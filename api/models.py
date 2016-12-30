@@ -296,8 +296,8 @@ class Frusergroupdevices(models.Model):
 class Fruserlogs(models.Model):
     oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
     logdatetime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add =  True)
-    fruseroid = models.ForeignKey('Frusers', on_delete = models.CASCADE, db_column = 'FRUserOId', max_length = 36)
-    deviceoid = models.ForeignKey('Devices', on_delete = models.CASCADE, db_column = 'DeviceOId', max_length = 36)
+    fruseroid = models.ForeignKey('Frusers', on_delete = models.DO_NOTHING, db_column = 'FRUserOId', max_length = 36, blank = True, null = True)
+    deviceoid = models.ForeignKey('Devices', on_delete = models.DO_NOTHING, db_column = 'DeviceOId', max_length = 36)
     logcontent = models.CharField(db_column = 'LogContent', max_length = 256, blank = True, null = True)
 
     class Meta:

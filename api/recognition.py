@@ -31,23 +31,104 @@ def face_verify(request):
 
 def face_identify(request):
     if request.method == 'POST':
+        from .models import Devices, Frusers, Fruserlogs
+        class end_procedure:
+            def __init__(self, response, fruseroid = None, deviceoid = None, logcontent = None):
+                Fruserlogs.objects.create(fruseroid = fruseroid, deviceoid = deviceoid, logcontent = logcontent)
+                self.ret = JsonResponse(response)
+
         try:
-            """response note
-            enter code
+            client_ip = request.META['REMOTE_ADDR']
+            ip_device = Devices.objects.get(ip = client_ip)
 
-            you can refer to the following method:
-            if success, enter values to below variables:
-            fruserid
-            then use like below code to response:
-            res = dict(ChainMap(result_pass, {'FRUserId':fruserid}))
+            if ip_device.state != 'Proposed':
+                try:
+                    res_upload = json.loads(
+                        requests.post(
+                            'http://localhost:8800/storage/upload',
+                            files = {'image' : (
+                                request.FILES['image'].name,
+                                request.FILES['image'].file,
+                                request.FILES['image'].content_type
+                            )}
+                        ).text
+                    )
 
-            if error, use like below code to response:
-            res = dict(ChainMap(result_fail, fail_code999, fail_message))
-            """
+                    if res_upload['state'] == 1000:
+                        res_face_detect = json.loads(
+                            requests.post(
+                                'http://localhost:8800/face/detection/detect',
+                                data = {'img_id' : res_upload['img_id']}
+                            ).text
+                        )
+                        face_id = res_face_detect['faces'][0]['face_id']
+
+                        for group in json.loads(requests.post('http://localhost:8800/face/query/group_list').text)['groups']:
+                            person_id = None
+                            similarity = 50
+                            res_group_identify = json.loads(
+                                requests.post(
+                                    'http://localhost:8800/face/group/identify',
+                                    data = {'group_id' : group, 'face_id' : face_id}
+                                ).text
+                            )
+
+                            if res_group_identify['state'] == 1000:
+                                for person in res_group_identify['persons']:
+                                    if person['similarity'] >= similarity:
+                                        similarity = person['similarity']
+                                        person_id = person['person_id']
+
+                        if person_id != None:
+                            try:
+                                fruser = Frusers.objects.get(personid = person_id)
+
+                                for member in fruser.frusergroupmember_set.filter(fruseroid=fruser.oid):
+                                    for device in member.groupoid.frusergroupdevices_set.filter(groupoid=member.groupoid):
+                                        if device.deviceoid == ip_device:
+                                            return end_procedure(
+                                                response = dict(ChainMap(result_pass, {'FRUserId':fruser.fruserid})),
+                                                fruseroid = fruser,
+                                                deviceoid = ip_device,
+                                                logcontent = 'Face identify pass'
+                                            ).ret
+                                return end_procedure(
+                                    response = dict(ChainMap(result_fail, fail_code999, fail_message)),
+                                    deviceoid = ip_device,
+                                    logcontent = 'Face identify pass'
+                                ).ret
+                            except:
+                                return end_procedure(
+                                    response = dict(ChainMap(result_fail, fail_code999, fail_message)),
+                                    deviceoid = ip_device,
+                                    logcontent = 'Face identify fail'
+                                ).ret
+                        else:
+                            return end_procedure(
+                                response = dict(ChainMap(result_fail, fail_code999, fail_message)),
+                                deviceoid = ip_device,
+                                logcontent = 'Face identify fail'
+                            ).ret
+                    else:
+                        return end_procedure(
+                            response = dict(ChainMap(result_fail, fail_code999, fail_message)),
+                            deviceoid = ip_device,
+                            logcontent = 'Face identify fail'
+                        ).ret
+                except:
+                    return end_procedure(
+                        response = dict(ChainMap(result_fail, fail_code999, fail_message)),
+                        deviceoid = ip_device,
+                        logcontent = 'Face identify fail'
+                    ).ret
+            else:
+                return end_procedure(
+                    response = dict(ChainMap(result_fail, fail_code999, fail_message)),
+                    deviceoid = ip_device,
+                    logcontent = 'Face identify fail'
+                ).ret
         except:
-            res = dict(ChainMap(result_fail, fail_code999, fail_message))
-
-        return JsonResponse(res)
+            return JsonResponse(dict(ChainMap(result_fail, fail_code999, fail_message)))
     else:
         return HttpResponse('method error')
 
@@ -75,7 +156,7 @@ def rfid_verify(request):
                 try:
                     from .models import Devices
                     ip_device = Devices.objects.get(ip = client_ip)
-                    if ip_device.state == 'Proposed':
+                    if ip_device.state != 'Proposed':
                         from .models import Frusers
                         fruser = Frusers.objects.get(rfidcard = req['RFIDCard'])
                         for member in fruser.frusergroupmember_set.filter(fruseroid=fruser.oid):
@@ -103,7 +184,7 @@ def rfid_check(request):
             if all(k in req for k in req_key) and all(req.values()):
                 try:
                     from .models import Devices
-                    if Devices.objects.get(ip = client_ip).state == 'Proposed':
+                    if Devices.objects.get(ip = client_ip).state != 'Proposed':
                         from .models import Frusers
                         Frusers.objects.get(rfidcard = req['RFIDCard'])
                         return JsonResponse(dict(result_success))
