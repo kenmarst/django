@@ -1,0 +1,2043 @@
+From c4e4358f8e20c21fe6d4906f135183ec7e6b2574 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Fri, 9 Sep 2016 17:54:16 +0800
+Subject: [PATCH 272/443] Update language messages files for pop-up window in
+ webs.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo                 | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po                 |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo                 | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po                 |   2 +-
+ templates/device_add.html                          |   6 +-
+ templates/device_edit.html                         |   6 +-
+ templates/device_frusergroups.html                 |   4 +-
+ templates/device_list.html                         |   4 +-
+ templates/device_settings.html                     |   4 +-
+ templates/fruser_edit.html                         |   4 +-
+ templates/fruser_list.html                         |   8 +-
+ templates/frusergroup_add.html                     |  12 +-
+ templates/frusergroup_devices.html                 |   4 +-
+ templates/frusergroup_edit.html                    |   6 +-
+ templates/frusergroup_member.html                  |   4 +-
+ templates/frusergroups_list.html                   |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo       | Bin 10558 -> 14604 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po       | 264 +++++++++++++++++++--
+ templates/locale/zh_TW/LC_MESSAGES/django.mo       | Bin 10558 -> 14592 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po       | 242 ++++++++++++++++++-
+ templates/logsetting.html                          |   6 +-
+ templates/registration/forget_password.html        |   4 +-
+ .../registration/password_reset_complete.html      |   4 +-
+ templates/registration/reset_password.html         |   4 +-
+ templates/role_add.html                            |   8 +-
+ templates/role_list.html                           |   4 +-
+ templates/role_permission.html                     |   2 +-
+ templates/role_rename.html                         |   8 +-
+ templates/user_add.html                            |  10 +-
+ templates/user_group_add.html                      |  12 +-
+ templates/user_group_devices.html                  |   4 +-
+ templates/user_group_edit.html                     |   6 +-
+ templates/user_group_list.html                     |   2 +-
+ templates/user_group_members.html                  |   4 +-
+ templates/user_list.html                           |   6 +-
+ templates/user_setting.html                        |  12 +-
+ templates/user_update.html                         |  10 +-
+ 37 files changed, 576 insertions(+), 104 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index abf2e50e7d89616c9ce8562f6b0804e181595779..3f5376513d1a217e598ff4277588e355dbbd3a35 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrGd(A>(zY~x2kMgTUZ1*ZT2
+
+delta 18
+ZcmZo-X=0i1irqrN(7?*bV&g|aMgTTp1)l%_
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index e18dc10..a6b76e9 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-08 10:28+0800\n"
++"POT-Creation-Date: 2016-09-09 17:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index abf2e50e7d89616c9ce8562f6b0804e181595779..3f5376513d1a217e598ff4277588e355dbbd3a35 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrGd(A>(zY~x2kMgTUZ1*ZT2
+
+delta 18
+ZcmZo-X=0i1irqrN(7?*bV&g|aMgTTp1)l%_
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index e18dc10..a6b76e9 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-08 10:28+0800\n"
++"POT-Creation-Date: 2016-09-09 17:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/device_add.html b/templates/device_add.html
+index 67e0dd6..2dac392 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -98,7 +98,7 @@
+             var IP = $('input[name=IP]').val();
+ 
+             if(!Name || !MAC || !IP){
+-                alert("please enter correct information");
++                alert("{% trans "please enter correct information" %}");
+                 return
+             }
+             $.ajax({
+@@ -115,10 +115,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Device add successfully");
++                        alert("{% trans "Device add successfully" %}");
+                         location.href = '/device_list/';
+                     } else {
+-                        alert("Fail to add device");
++                        alert("{% trans "Fail to add device" %}");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 70ba365..2d2eb96 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -229,17 +229,17 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            alert("Change device name successfully");
++                            alert("{% trans "Change device name successfully" %}");
+                             location.reload();
+                         } else {
+-                            alert("Fail to change device name");
++                            alert("{% trans "Fail to change device name" %}");
+                         }
+                     },
+                     error: function(data) {
+                     }
+                 });
+             } else {
+-                alert("Please input device name");
++                alert("{% trans "Please input device name" %}");
+             }
+         }
+ 
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 0cb11d2..acc6289 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -180,7 +180,7 @@
+                                 $GroupList.bootstrapTable('refresh');
+                                 $GroupAdd.bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete group");
++                                alert("{% trans "Fail to delete group" %}");
+                             }
+                         },
+                         error: function(data) {
+@@ -211,7 +211,7 @@
+                             $GroupList.bootstrapTable('refresh');
+                             $GroupAdd.bootstrapTable('refresh');
+                         } else {
+-                            alert("Fail to add group");
++                            alert("{% trans "Fail to add group" %}");
+                         }
+                     },
+                     error: function(data) {
+diff --git a/templates/device_list.html b/templates/device_list.html
+index e267cb2..3fcd3d0 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -160,7 +160,7 @@
+                             if (data.CODE == "0") {
+                                 $('#DeviceList').bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to accept device");
++                                alert("{% trans "Fail to accept device" %}");
+                             }
+                         },
+                         error: function(data) {
+@@ -187,7 +187,7 @@
+                             if (data.CODE == "0") {
+                                 $('#DeviceList').bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete device");
++                                alert("{% trans "Fail to delete device" %}");
+                             }
+                         },
+                         error: function(data) {
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 845d580..b923e34 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -381,10 +381,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Device setting successfully");
++                        alert("{% trans "Device setting successfully" %}");
+                         location.href = '/device_list/';
+                     } else {
+-                        alert("Fail to setting device");
++                        alert("{% trans "Fail to setting device" %}");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index ee63f3f..bf66d66 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -158,10 +158,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Update fruser successfully");
++                        alert("{% trans "Update fruser successfully" %}");
+                         location.href = '/fruser_list';
+                     } else {
+-                        alert("Fail to update fruser");
++                        alert("{% trans "Fail to update fruser" %}");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index d249908..4c6df37 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -173,11 +173,11 @@
+                             alert("Import End!\nSuccess : " + data.import_success + "\nFail : " + data.import_fail);
+                             $('#ImportModal').modal("hide");
+                         } else if (data.CODE == "2") {
+-                            alert("The file format is not correct!");
++                            alert("{% trans "The file format is not correct!" %}");
+                         } else if (data.CODE == "3") {
+-                            alert("Please wait for uploading!");
++                            alert("{% trans "Please wait for uploading!" %}");
+                         } else {
+-                            alert("Fail to import fruser!");
++                            alert("{% trans "Fail to import fruser!" %}");
+                         }
+                         $('#FruserList').bootstrapTable('refresh');
+                         $('#ImportFormBody').html('<input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">');
+@@ -204,7 +204,7 @@
+                             if (data.CODE == "0") {
+                                 $('#FruserList').bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete fruser");
++                                alert("{% trans "Fail to delete fruser" %}");
+                             }
+                         },
+                         error: function(data) {
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index 8af7454..b68e440 100644
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -80,7 +80,7 @@
+             var Name = $('input[name=Name]').val();
+ 
+             if(!Name){
+-                alert("please enter correct information");
++                alert("{% trans "please enter correct information" %}");
+                 return
+             }
+ 
+@@ -96,10 +96,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Group add successfully");
++                        alert("{% trans "Group add successfully" %}");
+                         location.href = '/fruser_group/';
+                     } else {
+-                        alert("Fail to add group");
++                        alert("{% trans "Fail to add group" %}");
+                     }
+                 },
+                 error: function(data) {
+@@ -111,7 +111,7 @@
+             var Name = $('input[name=Name]').val();
+ 
+             if(!Name){
+-                alert("please enter correct information");
++                alert("{% trans "please enter correct information" %}");
+                 return
+             }
+ 
+@@ -127,10 +127,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Group add successfully");
++                        alert("{% trans "Group add successfully" %}");
+                         location.reload();
+                     } else {
+-                        alert("Fail to add group");
++                        alert("{% trans "Fail to add group" %}");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 6067d9d..7e2a71c 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -182,7 +182,7 @@
+                                 $DeviceList.bootstrapTable('refresh');
+                                 $DeviceAdd.bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete device");
++                                alert("{% trans "Fail to delete device" %}");
+                             }
+                         },
+                         error: function(data) {
+@@ -213,7 +213,7 @@
+                             $DeviceList.bootstrapTable('refresh');
+                             $DeviceAdd.bootstrapTable('refresh');
+                         } else {
+-                            alert("Fail to add device");
++                            alert("{% trans "Fail to add device" %}");
+                         }
+                     },
+                     error: function(data) {
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index 51288e5..df35540 100644
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -109,17 +109,17 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            alert("Change group name successfully");
++                            alert("{% trans "Change group name successfully" %}");
+                             location.reload();
+                         } else {
+-                            alert("Fail to change group name");
++                            alert("{% trans "Fail to change group name" %}");
+                         }
+                     },
+                     error: function(data) {
+                     }
+                 });
+             } else {
+-                alert("Please input group name");
++                alert("{% trans "Please input group name" %}");
+             }
+         }
+ 
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 6a92446..638f4b5 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -182,7 +182,7 @@
+                                 $MemberList.bootstrapTable('refresh');
+                                 $MemberAdd.bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete user");
++                                alert("{% trans "Fail to delete user" %}");
+                             }
+                         },
+                         error: function(data) {
+@@ -213,7 +213,7 @@
+                             $MemberList.bootstrapTable('refresh');
+                             $MemberAdd.bootstrapTable('refresh');
+                         } else {
+-                            alert("Fail to add user");
++                            alert("{% trans "Fail to add user" %}");
+                         }
+                     },
+                     error: function(data) {
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index effc867..c583d63 100644
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -128,7 +128,7 @@
+                             if (data.CODE == "0") {
+                                 $('#GroupList').bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete group");
++                                alert("{% trans "Fail to delete group" %}");
+                             }
+                         },
+                         error: function(data) {
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 19eb1e4c6dcf3277fa8390e8e0e4986a37bca1ff..9920f191221c80683574b1652a34d07cfd01ea51 100644
+GIT binary patch
+literal 14604
+zcmb7|3wV^(na7V+vC>*AUaPJBSWDxD1h8r~(rSbt)P!IXplWM7%zR14OlH!#7*e}#
+zKth565+K~eCCDWTBp?t%E@X9EFRfka#jdur+t&GJCfe23t+qb9eY*euIqx@_3E1b^
+z@5wvA@7&LM&wJkYeEH3U^VTaoe}#M&a{2<L?mI`Rj*FSA)JvBsH4c0kM3FiLo(sMX
+zehNGdUIe}^=?}rHk^cDQrrveng-GXs=Yi9}OTgQ}YrxsyrJxUFe~ZD7gH7P)!8Y((
+z@DRxPy$YTW{sH_n_@40GD@?zaf$aB-;3vU*z)yfBAeZ!zuo|3z^kX3Bvl?W7JHheb
+zVUY746utm*-KRjV@8`mILF#Axm4=sqY=0HV@vj3p{#4;~;cQ_!$a#GmWV>1rf9f&(
+zu-!V4^V$JoD0K+r`d$RNA8&$e_cnMH_yNfIT#N+ueFaE;T?3YZ6G8SH1KDl~$oeZm
+z?&CUPCrG{YfY?&?97uirLO3G%{|j=Rmwd*wzZPVAGRXFKfLz~wAoukl@N=LK<ouR`
+z*h19=a-G|R-5|#s2HDR~B|i>Q|L=qNQ=dixOIA06w4-}K_P0P706G7qQod2RAEZ8q
+zCH)IYza{B&pk$U`4zl0LAp5-=q`nq_9RHgj?V?Wd9|Ni1rIKC^Qvd5g>U%55e)mdx
+z2&5if0@?1zAp3s<<bM1X%m?2AzX0BVLqNNn3sOH{2RW~5kn>mq(k>c7_O}Y8{x^fz
+zD)ltT@ty~{A1{KecS?8~<o=~V_V+%>b$$r4-KE$(wz~>sy@}w*z&w!kr-7_@E68={
+zgZG1XgKW1}%C`!4f?UTQDenWhpU;7_z&AiFU0HAfcvaIu?#F{*4j2UIfg3>9OM+bI
+zxo{rr=d)l1cngTFRa-%h*9%h5FN0j)DM`Nt(%$|A-VUB?nf;m$a$RL0%fAkCA081#
+zLF)N&kosH=avobi?#~gB^L`nmo_-Cozu$ovN+m$r>9~oe{xu-?e;P<V-vzSYB2bSH
+za-Saosn;;b{vHFlt_G0fG=ZFFi{!5dIgbvI{T%{nmxCbB--{sE@jA%yQ<DAwr2fYJ
+zlhMaSFoN{$Am@Jo<an=uoX06izXo!CZ-5-{_n-y71G2x1uQTJ{2y))Hf^0t>WIQMU
+zx!!po=e0-}mi(n4_0SG-ogKoxpk5!y@drWf!w)3?S0MK%3DQn^xLAK2crG{rq+MJA
+zP6elekANO92YdzO{QnGc{EH`<b8sa{JzfoRzBhsAgLi`LuK?sY4}s@_l_2#W0O=R%
+zz**pG5JyhE23p{IQhw<d&A2y$Tvs7T`<M%!4?ZOHfOnsR{=sp`@4}?X9$_!Yc0(ZN
+z`9t9^LF(x(koDE|rrrf0)0av58j$+CUeX01`<V-}-osLE3m*r0?lwyKGa$!5EIbLa
+zzaN26sftVfg*TXbSAgvQI^mauGlXSAFUWo)l5UW68_0d#2GUP-f^ZdT2;_WE3*Q9U
+z{w<K>{YBCj+-UMI6HXN73GWon2D#4plCBcQB!8)JJ;-spB;5mY+~<X_O8IF?zX>ix
+z`5z^J_D!aJiEshP`F<1R`f7wLK%S#LApPM{$$tf;ze$1I@4pEzoow3Q0J2@7q{~6h
+zw-#jmI!Uhrx!!i+J}K{)^eN$+lK%n7eg0&w;UtjlzY22x_e<IXavf1gw}EW;6v*)h
+zrTnLo|Bmp2JkyT_vfrs7>(2n$-vc1+ASU_sl5Pb#{yLEDo&vevUf~e<Nu<9o<v)>h
+zT+06>{HyTqAjcgy1!n^MEXeVzLH64Oa-7w|PRTzi9FY9y!HZGvHK7A?{_lgF&xgWs
+za8gWP3SI<SAnWCU9QS6B<IV*y1m_FCCHa0~t*}n`I2b_vMoGUX{19Y6YML2$Jjnj9
+z1TO}!1@pl?kn8jdzXx)jtsu{N2Y3(o97uhgceCNu!l_^>@@Ih)z|Fz~Ajca9+3p39
+z{hk(%fS98C0Gt5ke96?$2RXk2koE5uJ}j&TS${D|dux&OZjj>~2dUQ|gB<@SApOYe
+zQvMf^?Jv5;^lu4sL5`a*>92uozfkzF&=v+jjuQbn&pOFp2D1Ma$=@#A4{|^Hr2Ki|
+zYr+(W5U&0QWL){&t+>O2`5@P|2IP4AK+bEwq@M*j?_QAecmZTTKLcr3?@RtAx0!a=
+zf}F=BknN^`Y<CxUIama;-6D|dcpT(-YovUWq`Rg37|4EJlJeIj{~bx6^JO#Ml_1BN
+z2x_|rIo{16T&9{0J_JU<PlK;Y`ENmv|AFvt!t-u7`JWI@0NLMXK#ns-@~4Ab?+nQ=
+z266P&gCN(p0=x?B0NMVS@JArq{SM^#Z-eajJ>lO$gm2}8ybR%U3i1r(r%d2^&_K-q
+zdAH#D_<Ywu6$^<K^4<h~4^jzvOY(@lkdHxr4*59bI}rDQNvq|O_z&=FkQn3<$U(@r
+zA^i~A6`x%O>MueaXYt+uxeD?t2(EwXE06~uH$eEDFi?K*O?fBYgKUJ{#{`}*WQu+p
+z{rQ%>7J?6tW-Bk={{X?ZYCpVL%Id+TkP^sOA=LeIkhKs#{|xyPWP}Mk5y%%Iv_(GO
+zfb{4$b03_KcWjvoLHZyz<Z8&{kcE&JA#))A0^#!xWGmzt6L@y&U-NSWXoTD^c{7D~
+z3tt7#gV2r-LFPgJ3$hJz7o-eQ1la=F1nGr*0rCpuFyviG9b^Zj4YC+=67pLJpBo|H
+z*KhdV2XBT1A&)|KL+*k68-&kaA++~y$O6b3NGXI*J7ieDnHX|~yuSqg26CaKiE??*
+z1%C~>2!bn#z8eE-5o9~$UMBGT8A3nwHpByY0dfcAY)>aLr$U~DSdi-=HISb{9)tW5
+z@_PuM>5y9>4&=v>Yari*bU;=?z7ENJHb`O__yforkk3IrfW#r6huj9?v)VvS67B(8
+zAkRbo8}b_Dhmgx4d?r9nLw*9e6yiSriI)M$m5_Ci<B-hf2_$ZX+zDAP1?PhM<vky)
+zmiGd1GUOAG_aXlZnFev6*YWZx$kUQ>0Q`4(KObBI8HD@}auo6ugikAEpMJx)EjSMH
+zBgibtOMzXGDC7c2E#z5962j+tNCjjz6Y^XFHp}};@RyJ($mPr{@OtgqC=rSUL7$Ie
+z&9&>Snf9Z8ubocb8xF;4)2U*+W|196vc?~@{1MCR2?j$^YmsgF?0_A$(M=`V#-gDb
+zPt@;K_jtV3`X^Rvm3gadUo7AcR=PP6I~qmOio`ITNTebb2-K&`GV^AnhY6yNn&FAs
+zm7#FGno;EmR&s1k*$R4U?Cidzypn79=;B&WBvKa&`^K~lgd(<@5eioL!!_1Csgurd
+z8>KU%A<@B^Iaag^x+)C?bbmqH8@0;qNL0-T+gOP;6F=@dcfeFMWx=zgJ+f=koK=hl
+z+)kLI*DM)&fSI01)uNCm>{ComDfiddc&k@4?FvsU5VgXXp1YrBGtXKSwy9<mak~L+
+zECv?MNM2`XyOKnq&mVOQ<^(H3?t76RN{~8pO|N<*%Zyz_+%nH-zj)2wCTSkX=&IHe
+zMrTpjsT8I&ELa?@S+dV+elz_M&mwFTSZ&RZcwo*mLw3ZXnOAupwXIq^T;q>K{Gp&K
+z%q{l#14=KiutvWIF|1V|iiItk85ZUnhH2x31VVL_El<#A)!8|LfE4?Kk!U#PjiR@R
+zRS^nvg8E2!EN)^bXy>WIN9}OERU8UNtK@y5ZC9(p#kHYuRLv^IEHS20xSKMkHY=rf
+zCp*XJA>D;;Wa-sp*VFryoh6RI&CIM3vGg9#D%JCHXEK_wq_WN_3RPyN=lImD@_Cjw
+z6x63Aic^xk-Lt4={#ZC~I0*1!uJNaHVIuknWoB@&(RQfeGnSiK#~hi=oLFWn?-|Y}
+z-Jule4z!;cTaxw`Ztw02vD$Q9bLz&<OmZv2S(B06>?unoPx9DKvl{zrXgZeZa$>rw
+zIojE}bM29i94E(}zMGBhJ0ow5W@EKJI=QS3kUV!yI4YcRC|nteM(v<EKd#EGyVR_(
+zA7YlEVT|-%JLto%8Vl3Emi8j%^$bs8vbCd_T~b!A=G5T8F-+kk&(RtYSTfd}pcU}f
+z_+enNu&y>4j@-5ap-LV281=%omw^MeIPKP{lO|c78v4CFH3#R~6O0DxtwmaKmZyS_
+z!5i><t98VKCs9QRUNJbB2;Q`%&o`>luDK}W^#t730VMQ1sc#;cl2}x;%(x5vu0y$*
+zu}-^tloefzsp(=*Fy>*bHK*7dKzY~t!8^jMxIcIvRUG3%gwIFlf>VMIv#Twir+%W+
+z8lMYam3~Qw%DEvmH<SlKpx{qLmB5u{X=<_+sgFeM8mrC^pIB|%wN}9Bf?78IGK|T<
+z?^5+4{DiGg0Nbv&Ay3UKC@Wi7QaTea<+IhilG1WD&vpNnXeWX!6XDY@me2L+FaU4W
+zXg=M%&YEo120Rf&#46icZRK!<ZZA37jpvNL8suO$?o9$d-;UCa@$z7{E?s7fe@qyg
+zmyRkKvkustfvsZ-mk(Qm!9^`QSH~7(z7y5F%z8TZFm}|sbBWgRauf++(-_|^?18_c
+zo`=ke*4NrT3l@&soOB+*|M;Xsf3P+dwQ|bfD{`!0j5ohAW#*_GkC)Y`GJWH6J2M*5
+zvrEqmqfWZsUR>)B+rAqj7VeZWSjl9oGQ<<b6<34;h?_hywKynR@7}5qE@qYqkZxD`
+z?l5&8tcHO!RvQR;d}ujQmD*nD5N8n{#Aj|>rS>CGBuZ*vm+mQJ<Z%yFsk!Eq>V2%K
+zPiqrRxU=rKIBvme+zS}s;kY6ghf_Bf0JBSS13<%QEQ}~0@mB_OvGRyFj3!D)D*jkg
+ztWhJ-+2&m8GJUx8+t@npMA?IR&kmTn(HXwb<l-`t(OsD*s><k>_+ufm)45d!{d7E5
+zZB+>C^4IV_q|14eDL@?c;KblinoPRr?5egW?5(ooqETj2+7T;B=(td3^NJS5ww2WC
+zyAVqCJ;-H5(F#>r)Dw;2Jr-1D^+B%{<t4UEdk}#&BZf1AUC>U{6q);oywih@zRI;J
+zBST+KBt0LKNe@7WV|Jt*7lCSXU5iC%o4oEt{84+NDu>NZx}NXf3gQk5qmJ618l5eH
+zpvF_L?~(`}wc!vydtj3_yxaxqCtLmseJ;huB^!<wMp_XL)mS&*LG$|3G;88Fg5L-(
+z48;OI-JlM^h9&SgxIV^g1Wit*!Vjx3Zh~KHbZ&CYIn|ibN-B@pYJOQ^>D+?iLM0(c
+ze=*3r9S(=Wd6t}Sj^Ke0ibe9=$|j6wo1JMZ-S8wTz0v%!Ody8w=sZb^iDXpJ7txHg
+z-kFTFTtRitoSCMt(K`CX=rS`EQ;vg>ei<`i&Mc+_u&H6*&#V+t3;b}eGwmp^q6_iK
+zyD%Km4obcvVa4tj+5_;h+I?e>vm=gi5n;O$-z_%WpZOk8Xpj@u*9zPJC{0U$Ihs$2
+zMYh)ygXe>D!O{Fq40mI+^Nji;<6`OjwEscf^h_*IG}|uoI8?eAhKB&)F`eh&^rI7V
+z7t2?kGr#qXYJ5uKn}QqD)~P2e*T2yW9SfBCg?-blGq_v!Vy|ucB64Ff!A9Gf;yplV
+z<EQC+l=d(Yb4SpZE?x-oRN4t=1#KNO{~u9X)sBYV2t8lceW^Axwz~1xk8fBvtY=lw
+zdgsAcXJ)&zRXFywh+saIHPCmfa=k%?-)Nnh7Y;Ez<<9ZtF0jM=)XcZ$70kG=;NC)O
+zL1AgxoRYcYOKslabBiODeqZiAvC2qpc_`l+Kd+=bSN~rCjdFSX@~xYvPP;94>K*vA
+zrhPg8mfLQcdi&I=sF+)dPat+K^&TiJD9tS{$(>nX%`V9=o^#WKC36eM7kMJl-14v|
+z7{SFX6wbG1%`Yml=qs%0g~bJPita9$IkU8|tn90(YVNbS<?wm=R#Cy+d*^e?(~FAk
+z4*2t6QloV+)#5qDg`?}6mN#|$4EPotm)vq(OY-447e}Yy66O!yiCdT_jJW%i`Q@{6
+zZy&A4X;s+a+`^zY#8{ti-M+{l9j_9r_c*N^mDAVev>sQ94Tqdv+Xboalg{oY<qY&E
+z_qU)Vd2)AhVA*Io(cI>&*`(rqt5Q!4In6sqHt$Y$cP87Gry3fSbK>a8$z>|l^o;Xl
+z7rKcL45`#`yR&t>GO5JswaKm)NpPs{Ex&JQ!5_PQa)(>XB+M9zO+Cq{`<;eCl{`G)
+zH1AhthECh6<i0~r>!!rkqte(+^(+NW&+_EXC0TWy#v>ye52|EmcdC20DbG$MmUdxe
+zr){sPlG?k(ELMF~L27t&yziORzO|_p&#J_+mQ>IB)bRFX|FEmOjlClqkGhEshooj&
+z(PPuHIiuzOaAQp8$s+^FfgSOIXHuPAiEYCwv2jnLV@JXiBB4fhEra@!Tb7y85*v3W
+zj;xo3nKDygR6o+Ring(42s%|#OYFngj3f*a4Fiewhen!OWryO!-HG-Sl1LrHz&(;M
+z29vdsZZ&NZ*`_GHYa^ANHd)!-v@XTyqFz((m@JdvZ}%40%$9T{+q<yg2a>yX#D|8F
+zfQ@l`63=!fI#wjMJu$MmO(olpIS1R~!=1_Q!zwwrA$4+1cAnGG74K^q*|sZna-Gw-
+z2c`klX102FaAl%-O?=>hb7=WULu+cd$&`*P?T!!hjx=mZ?$`q@b8^~7Q$0r$n^vnt
+zPivy1nQ+#0sl?$Xr>UPyOLRU3Eyw%&xm2?*GkY99WBsC&%<UOdL(M8REv4$L(lHgX
+z_H9gAx{Vo)>RhuaYad1%Xs<AKmRWW%T30)nF`a)zx0?r`>16*i&d_@09ETq}&VPxS
+zqh^ksyUDu`r;hFsUuTx=m@F}VZBdeyo{G_&<YuZdD@$CB>F(@pWyB0OB|R8Fl;x~U
+zKbdYy>ZVubw$%<dYcb|rnymCpvZ`lIR;p(>tE{?Xd!X$#?m2t!Mva+H!tF|Xel~L5
+zyA<H#!sJTY^qZBHo&fzic1Si+CrtHp4R^FXN0c+XDb;<*oIj(+cL#T<cz^p?`%}ic
+zao`ip$Hf>E4f_~ZjG6={ib%qkftZ!4CdL`>8%T8YBN{fOnh)rM+6ap~o6c0Kg}xYW
+z#aZ5%>TRSeIM7aqiJazMI*N`4XZIGTwI@Cx_U$wunwEE~)3AzOC8P424NFyW=?SN4
+zz**Ym9NgrztwykRRvmFeZqLC~SA$}QZL5tQ-5Ahu!0CWe8JY2dPLv#_B+eC_j7b@f
+zWA=srE6W_5X;b1Vq#aj?6)mF?Kg%m*B}xm5Ewg<L6VMtqu5qMuV5DJ1qUC9%5kYaL
+z<3k+`R?fb43_R4nK1KRXyGc4@9(+M!%_hWWB{);jXH_DW0i`?5o8!aVlIu4^Sr}-H
+zqG2G34Vzi5u{S=nnVQg!#~dPVgIpa_$9o)Je1^C4YPDmhHoI<YrU^=B(xxs#E6t_p
+zs7m!5m&=8Y9vC}^Yt@x=;(e=gGH)k2<~AZtO(h(?<WRS%B{PxTHWw%p#$+2YnnbCC
+zPoc?}K$X}z=nNuqyOrX7yAuaG)6;<pV3qNc!zP-UA#vQKM}1KmU6tgnUhDL?Vw-UH
+z8tvGeVcF31aGBnabrD#z{`KWFFCSUE11HBgPqTbX3I+_@K@4`9HztSHINKVGI}!tR
+zwW(EoaD{WSG2ZuNd~oNxgRmBTI*c{Cr=w+Ua$uWs2A8G}2_3MxlVtiig#@$BzM5??
+z3C5v;b<Xi;oz^uY4Y)IkQ_2kc3in|Y@WeIl8R<NR`-3vRRDgeV$qmG0yOB`eEnU^=
+zL{_z|8J_8!<+z#x?(DAZSy^Tj*qwChG#*sOzX(#x`bM6>mUpFkmYbHz#(l{Z_*gJr
+z=tOUFU|(|Jpt-WTx%$>(4w6c=bvQi(#snlGUe}bQT{~`@%SX1fClBo9F_#?>;2Q#V
+zrIJtfCK|AfbQEnX69@OmCYn32GH{00VJovr#Oa%IaeiqRC(YvhEx4XZp)=S39}m|Y
+zKhc=gQ&z3ip<VdHkr0d0w>}=Sp*6|<a3M=n_CFXbXX~z!O*^c_`U9{@Wjvs{_u;=-
+zkK<ohSQ$M}YY#rO%thT4r-rwtI#*_XW1$*DUuQSsEgYfjLfgi>;4$Ipd(Gj7<4NeF
+z5Bu8+z3I=9c>hY3*1GFvb+DBR#-WU~Z%*~}U>u&<<2#HONG)kk4s<9}!)$80E3vGs
+z;A76-=y0RoLSh7_4>z>xYkB%&E4Nak&h#)@!Pq1?a{5jx7sRox%+=J5FM7G@8vz{t
+z=oHN{8Jo^p+($GtI+PDtcPT2dV^6XJpN4xAPc$O_t>7m(E+UEM4aR-o+XH&$H)i^a
+zB5|b4S-vvuuFaPN_R?8-Vx$q#5#Oopy>KV^{&Ws4F~y7(TX)9$`q|OmC5gjuXmqHV
+z|9BOh^gU_ZhB;hVFGezRvDi0L`o9F|G9N~xzZdmKx7jBCFF*oNs^u`uO)gy7w<%tJ
+z&b;#|vqocExR@~v!!0+9vtY~}*pS>efPXPaRm|oeg~-v+YFwD{OR`((SYr+Wy21x(
+yVhO%U(=l&oCzso{$~n04j9dxfCmWsaPJVq!ugUI)_|Up|-$5=td1A?E;{O2n3loh1
+
+delta 4625
+zcmYk;2~<?q9mnxY1c^%&6$*+7DiAbCL|kx-rfx~x2#Q*b7TmXrid$ovDX~Ue>h@ex
+zqarTE6;!B6TtGCocJss-yQa~!!jNcf+UE4ca}wL{Z|3hgzQb=m@7{Oc-R8{<8x~h(
+z`#x<My4`V9leQ$Xp>rW2&NXeSTIV7noTJLMz;KMg2AF`&FcF`^3@blx*R!w@^<yy<
+zr(g@5hOxL5TRG=*TR3@=ibEKNWyqhaG_Rm;{5|T%deq!PsceERusOz=U9ctP{>Y!p
+z;)Pq>RBVg|sENHE(C1tcCtA@~)Jk`ldr&tVL=9Mu8t}Y%)%@7Jjhe_k)P3JreK@nx
+z1X|&DFcGzreX%j)yFr|2;8Ccp%0cbKL>z;;sDUd{9bZJX{|##EKQeD4W4ikoiP~RI
+zU6h%Es_%<hP!{^s!DOqLhw5MjY9;GXZ_O@@!vn~ltKmf}xoPEls0pd}))0=`(e|kN
+zB-8>@t(=Kk;DAWpf30W;6*3F81CvlU<f1y5kD6!!_Q66-#Pg{4@-x&*?_v}_L`@))
+zLg1lA^_PHJSSrR~zbN)Uu;o-}r4y~;G&3KyRVz^)7NJ(S0d-#~>b_&Bc9r-9)}Y#d
+zfNFOYwc_95%XkBIUy_e~RD(3s3Nla^hN7PK(WtGThuZqJn1y?ACf-NgmlGY_soAIr
+z=399!>Mh-jG<Ew?<GpY7zA8?%g&&%KMs3j@)RujP8d&=k*iuvnF&K|=$Zos-$f8^}
+z>aCiM+L2|bepaC-vI+H;lpqWBxg(sY!_%nu`d!pORj7$wvijemCUOJSp&#|k{0H^%
+zdWf2MbC$0O#G}exunqP{?Z5;qz<g}L`0nqVXafE~1)pEkTks`npa-ad!sta4j6k)I
+zMtuXeMXl@^)PViXkybw$wc>o#f|i?w*hHWI^_*zHovOfnsE6gal}}?}M{q9nm+)!q
+z!ULj?b5IZ6WYkXNq9(Ek)lVU^2Db(^@e<U6N>R_BJH?46a20jKb@LB6kl%v8qE_CH
+zCs8Jusi^lj12y14Gs~{$+VxphUSj2ysE4*Fj{R2$Z(D=IX1O&yV_rtyUiTp;;^$W1
+ztX*&dv8V~8n3?7a<^*##YP=OzUfquUSH*TJw8i^TD=alnpsrV<2B@*}b@Nm6uKBeY
+z#z#Z<wKU_+RMg6QqsAHGvx+g+V5VItu=1-oo`!3z{+3y1{sT3!uaI}ig(d_|Ks}uO
+zkWa81j=DY#^>Ou~KCZrPc5)Qe;3DeAPpo_wHPi6+!5f;P224b)q`Q@ep>}XQs^dvk
+zUS!voqS~)U_4ig#pDX4>TUBaSSc8k^FU@PHj&I^9yo;J}pANwe$Dsz8Y%a9=RpvUY
+z--24e!GJ#ATTV3d4^R`iYTh*ehWbMJC#v1IsDVQ|1_zEqeXbMDG^@`v2be?6kvO0B
+zV^wB+SHp=qxQd#<N4kKwP%El4AK3M#d<4EreQV6dS5WQBQTJU!?bNSO{oOL}q1rt_
+zwQHKh`>(BN#fchrG`pJpQ8&DV>TohPzyeeU%aI4(y>8d{pxRfU`ul}>12xWVD}RZ)
+z|Jx)!|2hdx4puZVTcQSPjp``Q>N}$bNVodI=F6xZoMP8!n=8$Y$m8NlQ2*p!#<6%i
+znf=#5J@`Ith`mwefv6b|MonO>nTKk(05#xJR6Czt--Oz!-Kb~eG-|@vQ1^Xi*XynP
+zP&cYUSW2*?7*sh0H9%j~1csm{mW`8e9O}FNG^*pv=C94`<{!;lsEO5C`5RRKz6PCw
+z13ZPQXk+C>GaW;y*AGZId6!He9??-kw3Ua5{xQiQj~~-0bS3;|xfkrhX`Dd{89z{^
+zUn3ox2^$hPm|)<@<TakWO|r=_!kpX>$Qtq%(XpOvCvOlQ@W8Q~*B+#d%q9A<)9&dT
+zQAd=GAK1cRRdAaJQJ77>PXbRk9wBL@lsr$4lk-IX&*|Vd$;}F!1z(<kXUTA~gq$Ec
+z7Lhqb|IBpI`hP|q9i2H*T_p*%$~`!dEF=0YSVuMy9j}o0$zjrkyhN(VUZNv`B$LtP
+z(XoJ&6=XWmST2{0(1{&m%v0ua>|^JzVKo_O<wq>E6a53DFDD&(aGxZ6+yh5HUf;3v
+z@8L>~Ka-PP<UPCa9O@IGV;{Ld&XC8Cd<x@8H&XG~g)q){ka^^+)$3m~9T7oXN9;|u
+zlA&7vVonB=pOaz|OJc|XGL>v0I+~OI<QVx8Sxa^j9eG5*5mQJb(u|xVI$k96$tcp7
+zM3U7coeW`ox0Gxkj~{PRXiGMdo}_@36CFo`1YWoC+Kc?q>bje$_zd|m*-u82pO8n#
+zWKMoc^vt+}<W*9n0>>(n6F773B(^69RQ9e!4)zkG#)U1JF)M$u_eIn_uW9r$Z&!3$
+zi#Y{(Q|HfcgXa{?OUNn6n>C}NS<H$MZ)lqs@84|_z45U*6_;cG6ylY{b@Dp3%k~bm
+z8}9Xu&-Kp4kM^ER$g8-Pa681i)*;#J+HqIIr3<I$Et%o{uVb{Am*{!TlSX*6l2XDK
+z=P%4Jm@(a(m^?i^Ga<cepKh5ISCW%Lwx)D%Q&+UPc3rWnJ-Fu1xeHeCpE_4tbj&-F
+z^0oI#r`Zwy3uUfu$I06Ld+W=pXy_$$j`CjX+`4sb;cox7!_HrF+`qs0&V_0U{v&5U
+z-&t94t#frq>d>)S_0@a*XRB)uo~o}rWMin0vRzg+B7at}>@7%}<9(6lZ@^#`A3vKM
+z(!6?a-Nr+;#rqr$sPrPzBfb3ePHNy?OdsaG*lkb~&NZ>}H~ss(qutU1*Z$Hi)_Xc*
+zu6H40Ph+mz?G@9zw+e|)t$X9Jzod-u>q`s$=ic$3J5jrN=K!y?M}`;Ov&OsMvuz7k
+zSA597dwqR*Y2B*T?#_E_y~Vvo1bVLN74QAGS8uOhX1hkURjX^uO6s<s^!}9@`+v^{
+BM!x_6
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 37d72ae..38e4559 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-08 10:28+0800\n"
++"POT-Creation-Date: 2016-09-09 17:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -131,6 +131,22 @@ msgstr "返回"
+ msgid "Save"
+ msgstr "储存"
+ 
++#: templates/device_add.html:101 templates/frusergroup_add.html.py:83
++#: templates/frusergroup_add.html:114 templates/role_add.html.py:78
++#: templates/role_rename.html:74 templates/user_group_add.html.py:83
++#: templates/user_group_add.html:114
++msgid "please enter correct information"
++msgstr "请输入正确的讯息"
++
++#: templates/device_add.html:118
++msgid "Device add successfully"
++msgstr "设备新增成功"
++
++#: templates/device_add.html:121 templates/frusergroup_devices.html.py:216
++#: templates/user_group_devices.html:216
++msgid "Fail to add device"
++msgstr "新增设备失败"
++
+ #: templates/device_edit.html:8 templates/device_edit.html.py:18
+ #: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
+ #: templates/device_frusergroups.html:18 templates/device_frusergroups.html:25
+@@ -154,7 +170,19 @@ msgstr "设备参数"
+ 
+ #: templates/device_edit.html:187
+ msgid "Parameter Settings"
+-msgstr "设置参数"
++msgstr "设定参数"
++
++#: templates/device_edit.html:232
++msgid "Change device name successfully"
++msgstr "设备名称变更成功"
++
++#: templates/device_edit.html:235
++msgid "Fail to change device name"
++msgstr "设备名称变更失败"
++
++#: templates/device_edit.html:242
++msgid "Please input device name"
++msgstr "请输入设备名称"
+ 
+ #: templates/device_frusergroups.html:45
+ msgid "Group list"
+@@ -205,6 +233,17 @@ msgstr "您是否确认要删除"
+ msgid "from this device"
+ msgstr "设备"
+ 
++#: templates/device_frusergroups.html:183 templates/frusergroups_list.html:131
++#: templates/user_group_list.html:133
++msgid "Fail to delete group"
++msgstr "删除群组失败"
++
++#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:102
++#: templates/frusergroup_add.html.py:133 templates/user_group_add.html:102
++#: templates/user_group_add.html.py:133
++msgid "Fail to add group"
++msgstr "新增群组失败"
++
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+@@ -243,12 +282,21 @@ msgstr "编辑"
+ #: templates/system_settings.html:10 templates/system_settings.html.py:19
+ #: templates/system_settings.html:25
+ msgid "Settings"
+-msgstr "设置"
++msgstr "设定"
++
++#: templates/device_list.html:163
++msgid "Fail to accept device"
++msgstr "接受设备失败"
++
++#: templates/device_list.html:190 templates/frusergroup_devices.html.py:185
++#: templates/user_group_devices.html:185
++msgid "Fail to delete device"
++msgstr "删除设备失败"
+ 
+ #: templates/device_settings.html:8 templates/device_settings.html.py:19
+ #: templates/device_settings.html:26
+ msgid "Device Settings"
+-msgstr "设备设置"
++msgstr "设备设定"
+ 
+ #: templates/device_settings.html:34
+ msgid "Device parameter setup"
+@@ -266,6 +314,14 @@ msgstr "简体中文"
+ msgid "zh-tw"
+ msgstr "繁体中文"
+ 
++#: templates/device_settings.html:384
++msgid "Device setting successfully"
++msgstr "设备设定成功"
++
++#: templates/device_settings.html:387
++msgid "Fail to setting device"
++msgstr "设备设定失败"
++
+ #: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
+ #: templates/fruser_edit.html:25
+ msgid "Fruser Edit"
+@@ -309,6 +365,14 @@ msgstr "女"
+ msgid "Age"
+ msgstr "年龄"
+ 
++#: templates/fruser_edit.html:161
++msgid "Update fruser successfully"
++msgstr "更新设备使用者成功"
++
++#: templates/fruser_edit.html:164
++msgid "Fail to update fruser"
++msgstr "更新设备使用者失败"
++
+ #: templates/fruser_list.html:10 templates/fruser_list.html.py:18
+ #: templates/fruser_list.html:24 templates/menu.html.py:47
+ #: templates/role_permission.html:97
+@@ -344,6 +408,22 @@ msgstr "建立时间"
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
++#: templates/fruser_list.html:176
++msgid "The file format is not correct!"
++msgstr "文件格式不正确"
++
++#: templates/fruser_list.html:178
++msgid "Please wait for uploading!"
++msgstr "请等待上传！"
++
++#: templates/fruser_list.html:180
++msgid "Fail to import fruser!"
++msgstr "汇入设备使用者失败"
++
++#: templates/fruser_list.html:207
++msgid "Fail to delete fruser"
++msgstr "删除设备使用者失败"
++
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+@@ -358,6 +438,11 @@ msgstr "群组名称"
+ msgid "Save and Add another"
+ msgstr "储存并继续建立"
+ 
++#: templates/frusergroup_add.html:99 templates/frusergroup_add.html.py:130
++#: templates/user_group_add.html:99 templates/user_group_add.html.py:130
++msgid "Group add successfully"
++msgstr "群组新增成功"
++
+ #: templates/frusergroup_devices.html:10
+ msgid "FR User Group Device"
+ msgstr "FR设备管理"
+@@ -393,6 +478,18 @@ msgstr "搜寻设备"
+ msgid "from this group"
+ msgstr "群组"
+ 
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++msgid "Change group name successfully"
++msgstr "群组名称变更成功"
++
++#: templates/frusergroup_edit.html:115 templates/user_group_edit.html:115
++msgid "Fail to change group name"
++msgstr "变更群组名称失败"
++
++#: templates/frusergroup_edit.html:122 templates/user_group_edit.html:122
++msgid "Please input group name"
++msgstr "请输入群组名称"
++
+ #: templates/frusergroup_member.html:10
+ msgid "FR User Group Member"
+ msgstr "FR群组成员管理"
+@@ -413,6 +510,15 @@ msgstr "搜寻使用者"
+ msgid "User"
+ msgstr "使用者"
+ 
++#: templates/frusergroup_member.html:185 templates/user_group_members.html:186
++#: templates/user_list.html.py:163
++msgid "Fail to delete user"
++msgstr "删除使用者失败"
++
++#: templates/frusergroup_member.html:216 templates/user_group_members.html:217
++msgid "Fail to add user"
++msgstr "使用者新增失败"
++
+ #: templates/frusergroups_list.html:10 templates/frusergroups_list.html:18
+ #: templates/frusergroups_list.html:24
+ msgid "FR User Group List"
+@@ -450,12 +556,24 @@ msgstr "语言"
+ #: templates/logsetting.html:8 templates/logsetting.html.py:22
+ #: templates/logsetting.html:28 templates/menu.html.py:58
+ msgid "Log Setting"
+-msgstr "纪录汇出设置"
++msgstr "纪录汇出设定"
+ 
+ #: templates/logsetting.html:38
+ msgid "Separator Options"
+ msgstr "分隔符号"
+ 
++#: templates/logsetting.html:131
++msgid "input error"
++msgstr "输入错误"
++
++#: templates/logsetting.html:151
++msgid "successfully"
++msgstr "成功"
++
++#: templates/logsetting.html:153
++msgid "Fail"
++msgstr "失败"
++
+ #: templates/menu.html:33 templates/role_permission.html.py:75
+ msgid "System"
+ msgstr "系统"
+@@ -513,6 +631,16 @@ msgstr "重设密码"
+ msgid "Returns sign-in screen"
+ msgstr "回到登入页面"
+ 
++#: templates/registration/forget_password.html:49
++#: templates/registration/password_reset_complete.html:59
++msgid "Reset password link has been sent to your e-mail address"
++msgstr "重置密码连结已发送到您的电子邮件"
++
++#: templates/registration/forget_password.html:52
++#: templates/registration/password_reset_complete.html:62
++msgid "You entered does not match your registered email"
++msgstr "您输入您注册的电子邮件不匹配"
++
+ #: templates/registration/password_reset_complete.html:33
+ msgid "Password updated successfully"
+ msgstr "密码更新成功"
+@@ -522,14 +650,14 @@ msgstr "密码更新成功"
+ msgid ""
+ "You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+-msgstr "您收到这封邮件是因为您要求在 %(site_name)s 网站上重新设置新的密码 "
++msgstr "您收到这封邮件是因为您要求在 %(site_name)s 网站上重新设定新的密码 "
+ 
+ #: templates/registration/password_reset_email.html:4
+ #, python-format
+ msgid ""
+ "Please reset your password in %(expired)s minutes, go to the following page "
+ "and choose a new password:"
+-msgstr "请在 %(expired)s 分钟内变更密码，点选下列网址重新设置新密码"
++msgstr "请在 %(expired)s 分钟内变更密码，点选下列网址重新设定新密码"
+ 
+ #: templates/registration/password_reset_email.html:8
+ msgid "Your account, in case you've forgotten:"
+@@ -559,6 +687,14 @@ msgstr "请输入两次新密码，以便我们确认您输入是否一致"
+ msgid "confirm"
+ msgstr "确认"
+ 
++#: templates/registration/reset_password.html:50
++msgid "Update error. Please contact us."
++msgstr "更新错误，请跟我们联络"
++
++#: templates/registration/reset_password.html:53
++msgid "Password not match, plase check 'New Password' and 'Confirm Password'."
++msgstr "请确认输入的'新密码'与'确认密码'是否一致"
++
+ #: templates/role_add.html:10 templates/role_add.html.py:19
+ #: templates/role_add.html:25
+ msgid "Create New Role"
+@@ -572,6 +708,18 @@ msgstr "角色名称"
+ msgid "Sort"
+ msgstr "排序"
+ 
++#: templates/role_add.html:95
++msgid "Role add successfully"
++msgstr "角色新增成功"
++
++#: templates/role_add.html:98
++msgid "Fail to add Role"
++msgstr "角色新增失败"
++
++#: templates/role_add.html:118
++msgid "Please input 'Sort' number."
++msgstr "请输入排序号码"
++
+ #: templates/role_list.html:10 templates/role_list.html.py:24
+ #: templates/role_list.html:35
+ msgid "Role List"
+@@ -601,15 +749,27 @@ msgstr "重新命名"
+ msgid "Confirm to delete this Role"
+ msgstr "您是否确认要删除这个角色"
+ 
++#: templates/role_list.html:159
++msgid "Default role cannot delete"
++msgstr "预设的角色无法删除"
++
++#: templates/role_list.html:163
++msgid "Fail to delete role"
++msgstr "删除这个角色失败"
++
+ #: templates/role_permission.html:10 templates/role_permission.html.py:19
+ #: templates/role_permission.html:25
+ msgid "Permission Settings"
+-msgstr "权限设置"
++msgstr "权限设定"
+ 
+ #: templates/role_permission.html:70
+ msgid "Role / Permission"
+ msgstr "角色 / 权限"
+ 
++#: templates/role_permission.html:167
++msgid "permission save successfully"
++msgstr "权限储存成功"
++
+ #: templates/role_rename.html:10 templates/role_rename.html.py:19
+ #: templates/role_rename.html:25
+ msgid "Role Rename"
+@@ -619,6 +779,18 @@ msgstr "角色重新命名"
+ msgid "New Name"
+ msgstr "新名称"
+ 
++#: templates/role_rename.html:92
++msgid "Default role cannot rename"
++msgstr "预设角色不能重新命名"
++
++#: templates/role_rename.html:95
++msgid "Role Rename successfully"
++msgstr "角色重新命名成功"
++
++#: templates/role_rename.html:98
++msgid "Fail to rename Role"
++msgstr "角色重新命名失败"
++
+ #: templates/system_settings.html:32
+ msgid "Backup Scheduling"
+ msgstr "备份排程"
+@@ -685,7 +857,7 @@ msgstr "本地备份地点"
+ 
+ #: templates/system_settings.html:146
+ msgid "Remote backup FTP Setting"
+-msgstr "异地备份FTP设置"
++msgstr "异地备份FTP设定"
+ 
+ #: templates/system_settings.html:148 templates/system_settings.html.py:149
+ msgid "HOST"
+@@ -697,7 +869,7 @@ msgstr "连接埠"
+ 
+ #: templates/system_settings.html:151
+ msgid "PATH"
+-msgstr ""
++msgstr "路径"
+ 
+ #: templates/system_settings.html:154
+ msgid "USERNAME"
+@@ -772,7 +944,7 @@ msgstr "必须选择一个工作日"
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+-msgstr "选择每月 29~31 日，可能无法每月进行自动备份,您确定要继续吗?"
++msgstr "选择每月 29~31 日，可能无法每月进行自动备份，您确定要继续吗?"
+ 
+ #: templates/system_settings.html:338
+ msgid "Backup successfully"
+@@ -780,11 +952,11 @@ msgstr "备份成功"
+ 
+ #: templates/system_settings.html:340
+ msgid "Backup setting successfully"
+-msgstr "备份设定成功"
++msgstr "备份设定​​成功"
+ 
+ #: templates/system_settings.html:344
+ msgid "Fail to setting Backup"
+-msgstr "备份设定失败"
++msgstr "备份设定​​失败"
+ 
+ #: templates/system_settings.html:373
+ msgid "Log setting successfully"
+@@ -834,6 +1006,26 @@ msgstr "确认密码"
+ msgid "Role"
+ msgstr "角色"
+ 
++#: templates/user_add.html:129
++msgid "Please enter the correct e-mail format!"
++msgstr "请输入正确的电子信箱格式"
++
++#: templates/user_add.html:160
++msgid "User add successfully"
++msgstr "使用者新增成功"
++
++#: templates/user_add.html:163
++msgid "Fail to add User"
++msgstr "使用者新增失败"
++
++#: templates/user_add.html:171 templates/user_update.html.py:159
++msgid "Password does not match"
++msgstr "密码不一致"
++
++#: templates/user_add.html:173 templates/user_update.html.py:161
++msgid "Cannot be null"
++msgstr "不能是空值"
++
+ #: templates/user_group_add.html:8 templates/user_group_add.html.py:17
+ #: templates/user_group_add.html:23
+ msgid "User Group Add"
+@@ -870,9 +1062,17 @@ msgstr "电子信箱"
+ msgid "UpdateDate"
+ msgstr "更新时间"
+ 
++#: templates/user_list.html:159
++msgid "Admin is cannot be deleted"
++msgstr "不能删除管理者"
++
++#: templates/user_list.html:161
++msgid "Does not have permission"
++msgstr "没有权限"
++
+ #: templates/user_setting.html:23 templates/user_setting.html.py:29
+ msgid "Setting"
+-msgstr "设置"
++msgstr "设定"
+ 
+ #: templates/user_setting.html:91
+ msgid "New Password"
+@@ -882,6 +1082,30 @@ msgstr "新密码"
+ msgid "Confirm Password"
+ msgstr "确认密码"
+ 
++#: templates/user_setting.html:162
++msgid "please enter your name"
++msgstr "请输入你的名字"
++
++#: templates/user_setting.html:166
++msgid "please enter your password"
++msgstr "请输入你的密码"
++
++#: templates/user_setting.html:170
++msgid "password not match, please check 'New Password' and 'Confirm Password'"
++msgstr "输入的'新密码'与'确认密码'不一致"
++
++#: templates/user_setting.html:189
++msgid "Change password successfully"
++msgstr "密码变更成功"
++
++#: templates/user_setting.html:192
++msgid "Wrong password or account"
++msgstr "帐户或密码有误"
++
++#: templates/user_setting.html:194
++msgid "Fail to change password"
++msgstr "密码变更失败"
++
+ #: templates/user_update.html:8 templates/user_update.html.py:23
+ msgid "User Update"
+ msgstr "更新用户资料"
+@@ -889,3 +1113,15 @@ msgstr "更新用户资料"
+ #: templates/user_update.html:17 templates/user_update.html.py:31
+ msgid "User update"
+ msgstr "更新用户资料"
++
++#: templates/user_update.html:147
++msgid "User update successfully"
++msgstr "使用者更新成功"
++
++#: templates/user_update.html:150
++msgid "admin is cannot be updated"
++msgstr "无法变更管理员"
++
++#: templates/user_update.html:152
++msgid "Fail to update User"
++msgstr "使用者更新失败"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index a54b559d3bbf0096084460811fb0beb6d183921b..7a7243f386a1960125f1113a7b78e7de8125f411 100644
+GIT binary patch
+literal 14592
+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
+
+delta 4451
+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
+VukYXV>CppMx2$&8j;;8A<$sRO)*1i+
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 0648eee..2fb7ba8 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-08 10:28+0800\n"
++"POT-Creation-Date: 2016-09-09 17:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -131,6 +131,22 @@ msgstr "返回"
+ msgid "Save"
+ msgstr "儲存"
+ 
++#: templates/device_add.html:101 templates/frusergroup_add.html.py:83
++#: templates/frusergroup_add.html:114 templates/role_add.html.py:78
++#: templates/role_rename.html:74 templates/user_group_add.html.py:83
++#: templates/user_group_add.html:114
++msgid "please enter correct information"
++msgstr "請輸入正確的訊息"
++
++#: templates/device_add.html:118
++msgid "Device add successfully"
++msgstr "設備新增成功"
++
++#: templates/device_add.html:121 templates/frusergroup_devices.html.py:216
++#: templates/user_group_devices.html:216
++msgid "Fail to add device"
++msgstr "新增設備失敗"
++
+ #: templates/device_edit.html:8 templates/device_edit.html.py:18
+ #: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
+ #: templates/device_frusergroups.html:18 templates/device_frusergroups.html:25
+@@ -156,6 +172,18 @@ msgstr "設備參數"
+ msgid "Parameter Settings"
+ msgstr "設定參數"
+ 
++#: templates/device_edit.html:232
++msgid "Change device name successfully"
++msgstr "設備名稱變更成功"
++
++#: templates/device_edit.html:235
++msgid "Fail to change device name"
++msgstr "設備名稱變更失敗"
++
++#: templates/device_edit.html:242
++msgid "Please input device name"
++msgstr "請輸入設備名稱"
++
+ #: templates/device_frusergroups.html:45
+ msgid "Group list"
+ msgstr "群組管理"
+@@ -205,6 +233,17 @@ msgstr "您是否確認要刪除"
+ msgid "from this device"
+ msgstr "設備"
+ 
++#: templates/device_frusergroups.html:183 templates/frusergroups_list.html:131
++#: templates/user_group_list.html:133
++msgid "Fail to delete group"
++msgstr "刪除群組失敗"
++
++#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:102
++#: templates/frusergroup_add.html.py:133 templates/user_group_add.html:102
++#: templates/user_group_add.html.py:133
++msgid "Fail to add group"
++msgstr "新增群組失敗"
++
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+@@ -245,6 +284,15 @@ msgstr "編輯"
+ msgid "Settings"
+ msgstr "設定"
+ 
++#: templates/device_list.html:163
++msgid "Fail to accept device"
++msgstr "接受設備失敗"
++
++#: templates/device_list.html:190 templates/frusergroup_devices.html.py:185
++#: templates/user_group_devices.html:185
++msgid "Fail to delete device"
++msgstr "刪除設備失敗"
++
+ #: templates/device_settings.html:8 templates/device_settings.html.py:19
+ #: templates/device_settings.html:26
+ msgid "Device Settings"
+@@ -266,6 +314,14 @@ msgstr "簡體中文"
+ msgid "zh-tw"
+ msgstr "繁體中文"
+ 
++#: templates/device_settings.html:384
++msgid "Device setting successfully"
++msgstr "設備設定成功"
++
++#: templates/device_settings.html:387
++msgid "Fail to setting device"
++msgstr "設備設定失敗"
++
+ #: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
+ #: templates/fruser_edit.html:25
+ msgid "Fruser Edit"
+@@ -309,6 +365,14 @@ msgstr "女"
+ msgid "Age"
+ msgstr "年齡"
+ 
++#: templates/fruser_edit.html:161
++msgid "Update fruser successfully"
++msgstr "更新設備使用者成功"
++
++#: templates/fruser_edit.html:164
++msgid "Fail to update fruser"
++msgstr "更新設備使用者失敗"
++
+ #: templates/fruser_list.html:10 templates/fruser_list.html.py:18
+ #: templates/fruser_list.html:24 templates/menu.html.py:47
+ #: templates/role_permission.html:97
+@@ -344,6 +408,22 @@ msgstr "建立時間"
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
++#: templates/fruser_list.html:176
++msgid "The file format is not correct!"
++msgstr "文件格式不正確"
++
++#: templates/fruser_list.html:178
++msgid "Please wait for uploading!"
++msgstr "請等待上傳！"
++
++#: templates/fruser_list.html:180
++msgid "Fail to import fruser!"
++msgstr "匯入設備使用者失敗"
++
++#: templates/fruser_list.html:207
++msgid "Fail to delete fruser"
++msgstr "刪除設備使用者失敗"
++
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+@@ -358,6 +438,11 @@ msgstr "群組名稱"
+ msgid "Save and Add another"
+ msgstr "儲存並繼續建立"
+ 
++#: templates/frusergroup_add.html:99 templates/frusergroup_add.html.py:130
++#: templates/user_group_add.html:99 templates/user_group_add.html.py:130
++msgid "Group add successfully"
++msgstr "群組新增成功"
++
+ #: templates/frusergroup_devices.html:10
+ msgid "FR User Group Device"
+ msgstr "FR設備管理"
+@@ -393,6 +478,18 @@ msgstr "搜尋設備"
+ msgid "from this group"
+ msgstr "群組"
+ 
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++msgid "Change group name successfully"
++msgstr "群組名稱變更成功"
++
++#: templates/frusergroup_edit.html:115 templates/user_group_edit.html:115
++msgid "Fail to change group name"
++msgstr "變更群組名稱失敗"
++
++#: templates/frusergroup_edit.html:122 templates/user_group_edit.html:122
++msgid "Please input group name"
++msgstr "請輸入群組名稱"
++
+ #: templates/frusergroup_member.html:10
+ msgid "FR User Group Member"
+ msgstr "FR群組成員管理"
+@@ -413,6 +510,15 @@ msgstr "搜尋使用者"
+ msgid "User"
+ msgstr "使用者"
+ 
++#: templates/frusergroup_member.html:185 templates/user_group_members.html:186
++#: templates/user_list.html.py:163
++msgid "Fail to delete user"
++msgstr "刪除使用者失敗"
++
++#: templates/frusergroup_member.html:216 templates/user_group_members.html:217
++msgid "Fail to add user"
++msgstr "使用者新增失敗"
++
+ #: templates/frusergroups_list.html:10 templates/frusergroups_list.html:18
+ #: templates/frusergroups_list.html:24
+ msgid "FR User Group List"
+@@ -456,6 +562,18 @@ msgstr "紀錄匯出設定"
+ msgid "Separator Options"
+ msgstr "分隔符號"
+ 
++#: templates/logsetting.html:131
++msgid "input error"
++msgstr "輸入錯誤"
++
++#: templates/logsetting.html:151
++msgid "successfully"
++msgstr "成功"
++
++#: templates/logsetting.html:153
++msgid "Fail"
++msgstr "失敗"
++
+ #: templates/menu.html:33 templates/role_permission.html.py:75
+ msgid "System"
+ msgstr "系統"
+@@ -513,6 +631,16 @@ msgstr "重設密碼"
+ msgid "Returns sign-in screen"
+ msgstr "回到登入頁面"
+ 
++#: templates/registration/forget_password.html:49
++#: templates/registration/password_reset_complete.html:59
++msgid "Reset password link has been sent to your e-mail address"
++msgstr "重置密碼連結已發送到您的電子郵件"
++
++#: templates/registration/forget_password.html:52
++#: templates/registration/password_reset_complete.html:62
++msgid "You entered does not match your registered email"
++msgstr "您輸入您註冊的電子郵件不匹配"
++
+ #: templates/registration/password_reset_complete.html:33
+ msgid "Password updated successfully"
+ msgstr "密碼更新成功"
+@@ -559,6 +687,14 @@ msgstr "請輸入兩次新密碼，以便我們確認您輸入是否一致"
+ msgid "confirm"
+ msgstr "確認"
+ 
++#: templates/registration/reset_password.html:50
++msgid "Update error. Please contact us."
++msgstr "更新錯誤，請跟我們聯絡"
++
++#: templates/registration/reset_password.html:53
++msgid "Password not match, plase check 'New Password' and 'Confirm Password'."
++msgstr "請確認輸入的'新密碼'與'確認密碼'是否一致"
++
+ #: templates/role_add.html:10 templates/role_add.html.py:19
+ #: templates/role_add.html:25
+ msgid "Create New Role"
+@@ -572,6 +708,18 @@ msgstr "角色名稱"
+ msgid "Sort"
+ msgstr "排序"
+ 
++#: templates/role_add.html:95
++msgid "Role add successfully"
++msgstr "角色新增成功"
++
++#: templates/role_add.html:98
++msgid "Fail to add Role"
++msgstr "角色新增失敗"
++
++#: templates/role_add.html:118
++msgid "Please input 'Sort' number."
++msgstr "請輸入排序號碼"
++
+ #: templates/role_list.html:10 templates/role_list.html.py:24
+ #: templates/role_list.html:35
+ msgid "Role List"
+@@ -601,6 +749,14 @@ msgstr "重新命名"
+ msgid "Confirm to delete this Role"
+ msgstr "您是否確認要刪除這個角色"
+ 
++#: templates/role_list.html:159
++msgid "Default role cannot delete"
++msgstr "預設的角色無法刪除"
++
++#: templates/role_list.html:163
++msgid "Fail to delete role"
++msgstr "刪除這個角色失敗"
++
+ #: templates/role_permission.html:10 templates/role_permission.html.py:19
+ #: templates/role_permission.html:25
+ msgid "Permission Settings"
+@@ -610,6 +766,10 @@ msgstr "權限設定"
+ msgid "Role / Permission"
+ msgstr "角色 / 權限"
+ 
++#: templates/role_permission.html:167
++msgid "permission save successfully"
++msgstr "權限儲存成功"
++
+ #: templates/role_rename.html:10 templates/role_rename.html.py:19
+ #: templates/role_rename.html:25
+ msgid "Role Rename"
+@@ -619,6 +779,18 @@ msgstr "角色重新命名"
+ msgid "New Name"
+ msgstr "新名稱"
+ 
++#: templates/role_rename.html:92
++msgid "Default role cannot rename"
++msgstr "預設角色不能重新命名"
++
++#: templates/role_rename.html:95
++msgid "Role Rename successfully"
++msgstr "角色重新命名成功"
++
++#: templates/role_rename.html:98
++msgid "Fail to rename Role"
++msgstr "角色重新命名失敗"
++
+ #: templates/system_settings.html:32
+ msgid "Backup Scheduling"
+ msgstr "備份排程"
+@@ -697,7 +869,7 @@ msgstr "連接埠"
+ 
+ #: templates/system_settings.html:151
+ msgid "PATH"
+-msgstr ""
++msgstr "路徑"
+ 
+ #: templates/system_settings.html:154
+ msgid "USERNAME"
+@@ -772,7 +944,7 @@ msgstr "必須選擇一個工作日"
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+-msgstr "選擇每月 29~31 日，可能無法每月進行自動備份,您確定要繼續嗎?"
++msgstr "選擇每月 29~31 日，可能無法每月進行自動備份，您確定要繼續嗎?"
+ 
+ #: templates/system_settings.html:338
+ msgid "Backup successfully"
+@@ -834,6 +1006,26 @@ msgstr "確認密碼"
+ msgid "Role"
+ msgstr "角色"
+ 
++#: templates/user_add.html:129
++msgid "Please enter the correct e-mail format!"
++msgstr "請輸入正確的電子信箱格式"
++
++#: templates/user_add.html:160
++msgid "User add successfully"
++msgstr "使用者新增成功"
++
++#: templates/user_add.html:163
++msgid "Fail to add User"
++msgstr "使用者新增失敗"
++
++#: templates/user_add.html:171 templates/user_update.html.py:159
++msgid "Password does not match"
++msgstr "密碼不一致"
++
++#: templates/user_add.html:173 templates/user_update.html.py:161
++msgid "Cannot be null"
++msgstr "不能是空值"
++
+ #: templates/user_group_add.html:8 templates/user_group_add.html.py:17
+ #: templates/user_group_add.html:23
+ msgid "User Group Add"
+@@ -870,6 +1062,14 @@ msgstr "電子信箱"
+ msgid "UpdateDate"
+ msgstr "更新時間"
+ 
++#: templates/user_list.html:159
++msgid "Admin is cannot be deleted"
++msgstr "不能刪除管理者"
++
++#: templates/user_list.html:161
++msgid "Does not have permission"
++msgstr "沒有權限"
++
+ #: templates/user_setting.html:23 templates/user_setting.html.py:29
+ msgid "Setting"
+ msgstr "設定"
+@@ -882,6 +1082,30 @@ msgstr "新密碼"
+ msgid "Confirm Password"
+ msgstr "確認密碼"
+ 
++#: templates/user_setting.html:162
++msgid "please enter your name"
++msgstr "請輸入你的名字"
++
++#: templates/user_setting.html:166
++msgid "please enter your password"
++msgstr "請輸入你的密碼"
++
++#: templates/user_setting.html:170
++msgid "password not match, please check 'New Password' and 'Confirm Password'"
++msgstr "輸入的'新密碼'與'確認密碼'不一致"
++
++#: templates/user_setting.html:189
++msgid "Change password successfully"
++msgstr "密碼變更成功"
++
++#: templates/user_setting.html:192
++msgid "Wrong password or account"
++msgstr "帳戶或密碼有誤"
++
++#: templates/user_setting.html:194
++msgid "Fail to change password"
++msgstr "密碼變更失敗"
++
+ #: templates/user_update.html:8 templates/user_update.html.py:23
+ msgid "User Update"
+ msgstr "更新用戶資料"
+@@ -889,3 +1113,15 @@ msgstr "更新用戶資料"
+ #: templates/user_update.html:17 templates/user_update.html.py:31
+ msgid "User update"
+ msgstr "更新用戶資料"
++
++#: templates/user_update.html:147
++msgid "User update successfully"
++msgstr "使用者更新成功"
++
++#: templates/user_update.html:150
++msgid "admin is cannot be updated"
++msgstr "無法變更管理員"
++
++#: templates/user_update.html:152
++msgid "Fail to update User"
++msgstr "使用者更新失敗"
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 95cfa4b..e77fcc4 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -128,7 +128,7 @@
+             var s = $("#select2 option").val();
+             symbol = symbol1;
+             if ((symbol1 == 5 && (symbol2 == "") || (symbol2.length > 1)) || (symbol1 == undefined) || s == null) {
+-                alert("input error");
++                alert("{% trans "input error" %}");
+                 return
+             }
+             if (symbol1 == 5) {
+@@ -148,9 +148,9 @@
+                 success: function(data) {
+                     console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+-                        alert("successfully");
++                        alert("{% trans "successfully" %}");
+                     } else {
+-                        alert("Fail");
++                        alert("{% trans "Fail" %}");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/registration/forget_password.html b/templates/registration/forget_password.html
+index 02c9a63..8c0214d 100644
+--- a/templates/registration/forget_password.html
++++ b/templates/registration/forget_password.html
+@@ -46,9 +46,9 @@
+ <script>
+ 	var code = '{{Code}}';
+ 	if( code == "9999"){
+-		alert("Reset password link has been sent to your e-mail address");
++		alert("{% trans "Reset password link has been sent to your e-mail address" %}");
+ 	}
+ 	if( code == "0000"){
+-		alert("You entered does not match your registered email");
++		alert("{% trans "You entered does not match your registered email" %}");
+ 	}
+ </script>
+diff --git a/templates/registration/password_reset_complete.html b/templates/registration/password_reset_complete.html
+index fd1e383..9e98888 100644
+--- a/templates/registration/password_reset_complete.html
++++ b/templates/registration/password_reset_complete.html
+@@ -56,9 +56,9 @@
+ <script>
+ 	var code = '{{Code}}';
+ 	if( code == "9999"){
+-		alert("Reset password link has been sent to your e-mail address");
++		alert("{% trans "Reset password link has been sent to your e-mail address" %}");
+ 	}
+ 	if( code == "0000"){
+-		alert("You entered does not match your registered email");
++		alert("{% trans "You entered does not match your registered email" %}");
+ 	}
+ </script>
+diff --git a/templates/registration/reset_password.html b/templates/registration/reset_password.html
+index 9ea842c..ed2643d 100644
+--- a/templates/registration/reset_password.html
++++ b/templates/registration/reset_password.html
+@@ -47,9 +47,9 @@
+ <script>
+ 	var code = '{{Code}}';
+ 	if( code == "0000"){
+-		alert("Update error. Please contact us.");
++		alert("{% trans "Update error. Please contact us." %}");
+ 	}
+ 	if( code == "1111"){
+-		alert("Password not match, plase check 'New Password' and 'Confirm Password'.");
++		alert("{% trans "Password not match, plase check 'New Password' and 'Confirm Password'." %}");
+ 	}
+ </script>
+diff --git a/templates/role_add.html b/templates/role_add.html
+index 597e7f1..4706cd6 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -75,7 +75,7 @@
+             var sort = $('input[name=sort]').val();
+             var category = 'User'
+             if(!name || !sort){
+-                alert("please enter correct information");
++                alert("{% trans "please enter correct information" %}");
+                 return
+             }
+             $.ajax({
+@@ -92,10 +92,10 @@
+                 success: function(data) {
+                     console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+-                        alert("Role add successfully");
++                        alert("{% trans "Role add successfully" %}");
+                         location.href = '/role_list/';
+                     } else {
+-                        alert("Fail to add Role");
++                        alert("{% trans "Fail to add Role" %}");
+                     }
+                 },
+                 error: function(data) {
+@@ -115,7 +115,7 @@
+             if (!/^\d+$/.test(pnumber))
+             {
+                 $(e).val(/^\d+/.exec($(e).val()));
+-                alert("Please input 'Sort' number.");
++                alert("{% trans "Please input 'Sort' number." %}");
+             }
+             return false;
+         }
+diff --git a/templates/role_list.html b/templates/role_list.html
+index 6fe63a5..237b766 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -156,11 +156,11 @@
+                         success: function(data) {
+                             console.log("CODE = ",data.CODE);
+                             if (data.CODE == "0") {
+-                                alert("Default role can't delete")
++                                alert("{% trans "Default role cannot delete" %}");
+                             } else if (data.CODE == "1") {
+                                 $('#roleList').bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete role");
++                                alert("{% trans "Fail to delete role" %}");
+                             }
+                         },
+                         error: function(data) {
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index bdd31c5..a79c260 100644
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -164,7 +164,7 @@
+                         })
+                     }
+                 })
+-                alert("permission save successfully");
++                alert("{% trans "permission save successfully" %}");
+                 location.href = '/role_list/';
+             }
+ 
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index f3b2526..99e3b46 100644
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -71,7 +71,7 @@
+             var sort = $('input[name=sort]').val();
+             console.log({{obj|safe}}.OId);
+             if(!name){
+-                alert("please enter correct information");
++                alert("{% trans "please enter correct information" %}");
+                 return
+             }
+             $.ajax({
+@@ -89,13 +89,13 @@
+                 success: function(data) {
+                     console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+-                        alert("Default role can't rename")
++                        alert("{% trans "Default role cannot rename" %}")
+                         location.href = '/role_list/';
+                     } else if (data.CODE == "1"){
+-                        alert("Role Rename successfully");
++                        alert("{% trans "Role Rename successfully" %}");
+                         location.href = '/role_list/';
+                     } else {
+-                        alert("Fail to rename Role");
++                        alert("{% trans "Fail to rename Role" %}");
+                     }
+                 },
+ 
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 069cd68..8d378fa 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -126,7 +126,7 @@
+     function ValidateEmail(e, pEmail){
+         if (!/^[0-9a-zA-Z]([-._]*[0-9a-zA-Z])*@[0-9a-zA-Z]([-._]*[0-9a-zA-Z])*\.+[a-zA-Z]+$/.test(pEmail))
+         {
+-            alert("Please enter the correct e-mail format!");
++            alert("{% trans "Please enter the correct e-mail format!" %}");
+         }
+         return false;
+     }
+@@ -157,10 +157,10 @@
+                     success: function(data) {
+                         console.log("CODE = ",data.CODE);
+                         if (data.CODE == "0") {
+-                            alert("User add successfully");
++                            alert("{% trans "User add successfully" %}");
+                             location.href = '/user_list/';
+                         } else {
+-                            alert("Fail to add User");
++                            alert("{% trans "Fail to add User" %}");
+                         }
+                     },
+                     error: function(data) {
+@@ -168,9 +168,9 @@
+                     }
+                 });
+             } else
+-                alert("Password doesn't match")
++                alert("{% trans "Password does not match" %}")
+         } else
+-            alert("Cannot be null");
++            alert("{% trans "Cannot be null" %}");
+     }
+ 
+     $('input').keypress(function(e) {
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index 53ad3a3..606ad21 100644
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -80,7 +80,7 @@
+             var Name = $('input[name=Name]').val();
+ 
+             if(!Name){
+-                alert("please enter correct information");
++                alert("{% trans "please enter correct information" %}");
+                 return
+             }
+ 
+@@ -96,10 +96,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Group add successfully");
++                        alert("{% trans "Group add successfully" %}");
+                         location.href = '/user_group_list/';
+                     } else {
+-                        alert("Fail to add group");
++                        alert("{% trans "Fail to add group" %}");
+                     }
+                 },
+                 error: function(data) {
+@@ -111,7 +111,7 @@
+             var Name = $('input[name=Name]').val();
+ 
+             if(!Name){
+-                alert("please enter correct information");
++                alert("{% trans "please enter correct information" %}");
+                 return
+             }
+ 
+@@ -127,10 +127,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Group add successfully");
++                        alert("{% trans "Group add successfully" %}");
+                         location.reload();
+                     } else {
+-                        alert("Fail to add group");
++                        alert("{% trans "Fail to add group" %}");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index be849c4..35eb511 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -182,7 +182,7 @@
+                                 $DeviceList.bootstrapTable('refresh');
+                                 $DeviceAdd.bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete device");
++                                alert("{% trans "Fail to delete device" %}");
+                             }
+                         },
+                         error: function(data) {
+@@ -213,7 +213,7 @@
+                             $DeviceList.bootstrapTable('refresh');
+                             $DeviceAdd.bootstrapTable('refresh');
+                         } else {
+-                            alert("Fail to add device");
++                            alert("{% trans "Fail to add device" %}");
+                         }
+                     },
+                     error: function(data) {
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index 1b84964..6cdeda5 100644
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -109,17 +109,17 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            alert("Change group name successfully");
++                            alert("{% trans "Change group name successfully" %}");
+                             location.reload();
+                         } else {
+-                            alert("Fail to change group name");
++                            alert("{% trans "Fail to change group name" %}");
+                         }
+                     },
+                     error: function(data) {
+                     }
+                 });
+             } else {
+-                alert("Please input group name");
++                alert("{% trans "Please input group name" %}");
+             }
+         }
+ 
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index 1a77434..2af13f2 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -130,7 +130,7 @@
+                             if (data.CODE == "0") {
+                                 $('#GroupList').bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete group");
++                                alert("{% trans "Fail to delete group" %}");
+                             }
+                         },
+                         error: function(data) {
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index f080c4e..f8f7955 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -183,7 +183,7 @@
+                                 $MemberList.bootstrapTable('refresh');
+                                 $MemberAdd.bootstrapTable('refresh');
+                             } else {
+-                                alert("Fail to delete user");
++                                alert("{% trans "Fail to delete user" %}");
+                             }
+                         },
+                         error: function(data) {
+@@ -214,7 +214,7 @@
+                             $MemberList.bootstrapTable('refresh');
+                             $MemberAdd.bootstrapTable('refresh');
+                         } else {
+-                            alert("Fail to add user");
++                            alert("{% trans "Fail to add user" %}");
+                         }
+                     },
+                     error: function(data) {
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 6950994..f1817d6 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -156,11 +156,11 @@
+                     if (data.CODE == "0") {
+                         $('#userList').bootstrapTable('refresh');
+                     } else if (data.CODE == "2") {
+-                        alert("Admin is can't be deleted");
++                        alert("{% trans "Admin is cannot be deleted" %}");
+                     } else if (data.CODE == "3") {
+-                        alert("Doesn't have permission");
++                        alert("{% trans "Does not have permission" %}");
+                     } else {
+-                        alert("Fail to delete user");
++                        alert("{% trans "Fail to delete user" %}");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/user_setting.html b/templates/user_setting.html
+index 132dc10..54d4783 100644
+--- a/templates/user_setting.html
++++ b/templates/user_setting.html
+@@ -159,15 +159,15 @@
+ 		console.log(new_password)
+ 		console.log(confirm_password)
+ 		if(name==""){
+-			alert("please enter your name");
++			alert("{% trans "please enter your name" %}");
+ 			return
+ 		}
+ 		if(!password || !new_password || !confirm_password){
+-			alert("please enter your password");
++			alert("{% trans "please enter your password" %}");
+ 			return;
+ 		}
+ 		if(new_password != confirm_password){
+-			alert("password not match, please check 'New Password' and 'Confirm Password'");
++			alert("{% trans "password not match, please check 'New Password' and 'Confirm Password'" %}");
+ 			return;
+ 		}
+ 		$.ajax({
+@@ -186,12 +186,12 @@
+ 			success: function(data) {
+ 				console.log("CODE = ",data.CODE);
+ 				if (data.CODE == "0") {
+-					alert("Change password successfully");
++					alert("{% trans "Change password successfully" %}");
+ 					location.href = '/';
+ 				}else if (data.CODE == "2") {
+-					alert("Wrong password or account");
++					alert("{% trans "Wrong password or account" %}");
+ 				}else{
+-					alert("Fail to change password");
++					alert("{% trans "Fail to change password" %}");
+ 				}
+ 			},
+ 			error: function(data) {
+diff --git a/templates/user_update.html b/templates/user_update.html
+index ef18bd3..2eaf688 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -144,21 +144,21 @@
+                     success: function(data) {
+                         console.log("CODE = ",data.CODE);
+                         if (data.CODE == "0") {
+-                            alert("User update successfully");
++                            alert("{% trans "User update successfully" %}");
+                             location.href = '/user_list/';
+                         } else if (data.CODE == "2") {
+-                            alert("admin is cannot be updated");
++                            alert("{% trans "admin is cannot be updated" %}");
+                         } else
+-                            alert("Fail to update User");
++                            alert("{% trans "Fail to update User" %}");
+                     },
+                     error: function(data) {
+                         console.log('why nunu');
+                     }
+                 });
+             } else
+-                alert("Password doesn't match");
++                alert("{% trans "Password does not match" %}");
+         } else
+-            alert("Cannot be null");
++            alert("{% trans "Cannot be null" %}");
+     }
+ 
+     $('input').keypress(function(e) {
+-- 
+1.9.1
+

@@ -1,0 +1,59 @@
+From a2022f983c17fb414e22ec4d8574e627edb256c6 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 30 Sep 2016 16:37:15 +0800
+Subject: [PATCH 302/443] Modify language of device edit web.
+
+---
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 18937 -> 18937 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |   2 +-
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 18937 -> 18937 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |   2 +-
+ 4 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index fa4f072075e28afc522f287efce67dd0de4b9228..3f2664d8104502763cc6316ba067464f99c71791 100644
+GIT binary patch
+delta 26
+kcmV+#0OkMrlL7gY0kAbQ3yYHHyPfF2o8^V2vp_Ss7Q507-~a#s
+
+delta 26
+kcmV+#0OkMrlL7gY0kAbQ3!Q`MnULhTjp(+svp_Ss7P_hp-v9sr
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 5f8b7e0..b299586 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -241,7 +241,7 @@ msgstr "秒"
+ 
+ #: templates/device_edit.html:127 templates/device_settings.html.py:121
+ msgid "Access Denied"
+-msgstr "权限不足"
++msgstr "拒绝进入"
+ 
+ #: templates/device_edit.html:147 templates/device_settings.html.py:180
+ msgid "Time out"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 29d0c70fb6b59e98a82501ec93319e7417659d04..af51b545b48ec42e84061c492f9dc540d693a2a3 100644
+GIT binary patch
+delta 26
+kcmV+#0OkMrlL7gY0kAbQ3yYHHwUz0BvgL)Pvp_Ss7P*KGs{jB1
+
+delta 26
+kcmV+#0OkMrlL7gY0kAbQ3#^LinULhTjp(+svp_Ss7Q6!u^#A|>
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 5a98e87..79df714 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -241,7 +241,7 @@ msgstr "秒"
+ 
+ #: templates/device_edit.html:127 templates/device_settings.html.py:121
+ msgid "Access Denied"
+-msgstr "權限不足"
++msgstr "拒絕進入"
+ 
+ #: templates/device_edit.html:147 templates/device_settings.html.py:180
+ msgid "Time out"
+-- 
+1.9.1
+

@@ -1,0 +1,1608 @@
+From d3fe6924403083fedcfe38d70d1decd68103e552 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 23 Sep 2016 11:53:16 +0800
+Subject: [PATCH 291/443] Modify user of web for specification.
+
+Limit data format.
+Modify admin operation.
+---
+ api/models.py                                |   2 +-
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 14942 -> 15626 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 214 ++++++++++++++++-----------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 14930 -> 15626 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 210 +++++++++++++++-----------
+ templates/user_add.html                      | 119 +++++++--------
+ templates/user_list.html                     |  15 +-
+ templates/user_update.html                   | 118 ++++++++-------
+ user/views.py                                |  42 ++++--
+ 13 files changed, 404 insertions(+), 320 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 2390800..7639088 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -275,7 +275,7 @@ class Users(models.Model):
+     Account = models.CharField(db_column = 'Account', unique = True, max_length = 255)
+     Password = models.CharField(db_column = 'Password', max_length = 64)
+     Name = models.CharField(db_column = 'Name', default = '', max_length = 32, blank = True, null = True)
+-    Email = models.EmailField(db_column = 'Email', default = '', max_length = 256, blank = True, null = True)
++    Email = models.EmailField(db_column = 'Email', unique = True, max_length = 255)
+     RoleOId = models.ForeignKey(Role, on_delete = models.CASCADE, db_column = 'RoleOId', max_length = 36)
+     LoginIP = models.CharField(db_column = 'LoginIP', max_length = 64)
+     CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index dde098660571a7689d6d9d9bb3bd059ceaab41e1..4dc71bee843bee1a9c0139a2cf3889f37b9e1ca9 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrYj(9p`nV&g|aMgTTG1)Tr@
+
+delta 18
+ZcmZo-X=0i1irqlL(9p`ra^puqMgTSz1(^T<
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 8e22f4f..f823d0a 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-20 11:29+0800\n"
++"POT-Creation-Date: 2016-09-23 11:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index dde098660571a7689d6d9d9bb3bd059ceaab41e1..4dc71bee843bee1a9c0139a2cf3889f37b9e1ca9 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrYj(9p`nV&g|aMgTTG1)Tr@
+
+delta 18
+ZcmZo-X=0i1irqlL(9p`ra^puqMgTSz1(^T<
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 8e22f4f..f823d0a 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-20 11:29+0800\n"
++"POT-Creation-Date: 2016-09-23 11:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 4ccccee92c128b8c530ca147c2dc1c0479e9c1cd..52481d0720f0e64f729e3bc873037294f6cb7965 100644
+GIT binary patch
+delta 6436
+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
+RpSbz~f874yppNA|{{eM~tqK4D
+
+delta 5886
+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
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 569c740..b238067 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-20 11:29+0800\n"
++"POT-Creation-Date: 2016-09-23 11:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -73,7 +73,7 @@ msgstr "设备使用者资讯"
+ #: templates/dashboard.html:152 templates/dashboard.html.py:170
+ #: templates/fruser_list.html:99 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:89
+-#: templates/systemlog_list.html:81 templates/user_list.html.py:85
++#: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "编号"
+ 
+@@ -110,24 +110,25 @@ msgid "Device"
+ msgstr "设备"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:300 templates/fruser_edit.html.py:101
+-#: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
+-#: templates/role_add.html:46 templates/role_permission.html.py:37
+-#: templates/role_rename.html:42 templates/user_add.html.py:96
+-#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+-#: templates/user_setting.html:118 templates/user_update.html.py:93
++#: templates/device_settings.html:300 templates/fruser_add.html.py:75
++#: templates/fruser_edit.html:101 templates/frusergroup_add.html.py:48
++#: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
++#: templates/role_permission.html:37 templates/role_rename.html.py:42
++#: templates/user_add.html:95 templates/user_group_add.html.py:48
++#: templates/user_group_edit.html:65 templates/user_setting.html.py:118
++#: templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:301 templates/fruser_edit.html.py:102
+-#: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+-#: templates/logsetting.html:106 templates/role_add.html.py:47
+-#: templates/role_permission.html:38 templates/role_rename.html.py:43
+-#: templates/system_settings.html:162 templates/system_settings.html.py:199
+-#: templates/user_add.html:97 templates/user_group_add.html.py:49
+-#: templates/user_group_edit.html:66 templates/user_setting.html.py:119
+-#: templates/user_update.html:94
++#: templates/device_settings.html:301 templates/fruser_add.html.py:76
++#: templates/fruser_edit.html:102 templates/frusergroup_add.html.py:49
++#: templates/frusergroup_edit.html:66 templates/logsetting.html.py:106
++#: templates/role_add.html:47 templates/role_permission.html.py:38
++#: templates/role_rename.html:43 templates/system_settings.html.py:162
++#: templates/system_settings.html:199 templates/user_add.html.py:96
++#: templates/user_group_add.html:49 templates/user_group_edit.html.py:66
++#: templates/user_setting.html:119 templates/user_update.html.py:97
+ msgid "Save"
+ msgstr "储存"
+ 
+@@ -208,9 +209,9 @@ msgstr "设备使用者群组管理"
+ 
+ #: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+ #: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
+-#: templates/role_list.html:121 templates/user_group_devices.html.py:110
++#: templates/role_list.html:126 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+-#: templates/user_list.html.py:116
++#: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "删除"
+ 
+@@ -225,7 +226,7 @@ msgstr "群组"
+ #: templates/fruser_list.html:193 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+-#: templates/user_group_members.html:167 templates/user_list.html.py:140
++#: templates/user_group_members.html:167 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+ msgstr "您是否确认要删除"
+ 
+@@ -322,49 +323,54 @@ msgstr "设备设定成功"
+ msgid "Fail to setting device"
+ msgstr "设备设定失败"
+ 
+-#: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
+-#: templates/fruser_edit.html:25
+-msgid "Fruser Edit"
+-msgstr "修改用户资讯"
++#: templates/fruser_add.html:9 templates/fruser_add.html.py:17
++#: templates/fruser_add.html:23
++msgid "Fruser Add"
++msgstr "新增设备使用者"
+ 
+-#: templates/fruser_edit.html:33
++#: templates/fruser_add.html:31 templates/fruser_edit.html.py:33
+ msgid "Fruser"
+ msgstr "设备使用者"
+ 
+-#: templates/fruser_edit.html:39 templates/fruser_list.html.py:103
+-#: templates/fruserlog_list.html:96
++#: templates/fruser_add.html:37 templates/fruser_edit.html.py:39
++#: templates/fruser_list.html:103 templates/fruserlog_list.html.py:96
+ msgid "FRUserId"
+ msgstr "工号"
+ 
+-#: templates/fruser_edit.html:43 templates/fruser_list.html.py:108
+-#: templates/frusergroup_devices.html:102
++#: templates/fruser_add.html:41 templates/fruser_edit.html.py:43
++#: templates/fruser_list.html:108 templates/frusergroup_devices.html.py:102
+ #: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:102
+-#: templates/user_group_members.html:102 templates/user_list.html.py:95
+-#: templates/user_setting.html:54 templates/user_update.html.py:47
++#: templates/user_group_members.html:102 templates/user_list.html.py:89
++#: templates/user_setting.html:54 templates/user_update.html.py:49
+ msgid "Name"
+ msgstr "姓名"
+ 
+-#: templates/fruser_edit.html:49
++#: templates/fruser_add.html:46 templates/fruser_edit.html.py:49
+ msgid "Disable"
+ msgstr "停用"
+ 
+-#: templates/fruser_edit.html:56
++#: templates/fruser_add.html:53 templates/fruser_edit.html.py:56
+ msgid "Gender"
+ msgstr "性别"
+ 
+-#: templates/fruser_edit.html:60
++#: templates/fruser_add.html:57 templates/fruser_edit.html.py:60
+ msgid "Male"
+ msgstr "男"
+ 
+-#: templates/fruser_edit.html:61
++#: templates/fruser_add.html:58 templates/fruser_edit.html.py:61
+ msgid "Female"
+ msgstr "女"
+ 
+-#: templates/fruser_edit.html:64
++#: templates/fruser_add.html:61 templates/fruser_edit.html.py:64
+ msgid "Age"
+ msgstr "年龄"
+ 
++#: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
++#: templates/fruser_edit.html:25
++msgid "Fruser Edit"
++msgstr "修改用户资讯"
++
+ #: templates/fruser_edit.html:161
+ msgid "Update fruser successfully"
+ msgstr "更新设备使用者成功"
+@@ -511,7 +517,7 @@ msgid "User"
+ msgstr "使用者"
+ 
+ #: templates/frusergroup_member.html:185 templates/user_group_members.html:186
+-#: templates/user_list.html.py:163
++#: templates/user_list.html.py:158
+ msgid "Fail to delete user"
+ msgstr "删除使用者失败"
+ 
+@@ -541,7 +547,7 @@ msgstr "群组"
+ msgid "FRUser Log List"
+ msgstr "设备使用者登入纪录"
+ 
+-#: templates/fruserlog_list.html:111 templates/user_list.html.py:107
++#: templates/fruserlog_list.html:111 templates/user_list.html.py:101
+ msgid "CreateDate"
+ msgstr "建立时间"
+ 
+@@ -741,19 +747,19 @@ msgstr "类别"
+ msgid "Update Date"
+ msgstr "更新时间"
+ 
+-#: templates/role_list.html:120
++#: templates/role_list.html:125
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:144
++#: templates/role_list.html:150
+ msgid "Confirm to delete this Role"
+ msgstr "您是否确认要删除这个角色"
+ 
+-#: templates/role_list.html:159
++#: templates/role_list.html:165
+ msgid "Default role cannot delete"
+ msgstr "预设的角色无法删除"
+ 
+-#: templates/role_list.html:163
++#: templates/role_list.html:169
+ msgid "Fail to delete role"
+ msgstr "删除这个角色失败"
+ 
+@@ -950,31 +956,35 @@ msgid ""
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "选择每月 29~31 日，可能无法每月进行自动备份，您确定要继续吗?"
+ 
+-#: templates/system_settings.html:343
++#: templates/system_settings.html:314
++msgid "Must input correct FTP remote path!"
++msgstr "必须输入正确的远端 FTP 路径！"
++
++#: templates/system_settings.html:352
+ msgid "Backup successfully"
+ msgstr "备份成功"
+ 
+-#: templates/system_settings.html:345
++#: templates/system_settings.html:354
+ msgid "Backup setting successfully"
+-msgstr "备份设定​​成功"
++msgstr "备份设定成功"
+ 
+-#: templates/system_settings.html:349
++#: templates/system_settings.html:358
+ msgid "Fail to setting Backup"
+-msgstr "备份设定​​失败"
++msgstr "备份设定失败"
+ 
+-#: templates/system_settings.html:364
++#: templates/system_settings.html:373
+ msgid "Must input correct log limit value!"
+ msgstr "必须输入正确的Log笔数限制值！"
+ 
+-#: templates/system_settings.html:369
++#: templates/system_settings.html:378
+ msgid "Must input correct month value for log preservation!"
+ msgstr "Log的保留月份必须输入正确的值！"
+ 
+-#: templates/system_settings.html:388
++#: templates/system_settings.html:397
+ msgid "Log setting successfully"
+ msgstr "Log设定成功"
+ 
+-#: templates/system_settings.html:391
++#: templates/system_settings.html:400
+ msgid "Fail to setting Log"
+ msgstr "Log设定失败"
+ 
+@@ -995,48 +1005,78 @@ msgstr "日期时间"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:88
++#: templates/user_add.html:39 templates/user_list.html.py:82
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帐号"
+ 
+-#: templates/user_add.html:58 templates/user_update.html.py:55
++#: templates/user_add.html:42
++msgid "Please input your account"
++msgstr "请输入帐号"
++
++#: templates/user_add.html:42
++msgid "Account can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgstr "帐号只能包含1到16码的英文、数字、'_'、'-'"
++
++#: templates/user_add.html:51 templates/user_update.html.py:52
++msgid "Please input your name"
++msgstr "请输入姓名"
++
++#: templates/user_add.html:51 templates/user_update.html.py:52
++msgid ""
++"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
++"'-'"
++msgstr "帐号只能包含25码的中文、英文、数字、'_'、'-'"
++
++#: templates/user_add.html:57 templates/user_update.html.py:58
+ msgid "E-Mail"
+ msgstr "电子信箱"
+ 
+-#: templates/user_add.html:67 templates/user_setting.html.py:79
+-#: templates/user_update.html:64
++#: templates/user_add.html:60 templates/user_update.html.py:61
++msgid "Please input your E-Mail"
++msgstr "请输入电子E-Mail"
++
++#: templates/user_add.html:60 templates/user_update.html.py:61
++msgid "Please enter the correct e-mail format!"
++msgstr "请输入正确的电子信箱格式"
++
++#: templates/user_add.html:66 templates/user_setting.html.py:79
++#: templates/user_update.html:66
+ msgid "Password"
+ msgstr "密码"
+ 
+-#: templates/user_add.html:75 templates/user_update.html.py:72
++#: templates/user_add.html:69 templates/user_add.html.py:78
++msgid "Please input your password"
++msgstr "请输入你的密码"
++
++#: templates/user_add.html:75 templates/user_update.html.py:74
+ msgid "Confirm password"
+ msgstr "确认密码"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:103
+-#: templates/user_update.html:81
++#: templates/user_add.html:84 templates/user_list.html.py:97
++#: templates/user_update.html:85
+ msgid "Role"
+ msgstr "角色"
+ 
+-#: templates/user_add.html:129
+-msgid "Please enter the correct e-mail format!"
+-msgstr "请输入正确的电子信箱格式"
+-
+-#: templates/user_add.html:160
+-msgid "User add successfully"
+-msgstr "使用者新增成功"
++#: templates/user_add.html:129 templates/user_update.html.py:130
++msgid "Please input correct format"
++msgstr "请输入正确的格式"
+ 
+-#: templates/user_add.html:163
+-msgid "Fail to add User"
+-msgstr "使用者新增失败"
+-
+-#: templates/user_add.html:171 templates/user_update.html.py:159
++#: templates/user_add.html:136 templates/user_update.html.py:137
+ msgid "Password does not match"
+ msgstr "密码不一致"
+ 
+-#: templates/user_add.html:173 templates/user_update.html.py:161
+-msgid "Cannot be null"
+-msgstr "不能是空值"
++#: templates/user_add.html:168
++msgid "Create user successfully"
++msgstr "建立使用者成功"
++
++#: templates/user_add.html:171
++msgid "Can not create admin account"
++msgstr "管理员帐号无法被建立"
++
++#: templates/user_add.html:173
++msgid "Fail to create User"
++msgstr "使用者建立失败"
+ 
+ #: templates/user_group_add.html:8 templates/user_group_add.html.py:17
+ #: templates/user_group_add.html:23
+@@ -1066,21 +1106,17 @@ msgstr "群组成员管理"
+ msgid "Create new account"
+ msgstr "建立新帐号"
+ 
+-#: templates/user_list.html:99 templates/user_setting.html.py:66
++#: templates/user_list.html:93 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "电子信箱"
+ 
+-#: templates/user_list.html:111
++#: templates/user_list.html:105
+ msgid "UpdateDate"
+ msgstr "更新时间"
+ 
+-#: templates/user_list.html:159
+-msgid "Admin is cannot be deleted"
+-msgstr "不能删除管理者"
+-
+-#: templates/user_list.html:161
+-msgid "Does not have permission"
+-msgstr "没有权限"
++#: templates/user_list.html:156
++msgid "Permission denied"
++msgstr "权限不足"
+ 
+ #: templates/user_setting.html:23 templates/user_setting.html.py:29
+ msgid "Setting"
+@@ -1126,14 +1162,16 @@ msgstr "更新用户资料"
+ msgid "User update"
+ msgstr "更新用户资料"
+ 
+-#: templates/user_update.html:147
+-msgid "User update successfully"
++#: templates/user_update.html:169
++msgid "Update user successfully"
+ msgstr "使用者更新成功"
+ 
+-#: templates/user_update.html:150
+-msgid "admin is cannot be updated"
+-msgstr "无法变更管理员"
+-
+-#: templates/user_update.html:152
++#: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失败"
++
++#~ msgid "Admin is cannot be deleted"
++#~ msgstr "不能删除管理者"
++
++#~ msgid "Does not have permission"
++#~ msgstr "没有权限"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 10a63f56104c50bc901a24fb3883ad4b8dab70bb..f9c45394440a5d7df6fcf13b8791ccc46212a502 100644
+GIT binary patch
+delta 6429
+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
+C*_jFe
+
+delta 5872
+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
+QD{8%|)rYG$4T<;t5Bd4J*#H0l
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 9769fa6..6a8f3e7 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-20 11:29+0800\n"
++"POT-Creation-Date: 2016-09-23 11:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -73,7 +73,7 @@ msgstr "設備使用者資訊"
+ #: templates/dashboard.html:152 templates/dashboard.html.py:170
+ #: templates/fruser_list.html:99 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:89
+-#: templates/systemlog_list.html:81 templates/user_list.html.py:85
++#: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "編號"
+ 
+@@ -110,24 +110,25 @@ msgid "Device"
+ msgstr "設備"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:300 templates/fruser_edit.html.py:101
+-#: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
+-#: templates/role_add.html:46 templates/role_permission.html.py:37
+-#: templates/role_rename.html:42 templates/user_add.html.py:96
+-#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+-#: templates/user_setting.html:118 templates/user_update.html.py:93
++#: templates/device_settings.html:300 templates/fruser_add.html.py:75
++#: templates/fruser_edit.html:101 templates/frusergroup_add.html.py:48
++#: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
++#: templates/role_permission.html:37 templates/role_rename.html.py:42
++#: templates/user_add.html:95 templates/user_group_add.html.py:48
++#: templates/user_group_edit.html:65 templates/user_setting.html.py:118
++#: templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:301 templates/fruser_edit.html.py:102
+-#: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+-#: templates/logsetting.html:106 templates/role_add.html.py:47
+-#: templates/role_permission.html:38 templates/role_rename.html.py:43
+-#: templates/system_settings.html:162 templates/system_settings.html.py:199
+-#: templates/user_add.html:97 templates/user_group_add.html.py:49
+-#: templates/user_group_edit.html:66 templates/user_setting.html.py:119
+-#: templates/user_update.html:94
++#: templates/device_settings.html:301 templates/fruser_add.html.py:76
++#: templates/fruser_edit.html:102 templates/frusergroup_add.html.py:49
++#: templates/frusergroup_edit.html:66 templates/logsetting.html.py:106
++#: templates/role_add.html:47 templates/role_permission.html.py:38
++#: templates/role_rename.html:43 templates/system_settings.html.py:162
++#: templates/system_settings.html:199 templates/user_add.html.py:96
++#: templates/user_group_add.html:49 templates/user_group_edit.html.py:66
++#: templates/user_setting.html:119 templates/user_update.html.py:97
+ msgid "Save"
+ msgstr "儲存"
+ 
+@@ -208,9 +209,9 @@ msgstr "設備使用者群組管理"
+ 
+ #: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+ #: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
+-#: templates/role_list.html:121 templates/user_group_devices.html.py:110
++#: templates/role_list.html:126 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+-#: templates/user_list.html.py:116
++#: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "刪除"
+ 
+@@ -225,7 +226,7 @@ msgstr "群組"
+ #: templates/fruser_list.html:193 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+-#: templates/user_group_members.html:167 templates/user_list.html.py:140
++#: templates/user_group_members.html:167 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+ msgstr "您是否確認要刪除"
+ 
+@@ -322,49 +323,54 @@ msgstr "設備設定成功"
+ msgid "Fail to setting device"
+ msgstr "設備設定失敗"
+ 
+-#: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
+-#: templates/fruser_edit.html:25
+-msgid "Fruser Edit"
+-msgstr "修改用戶資訊"
++#: templates/fruser_add.html:9 templates/fruser_add.html.py:17
++#: templates/fruser_add.html:23
++msgid "Fruser Add"
++msgstr "新增設備使用者"
+ 
+-#: templates/fruser_edit.html:33
++#: templates/fruser_add.html:31 templates/fruser_edit.html.py:33
+ msgid "Fruser"
+ msgstr "設備使用者"
+ 
+-#: templates/fruser_edit.html:39 templates/fruser_list.html.py:103
+-#: templates/fruserlog_list.html:96
++#: templates/fruser_add.html:37 templates/fruser_edit.html.py:39
++#: templates/fruser_list.html:103 templates/fruserlog_list.html.py:96
+ msgid "FRUserId"
+ msgstr "工號"
+ 
+-#: templates/fruser_edit.html:43 templates/fruser_list.html.py:108
+-#: templates/frusergroup_devices.html:102
++#: templates/fruser_add.html:41 templates/fruser_edit.html.py:43
++#: templates/fruser_list.html:108 templates/frusergroup_devices.html.py:102
+ #: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:102
+-#: templates/user_group_members.html:102 templates/user_list.html.py:95
+-#: templates/user_setting.html:54 templates/user_update.html.py:47
++#: templates/user_group_members.html:102 templates/user_list.html.py:89
++#: templates/user_setting.html:54 templates/user_update.html.py:49
+ msgid "Name"
+ msgstr "姓名"
+ 
+-#: templates/fruser_edit.html:49
++#: templates/fruser_add.html:46 templates/fruser_edit.html.py:49
+ msgid "Disable"
+ msgstr "停用"
+ 
+-#: templates/fruser_edit.html:56
++#: templates/fruser_add.html:53 templates/fruser_edit.html.py:56
+ msgid "Gender"
+ msgstr "性別"
+ 
+-#: templates/fruser_edit.html:60
++#: templates/fruser_add.html:57 templates/fruser_edit.html.py:60
+ msgid "Male"
+ msgstr "男"
+ 
+-#: templates/fruser_edit.html:61
++#: templates/fruser_add.html:58 templates/fruser_edit.html.py:61
+ msgid "Female"
+ msgstr "女"
+ 
+-#: templates/fruser_edit.html:64
++#: templates/fruser_add.html:61 templates/fruser_edit.html.py:64
+ msgid "Age"
+ msgstr "年齡"
+ 
++#: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
++#: templates/fruser_edit.html:25
++msgid "Fruser Edit"
++msgstr "修改用戶資訊"
++
+ #: templates/fruser_edit.html:161
+ msgid "Update fruser successfully"
+ msgstr "更新設備使用者成功"
+@@ -511,7 +517,7 @@ msgid "User"
+ msgstr "使用者"
+ 
+ #: templates/frusergroup_member.html:185 templates/user_group_members.html:186
+-#: templates/user_list.html.py:163
++#: templates/user_list.html.py:158
+ msgid "Fail to delete user"
+ msgstr "刪除使用者失敗"
+ 
+@@ -541,7 +547,7 @@ msgstr "群組"
+ msgid "FRUser Log List"
+ msgstr "設備使用者登入紀錄"
+ 
+-#: templates/fruserlog_list.html:111 templates/user_list.html.py:107
++#: templates/fruserlog_list.html:111 templates/user_list.html.py:101
+ msgid "CreateDate"
+ msgstr "建立時間"
+ 
+@@ -741,19 +747,19 @@ msgstr "類別"
+ msgid "Update Date"
+ msgstr "更新時間"
+ 
+-#: templates/role_list.html:120
++#: templates/role_list.html:125
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:144
++#: templates/role_list.html:150
+ msgid "Confirm to delete this Role"
+ msgstr "您是否確認要刪除這個角色"
+ 
+-#: templates/role_list.html:159
++#: templates/role_list.html:165
+ msgid "Default role cannot delete"
+ msgstr "預設的角色無法刪除"
+ 
+-#: templates/role_list.html:163
++#: templates/role_list.html:169
+ msgid "Fail to delete role"
+ msgstr "刪除這個角色失敗"
+ 
+@@ -950,31 +956,35 @@ msgid ""
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "選擇每月 29~31 日，可能無法每月進行自動備份，您確定要繼續嗎?"
+ 
+-#: templates/system_settings.html:343
++#: templates/system_settings.html:314
++msgid "Must input correct FTP remote path!"
++msgstr "必須輸入正確的遠端 FTP 路徑！"
++
++#: templates/system_settings.html:352
+ msgid "Backup successfully"
+ msgstr "備份成功"
+ 
+-#: templates/system_settings.html:345
++#: templates/system_settings.html:354
+ msgid "Backup setting successfully"
+ msgstr "備份設定成功"
+ 
+-#: templates/system_settings.html:349
++#: templates/system_settings.html:358
+ msgid "Fail to setting Backup"
+ msgstr "備份設定失敗"
+ 
+-#: templates/system_settings.html:364
++#: templates/system_settings.html:373
+ msgid "Must input correct log limit value!"
+ msgstr "必須輸入正確的Log筆數限制值！"
+ 
+-#: templates/system_settings.html:369
++#: templates/system_settings.html:378
+ msgid "Must input correct month value for log preservation!"
+ msgstr "Log的保留月份必須輸入正確的值！"
+ 
+-#: templates/system_settings.html:388
++#: templates/system_settings.html:397
+ msgid "Log setting successfully"
+ msgstr "Log設定成功"
+ 
+-#: templates/system_settings.html:391
++#: templates/system_settings.html:400
+ msgid "Fail to setting Log"
+ msgstr "Log設定失敗"
+ 
+@@ -995,48 +1005,78 @@ msgstr "日期時間"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:88
++#: templates/user_add.html:39 templates/user_list.html.py:82
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帳號"
+ 
+-#: templates/user_add.html:58 templates/user_update.html.py:55
++#: templates/user_add.html:42
++msgid "Please input your account"
++msgstr "請輸入帳號"
++
++#: templates/user_add.html:42
++msgid "Account can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgstr "帳號只能包含1到16碼的英文、數字、'_'、'-'"
++
++#: templates/user_add.html:51 templates/user_update.html.py:52
++msgid "Please input your name"
++msgstr "請輸入姓名"
++
++#: templates/user_add.html:51 templates/user_update.html.py:52
++msgid ""
++"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
++"'-'"
++msgstr "帳號只能包含25碼的中文、英文、數字、'_'、'-'"
++
++#: templates/user_add.html:57 templates/user_update.html.py:58
+ msgid "E-Mail"
+ msgstr "電子信箱"
+ 
+-#: templates/user_add.html:67 templates/user_setting.html.py:79
+-#: templates/user_update.html:64
++#: templates/user_add.html:60 templates/user_update.html.py:61
++msgid "Please input your E-Mail"
++msgstr "請輸入電子E-Mail"
++
++#: templates/user_add.html:60 templates/user_update.html.py:61
++msgid "Please enter the correct e-mail format!"
++msgstr "請輸入正確的電子信箱格式"
++
++#: templates/user_add.html:66 templates/user_setting.html.py:79
++#: templates/user_update.html:66
+ msgid "Password"
+ msgstr "密碼"
+ 
+-#: templates/user_add.html:75 templates/user_update.html.py:72
++#: templates/user_add.html:69 templates/user_add.html.py:78
++msgid "Please input your password"
++msgstr "請輸入你的密碼"
++
++#: templates/user_add.html:75 templates/user_update.html.py:74
+ msgid "Confirm password"
+ msgstr "確認密碼"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:103
+-#: templates/user_update.html:81
++#: templates/user_add.html:84 templates/user_list.html.py:97
++#: templates/user_update.html:85
+ msgid "Role"
+ msgstr "角色"
+ 
+-#: templates/user_add.html:129
+-msgid "Please enter the correct e-mail format!"
+-msgstr "請輸入正確的電子信箱格式"
+-
+-#: templates/user_add.html:160
+-msgid "User add successfully"
+-msgstr "使用者新增成功"
++#: templates/user_add.html:129 templates/user_update.html.py:130
++msgid "Please input correct format"
++msgstr "請輸入正確的格式"
+ 
+-#: templates/user_add.html:163
+-msgid "Fail to add User"
+-msgstr "使用者新增失敗"
+-
+-#: templates/user_add.html:171 templates/user_update.html.py:159
++#: templates/user_add.html:136 templates/user_update.html.py:137
+ msgid "Password does not match"
+ msgstr "密碼不一致"
+ 
+-#: templates/user_add.html:173 templates/user_update.html.py:161
+-msgid "Cannot be null"
+-msgstr "不能是空值"
++#: templates/user_add.html:168
++msgid "Create user successfully"
++msgstr "建立使用者成功"
++
++#: templates/user_add.html:171
++msgid "Can not create admin account"
++msgstr "管理員帳號無法被建立"
++
++#: templates/user_add.html:173
++msgid "Fail to create User"
++msgstr "使用者建立失敗"
+ 
+ #: templates/user_group_add.html:8 templates/user_group_add.html.py:17
+ #: templates/user_group_add.html:23
+@@ -1066,21 +1106,17 @@ msgstr "群組成員管理"
+ msgid "Create new account"
+ msgstr "建立新帳號"
+ 
+-#: templates/user_list.html:99 templates/user_setting.html.py:66
++#: templates/user_list.html:93 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "電子信箱"
+ 
+-#: templates/user_list.html:111
++#: templates/user_list.html:105
+ msgid "UpdateDate"
+ msgstr "更新時間"
+ 
+-#: templates/user_list.html:159
+-msgid "Admin is cannot be deleted"
+-msgstr "不能刪除管理者"
+-
+-#: templates/user_list.html:161
+-msgid "Does not have permission"
+-msgstr "沒有權限"
++#: templates/user_list.html:156
++msgid "Permission denied"
++msgstr "權限不足"
+ 
+ #: templates/user_setting.html:23 templates/user_setting.html.py:29
+ msgid "Setting"
+@@ -1126,14 +1162,16 @@ msgstr "更新用戶資料"
+ msgid "User update"
+ msgstr "更新用戶資料"
+ 
+-#: templates/user_update.html:147
+-msgid "User update successfully"
++#: templates/user_update.html:169
++msgid "Update user successfully"
+ msgstr "使用者更新成功"
+ 
+-#: templates/user_update.html:150
+-msgid "admin is cannot be updated"
+-msgstr "無法變更管理員"
+-
+-#: templates/user_update.html:152
++#: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失敗"
++
++#~ msgid "Admin is cannot be deleted"
++#~ msgstr "不能刪除管理者"
++
++#~ msgid "Does not have permission"
++#~ msgstr "沒有權限"
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 8d378fa..745d65e 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -31,7 +31,7 @@
+                             <p>{% trans "User add" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+@@ -39,7 +39,7 @@
+                                             {% trans "Account" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                                <input type="text" class="form-control" placeholder="" name="account">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input your account" %}" title="{% trans "Please input your account" %}" name="Account" AutoComplete="Off" pattern="[\w-]{1,16}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "Account can only contain 1 to 16 bit of English or Number or '_' or '-'" %}`)" autofocus required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -48,8 +48,7 @@
+                                             {% trans "Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                                <input type="text" class="form-control" placeholder="" name="name">
+-                                            </div>
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" {% if obj.Account == 'admin' %} disabled="disabled" {% else %} oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required {% endif %}>
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -58,7 +57,7 @@
+                                             {% trans "E-Mail" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                                <input type="email" class="form-control" placeholder="" name="email" style="ime-mode:disabled" onblur="return ValidateEmail(this,value)">
++                                            <input type="email" class="form-control" placeholder="{% trans "Please input your E-Mail" %}" title="{% trans "Please input your E-Mail" %}" name="Email" AutoComplete="Off" oninput="setCustomValidity('')" oninvalid="setCustomValidity('{% trans "Please enter the correct e-mail format!" %}')" required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -67,15 +66,16 @@
+                                             {% trans "Password" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="password" class="form-control" placeholder="" name="password">
++                                            <input type="password" class="form-control" placeholder="{% trans "Please input your password" %}" title="{% trans "Please input your password" %}" name="Password" oninput="validityPwd()" AutoComplete="Off"required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i>
+                                             {% trans "Confirm password" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="password" class="form-control" placeholder="" name="confirm">
++                                            <input type="password" class="form-control" placeholder="{% trans "Please input your password" %}" title="{% trans "Please input your password" %}" name="Confirm" oninput="validityPwd()" AutoComplete="Off">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -84,18 +84,16 @@
+                                             {% trans "Role" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <select class="form-control" name="role">
++                                            <select class="form-control" name="Role" required>
+                                                 {% for i in Roles %}
+ 　                                                  <option value="{{i.OId}}">{{i.Name}}</option>
+                                                 {% endfor %}
+                                             </select>
+                                         </div>
+                                     </div>
+-                                    <div class="form-actions">
+-                                        <div class="col-md-offset-3 col-md-9">
+-                                            <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                                            <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                        </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <button type="button" class="btn btn-default" onclick="location.href = '/user_list/'">{% trans "Back" %}</button>
++                                        <button id="SaveButton" type="submit" class="btn btn-default">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -107,40 +105,50 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
+                     }
+                 }
++                return cookieValue;
+             }
+-            return cookieValue;
+-        }
+-    function ValidateEmail(e, pEmail){
+-        if (!/^[0-9a-zA-Z]([-._]*[0-9a-zA-Z])*@[0-9a-zA-Z]([-._]*[0-9a-zA-Z])*\.+[a-zA-Z]+$/.test(pEmail))
+-        {
+-            alert("{% trans "Please enter the correct e-mail format!" %}");
+-        }
+-        return false;
+-    }
+ 
+-    function onSaveClick () {
+-		var account = $('input[name=account]').val();
+-		var name = $('input[name=name]').val();
+-		var email = $('input[name=email]').val();
+-		var password = $('input[name=password]').val();
+-		var psw_confirm = $('input[name=confirm]').val();
+-		var role = $('select[name=role]').val();
++            function validityPwd() {
++                var password = $('input[name=Password]');
++                var psw_confirm = $('input[name=Confirm]');
++                if (!/.{3,16}/.test(password.val())) {
++                    password[0].setCustomValidity('{% trans "Please input correct format" %}');
++                    password[0].style.borderColor = 'red';
++                } else {
++                    password[0].setCustomValidity('');
++                    password[0].style.borderColor = 'green';
++                }
++                if (password.val() != psw_confirm.val()) {
++                    psw_confirm[0].setCustomValidity('{% trans "Password does not match" %}');
++                    psw_confirm[0].style.borderColor = 'red';
++                } else {
++                    psw_confirm[0].setCustomValidity('');
++                    psw_confirm[0].style.borderColor = 'green';
++                }
++            }
++
++            function onSaveClick () {
++                var account = $('input[name=Account]').val();
++                var name = $('input[name=Name]').val();
++                var email = $('input[name=Email]').val();
++                var password = $('input[name=Password]').val();
++                var psw_confirm = $('input[name=Confirm]').val();
++                var role = $('select[name=Role]').val();
+ 
+-        if (account && name && email && password && psw_confirm && role) {
+-            if (password == psw_confirm) {
+                 $.ajax({
+                     type: 'post',
+                     url: '/add_user/',
+@@ -157,29 +165,16 @@
+                     success: function(data) {
+                         console.log("CODE = ",data.CODE);
+                         if (data.CODE == "0") {
+-                            alert("{% trans "User add successfully" %}");
++                            alert('{% trans "Create user successfully" %}');
+                             location.href = '/user_list/';
++                        } else if (data.CODE == "2") {
++                            alert('{% trans "Can not create admin account" %}');
+                         } else {
+-                            alert("{% trans "Fail to add User" %}");
++                            alert('{% trans "Fail to create User" %}');
+                         }
+                     },
+-                    error: function(data) {
+-                        console.log('why nunu');
+-                    }
+                 });
+-            } else
+-                alert("{% trans "Password does not match" %}")
+-        } else
+-            alert("{% trans "Cannot be null" %}");
+-    }
+-
+-    $('input').keypress(function(e) {
+-        code = e.keyCode ? e.keyCode : e.which;
+-        if(code == 13) {
+-            e.preventDefault();
+-        }
+-    });
+-	</script>
+-</body>
+-
++            }
++        </script>
++    </body>
+ </html>
+diff --git a/templates/user_list.html b/templates/user_list.html
+index f1817d6..968e84d 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -43,12 +43,6 @@
+ 			</div>
+ 		</div><!--/.row-->
+ 	</div><!--/.main-->
+-
+-	<script src="{% static "js/chart.min.js" %}"></script>
+-	<script src="{% static "js/chart-data.js" %}"></script>
+-	<script src="{% static "js/easypiechart.js" %}"></script>
+-	<script src="{% static "js/easypiechart-data.js" %}"></script>
+-	<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+ 	<script>
+ 	    var language = "{{ LANGUAGE_CODE }}";
+ 	    if (language == "zh-tw") {
+@@ -113,7 +107,10 @@
+                 }, {
+                     formatter: function(value, row) {
+                         row.Account = row.Account.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+-                        return '<button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
++                        if (row.Account != 'admin')
++                            return '<button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
++                        else
++                            return '';
+                     }
+                 }
+             ],
+@@ -155,10 +152,8 @@
+                     //console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         $('#userList').bootstrapTable('refresh');
+-                    } else if (data.CODE == "2") {
+-                        alert("{% trans "Admin is cannot be deleted" %}");
+                     } else if (data.CODE == "3") {
+-                        alert("{% trans "Does not have permission" %}");
++                        alert("{% trans "Permission denied" %}");
+                     } else {
+                         alert("{% trans "Fail to delete user" %}");
+                     }
+diff --git a/templates/user_update.html b/templates/user_update.html
+index 2eaf688..1c54709 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -31,7 +31,7 @@
+                             <p>{% trans "User update" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+@@ -43,28 +43,30 @@
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            <i style="color: red;">*</i>
++                                            {% if obj.Account != 'admin' %}
++                                                <i style="color: red;">*</i>
++                                            {% endif %}
+                                             {% trans "Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input class="form-control" placeholder="" name="Name" value="{{obj.Name}}" AutoComplete="Off">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" value="{{obj.Name}}" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" {% if obj.Account == 'admin' %} disabled="disabled" {% else %} oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required {% endif %}>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i>
+                                             {% trans "E-Mail" %}
+                                         </label>
+-                                        <label class="col-md-6 control-label">
+-                                            <p class="text-left" >{{obj.Email}}</p>
+-                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="email" class="form-control" placeholder="{% trans "Please input your E-Mail" %}" title="{% trans "Please input your E-Mail" %}" name="Email" value="{{obj.Email}}" AutoComplete="Off" oninput="setCustomValidity('')" oninvalid="setCustomValidity('{% trans "Please enter the correct e-mail format!" %}')" required>
++                                        </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            <i style="color: red;">*</i>
+                                             {% trans "Password" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="password" class="form-control" placeholder="" name="password">
++                                            <input type="password" class="form-control" name="Password" oninput="validityPwd()" AutoComplete="Off">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -72,27 +74,27 @@
+                                             {% trans "Confirm password" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="password" class="form-control" placeholder="" name="confirm">
++                                            <input type="password" class="form-control" name="Confirm" oninput="validityPwd()" AutoComplete="Off">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            <i style="color: red;">*</i>
++                                            {% if obj.Account != 'admin' %}
++                                                <i style="color: red;">*</i>
++                                            {% endif %}
+                                             {% trans "Role" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <select class="form-control" name="role">
++                                            <select class="form-control" name="Role" {% if obj.Account == 'admin' %} disabled="disabled" {% endif %}>
+                                                 {% for i in Roles %}
+ 　                                                  <option value="{{i.OId}}">{{i.Name}}</option>
+                                                 {% endfor %}
+                                             </select>
+                                         </div>
+                                     </div>
+-                                    <div class="form-actions">
+-                                        <div class="col-md-offset-3 col-md-3">
+-                                            <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                                            <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                        </div>
++                                    <div class="col-md-offset-3 col-md-3">
++                                        <button type="button" class="btn btn-default" onclick="location.href = '/user_list/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -104,30 +106,49 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
+                     }
+                 }
++                return cookieValue;
+             }
+-            return cookieValue;
+-        }
+ 
+-    function onSaveClick(){
+-		var name = $('input[name=Name]').val();
+-		var password = $('input[name=password]').val();
+-        var psw_confirm = $('input[name=confirm]').val();
+-		var role = $('select[name=role]').val();
+-        if (name && role) {
+-            if (password == psw_confirm) {
++            function validityPwd() {
++                var password = $('input[name=Password]');
++                var psw_confirm = $('input[name=Confirm]');
++                if (!/.{3,16}?/.test(password.val())) {
++                    password[0].setCustomValidity('{% trans "Please input correct format" %}');
++                    password[0].style.borderColor = 'red';
++                } else {
++                    password[0].setCustomValidity('');
++                    password[0].style.borderColor = 'green';
++                }
++                if (password.val() != psw_confirm.val()) {
++                    psw_confirm[0].setCustomValidity('{% trans "Password does not match" %}');
++                    psw_confirm[0].style.borderColor = 'red';
++                } else {
++                    psw_confirm[0].setCustomValidity('');
++                    psw_confirm[0].style.borderColor = 'green';
++                }
++            }
++
++            function onSaveClick(){
++                var name = $('input[name=Name]').val();
++                var email = $('input[name=Email]').val();
++                var password = $('input[name=Password]').val();
++                var psw_confirm = $('input[name=Confirm]').val();
++                var role = $('select[name=Role]').val();
++
+                 $.ajax({
+                     type: 'post',
+                     url: '/update_user/',
+@@ -138,36 +159,23 @@
+                         'OId' : '{{obj.OId}}',
+                         'Account' : '{{obj.Account}}',
+                         'Name': name,
++                        'Email': email,
+                         'Password': password,
+                         'RoleOId' : role,
+                     },
+                     success: function(data) {
+                         console.log("CODE = ",data.CODE);
+                         if (data.CODE == "0") {
+-                            alert("{% trans "User update successfully" %}");
++                            alert('{% trans "Update user successfully" %}');
+                             location.href = '/user_list/';
+-                        } else if (data.CODE == "2") {
+-                            alert("{% trans "admin is cannot be updated" %}");
+                         } else
+-                            alert("{% trans "Fail to update User" %}");
++                            alert('{% trans "Fail to update User" %}');
+                     },
+                     error: function(data) {
+                         console.log('why nunu');
+                     }
+                 });
+-            } else
+-                alert("{% trans "Password does not match" %}");
+-        } else
+-            alert("{% trans "Cannot be null" %}");
+-    }
+-
+-    $('input').keypress(function(e) {
+-        code = e.keyCode ? e.keyCode : e.which;
+-        if(code == 13) {
+-            e.preventDefault();
+-        }
+-    });
+-	</script>
+-</body>
+-
++            }
++        </script>
++    </body>
+ </html>
+diff --git a/user/views.py b/user/views.py
+index e15cc37..4f67810 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -88,14 +88,17 @@ def add_user(request):
+         return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+-        Users.objects.create(
+-            Account = request.POST['Account'],
+-            Name = request.POST['Name'],
+-            Email = request.POST['Email'],
+-            Password = md5(request.POST['Password']),#md5
+-            RoleOId = Role.objects.get(OId = request.POST['RoleOId']),
+-            LoginIP = '0.0.0.0'
+-        )
++        if request.POST['Account'] != 'admin':
++            Users.objects.create(
++                Account = request.POST['Account'],
++                Name = request.POST['Name'],
++                Email = request.POST['Email'],
++                Password = md5(request.POST['Password']),#md5
++                RoleOId = Role.objects.get(OId = request.POST['RoleOId']),
++                LoginIP = '0.0.0.0'
++            )
++        else:
++            return JsonResponse(res_code[2])
+         return JsonResponse(res_code[0])
+     except Exception as e:
+         print (e)
+@@ -108,14 +111,21 @@ def update_user(request):
+ 
+     try:
+         if request.POST['Account'] == 'admin':
+-            return JsonResponse(res_code[2])
+-        Users.objects.filter(OId = request.POST['OId']).update(
+-            Name = request.POST['Name'],
+-            Password = md5(request.POST['Password']) if request.POST['Password'] else \
+-                    Users.objects.get(OId = request.POST['OId']).Password,
+-            RoleOId = Role.objects.get(OId = request.POST['RoleOId']),
+-            UpdateDate = datetime.now()
+-        )
++            Users.objects.filter(OId = request.POST['OId']).update(
++                Email = request.POST['Email'],
++                Password = md5(request.POST['Password']) if request.POST['Password'] else \
++                        Users.objects.get(OId = request.POST['OId']).Password,
++                UpdateDate = datetime.now()
++            )
++        else:
++            Users.objects.filter(OId = request.POST['OId']).update(
++                Name = request.POST['Name'],
++                Email = request.POST['Email'],
++                Password = md5(request.POST['Password']) if request.POST['Password'] else \
++                        Users.objects.get(OId = request.POST['OId']).Password,
++                RoleOId = Role.objects.get(OId = request.POST['RoleOId']),
++                UpdateDate = datetime.now()
++            )
+         return JsonResponse(res_code[0])
+     except Exception as e:
+         print (e)
+-- 
+1.9.1
+

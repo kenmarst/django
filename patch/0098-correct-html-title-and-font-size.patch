@@ -1,0 +1,55 @@
+From 3a5226ca1e19552314936cc134bb968a5cce97f9 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Thu, 26 May 2016 16:51:40 +0800
+Subject: [PATCH 098/443] correct html title and font size
+
+---
+ templates/role_add.html  | 6 +++---
+ templates/role_list.html | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/templates/role_add.html b/templates/role_add.html
+index e89f635..68d6e1d 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -7,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>{% trans "Role add" %}</title>
++        <title>{% trans "Create New Role" %}</title>
+     </head>
+ 
+     <body>
+@@ -16,13 +16,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">{% trans "Role add" %}</li>
++                    <li class="active">{% trans "Create New Role" %}</li>
+                 </ol>
+             </div>
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header">{% trans "Create New Role" %}</h1>
++                    <h1 class="page-header"><small>{% trans "Create New Role" %}</small></h1>
+                 </div>
+             </div>
+ 
+diff --git a/templates/role_list.html b/templates/role_list.html
+index f0ea0d9..577cb2c 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -21,7 +21,7 @@
+             <div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">{% trans "User List" %}</li>
++				<li class="active">{% trans "Role List" %}</li>
+ 			</ol>
+ 		    </div><!--/.row-->
+ 
+-- 
+1.9.1
+

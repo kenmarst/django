@@ -1,0 +1,45 @@
+From e1bacf23d69887e1fbff9e4fd73f178339730a28 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 12 Sep 2016 13:02:37 +0800
+Subject: [PATCH 275/443] Fix fruser can duplicate upload
+
+Fix bug - fruser can duplicate upload
+    When uploading, it will disable upload button.
+---
+ templates/fruser_list.html | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 4c6df37..0aaf8c9 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -58,7 +58,7 @@
+                     </div>
+                     <div class="modal-footer">
+                         <button class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+-                        <button class="btn btn-default" onclick="ImportFruser()">{% trans "Upload" %}</button>
++                        <button id="ImportFruser" class="btn btn-default" onclick="ImportFruser()">{% trans "Upload" %}</button>
+                     </div>
+                 </div>
+             </div>
+@@ -158,7 +158,8 @@
+                 var data = new FormData($('#ImportForm')[0]);
+                 data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+ 
+-                $('#ImportFormBody').html('<div class="col-sm-offset-1">Please wait for uploading</div>');
++                $('#ImportFormBody').html('<div class="col-sm-offset-1">Please do not leave this page and waiting for uploading!</div>');
++                $('#ImportFruser').prop('disabled', true);
+                 $.ajax({
+                     type: 'post',
+                     traditional: true,
+@@ -181,6 +182,7 @@
+                         }
+                         $('#FruserList').bootstrapTable('refresh');
+                         $('#ImportFormBody').html('<input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">');
++                        $('#ImportFruser').prop('disabled', false);
+                     },
+                     error: function(data) {
+                     }
+-- 
+1.9.1
+

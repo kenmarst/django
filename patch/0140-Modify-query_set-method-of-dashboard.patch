@@ -1,0 +1,41 @@
+From e7a8a827c61f2b16ae79856ed53ddf9b0dcebc1b Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Fri, 17 Jun 2016 14:36:29 +0800
+Subject: [PATCH 140/443] Modify query_set method of dashboard
+
+Modify query_set method of dashboard for large data load.
+---
+ dashboard/views.py | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index c50b08b..cb72a53 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -81,19 +81,15 @@ def dashboard_views(request):
+     device_offline_count = Devices.objects.filter(UpdateDate__lt=offline_time_check).count()
+     device_online_count = device_total_count - device_offline_count - device_proposed_count
+ 
+-    devices_query_set = Devices.objects.all().order_by('-UpdateDate')
+-    devices = [res for res in devices_query_set if (res.State != 'Proposed')]
+-    devices = devices[:5]
+-    devices = [res.as_json() for res in devices]
++    devices_query_set = Devices.objects.exclude(State = 'Proposed').order_by('-UpdateDate')[:5]
++    devices = [res.as_json() for res in devices_query_set]
+     index = 0
+     for dev in devices:
+         dev['Index'] = index+1
+         index += 1
+ 
+-    frusers_query_set = Frusers.objects.all().order_by('-UpdateDate')
+-    frusers = [res for res in frusers_query_set if (res.State != 'Disable')]
+-    frusers = frusers[:5]
+-    frusers = [res.as_json() for res in frusers]
++    frusers_query_set = Frusers.objects.exclude(State = 'Disable').order_by('-UpdateDate')[:5]
++    frusers = [res.as_json() for res in frusers_query_set]
+     index = 0
+     for user in frusers:
+         user['Index'] = index+1
+-- 
+1.9.1
+

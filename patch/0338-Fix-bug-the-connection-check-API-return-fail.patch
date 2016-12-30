@@ -1,0 +1,35 @@
+From 7df7a1dcc4ade79f92e52d76a935037072cd606c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 28 Oct 2016 14:24:30 +0800
+Subject: [PATCH 338/443] Fix bug - the connection check API return fail.
+
+---
+ api/connection.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 1e9dbe4..f16a238 100755
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -16,14 +16,14 @@ def check(request):
+             client_ip = request.META['REMOTE_ADDR']
+             from api.models import Devices
+             devices = Devices.objects.filter(IP = client_ip)
+-            if devices.exists():
++            if devices.count() == 1:
+                 states = {'Proposed' : 0, 'Approved' : 1, 'Online' : 1, 'Offline' : 1, 'Setting' : 2, 'Getting': 3}
+                 devices.update(UpdateDate = datetime.now())
+-
+-                return JsonResponse({'Result' : states[devices.State]})
+-            else:
++                return JsonResponse({'Result' : states[devices[0].State]})
++            elif devices.count() == 0:
+                 Devices.objects.create(Name = 'Default' + client_ip, IP = client_ip)
+                 return JsonResponse({'Result' : 0})
++            raise Exception('Duplicate IP address conflicts, please check the number of devices in the server.')
+         except Exception as e:
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
+     else:
+-- 
+1.9.1
+

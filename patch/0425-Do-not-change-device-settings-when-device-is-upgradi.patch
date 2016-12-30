@@ -1,0 +1,116 @@
+From 03fcde57af73c637552c8532f5bf5199a623c8b1 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 20 Dec 2016 14:10:19 +0800
+Subject: [PATCH 425/443] Do not change device settings when device is
+ upgrading.
+
+---
+ devices/views.py               | 50 +++++++++++++++++++++++-------------------
+ templates/device_edit.html     |  2 ++
+ templates/device_settings.html |  2 ++
+ 3 files changed, 32 insertions(+), 22 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index 2be0f91..a42cce4 100755
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -9,7 +9,7 @@ from django.db.models import Q
+ import json
+ from django.views.decorators.csrf import csrf_exempt
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}, {"CODE": "4"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}, {"CODE": "4"}, {"CODE": "5"}]
+ permission = 'permission_device'
+ 
+ def device_list_view(request):
+@@ -167,6 +167,9 @@ def change_device_name(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        device = Devices.objects.get(OId = request.POST['OId'])
++        if device.State == 'Upgrade':
++            return JsonResponse(res_code[5])
+         Name = request.POST.get('Name', '')
+         if Name != '' and Devices.objects.filter(Name = Name).exists():
+             return JsonResponse(res_code[2])
+@@ -180,27 +183,30 @@ def settings_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        Devices.objects.filter(OId = request.POST['OId']).update(
+-            State = 'Setting',
+-            Type = request.POST['Type'],
+-            Model = request.POST['Model'],
+-            WelcomeR0Action = request.POST['WelcomeR0Action'],
+-            WelcomeR0Pulse = request.POST['WelcomeR0Pulse'],
+-            WelcomeR1Action = request.POST['WelcomeR1Action'],
+-            WelcomeR1Pulse = request.POST['WelcomeR1Pulse'],
+-            AccessDeniedR0Action = request.POST['AccessDeniedR0Action'],
+-            AccessDeniedR0Pulse = request.POST['AccessDeniedR0Pulse'],
+-            AccessDeniedR1Action = request.POST['AccessDeniedR1Action'],
+-            AccessDeniedR1Pulse = request.POST['AccessDeniedR1Pulse'],
+-            Timeout = request.POST['Timeout'],
+-            ScreenSaver = request.POST['ScreenSaver'],
+-            NTP = request.POST['NTP'] or '118.163.81.61',
+-            Timezone = request.POST['Timezone'],
+-            Audio = request.POST['Audio'],
+-            FaceBioScore = request.POST['FaceBioScore'],
+-            FingerBioScore = request.POST['FingerBioScore'],
+-            Language = request.POST['Language'],
+-        )
++        device = Devices.objects.get(OId = request.POST['OId'])
++        if device.State == 'Upgrade':
++            return JsonResponse(res_code[5])
++        device.State = 'Setting'
++        device.Type = request.POST['Type'],
++        device.Model = request.POST['Model'],
++        device.WelcomeR0Action = request.POST['WelcomeR0Action'],
++        device.WelcomeR0Pulse = request.POST['WelcomeR0Pulse'],
++        device.WelcomeR1Action = request.POST['WelcomeR1Action'],
++        device.WelcomeR1Pulse = request.POST['WelcomeR1Pulse'],
++        device.AccessDeniedR0Action = request.POST['AccessDeniedR0Action'],
++        device.AccessDeniedR0Pulse = request.POST['AccessDeniedR0Pulse'],
++        device.AccessDeniedR1Action = request.POST['AccessDeniedR1Action'],
++        device.AccessDeniedR1Pulse = request.POST['AccessDeniedR1Pulse'],
++        device.Timeout = request.POST['Timeout'],
++        device.ScreenSaver = request.POST['ScreenSaver'],
++        device.NTP = request.POST['NTP'] or '118.163.81.61',
++        device.Timezone = request.POST['Timezone'],
++        device.Audio = request.POST['Audio'],
++        device.FaceBioScore = request.POST['FaceBioScore'],
++        device.FingerBioScore = request.POST['FingerBioScore'],
++        device.Language = request.POST['Language'],
++        device.save()
++
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index bd34855..846d75f 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -266,6 +266,8 @@
+                         alert("{% trans "Fail to change the device name" %}");
+                     } else if (data.CODE == "2") {
+                         alert("{% trans "The device name is duplicated!" %}");
++                    } else if (data.CODE == "5") {
++                        alert("{% trans "Device is upgrading. Fail to change the device name." %}");
+                     }
+                 },
+             });
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 922b682..6d70ddf 100755
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -434,6 +434,8 @@
+                     if (data.CODE == "0") {
+                         alert("{% trans "Device setting successfully" %}");
+                         location.href = '/device_list/';
++                    } else if (data.CODE == "5") {
++                        alert("{% trans "Device is upgrading. Fail to setting device." %}");
+                     } else {
+                         alert("{% trans "Fail to setting device" %}");
+                     }
+-- 
+1.9.1
+

@@ -1,0 +1,26 @@
+From 7a0f3533dc8f09f1372bf52bcb0b739808c553eb Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 12 Oct 2016 17:58:34 +0800
+Subject: [PATCH 316/443] Modify UserAdd API: if 4G User does not exist, return
+ code '0' to br06 device.
+
+---
+ api/user.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/user.py b/api/user.py
+index b5cacc9..48551f6 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -55,7 +55,7 @@ def add(request):
+                             #print(res_4G)
+                             if not res_4G['status'] == settings.SE_4G:
+                                 logContent = '{message_head}4G User does not exist'.format(message_head = message_head)
+-                                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++                                return JsonResponse(dict(ChainMap(result_fail, {'Code' : '0'}, {'Message' : logContent})))
+                         # print("Creating new account now.")
+                         Frusers.objects.create(
+                             FRUserId = req['FRUserId'],
+-- 
+1.9.1
+

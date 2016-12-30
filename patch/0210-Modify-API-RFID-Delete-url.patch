@@ -1,0 +1,25 @@
+From bc0149cf6ff9f5da907344ac05a011cee6326608 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 28 Jul 2016 14:18:49 +0800
+Subject: [PATCH 210/443] Modify API RFID Delete url
+
+---
+ br06/urls.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index b1e9044..737c854 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -186,7 +186,7 @@ urlpatterns += [
+     url(r'^api/recognition/face/check/?$', recognition.face_check),
+     url(r'^api/recognition/RFID/verify/?$', recognition.rfid_verify),
+     url(r'^api/recognition/RFID/check/?$', recognition.rfid_check),
+-    url(r'^api/recognition/RFID/delete/?$', recognition.rfid_delete),
++    url(r'^api/rfid/delete/?$', recognition.rfid_delete),
+ ]
+ 
+ urlpatterns += [
+-- 
+1.9.1
+

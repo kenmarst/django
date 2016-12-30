@@ -1,0 +1,38 @@
+From 70f740e71c429253009c88d50bb60bc28aaf5e33 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 1 Jul 2016 16:30:53 +0800
+Subject: [PATCH 156/443] Modify api user list : remove query "State = Enable"
+ from frusers.
+
+---
+ api/user.py | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index 71bf610..b12e573 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -204,7 +204,7 @@ def list(request):
+                     #print('Field : ', req['Field'], 'Keyword : ',req['Keyword'])
+ 
+                     FlipPage = ( int( req['FlipPage'] ) - 1 ) * 5
+-                    numbers = Frusers.objects.filter(State = "Enable", **{req['Field'] + '__contains' : req['Keyword']}).count()
++                    numbers = Frusers.objects.filter(**{req['Field'] + '__contains' : req['Keyword']}).count()
+ 
+                     return JsonResponse(dict(ChainMap(result_success, {
+                         'Numbers' : numbers,
+@@ -222,9 +222,8 @@ def list(request):
+                                     frusergroupmember__FRUserOId__OId = i.OId
+                                 ).values('OId', 'Name')
+                             ]
+-                        } for i in Frusers.objects.filter( State = "Enable" ) \
+-                            .filter( **{ req['Field'] + '__contains' : req['Keyword'] } ) \
+-                            [ FlipPage : FlipPage + 5 ] ] # ex:[ 0 : 5 ] => 5 frusers / 1 page
++                        } for i in Frusers.objects.filter(**{req['Field'] + '__contains' : req['Keyword']}) \
++                        [ FlipPage : FlipPage + 5 ] ] # ex:[ 0 : 5 ] => 5 frusers / 1 page
+                     })))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+-- 
+1.9.1
+

@@ -1,0 +1,26 @@
+From cbb590cbed23ea4abf980834ad927eab676e3c88 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 12 Jul 2016 13:52:06 +0800
+Subject: [PATCH 172/443] Modify face delete API return
+
+Modify face delete API success return for specification.
+---
+ api/face.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/face.py b/api/face.py
+index 8435761..ce78320 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -170,7 +170,7 @@ def delete(request):
+                         fruser.FaceID3 = ''
+                         fruser.save()
+                         logContent = '{message_head}Face Delete Successfully'.format(message_head = message_head)
+-                        return JsonResponse({'Result' : logContent})
++                        return JsonResponse(result_success)
+                     else:
+                         logContent = '{message_head}Face remove error'.format(message_head = message_head)
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+-- 
+1.9.1
+

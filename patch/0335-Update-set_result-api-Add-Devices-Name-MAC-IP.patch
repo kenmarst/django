@@ -1,0 +1,26 @@
+From ce505c01de7d8264cfa3517c8f74273eca056ed3 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 27 Oct 2016 17:28:09 +0800
+Subject: [PATCH 335/443] Update set_result api: Add Devices Name, MAC, IP
+
+---
+ api/recognition.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 2b21fc2..e03320c 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -318,6 +318,9 @@ def set_result(request):
+                         data = json.dumps({
+                             "account": req['FRUserId'],
+                             "login_time": str(int(time.time())),# Unix Timestamp
++                            "device_name": ip_device.Name,
++                            "device_ip": request_IP,
++                            "device_mac": ip_device.MAC,
+                             "checksum": md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
+                         }).encode('utf8'),
+                         headers = {'Content-Type': 'application/json'}
+-- 
+1.9.1
+

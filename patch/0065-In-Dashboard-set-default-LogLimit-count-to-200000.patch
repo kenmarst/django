@@ -1,0 +1,29 @@
+From 2476ed0d38ba2a617ecd0aff856f3a82c7ebbe83 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Mon, 23 May 2016 11:26:59 +0800
+Subject: [PATCH 065/443] In Dashboard, set default LogLimit count to 200000
+
+---
+ dashboard/views.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 1fbd2f0..a96a8d2 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -61,6 +61,11 @@ def dashboard_views(request):
+     frusers_total_count = Frusers.objects.count()
+     Syslogs_total_count = Systemlogs.objects.count()
+     frusers_limit = 10000
+-    syslog_limit = Config.objects.get(Name='LogLimit').Value
++
++    try:
++        syslog_limit = Config.objects.get(Name='LogLimit').Value
++    except:
++        Config.objects.create(Name = 'LogLimit', Value = '200000')
++        syslog_limit = 200000
+ 
+     return render_to_response('dashboard.html',locals())
+-- 
+1.9.1
+

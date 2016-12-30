@@ -1,0 +1,1075 @@
+From 8a02b2dfa71633ad78b46391ed570ccf80c69d2e Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 27 Oct 2016 16:58:24 +0800
+Subject: [PATCH 334/443] Add a default group with the name 'Default'.
+
+---
+ api/models.py                                |   2 +-
+ api/user.py                                  |  16 +++++--
+ frusergroups/views.py                        |  45 ++++++++++++++++++-
+ frusers/views.py                             |  46 ++++++++++---------
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   8 ++--
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   8 ++--
+ templates/frusergroup_add.html               |   6 ++-
+ templates/frusergroups_list.html             |  13 +++---
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 18937 -> 19096 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  64 +++++++++++++++------------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 18937 -> 19096 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  64 +++++++++++++++------------
+ 14 files changed, 175 insertions(+), 97 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 4b6ee1b..53d8b65 100755
+--- a/api/models.py
++++ b/api/models.py
+@@ -407,7 +407,7 @@ class Frusers(models.Model):
+             OId = self.OId,
+             FRUserId = self.FRUserId,
+             Name = self.Name,
+-            Group = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = self.OId).values('Name')) or 'Default',
++            Group = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = self.OId).values('Name')),
+             Gender = self.Gender,
+             Age = self.Age,
+             PersonId = self.PersonId,
+diff --git a/api/user.py b/api/user.py
+index 48551f6..dcf2324 100755
+--- a/api/user.py
++++ b/api/user.py
+@@ -57,7 +57,7 @@ def add(request):
+                                 logContent = '{message_head}4G User does not exist'.format(message_head = message_head)
+                                 return JsonResponse(dict(ChainMap(result_fail, {'Code' : '0'}, {'Message' : logContent})))
+                         # print("Creating new account now.")
+-                        Frusers.objects.create(
++                        fruser = Frusers.objects.create(
+                             FRUserId = req['FRUserId'],
+                             Name = req['Name'],
+                             Gender = req['Gender'],
+@@ -68,12 +68,17 @@ def add(request):
+                         for i in req['Groups']:
+                             if i.get('OId', '') and i.get('Name', ''):
+                                 Frusergroupmember.objects.create(
+-                                    FRUserOId = Frusers.objects.get(FRUserId = req['FRUserId']),
+-                                    GroupOId = Frusergroups.objects.get(OId = i['OId'])
++                                    GroupOId = Frusergroups.objects.get(OId = i['OId']),
++                                    FRUserOId = fruser
+                                 )
+                             else:
+                                 logContent = '{message_head}Add group error cause by parameter not correct'.format(message_head = message_head)
+                                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++                        if not Frusergroupmember.objects.filter(FRUserOId = fruser).exists():
++                            Frusergroupmember.objects.create(
++                                GroupOId = Frusergroups.objects.get_or_create(Name = 'Default')[0],
++                                FRUserOId = fruser
++                            )
+                         logContent = '{message_head}Create FRUser successfully'.format(message_head = message_head)
+                         return JsonResponse(result_success)
+                 else:
+@@ -136,6 +141,11 @@ def update(request):
+                             logContent = '{message_head}Update group error cause by parameter not correct'.format(message_head = message_head)
+                             Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+                     delete_fruser.delete()
++                    if not Frusergroupmember.objects.filter(FRUserOId = fruser).exists():
++                        Frusergroupmember.objects.create(
++                            GroupOId = Frusergroups.objects.get_or_create(Name = 'Default')[0],
++                            FRUserOId = fruser
++                        )
+                     logContent = '{message_head}Update FRUser successfully'.format(message_head = message_head)
+                     return JsonResponse(result_success)
+                 else:
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index f023829..a13141a 100755
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -1,6 +1,7 @@
+ from django.shortcuts import render
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
++from django.conf import settings
+ from api.models import Frusergroups, Frusergroupmember, Frusergroupdevices, Devices, Frusers
+ from datetime import datetime
+ from login.views import check_login, check_login_redirect
+@@ -10,6 +11,16 @@ import json
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_frusergroup'
+ 
++try:
++    group, group_exists = Frusergroups.objects.get_or_create(Name = 'Default')
++    if not group_exists:
++        print('Create default FR user group.')
++    else:
++        if settings.DEBUG:
++            print('Default FR user group exist.')
++except:
++    print('Cannot create "Default" group.')
++
+ def frusergroups_list(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+@@ -60,7 +71,14 @@ def delete_frusergroup(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.POST['OId']).Name == 'Default':
++            return JsonResponse(res_code[2])
++        frusers = list(Frusers.objects.filter(frusergroupmember__GroupOId__OId = request.POST['OId']))
++        group = Frusergroups.objects.get_or_create(Name = 'Default')[0]
+         Frusergroups.objects.filter(OId = request.POST['OId']).delete()
++        for fruser in frusers:
++            if not Frusergroupmember.objects.filter(FRUserOId = fruser).exists():
++                Frusergroupmember.objects.create(GroupOId = group, FRUserOId = fruser)
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -70,9 +88,12 @@ def add_frusergroup(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if request.POST['Name'] == 'Default':
++            return JsonResponse(res_code[2])
+         if Frusergroups.objects.all().count() >= 20: # spec: Max 20 Groups
+             return JsonResponse(res_code[1])
+-        Frusergroups.objects.create(Name = request.POST['Name'])
++        if not Frusergroups.objects.get_or_create(Name = request.POST['Name'])[1]:
++            return JsonResponse(res_code[3])
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -82,6 +103,8 @@ def frusergroup_edit_view(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.GET['OId']).Name == 'Default':
++            raise
+         FRUserGroupsList = Frusergroups.objects.get(OId = request.GET['OId']).as_json()
+         return render(request, 'frusergroup_edit.html', {'active': 'frusergroup_edit', 'obj': FRUserGroupsList})
+     except:
+@@ -92,6 +115,8 @@ def change_frusergroup_name(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.POST['OId']).Name == 'Default':
++            return JsonResponse(res_code[2])
+         Frusergroups.objects.filter(OId = request.POST['OId']).update(
+             Name = request.POST['Name'],
+             UpdateDate = datetime.now()
+@@ -105,6 +130,8 @@ def frusergroup_member_view(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.GET['OId']).Name == 'Default':
++            raise
+         return render(request, 'frusergroup_member.html', {'active': 'frusergroup_member', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+@@ -164,10 +191,13 @@ def add_frusergroup_member(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.POST['GroupOId']).Name == 'Default':
++            return JsonResponse(res_code[2])
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         FRUserOIds = [Frusers.objects.get(OId = FRUserOId) for FRUserOId in request.POST.getlist('UserOIds')]
+         for FRUserOId in FRUserOIds:
+             Frusergroupmember.objects.create(GroupOId = GroupOId, FRUserOId = FRUserOId)
++            Frusergroupmember.objects.filter(GroupOId__Name = 'Default', FRUserOId = FRUserOId).delete()
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -177,9 +207,16 @@ def delete_frusergroup_member(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.POST['GroupOId']).Name == 'Default':
++            return JsonResponse(res_code[2])
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         FRUserOId = Frusers.objects.get(OId = request.POST['FRUserOId'])
+         Frusergroupmember.objects.filter(GroupOId = GroupOId, FRUserOId = FRUserOId).delete()
++        if not Frusergroupmember.objects.filter(FRUserOId = FRUserOId).exists():
++            Frusergroupmember.objects.create(
++                GroupOId = Frusergroups.objects.get_or_create(Name = 'Default')[0],
++                FRUserOId = FRUserOId
++            )
+         return JsonResponse(dict(ChainMap(res_code[0], FRUserOId.as_json())))
+     except:
+         return JsonResponse(res_code[1])
+@@ -189,6 +226,8 @@ def frusergroup_devices_view(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.GET['OId']).Name == 'Default':
++            raise
+         return render(request, 'frusergroup_devices.html', {'active': 'frusergroup_devices', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+@@ -244,6 +283,8 @@ def add_frusergroup_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.POST['GroupOId']).Name == 'Default':
++            return JsonResponse(res_code[2])
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOIds = [Devices.objects.get(OId = DeviceOId) for DeviceOId in request.POST.getlist('DeviceOIds')]
+         for DeviceOId in DeviceOIds:
+@@ -257,6 +298,8 @@ def delete_frusergroup_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        if Frusergroups.objects.get(OId = request.POST['GroupOId']).Name == 'Default':
++            return JsonResponse(res_code[2])
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
+         Frusergroupdevices.objects.filter(GroupOId = GroupOId, DeviceOId = DeviceOId).delete()
+diff --git a/frusers/views.py b/frusers/views.py
+index cc51f96..9169b7b 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -55,7 +55,7 @@ def fruser_data(request):
+             fruser['Age'] = fruser['Age'] or ''
+             fruser['Index'] = index + 1
+             index += 1
+-            fruser['Group'] = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = fruser['OId']).values('Name')) or 'Default'
++            fruser['Group'] = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = fruser['OId']).values('Name'))
+         return JsonResponse({'total': fruser_count, 'rows': frusers})
+     except:
+         return JsonResponse({'total': 0, 'rows': []})
+@@ -115,20 +115,19 @@ def import_fruser(request):
+             for row in csv.DictReader(csvfile):
+                 fail = False
+                 fruser, result = Frusers.objects.get_or_create(FRUserId = row['FRUserId'])
+-                for group in row['Group'].split(', '):
+-                    if group != 'Default':
+-                        try:
+-                            group = Frusergroups.objects.get(Name = group)
+-                        except:
+-                            if Frusergroups.objects.count() >= 20:
+-                                Systemlogs.objects.create(
+-                                    Category = 'System',
+-                                    LogContent = 'Import frusers[FRUserId : {0}] : Add FRUser to group {1} fail cause by: The number of the group reached the maximum'.format(row['FRUserId'], group)
+-                                )
+-                                fail = True
+-                                continue
+-                            group = Frusergroups.objects.create(Name = group)
+-                        Frusergroupmember.objects.get_or_create(GroupOId = group, FRUserOId = fruser)
++                for group in row['Group'].split(', ') or ['Default']:
++                    try:
++                        group = Frusergroups.objects.get(Name = group)
++                    except:
++                        if Frusergroups.objects.count() >= 20:
++                            Systemlogs.objects.create(
++                                Category = 'System',
++                                LogContent = 'Import frusers[FRUserId : {0}] : Add FRUser to group {1} fail cause by: The number of the group reached the maximum'.format(row['FRUserId'], group)
++                            )
++                            fail = True
++                            continue
++                        group = Frusergroups.objects.create(Name = group)
++                    Frusergroupmember.objects.get_or_create(GroupOId = group, FRUserOId = fruser)
+                 if result:
+                     fruser.Name = row['Name']
+                     fruser.Gender = row['Gender']
+@@ -240,13 +239,16 @@ def add_fruser(request):
+         if Frusers.objects.filter(FRUserId = request.POST['FRUserId']).exists():
+             return JsonResponse(res_code[2])
+         else:
+-            Frusers.objects.create(
+-                FRUserId = request.POST['FRUserId'],
+-                Name = request.POST['Name'],
+-                Gender = request.POST['Gender'],
+-                Age = int(request.POST['Age']) or 0,
+-                State = request.POST['State'],
+-                DisableCauses = request.POST['DisableCauses']
++            Frusergroupmember.objects.create(
++                GroupOId = Frusergroups.objects.get_or_create(Name = 'Default')[0],
++                FRUserOId = Frusers.objects.create(
++                    FRUserId = request.POST['FRUserId'],
++                    Name = request.POST['Name'],
++                    Gender = request.POST['Gender'],
++                    Age = int(request.POST['Age']) or 0,
++                    State = request.POST['State'],
++                    DisableCauses = request.POST['DisableCauses']
++                )
+             )
+         return JsonResponse(res_code[0])
+     except:
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 7e46ba7f34d5a6e343f4ffbf4ec777151e93f5f4..654fdef5fb6062236a449590b909fdf5dae24677 100755
+GIT binary patch
+delta 22
+dcmZo-X=0i1jN8ya*T`JK(9FuzXyZpgMgU6A24MgI
+
+delta 22
+dcmZo-X=0i1jN8Cc*VsV8(9FuvY~x2kMgU6q24esK
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 7ed4ff7..66f007f 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-30 16:16+0800\n"
++"POT-Creation-Date: 2016-10-27 16:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:143
++#: br06/settings.py:144
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:145
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:146
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 7e46ba7f34d5a6e343f4ffbf4ec777151e93f5f4..654fdef5fb6062236a449590b909fdf5dae24677 100755
+GIT binary patch
+delta 22
+dcmZo-X=0i1jN8ya*T`JK(9FuzXyZpgMgU6A24MgI
+
+delta 22
+dcmZo-X=0i1jN8Cc*VsV8(9FuvY~x2kMgU6q24esK
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 7ed4ff7..66f007f 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-30 16:16+0800\n"
++"POT-Creation-Date: 2016-10-27 16:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:143
++#: br06/settings.py:144
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:145
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:146
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index 4cb9592..459296d 100755
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -97,8 +97,12 @@
+                         } else {
+                             location.href = '/fruser_group/';
+                         }
+-                    } else {
++                    } else if (data.CODE == "1"){
+                         alert("{% trans "Fail to add group" %}");
++                    } else if (data.CODE == "2"){
++                        alert("{% trans "Can not add a group with the name 'Default'" %}");
++                    } else if (data.CODE == "3"){
++                        alert("{% trans "Group name exists" %}");
+                     }
+                 },
+             });
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index c583d63..bcd96f9 100755
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -84,11 +84,14 @@
+                     {
+                         formatter: function(value, row) {
+                             row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+-                            return ' \
+-                                <div align="center"> \
+-                                    <button class="btn btn-default" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+-                                </div>';
++                            if (row.Name != 'Default')
++                                return ' \
++                                    <div align="center"> \
++                                        <button class="btn btn-default" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
++                                    </div>';
++                            else
++                                return '';
+                         }
+                     }
+                 ],
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 3f2664d8104502763cc6316ba067464f99c71791..edecc444064834b6eef557a06237db8f9365c313 100755
+GIT binary patch
+delta 6939
+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
+
+delta 6800
+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
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index b299586..863fac1 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-30 16:16+0800\n"
++"POT-Creation-Date: 2016-10-27 16:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -71,7 +71,7 @@ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+ #: templates/dashboard.html:146 templates/dashboard.html.py:164
+-#: templates/fruser_list.html:100 templates/frusergroups_list.html.py:72
++#: templates/fruser_list.html:104 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+@@ -319,14 +319,14 @@ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+ #: templates/device_frusergroups.html:110 templates/device_list.html.py:119
+-#: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
++#: templates/fruser_list.html:143 templates/frusergroups_list.html.py:91
+ #: templates/role_list.html:121 templates/user_group_devices.html.py:113
+ #: templates/user_group_list.html:90 templates/user_group_members.html:113
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "删除"
+ 
+-#: templates/device_frusergroups.html:141 templates/fruser_list.html.py:114
++#: templates/device_frusergroups.html:141 templates/fruser_list.html.py:118
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+@@ -334,8 +334,8 @@ msgid "Group"
+ msgstr "群组"
+ 
+ #: templates/device_frusergroups.html:167 templates/device_list.html.py:171
+-#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:170
+-#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:115
++#: templates/fruser_list.html:207 templates/frusergroup_devices.html.py:170
++#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:118
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+ #: templates/user_group_members.html:170 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+@@ -345,7 +345,7 @@ msgstr "您是否确认要删除"
+ msgid "from this device"
+ msgstr "设备"
+ 
+-#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:131
++#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:134
+ #: templates/user_group_list.html:133
+ msgid "Fail to delete group"
+ msgstr "删除群组失败"
+@@ -368,7 +368,7 @@ msgstr "设备管理"
+ msgid "Create new device"
+ msgstr "建立新设备"
+ 
+-#: templates/device_list.html:88
++#: templates/device_list.html:88 templates/fruser_list.html.py:123
+ msgid "Status"
+ msgstr "状态"
+ 
+@@ -384,8 +384,8 @@ msgstr "接受"
+ msgid "Reject"
+ msgstr "拒绝"
+ 
+-#: templates/device_list.html:117 templates/fruser_list.html.py:132
+-#: templates/frusergroups_list.html:89 templates/user_group_list.html.py:89
++#: templates/device_list.html:117 templates/fruser_list.html.py:142
++#: templates/frusergroups_list.html:90 templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "编辑"
+ 
+@@ -503,11 +503,11 @@ msgstr "简体中文"
+ msgid "zh-tw"
+ msgstr "繁体中文"
+ 
+-#: templates/device_settings.html:407
++#: templates/device_settings.html:435
+ msgid "Device setting successfully"
+ msgstr "设备设定成功"
+ 
+-#: templates/device_settings.html:410
++#: templates/device_settings.html:438
+ msgid "Fail to setting device"
+ msgstr "设备设定失败"
+ 
+@@ -521,7 +521,7 @@ msgid "Fruser"
+ msgstr "设备使用者"
+ 
+ #: templates/fruser_add.html:39 templates/fruser_edit.html.py:39
+-#: templates/fruser_list.html:104 templates/fruserlog_list.html.py:96
++#: templates/fruser_list.html:108 templates/fruserlog_list.html.py:96
+ msgid "FRUserId"
+ msgstr "工号"
+ 
+@@ -535,7 +535,7 @@ msgid ""
+ msgstr "使用者ID只能包含1到16码的英文、数字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:105
++#: templates/fruser_list.html:113 templates/frusergroup_devices.html.py:105
+ #: templates/frusergroup_member.html:105 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:105
+ #: templates/user_group_members.html:105 templates/user_list.html.py:89
+@@ -620,56 +620,56 @@ msgstr "更新设备使用者失败"
+ msgid "FR User List"
+ msgstr "设备使用者管理"
+ 
+-#: templates/fruser_list.html:33
++#: templates/fruser_list.html:34
+ msgid "Create FR User"
+ msgstr "建立设备使用者"
+ 
+-#: templates/fruser_list.html:34
++#: templates/fruser_list.html:35
+ msgid "Import"
+ msgstr "汇入"
+ 
+-#: templates/fruser_list.html:35 templates/fruserlog_list.html.py:41
++#: templates/fruser_list.html:36 templates/fruserlog_list.html.py:41
+ #: templates/systemlog_list.html:40
+ msgid "Export"
+ msgstr "汇出"
+ 
+-#: templates/fruser_list.html:51
++#: templates/fruser_list.html:54
+ msgid "Import Fruser"
+ msgstr "汇入设备使用者"
+ 
+-#: templates/fruser_list.html:61
++#: templates/fruser_list.html:64
+ msgid "Close"
+ msgstr "关闭"
+ 
+-#: templates/fruser_list.html:62
++#: templates/fruser_list.html:65
+ msgid "Upload"
+ msgstr "上传"
+ 
+-#: templates/fruser_list.html:119 templates/role_list.html.py:103
++#: templates/fruser_list.html:128 templates/role_list.html.py:103
+ msgid "Create Date"
+ msgstr "建立时间"
+ 
+-#: templates/fruser_list.html:124
++#: templates/fruser_list.html:133
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
+-#: templates/fruser_list.html:179
++#: templates/fruser_list.html:191
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正确"
+ 
+-#: templates/fruser_list.html:181
++#: templates/fruser_list.html:193
+ msgid "Please wait for uploading!"
+ msgstr "请等待上传！"
+ 
+-#: templates/fruser_list.html:183
++#: templates/fruser_list.html:195
+ msgid "Fail to import fruser!"
+ msgstr "汇入设备使用者失败"
+ 
+-#: templates/fruser_list.html:211
++#: templates/fruser_list.html:223
+ msgid "Fail to delete fruser"
+ msgstr "删除设备使用者失败"
+ 
+-#: templates/fruser_list.html:221
++#: templates/fruser_list.html:233
+ msgid "Duplicate export!"
+ msgstr "重复汇出"
+ 
+@@ -697,6 +697,14 @@ msgstr "储存并继续建立"
+ msgid "Group add successfully"
+ msgstr "群组新增成功"
+ 
++#: templates/frusergroup_add.html:103
++msgid "Can not add a group with the name 'Default'"
++msgstr "无法新增名称为Default的群组"
++
++#: templates/frusergroup_add.html:105
++msgid "Group name exists"
++msgstr "群组名称存在"
++
+ #: templates/frusergroup_devices.html:10
+ msgid "FR User Group Device"
+ msgstr "FR设备管理"
+@@ -787,7 +795,7 @@ msgstr "建立新群组"
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:115
++#: templates/frusergroups_list.html:118
+ msgid "group"
+ msgstr "群组"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index af51b545b48ec42e84061c492f9dc540d693a2a3..cb58697a1c15dab25ebfff669227a129667cca16 100755
+GIT binary patch
+delta 6938
+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
+
+delta 6800
+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
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 79df714..b434131 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-30 16:16+0800\n"
++"POT-Creation-Date: 2016-10-27 16:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -71,7 +71,7 @@ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+ #: templates/dashboard.html:146 templates/dashboard.html.py:164
+-#: templates/fruser_list.html:100 templates/frusergroups_list.html.py:72
++#: templates/fruser_list.html:104 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+@@ -319,14 +319,14 @@ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+ #: templates/device_frusergroups.html:110 templates/device_list.html.py:119
+-#: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
++#: templates/fruser_list.html:143 templates/frusergroups_list.html.py:91
+ #: templates/role_list.html:121 templates/user_group_devices.html.py:113
+ #: templates/user_group_list.html:90 templates/user_group_members.html:113
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "刪除"
+ 
+-#: templates/device_frusergroups.html:141 templates/fruser_list.html.py:114
++#: templates/device_frusergroups.html:141 templates/fruser_list.html.py:118
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+@@ -334,8 +334,8 @@ msgid "Group"
+ msgstr "群組"
+ 
+ #: templates/device_frusergroups.html:167 templates/device_list.html.py:171
+-#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:170
+-#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:115
++#: templates/fruser_list.html:207 templates/frusergroup_devices.html.py:170
++#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:118
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+ #: templates/user_group_members.html:170 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+@@ -345,7 +345,7 @@ msgstr "您是否確認要刪除"
+ msgid "from this device"
+ msgstr "設備"
+ 
+-#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:131
++#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:134
+ #: templates/user_group_list.html:133
+ msgid "Fail to delete group"
+ msgstr "刪除群組失敗"
+@@ -368,7 +368,7 @@ msgstr "設備管理"
+ msgid "Create new device"
+ msgstr "建立新設備"
+ 
+-#: templates/device_list.html:88
++#: templates/device_list.html:88 templates/fruser_list.html.py:123
+ msgid "Status"
+ msgstr "狀態"
+ 
+@@ -384,8 +384,8 @@ msgstr "接受"
+ msgid "Reject"
+ msgstr "拒絕"
+ 
+-#: templates/device_list.html:117 templates/fruser_list.html.py:132
+-#: templates/frusergroups_list.html:89 templates/user_group_list.html.py:89
++#: templates/device_list.html:117 templates/fruser_list.html.py:142
++#: templates/frusergroups_list.html:90 templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "編輯"
+ 
+@@ -503,11 +503,11 @@ msgstr "簡體中文"
+ msgid "zh-tw"
+ msgstr "繁體中文"
+ 
+-#: templates/device_settings.html:407
++#: templates/device_settings.html:435
+ msgid "Device setting successfully"
+ msgstr "設備設定成功"
+ 
+-#: templates/device_settings.html:410
++#: templates/device_settings.html:438
+ msgid "Fail to setting device"
+ msgstr "設備設定失敗"
+ 
+@@ -521,7 +521,7 @@ msgid "Fruser"
+ msgstr "設備使用者"
+ 
+ #: templates/fruser_add.html:39 templates/fruser_edit.html.py:39
+-#: templates/fruser_list.html:104 templates/fruserlog_list.html.py:96
++#: templates/fruser_list.html:108 templates/fruserlog_list.html.py:96
+ msgid "FRUserId"
+ msgstr "工號"
+ 
+@@ -535,7 +535,7 @@ msgid ""
+ msgstr "使用者ID只能包含1到16碼的英文、數字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:105
++#: templates/fruser_list.html:113 templates/frusergroup_devices.html.py:105
+ #: templates/frusergroup_member.html:105 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:105
+ #: templates/user_group_members.html:105 templates/user_list.html.py:89
+@@ -620,56 +620,56 @@ msgstr "更新設備使用者失敗"
+ msgid "FR User List"
+ msgstr "設備使用者管理"
+ 
+-#: templates/fruser_list.html:33
++#: templates/fruser_list.html:34
+ msgid "Create FR User"
+ msgstr "建立設備使用者"
+ 
+-#: templates/fruser_list.html:34
++#: templates/fruser_list.html:35
+ msgid "Import"
+ msgstr "匯入"
+ 
+-#: templates/fruser_list.html:35 templates/fruserlog_list.html.py:41
++#: templates/fruser_list.html:36 templates/fruserlog_list.html.py:41
+ #: templates/systemlog_list.html:40
+ msgid "Export"
+ msgstr "匯出"
+ 
+-#: templates/fruser_list.html:51
++#: templates/fruser_list.html:54
+ msgid "Import Fruser"
+ msgstr "匯入設備使用者"
+ 
+-#: templates/fruser_list.html:61
++#: templates/fruser_list.html:64
+ msgid "Close"
+ msgstr "關閉"
+ 
+-#: templates/fruser_list.html:62
++#: templates/fruser_list.html:65
+ msgid "Upload"
+ msgstr "上傳"
+ 
+-#: templates/fruser_list.html:119 templates/role_list.html.py:103
++#: templates/fruser_list.html:128 templates/role_list.html.py:103
+ msgid "Create Date"
+ msgstr "建立時間"
+ 
+-#: templates/fruser_list.html:124
++#: templates/fruser_list.html:133
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
+-#: templates/fruser_list.html:179
++#: templates/fruser_list.html:191
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正確"
+ 
+-#: templates/fruser_list.html:181
++#: templates/fruser_list.html:193
+ msgid "Please wait for uploading!"
+ msgstr "請等待上傳！"
+ 
+-#: templates/fruser_list.html:183
++#: templates/fruser_list.html:195
+ msgid "Fail to import fruser!"
+ msgstr "匯入設備使用者失敗"
+ 
+-#: templates/fruser_list.html:211
++#: templates/fruser_list.html:223
+ msgid "Fail to delete fruser"
+ msgstr "刪除設備使用者失敗"
+ 
+-#: templates/fruser_list.html:221
++#: templates/fruser_list.html:233
+ msgid "Duplicate export!"
+ msgstr "重複匯出"
+ 
+@@ -697,6 +697,14 @@ msgstr "儲存並繼續建立"
+ msgid "Group add successfully"
+ msgstr "群組新增成功"
+ 
++#: templates/frusergroup_add.html:103
++msgid "Can not add a group with the name 'Default'"
++msgstr "無法新增名稱為Default的群組"
++
++#: templates/frusergroup_add.html:105
++msgid "Group name exists"
++msgstr "群組名稱存在"
++
+ #: templates/frusergroup_devices.html:10
+ msgid "FR User Group Device"
+ msgstr "FR設備管理"
+@@ -787,7 +795,7 @@ msgstr "建立新群組"
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:115
++#: templates/frusergroups_list.html:118
+ msgid "group"
+ msgstr "群組"
+ 
+-- 
+1.9.1
+

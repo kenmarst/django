@@ -1,0 +1,2396 @@
+From 2875e517ef060093b3bb6ce6049a0cb0a6dd4f8e Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 24 May 2016 13:22:25 +0800
+Subject: [PATCH 068/443] Add internationalization (i18n) in login, menu, user
+ item, systemlog, forget_password, setting.
+
+---
+ api/connection.py                            |   2 -
+ api/face.py                                  |   2 -
+ api/group.py                                 |   2 -
+ api/recognition.py                           |   2 -
+ api/user.py                                  |   2 -
+ api/utility.py                               |   1 -
+ br06/settings.py                             |  15 ++
+ br06/urls.py                                 |   3 +-
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 0 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |  30 +++
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 0 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |  30 +++
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 0 -> 4151 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 378 +++++++++++++++++++++++++++
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 0 -> 4151 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 378 +++++++++++++++++++++++++++
+ templates/login.html                         |  29 +-
+ templates/menu.html                          |  43 +--
+ templates/registration/forget_password.html  |  19 +-
+ templates/setting.html                       |  45 ++--
+ templates/systemlog_list.html                |  23 +-
+ templates/user_add.html                      |  25 +-
+ templates/user_group_add.html                |  17 +-
+ templates/user_group_devices.html            |  27 +-
+ templates/user_group_edit.html               |  21 +-
+ templates/user_group_list.html               |  19 +-
+ templates/user_group_members.html            |  27 +-
+ templates/user_list.html                     |  47 ++--
+ templates/user_update.html                   |  27 +-
+ 29 files changed, 1025 insertions(+), 189 deletions(-)
+ create mode 100644 locale/zh_CN/LC_MESSAGES/django.mo
+ create mode 100644 locale/zh_CN/LC_MESSAGES/django.po
+ create mode 100644 locale/zh_TW/LC_MESSAGES/django.mo
+ create mode 100644 locale/zh_TW/LC_MESSAGES/django.po
+ create mode 100644 templates/locale/zh_CN/LC_MESSAGES/django.mo
+ create mode 100644 templates/locale/zh_CN/LC_MESSAGES/django.po
+ create mode 100644 templates/locale/zh_TW/LC_MESSAGES/django.mo
+ create mode 100644 templates/locale/zh_TW/LC_MESSAGES/django.po
+
+diff --git a/api/connection.py b/api/connection.py
+index 8d269c3..8988c5d 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -1,5 +1,3 @@
+-#-*-coding:utf-8-*-
+-
+ import json
+ from collections import ChainMap
+ from django.http import JsonResponse
+diff --git a/api/face.py b/api/face.py
+index 4122ee4..9aa2bfa 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -1,5 +1,3 @@
+-#-*-coding:utf-8-*-
+-
+ import json, requests
+ from collections import ChainMap
+ from django.http import HttpResponse, JsonResponse
+diff --git a/api/group.py b/api/group.py
+index ac5f91e..e56f5d4 100644
+--- a/api/group.py
++++ b/api/group.py
+@@ -1,5 +1,3 @@
+-#-*-coding:utf-8-*-
+-
+ import json
+ from collections import ChainMap
+ from django.http import JsonResponse
+diff --git a/api/recognition.py b/api/recognition.py
+index e5f71bf..98c4196 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -1,5 +1,3 @@
+-#-*-coding:utf-8-*-
+-
+ import json, requests
+ from collections import ChainMap
+ from django.http import JsonResponse
+diff --git a/api/user.py b/api/user.py
+index f77deb9..2373f41 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -1,5 +1,3 @@
+-#-*-coding:utf-8-*-
+-
+ import json, requests
+ from collections import ChainMap
+ from django.http import JsonResponse
+diff --git a/api/utility.py b/api/utility.py
+index c2b690f..d5ccdf9 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -1,4 +1,3 @@
+-#-*-coding:utf-8-*-
+ import os
+ import re
+ from django.shortcuts import render
+diff --git a/br06/settings.py b/br06/settings.py
+index 4580e62..154285e 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -51,6 +51,7 @@ INSTALLED_APPS = [
+ MIDDLEWARE_CLASSES = [
+     'django.middleware.security.SecurityMiddleware',
+     'django.contrib.sessions.middleware.SessionMiddleware',
++    'django.middleware.locale.LocaleMiddleware',
+     'django.middleware.common.CommonMiddleware',
+     'django.middleware.csrf.CsrfViewMiddleware',
+     'django.contrib.auth.middleware.AuthenticationMiddleware',
+@@ -69,6 +70,7 @@ TEMPLATES = [
+             'context_processors': [
+                 'django.template.context_processors.debug',
+                 'django.template.context_processors.request',
++                'django.core.context_processors.i18n',
+                 'django.contrib.auth.context_processors.auth',
+                 'django.contrib.messages.context_processors.messages',
+             ],
+@@ -118,6 +120,19 @@ AUTH_PASSWORD_VALIDATORS = [
+ # Internationalization
+ # https://docs.djangoproject.com/en/dev/topics/i18n/
+ 
++LOCALE_PATHS = (
++    os.path.join(BASE_DIR, 'locale').replace('\\', '/'),
++    os.path.join(BASE_DIR, 'templates/locale').replace('\\', '/'),
++)
++
++_ = lambda s: s
++
++LANGUAGES = (
++   ('en-us', _('English')),
++   ('zh-TW', _('繁體中文')),
++   ('zh-CN', _('筒体中文')),
++)
++
+ LANGUAGE_CODE = 'en-us'
+ 
+ USE_I18N = True
+diff --git a/br06/urls.py b/br06/urls.py
+index 4ab79f2..345e089 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -13,7 +13,7 @@ Including another URLconf
+     1. Import the include() function: from django.conf.urls import url, include
+     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
+ """
+-from django.conf.urls import url
++from django.conf.urls import url, include
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_setting, user_list_view, user_add_view, user_update_view, add_user, update_user, delete_user
+@@ -30,6 +30,7 @@ from login.views import login, logout, password_reset_confirm, ResetPasswordRequ
+ 
+ 
+ urlpatterns = [
++    url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^admin/', admin.site.urls),
+     url(r'^setting/?$', user_setting),
+     url(r'^fruser_list/?$', fruser_list_view),
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+new file mode 100644
+index 0000000000000000000000000000000000000000..d95735ef14dc421077f2781efb41527ab7166353
+GIT binary patch
+literal 514
+zcmYL_yH4aV6o$QArHBez3irs6VHY$C1DY^nAR?KJG8rTgjhUE?QE-A|5R^1f&~Yny
+z01(A?yT!i6c1To+OT#m8B8`|MfBtRj_whM?9v`|v5JSKuPyvR4ZJ>w@7zGZ1G2o=9
+zXQ0&|2wj1W0RLe<4*CQ-0s09F0}TR2?ji<?iOM(;c^ADsUcUUhdinGCdV7xE{+@n3
+zT=zCjmG1G5CQd{)xXMK;E!?zg>-H+e8#HJ+e!~cOmMTrWJQfjIK8$k`rWQ7uen@JH
+zGYywWooR02S+g`x%sDdq3zvRcrTHndY?@#s0Y4H&@}6&#+5z!=Qn&G%Z+XttmfxU;
+z%W_RZ#bll^ohl2jv|SfBY>(m!^=!wj+Vy%sTdgIq%J`7QoP?b1TiCT5tL>uXitAPr
+zF`cTo?}1W1$D{rJO4FuMOQq%#o;%5)Zq1MNOqMVq7jUP`RL=EcJ6s{<zON{2mn%YL
+sCyj)REnMCa+Cc9Yzu)igP)qD*iP#l9!nLlDJm&~HiA3=^EcrhB0>BNDBme*a
+
+literal 0
+HcmV?d00001
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+new file mode 100644
+index 0000000..1cf13fe
+--- /dev/null
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -0,0 +1,30 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: \n"
++"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"Language: \n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=UTF-8\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: br06/settings.py:131
++msgid "English"
++msgstr "英語"
++
++#: br06/settings.py:132
++msgid "繁體中文"
++msgstr "Traditional Chinese"
++
++#: br06/settings.py:133
++msgid "筒体中文"
++msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+new file mode 100644
+index 0000000000000000000000000000000000000000..d95735ef14dc421077f2781efb41527ab7166353
+GIT binary patch
+literal 514
+zcmYL_yH4aV6o$QArHBez3irs6VHY$C1DY^nAR?KJG8rTgjhUE?QE-A|5R^1f&~Yny
+z01(A?yT!i6c1To+OT#m8B8`|MfBtRj_whM?9v`|v5JSKuPyvR4ZJ>w@7zGZ1G2o=9
+zXQ0&|2wj1W0RLe<4*CQ-0s09F0}TR2?ji<?iOM(;c^ADsUcUUhdinGCdV7xE{+@n3
+zT=zCjmG1G5CQd{)xXMK;E!?zg>-H+e8#HJ+e!~cOmMTrWJQfjIK8$k`rWQ7uen@JH
+zGYywWooR02S+g`x%sDdq3zvRcrTHndY?@#s0Y4H&@}6&#+5z!=Qn&G%Z+XttmfxU;
+z%W_RZ#bll^ohl2jv|SfBY>(m!^=!wj+Vy%sTdgIq%J`7QoP?b1TiCT5tL>uXitAPr
+zF`cTo?}1W1$D{rJO4FuMOQq%#o;%5)Zq1MNOqMVq7jUP`RL=EcJ6s{<zON{2mn%YL
+sCyj)REnMCa+Cc9Yzu)igP)qD*iP#l9!nLlDJm&~HiA3=^EcrhB0>BNDBme*a
+
+literal 0
+HcmV?d00001
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+new file mode 100644
+index 0000000..1cf13fe
+--- /dev/null
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -0,0 +1,30 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: \n"
++"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"Language: \n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=UTF-8\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: br06/settings.py:131
++msgid "English"
++msgstr "英語"
++
++#: br06/settings.py:132
++msgid "繁體中文"
++msgstr "Traditional Chinese"
++
++#: br06/settings.py:133
++msgid "筒体中文"
++msgstr "Simplified Chinese"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f8197e4a6159b2af4405e68c8565026bb2dba8e
+GIT binary patch
+literal 4151
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+new file mode 100644
+index 0000000..2ce248b
+--- /dev/null
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -0,0 +1,378 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: \n"
++"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"Language: \n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=UTF-8\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: templates/login.html:35
++msgid "Sign in"
++msgstr "登入"
++
++#: templates/login.html:37
++msgid "Forget password"
++msgstr "忘记密码"
++
++#: templates/login.html:43
++msgid "Languages"
++msgstr "语言"
++
++#: templates/menu.html:23
++msgid "Settings"
++msgstr "设置"
++
++#: templates/menu.html:24
++msgid "Logout"
++msgstr "登出"
++
++#: templates/menu.html:42
++msgid "System"
++msgstr "系统"
++
++#: templates/menu.html:47
++msgid "Dashboard"
++msgstr "系统仪表板"
++
++#: templates/menu.html:52 templates/setting.html.py:8
++#: templates/user_add.html:8 templates/user_list.html.py:25
++#: templates/user_list.html:31
++msgid "User List"
++msgstr "网站使用者管理"
++
++#: templates/menu.html:57
++msgid "Group List"
++msgstr "网站使用者群组管理"
++
++#: templates/menu.html:62
++msgid "Role & Permission"
++msgstr "角色管理"
++
++#: templates/menu.html:67 templates/setting.html.py:23
++#: templates/setting.html:29
++msgid "Setting"
++msgstr "设置"
++
++#: templates/menu.html:72 templates/user_group_devices.html.py:39
++#: templates/user_group_edit.html:38 templates/user_group_members.html:39
++msgid "Device List"
++msgstr "设备管理"
++
++#: templates/menu.html:73
++msgid "FRUser List"
++msgstr "设备使用者管理"
++
++#: templates/menu.html:74
++msgid "FRUser Group"
++msgstr "设备使用者群组管理"
++
++#: templates/menu.html:77
++msgid "Log"
++msgstr "纪录"
++
++#: templates/menu.html:82
++msgid "FRUser Log List"
++msgstr "设备使用者登入纪录"
++
++#: templates/menu.html:87 templates/systemlog_list.html.py:10
++#: templates/systemlog_list.html:25
++msgid "System Log List"
++msgstr "系统事件纪录"
++
++#: templates/menu.html:92
++msgid "Log Setting"
++msgstr "纪录汇出设置"
++
++#: templates/menu.html:98
++msgid "Log Out"
++msgstr "登出"
++
++#: templates/registration/forget_password.html:17
++msgid "Forgotten your password ?"
++msgstr "忘记您的密码？"
++
++#: templates/registration/forget_password.html:20
++msgid ""
++"Enter your email address below, and we'll email instructions for setting a "
++"new one."
++msgstr "在下面输入您的电子信箱，我们将透过电子邮件通知重设密码说明"
++
++#: templates/registration/forget_password.html:25
++msgid "Reset my password"
++msgstr "重设密码"
++
++#: templates/registration/forget_password.html:28
++#: templates/registration/password_reset_complete.html:39
++#: templates/registration/reset_password.html:43
++msgid "Returns sign-in screen"
++msgstr "回到登入页面"
++
++#: templates/registration/password_reset_complete.html:33
++msgid "Password updated successfully"
++msgstr "密码更新成功"
++
++#: templates/registration/password_reset_email.html:2
++#, python-format
++msgid ""
++"You're receiving this email because you requested a password reset for your "
++"user account at %(site_name)s."
++msgstr ""
++
++#: templates/registration/password_reset_email.html:4
++#, python-format
++msgid ""
++"Please reset your password in %(expired)s minutes, go to the following page "
++"and choose a new password:"
++msgstr ""
++
++#: templates/registration/password_reset_email.html:8
++msgid "Your account, in case you've forgotten:"
++msgstr ""
++
++#: templates/registration/password_reset_email.html:10
++msgid "Thanks for using our site!"
++msgstr ""
++
++#: templates/registration/password_reset_email.html:12
++#, python-format
++msgid "The %(site_name)s team"
++msgstr ""
++
++#: templates/registration/reset_password.html:33
++msgid "Password reset confirmation"
++msgstr "密码重置确认"
++
++#: templates/registration/reset_password.html:36
++msgid ""
++"Please enter your new password twice so we can verify you typed it in "
++"correctly."
++msgstr "请输入两次新密码，以便我们确认您输入是否一致"
++
++#: templates/registration/reset_password.html:40
++msgid "confirm"
++msgstr "确认"
++
++#: templates/setting.html:41 templates/user_add.html.py:39
++#: templates/user_list.html:71 templates/user_update.html.py:38
++msgid "Account"
++msgstr "帐号"
++
++#: templates/setting.html:54 templates/user_add.html.py:48
++#: templates/user_group_devices.html:82 templates/user_group_members.html:82
++#: templates/user_list.html.py:78 templates/user_update.html:47
++msgid "Name"
++msgstr "名称"
++
++#: templates/setting.html:66
++msgid "Email"
++msgstr "电子信箱"
++
++#: templates/setting.html:79 templates/user_add.html.py:67
++#: templates/user_update.html:64
++msgid "Password"
++msgstr "密码"
++
++#: templates/setting.html:91
++msgid "New Password"
++msgstr "新密码"
++
++#: templates/setting.html:103
++msgid "Confirm Password"
++msgstr "确认密码"
++
++#: templates/setting.html:118 templates/user_add.html.py:97
++#: templates/user_update.html:94
++msgid "Back"
++msgstr "返回"
++
++#: templates/setting.html:119 templates/user_add.html.py:98
++#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
++#: templates/user_update.html:95
++msgid "Save"
++msgstr "储存"
++
++#: templates/systemlog_list.html:31
++msgid "System log List"
++msgstr "系统事件纪录"
++
++#: templates/systemlog_list.html:40
++msgid "Export"
++msgstr "汇出"
++
++#: templates/systemlog_list.html:68 templates/user_list.html.py:67
++msgid "No."
++msgstr "编号"
++
++#: templates/systemlog_list.html:73
++msgid "Category"
++msgstr "类别"
++
++#: templates/systemlog_list.html:78
++msgid "Notes"
++msgstr "记要"
++
++#: templates/systemlog_list.html:82
++msgid "Date/Time"
++msgstr "日期时间"
++
++#: templates/user_add.html:17 templates/user_add.html.py:23
++#: templates/user_add.html:31
++msgid "User add"
++msgstr "使用者新增"
++
++#: templates/user_add.html:58 templates/user_update.html.py:55
++msgid "E-Mail"
++msgstr "电子信箱"
++
++#: templates/user_add.html:75 templates/user_update.html.py:72
++msgid "Confirm password"
++msgstr "确认密码"
++
++#: templates/user_add.html:84 templates/user_list.html.py:82
++#: templates/user_update.html:81
++msgid "Role"
++msgstr "角色"
++
++#: templates/user_group_add.html:8 templates/user_group_add.html.py:17
++#: templates/user_group_add.html:23
++msgid "User Group Add"
++msgstr "建立新群组"
++
++#: templates/user_group_add.html:31 templates/user_group_edit.html.py:48
++#: templates/user_group_list.html:59
++msgid "Group"
++msgstr "群组"
++
++#: templates/user_group_add.html:38
++msgid "Group Name"
++msgstr "群组名称"
++
++#: templates/user_group_add.html:47 templates/user_group_edit.html.py:64
++msgid "Cancel"
++msgstr "关闭"
++
++#: templates/user_group_add.html:49
++msgid "Save and add another"
++msgstr "储存并继续建立"
++
++#: templates/user_group_devices.html:10
++msgid "User Group Device"
++msgstr "设备管理"
++
++#: templates/user_group_devices.html:18 templates/user_group_devices.html:25
++#: templates/user_group_edit.html.py:8 templates/user_group_edit.html:17
++#: templates/user_group_edit.html.py:24 templates/user_group_members.html:18
++#: templates/user_group_members.html:25
++msgid "User Group Edit"
++msgstr "使用者群组修改"
++
++#: templates/user_group_devices.html:33 templates/user_group_edit.html:32
++#: templates/user_group_members.html:33
++msgid "Imformation"
++msgstr "一般"
++
++#: templates/user_group_devices.html:36 templates/user_group_edit.html:35
++#: templates/user_group_members.html:36
++msgid "Member List"
++msgstr "成员管理"
++
++#: templates/user_group_devices.html:48
++msgid "Device list"
++msgstr "设备管理"
++
++#: templates/user_group_devices.html:54
++msgid "Add New Device"
++msgstr "新增设备"
++
++#: templates/user_group_devices.html:56
++msgid "Search Device :"
++msgstr "搜寻设备 :"
++
++#: templates/user_group_devices.html:60 templates/user_group_members.html:60
++msgid "Add"
++msgstr "新增"
++
++#: templates/user_group_devices.html:89 templates/user_group_list.html:72
++#: templates/user_group_members.html:89 templates/user_list.html.py:98
++msgid "Delete"
++msgstr "删除"
++
++#: templates/user_group_devices.html:108
++msgid "Device"
++msgstr "设备"
++
++#: templates/user_group_edit.html:55
++msgid "Group Name :"
++msgstr "群组名称 :"
++
++#: templates/user_group_list.html:10 templates/user_group_list.html.py:18
++#: templates/user_group_list.html:24
++msgid "User Group List"
++msgstr "网站使用者群组管理"
++
++#: templates/user_group_list.html:32
++msgid "Create new group"
++msgstr "建立新群组"
++
++#: templates/user_group_list.html:54
++msgid "No"
++msgstr "编号"
++
++#: templates/user_group_list.html:64
++msgid "Users"
++msgstr "使用者"
++
++#: templates/user_group_list.html:71
++msgid "Edit"
++msgstr "编辑"
++
++#: templates/user_group_members.html:10
++msgid "User Group Member"
++msgstr "群组成员管理"
++
++#: templates/user_group_members.html:48
++msgid "Member list"
++msgstr "成员管理"
++
++#: templates/user_group_members.html:54
++msgid "Add New Member"
++msgstr "建立新成员"
++
++#: templates/user_group_members.html:56
++msgid "Search User :"
++msgstr "搜寻使用者 :"
++
++#: templates/user_group_members.html:108
++msgid "User"
++msgstr "使用者"
++
++#: templates/user_list.html:39
++msgid "Create new account"
++msgstr "建立新帐号"
++
++#: templates/user_list.html:86
++msgid "CreateDate"
++msgstr "创立时间"
++
++#: templates/user_list.html:91
++msgid "UpdateDate"
++msgstr "更新时间"
++
++#: templates/user_update.html:8 templates/user_update.html.py:23
++msgid "User Update"
++msgstr "建立新用户"
++
++#: templates/user_update.html:17 templates/user_update.html.py:31
++msgid "User update"
++msgstr "建立新用户"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+new file mode 100644
+index 0000000000000000000000000000000000000000..7006a307f7e52087e39e4fb77b665b856685754a
+GIT binary patch
+literal 4151
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+new file mode 100644
+index 0000000..e4b0672
+--- /dev/null
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -0,0 +1,378 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: \n"
++"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"Language: \n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=UTF-8\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: templates/login.html:35
++msgid "Sign in"
++msgstr "登入"
++
++#: templates/login.html:37
++msgid "Forget password"
++msgstr "忘記密碼"
++
++#: templates/login.html:43
++msgid "Languages"
++msgstr "語言"
++
++#: templates/menu.html:23
++msgid "Settings"
++msgstr "設定"
++
++#: templates/menu.html:24
++msgid "Logout"
++msgstr "登出"
++
++#: templates/menu.html:42
++msgid "System"
++msgstr "系統"
++
++#: templates/menu.html:47
++msgid "Dashboard"
++msgstr "系統儀表板"
++
++#: templates/menu.html:52 templates/setting.html.py:8
++#: templates/user_add.html:8 templates/user_list.html.py:25
++#: templates/user_list.html:31
++msgid "User List"
++msgstr "網站使用者管理"
++
++#: templates/menu.html:57
++msgid "Group List"
++msgstr "網站使用者群組管理"
++
++#: templates/menu.html:62
++msgid "Role & Permission"
++msgstr "角色管理"
++
++#: templates/menu.html:67 templates/setting.html.py:23
++#: templates/setting.html:29
++msgid "Setting"
++msgstr "設定"
++
++#: templates/menu.html:72 templates/user_group_devices.html.py:39
++#: templates/user_group_edit.html:38 templates/user_group_members.html:39
++msgid "Device List"
++msgstr "設備管理"
++
++#: templates/menu.html:73
++msgid "FRUser List"
++msgstr "設備使用者管理"
++
++#: templates/menu.html:74
++msgid "FRUser Group"
++msgstr "設備使用者群組管理"
++
++#: templates/menu.html:77
++msgid "Log"
++msgstr "紀錄"
++
++#: templates/menu.html:82
++msgid "FRUser Log List"
++msgstr "設備使用者登入紀錄"
++
++#: templates/menu.html:87 templates/systemlog_list.html.py:10
++#: templates/systemlog_list.html:25
++msgid "System Log List"
++msgstr "系統事件紀錄"
++
++#: templates/menu.html:92
++msgid "Log Setting"
++msgstr "紀錄匯出設定"
++
++#: templates/menu.html:98
++msgid "Log Out"
++msgstr "登出"
++
++#: templates/registration/forget_password.html:17
++msgid "Forgotten your password ?"
++msgstr "忘記您的密碼？"
++
++#: templates/registration/forget_password.html:20
++msgid ""
++"Enter your email address below, and we'll email instructions for setting a "
++"new one."
++msgstr "在下面輸入您的電子信箱，我們將透過電子郵件通知重設密碼說明"
++
++#: templates/registration/forget_password.html:25
++msgid "Reset my password"
++msgstr "重設密碼"
++
++#: templates/registration/forget_password.html:28
++#: templates/registration/password_reset_complete.html:39
++#: templates/registration/reset_password.html:43
++msgid "Returns sign-in screen"
++msgstr "回到登入頁面"
++
++#: templates/registration/password_reset_complete.html:33
++msgid "Password updated successfully"
++msgstr "密碼更新成功"
++
++#: templates/registration/password_reset_email.html:2
++#, python-format
++msgid ""
++"You're receiving this email because you requested a password reset for your "
++"user account at %(site_name)s."
++msgstr ""
++
++#: templates/registration/password_reset_email.html:4
++#, python-format
++msgid ""
++"Please reset your password in %(expired)s minutes, go to the following page "
++"and choose a new password:"
++msgstr ""
++
++#: templates/registration/password_reset_email.html:8
++msgid "Your account, in case you've forgotten:"
++msgstr ""
++
++#: templates/registration/password_reset_email.html:10
++msgid "Thanks for using our site!"
++msgstr ""
++
++#: templates/registration/password_reset_email.html:12
++#, python-format
++msgid "The %(site_name)s team"
++msgstr ""
++
++#: templates/registration/reset_password.html:33
++msgid "Password reset confirmation"
++msgstr "密碼重置確認"
++
++#: templates/registration/reset_password.html:36
++msgid ""
++"Please enter your new password twice so we can verify you typed it in "
++"correctly."
++msgstr "請輸入兩次新密碼，以便我們確認您輸入是否一致"
++
++#: templates/registration/reset_password.html:40
++msgid "confirm"
++msgstr "確認"
++
++#: templates/setting.html:41 templates/user_add.html.py:39
++#: templates/user_list.html:71 templates/user_update.html.py:38
++msgid "Account"
++msgstr "帳號"
++
++#: templates/setting.html:54 templates/user_add.html.py:48
++#: templates/user_group_devices.html:82 templates/user_group_members.html:82
++#: templates/user_list.html.py:78 templates/user_update.html:47
++msgid "Name"
++msgstr "名稱"
++
++#: templates/setting.html:66
++msgid "Email"
++msgstr "電子信箱"
++
++#: templates/setting.html:79 templates/user_add.html.py:67
++#: templates/user_update.html:64
++msgid "Password"
++msgstr "密碼"
++
++#: templates/setting.html:91
++msgid "New Password"
++msgstr "新密碼"
++
++#: templates/setting.html:103
++msgid "Confirm Password"
++msgstr "確認密碼"
++
++#: templates/setting.html:118 templates/user_add.html.py:97
++#: templates/user_update.html:94
++msgid "Back"
++msgstr "返回"
++
++#: templates/setting.html:119 templates/user_add.html.py:98
++#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
++#: templates/user_update.html:95
++msgid "Save"
++msgstr "儲存"
++
++#: templates/systemlog_list.html:31
++msgid "System log List"
++msgstr "系統事件紀錄"
++
++#: templates/systemlog_list.html:40
++msgid "Export"
++msgstr "匯出"
++
++#: templates/systemlog_list.html:68 templates/user_list.html.py:67
++msgid "No."
++msgstr "編號"
++
++#: templates/systemlog_list.html:73
++msgid "Category"
++msgstr "類別"
++
++#: templates/systemlog_list.html:78
++msgid "Notes"
++msgstr "記要"
++
++#: templates/systemlog_list.html:82
++msgid "Date/Time"
++msgstr "日期時間"
++
++#: templates/user_add.html:17 templates/user_add.html.py:23
++#: templates/user_add.html:31
++msgid "User add"
++msgstr "使用者新增"
++
++#: templates/user_add.html:58 templates/user_update.html.py:55
++msgid "E-Mail"
++msgstr "電子信箱"
++
++#: templates/user_add.html:75 templates/user_update.html.py:72
++msgid "Confirm password"
++msgstr "確認密碼"
++
++#: templates/user_add.html:84 templates/user_list.html.py:82
++#: templates/user_update.html:81
++msgid "Role"
++msgstr "角色"
++
++#: templates/user_group_add.html:8 templates/user_group_add.html.py:17
++#: templates/user_group_add.html:23
++msgid "User Group Add"
++msgstr "建立新群組"
++
++#: templates/user_group_add.html:31 templates/user_group_edit.html.py:48
++#: templates/user_group_list.html:59
++msgid "Group"
++msgstr "群組"
++
++#: templates/user_group_add.html:38
++msgid "Group Name"
++msgstr "群組名稱"
++
++#: templates/user_group_add.html:47 templates/user_group_edit.html.py:64
++msgid "Cancel"
++msgstr "關閉"
++
++#: templates/user_group_add.html:49
++msgid "Save and add another"
++msgstr "儲存並繼續建立"
++
++#: templates/user_group_devices.html:10
++msgid "User Group Device"
++msgstr "設備管理"
++
++#: templates/user_group_devices.html:18 templates/user_group_devices.html:25
++#: templates/user_group_edit.html.py:8 templates/user_group_edit.html:17
++#: templates/user_group_edit.html.py:24 templates/user_group_members.html:18
++#: templates/user_group_members.html:25
++msgid "User Group Edit"
++msgstr "使用者群組修改"
++
++#: templates/user_group_devices.html:33 templates/user_group_edit.html:32
++#: templates/user_group_members.html:33
++msgid "Imformation"
++msgstr "一般"
++
++#: templates/user_group_devices.html:36 templates/user_group_edit.html:35
++#: templates/user_group_members.html:36
++msgid "Member List"
++msgstr "成員管理"
++
++#: templates/user_group_devices.html:48
++msgid "Device list"
++msgstr "設備管理"
++
++#: templates/user_group_devices.html:54
++msgid "Add New Device"
++msgstr "新增設備"
++
++#: templates/user_group_devices.html:56
++msgid "Search Device :"
++msgstr "搜尋設備 :"
++
++#: templates/user_group_devices.html:60 templates/user_group_members.html:60
++msgid "Add"
++msgstr "新增"
++
++#: templates/user_group_devices.html:89 templates/user_group_list.html:72
++#: templates/user_group_members.html:89 templates/user_list.html.py:98
++msgid "Delete"
++msgstr "刪除"
++
++#: templates/user_group_devices.html:108
++msgid "Device"
++msgstr "設備"
++
++#: templates/user_group_edit.html:55
++msgid "Group Name :"
++msgstr "群組名稱 :"
++
++#: templates/user_group_list.html:10 templates/user_group_list.html.py:18
++#: templates/user_group_list.html:24
++msgid "User Group List"
++msgstr "網站使用者群組管理"
++
++#: templates/user_group_list.html:32
++msgid "Create new group"
++msgstr "建立新群組"
++
++#: templates/user_group_list.html:54
++msgid "No"
++msgstr "編號"
++
++#: templates/user_group_list.html:64
++msgid "Users"
++msgstr "使用者"
++
++#: templates/user_group_list.html:71
++msgid "Edit"
++msgstr "編輯"
++
++#: templates/user_group_members.html:10
++msgid "User Group Member"
++msgstr "群組成員管理"
++
++#: templates/user_group_members.html:48
++msgid "Member list"
++msgstr "成員管理"
++
++#: templates/user_group_members.html:54
++msgid "Add New Member"
++msgstr "建立新成員"
++
++#: templates/user_group_members.html:56
++msgid "Search User :"
++msgstr "搜尋使用者 :"
++
++#: templates/user_group_members.html:108
++msgid "User"
++msgstr "使用者"
++
++#: templates/user_list.html:39
++msgid "Create new account"
++msgstr "建立新帳號"
++
++#: templates/user_list.html:86
++msgid "CreateDate"
++msgstr "創立時間"
++
++#: templates/user_list.html:91
++msgid "UpdateDate"
++msgstr "更新時間"
++
++#: templates/user_update.html:8 templates/user_update.html.py:23
++msgid "User Update"
++msgstr "建立新用戶"
++
++#: templates/user_update.html:17 templates/user_update.html.py:31
++msgid "User update"
++msgstr "建立新用戶"
+diff --git a/templates/login.html b/templates/login.html
+index 3170e77..f8e3432 100644
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -1,11 +1,23 @@
+ <!DOCTYPE html>
++{% load i18n %}
++<html xml:lang="{{ LANGUAGE_CODE }}" lang="{{ LANGUAGE_CODE }}">
+ {% include 'commons_js.html' %}
+ 
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+ <!-- <body background="{% static "background.jpg" %}"> -->
+ <head>
+-	<script src="https://www.google.com/recaptcha/api.js" async defer></script>
++	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
++	<script src="https://www.google.com/recaptcha/api.js" async defer ></script>
++	<script type="text/javascript">
++		function selectdo(obj) {
++			      str="/i18n/setlang/";
++			      myform = document.getElementById('testform');
++			      myform.method = "POST";
++			      myform.action = str;
++			      myform.submit();
++		}
++	</script>
+ </head>
+ 
+ <div class="container">
+@@ -20,12 +32,20 @@
+ 					<div class="pwstrength_viewport_progress"></div>
+ 
+ 					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY" style="transform:scale(0.8);-webkit-transform:scale(0.8);transform-origin:0 0;-webkit-transform-origin:0 0;" align="center"></div>
+-					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">Sign in</button>
++					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">{% trans "Sign in" %}</button>
+ 					<div>
+-						<a href="account/forget_password">Forget password</a>
++						<a href="account/forget_password">{% trans "Forget password" %}</a>
+ 					</div>
+ 				</form>
+-
++				 <br>
++				<form name="testform" id="testform" method='post'>{% csrf_token %}
++				  <select id="language" name="language" class="form-control input-lg" style="width:160px;height:40px;font-size:14px;" onchange="selectdo(this)">
++				  <option value="" >{% trans "Languages" %}</option>
++				    {% for lang in LANGUAGES %}
++				    <option value="{{ lang.0 }}" > {{ lang.1 }} </option>
++				    {% endfor %}
++				  </select>
++				</form>
+ 				<!-- <div class="form-links">
+ 					<a href="#">www.website.com</a>
+ 				</div> -->
+@@ -40,6 +60,7 @@
+ 		<br>
+ 	</p>    -->
+ </div>
++</html>
+ 
+ <script src="{% static "login.js" %}"></script>
+ <link rel="stylesheet" href="{% static "login.css" %}">
+diff --git a/templates/menu.html b/templates/menu.html
+index 0a12769..6118544 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -1,3 +1,4 @@
++{% load i18n %}
+ {% load static %}
+ <link rel="stylesheet" href="{% static "bootstrap.min.css" %}">
+ <link rel="stylesheet" href="{% static "datepicker3.css" %}">
+@@ -19,8 +20,8 @@
+ 					<a href="#" class="dropdown-toggle" data-toggle="dropdown"><svg class="glyph stroked male-user"><use xlink:href="#stroked-male-user"></use></svg> {{ request.session.Name }} <span class="caret"></span></a>
+ 					<ul class="dropdown-menu" role="menu">
+ 						<!-- <li><a href="#"><svg class="glyph stroked male-user"><use xlink:href="#stroked-male-user"></use></svg> Profile</a></li> -->
+-						<li><a href="/setting"><svg class="glyph stroked gear"><use xlink:href="#stroked-gear"></use></svg> Settings</a></li>
+-						<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"></use></svg> Logout</a></li>
++						<li><a href="/setting"><svg class="glyph stroked gear"><use xlink:href="#stroked-gear"></use></svg> {% trans "Settings" %}</a></li>
++						<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"></use></svg> {% trans "Logout" %}</a></li>
+ 					</ul>
+ 				</li>
+ 			</ul>
+@@ -38,63 +39,63 @@
+ 	<ul class="nav menu">
+ 		<li class="parent ">
+ 			<a href="#">
+-			    <span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System
++			    <span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> {% trans "System" %}
+ 			</a>
+             <ul class="children collapse" id="sub-item-1">
+                 <li>
+ 			    	<a class="" href="/dashboard">
+-				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Dashboard
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Dashboard" %}
+ 					</a>
+ 				</li>
+ 			    <li>
+ 				    <a class="" href="/user_list">
+-				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> User List
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User List" %}
+ 				    </a>
+ 			    </li>
+ 			        <li>
+ 				    <a class="" href="/user_group_list">
+-				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Group List
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Group List" %}
+ 				    </a>
+ 			    </li>
+ 			    <li>
+ 				    <a class="" href="/role_list">
+-				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Role & Permission
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Role & Permission" %}
+ 				    </a>
+ 			    </li>
+                 <li>
+ 		            <a class="" href="#">
+-		            <svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg>  Setting
++		            <svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg>  {% trans "Setting" %}
+ 		            </a>
+ 		        </li>
+              </ul>
+ 		</li>
+-        <li name="device_list"><a href="/device_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> Device List</a></li>
+-        <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser List</a></li>
+-        <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser Group</a></li>
++        <li name="device_list"><a href="/device_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> {% trans "Device List" %}</a></li>
++        <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> {% trans "FRUser List" %}</a></li>
++        <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> {% trans "FRUser Group" %}</a></li>
+         <li class="parent ">
+ 		    <a href="#">
+-			   <span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log
++			   <span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> {% trans "Log" %}
+ 		    </a>
+ 		    <ul class="children collapse" id="sub-item-3">
+ 			<li>
+ 				<a class="" href="/fruserlog_list">
+-				     <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> FRUser Log List
++				     <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "FRUser Log List" %}
+ 				</a>
+ 			</li>
+             <li>
+ 				<a class="" href="/systemlog_list">
+-				      <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> System Log List
++				      <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "System Log List" %}
+      			</a>
+ 			 </li>
+              <li>
+ 				<a class="" href="/logsetting">
+-				      <svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg> Log Setting
++				      <svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg> {% trans "Log Setting" %}
+ 				</a>
+ 			 </li>
+ 			 </ul>
+ 		</li>
+ 		<li role="presentation" class="divider"></li>
+-		<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"/></svg> Log Out</a></li>
++		<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"/></svg> {% trans "Log Out" %}</a></li>
+ 	</ul>
+ 	<script>
+                  $(document).ready(function() {
+@@ -106,16 +107,16 @@
+                            $('#sub-item-1').collapse('show');
+                        }
+ 	           });
+-               
++
+                    jQuery.each(loglink, function() {
+                        if($(location).attr('pathname') ==this){
+                             $('#sub-item-3').collapse('show');
+                        }
+                   });
+-                
++
+                    $('#sub-item-1').collapse({'toggle': false});
+                    $('#sub-item-3').collapse({'toggle': false});
+-                   
++
+                 })
+ 
+ 	        $("#sub-item-1").on("shown.bs.collapse", function() {
+@@ -125,9 +126,9 @@
+ 
+ 	        $("#sub-item-3").on("shown.bs.collapse", function() {
+                         $("#sub-item-1").collapse('hide');
+-                   
++
+ 	        })
+-                        
++
+ 	</script>
+ 	<a class="navbar-fixed-bottom" href="http://MediaLoot.com" style=" color:white"> Theme from MediaLoot</a>
+ </div><!--/.sidebar-->
+diff --git a/templates/registration/forget_password.html b/templates/registration/forget_password.html
+index 2f893e5..f32636d 100644
+--- a/templates/registration/forget_password.html
++++ b/templates/registration/forget_password.html
+@@ -1,27 +1,11 @@
+ <!DOCTYPE html>
+ {% load i18n %}
+-<html xml:lang="{{ LANGUAGE_CODE }}" lang="{{ LANGUAGE_CODE }}">
+ {% include 'commons_js.html' %}
+ 
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+ <!-- <body background="{% static "background.jpg" %}"> -->
+ 
+-<head>
+-	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+-	<title>Forget Password</title>
+-		<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+-		<script type="text/javascript">
+-			function selectdo(obj) {
+-			          str="/i18n/setlang/";
+-			          myform = document.getElementById('testform');
+-			          myform.method = "POST";
+-			          myform.action = str;
+-			          myform.submit();
+-			}
+-		</script>
+-</head>
+-
+ <div class="container">
+ 	<div class="row" id="pwd-container">
+ 	<div class="col-md-4"></div>
+@@ -44,7 +28,7 @@
+ 						<a href="/">{% trans "Returns sign-in screen" %}</a>
+ 					</div>
+ 				</form>
+-			</section>  
++			</section>
+ 		</div>
+ 
+ 	<div class="col-md-4"></div>
+@@ -54,7 +38,6 @@
+ <script src="{% static "login.js" %}"></script>
+ <link rel="stylesheet" href="{% static "login.css" %}">
+ 
+-</html>
+ 
+ <script>
+ 	var code = '{{Code}}';
+diff --git a/templates/setting.html b/templates/setting.html
+index 58e41b9..50eb4f0 100644
+--- a/templates/setting.html
++++ b/templates/setting.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>User List</title>
++<title>{% trans "User List" %}</title>
+ 
+ <!--[if lt IE 9]>
+ <script src="js/html5shiv.js"></script>
+@@ -15,20 +16,20 @@
+ 
+ <body>
+ 	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">Setting</li>
++				<li class="active">{% trans "Setting" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-				<h1 class="page-header">Setting</h1>
++				<h1 class="page-header">{% trans "Setting" %}</h1>
+ 			</div>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+@@ -37,11 +38,11 @@
+ 						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+                             <div class="form-body">
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Account
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Account" %}
+                                         <span class="required"> </span>
+                                     </label>
+                                     <div class="col-md-6">
+-                                    	<div class="input-icon"> 
++                                      <div class="input-icon">
+                                         	<input readonly type="text" class="form-control" placeholder="" name="Account" value="{{obj.Account}}">
+                                         	<div class="form-control-focus"> </div>
+                                             <i class="fa fa-envelope"></i>
+@@ -50,11 +51,11 @@
+                                     </div>
+                                 </div>
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Name
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Name" %}
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+-                                    	<div class="input-icon"> 
++                                      <div class="input-icon">
+                                         	<input type="text" class="form-control" placeholder="" name="name" value="{{obj.Name}}">
+                                         	<div class="form-control-focus"> </div>
+                                             <i class="fa fa-envelope"></i>
+@@ -62,11 +63,11 @@
+                                     </div>
+                                 </div>
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Email
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Email" %}
+                                         <span class="required"> </span>
+                                     </label>
+                                     <div class="col-md-6">
+-                                    	<div class="input-icon"> 
++                                      <div class="input-icon">
+                                         	<input readonly type="text" class="form-control" placeholder="" name="email" value="{{obj.Email}}">
+                                         	<div class="form-control-focus"> </div>
+                                             <i class="fa fa-envelope"></i>
+@@ -75,23 +76,23 @@
+                                     </div>
+                                 </div>
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Password
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Password" %}
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+-                                        <div class="input-icon">                                                
++                                        <div class="input-icon">
+                                             <input type="password" class="form-control" placeholder="" name="password">
+                                             <div class="form-control-focus"> </div>
+                                             <i class="fa fa-key"></i>
+-                                        </div>   
++                                        </div>
+                                     </div>
+                                 </div>
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">New Password
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "New Password" %}
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+-                                    	<div class="input-icon">	
++                                      <div class="input-icon">
+                                             <input type="password" class="form-control" placeholder="Enter new password" name="new_password">
+                                             <div class="form-control-focus"> </div>
+                                             <i class="fa fa-user"></i>
+@@ -99,7 +100,7 @@
+                                     </div>
+                                 </div>
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Confirm Password
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Confirm Password" %}
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+@@ -114,8 +115,8 @@
+                             <div class="form-actions">
+                                 <div class="row">
+                                     <div class="col-md-offset-3 col-md-9">
+-                                        <a type="reset" class="btn default">Back</a>
+-                                        <a onClick="onSaveClick()" type="" class="btn green">Save</a>
++                                        <a type="reset" class="btn default">{% trans "Back" %}</a>
++                                        <a onClick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+                             </div>
+@@ -123,7 +124,7 @@
+ 					</div>
+ 				</div>
+ 			</div>
+-		</div><!--/.row-->	
++		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+ 	{% load static %}
+@@ -198,7 +199,7 @@
+ 			}
+ 		});
+ 	}
+-	</script>	
++	</script>
+ </body>
+ 
+ </html>
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index 128f3ce..be63b65 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,14 +7,14 @@
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>System Log List</title>
++<title>{% trans "System Log List" %}</title>
+ 
+ <!--[if lt IE 9]>
+ <script src="js/html5shiv.js"></script>
+ <script src="js/respond.min.js"></script>
+ <![endif]-->
+ 
+-</head>l
++</head>
+ 
+ <body>
+ 	{% include 'menu.html' %}
+@@ -21,22 +22,22 @@
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">System Log List</li>
++				<li class="active">{% trans "System Log List" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+                 <div class="col-lg-12">
+-                   <h1 class="page-header"><small>System log List</small></h1>
++                   <h1 class="page-header"><small>{% trans "System log List" %}</small></h1>
+                  </div>
+         </div><!--/.row-->
+- 
++
+         <div class="row">
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+ 					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 					<div class="panel-body">
+-						 <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/systemlog_export/'">Export</button>
++						 <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/systemlog_export/'">{% trans "Export" %}</button>
+ 						<table id="SystemLogList"></table>
+                     </div>
+ 				</div>
+@@ -64,21 +65,21 @@
+             sortOrder: 'asc',
+ 			columns: [{
+ 				field: 'Index',
+-				title: 'No.',
++				title: '{% trans "No." %}',
+ 				sortable: true,
+ 			},
+ 			{
+ 				field: 'Category',
+-				title: 'Category',
++				title: '{% trans "Category" %}',
+ 				sortable: true
+ 			},
+ 			{
+ 				field: 'LogContent',
+-				title: 'Notes'
++				title: '{% trans "Notes" %}'
+ 			},
+ 			{
+ 				field: 'LogDateTime',
+-				title: 'Date/Time',
++				title: '{% trans "Date/Time" %}',
+ 				sortable: true
+ 			}],
+ 			data: dataSet
+@@ -97,7 +98,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+-         
++
+ 	</script>
+ </body>
+ 
+diff --git a/templates/user_add.html b/templates/user_add.html
+index ef4b29e..659744e 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User List</title>
++        <title>{% trans "User List" %}</title>
+     </head>
+ 
+     <body>
+@@ -13,13 +14,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User add</li>
++                    <li class="active">{% trans "User add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>User add</small></h1>
++                    <h1 class="page-header"><small>{% trans "User add" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -27,7 +28,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>User add</p>
++                            <p>{% trans "User add" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+@@ -35,7 +36,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+ 					                        <i style="color: red;">*</i>
+-                                            Account
++                                            {% trans "Account" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                                 <input type="text" class="form-control" placeholder="" name="account">
+@@ -44,7 +45,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            Name
++                                            {% trans "Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                                 <input type="text" class="form-control" placeholder="" name="name">
+@@ -54,7 +55,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+ 					                        <i style="color: red;">*</i>
+-					                        E-Mail
++                                            {% trans "E-Mail" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                                 <input type="text" class="form-control" placeholder="" name="email">
+@@ -63,7 +64,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            Password
++                                            {% trans "Password" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="password">
+@@ -71,7 +72,7 @@
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            Confirm password
++                                            {% trans "Confirm password" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="confirm">
+@@ -80,7 +81,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            Role
++                                            {% trans "Role" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <select class="form-control" name="role">
+@@ -93,8 +94,8 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="history.back()">Back</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="history.back()">{% trans "Back" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index 9215abe..002e34d 100644
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User Group Add</title>
++        <title>{% trans "User Group Add" %}</title>
+     </head>
+ 
+     <body>
+@@ -13,13 +14,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User Group Add</li>
++                    <li class="active">{% trans "User Group Add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>User Group Add</small></h1>
++                    <h1 class="page-header"><small>{% trans "User Group Add" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -27,14 +28,14 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Group</p>
++                            <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Group Name
++                                            <span style="color: red;">*</span> {% trans "Group Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="text" class="form-control" placeholder="Please input Group Name" name="Name" required="required">
+@@ -43,9 +44,9 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-4 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/user_group_list'">Cancel</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
+-                                <button class="btn btn-default" onclick="onSaveAnotherClick()">Save and add another</button>
++                                <button class="btn btn-default" onclick="location.href='/user_group_list'">{% trans "Cancel" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
++                                <button class="btn btn-default" onclick="onSaveAnotherClick()">{% trans "Save and add another" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index 56288f9..37c9adb 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User Group Device</title>
++        <title>{% trans "User Group Device" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>User Group Edit</li>
++                    <li>{% trans "User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>User Group Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "User Group Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,13 +30,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">Member List</a>
++                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">{% trans "Device List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -44,19 +45,19 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="col-md-8 panel panel-default">
+-                        <div class="panel-heading"><p>Device list</p></div>
++                        <div class="panel-heading"><p>{% trans "Device list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="DeviceList"></table>
+                         </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+-                        <div class="panel-heading"><p>Add New Device</p></div>
++                        <div class="panel-heading"><p>{% trans "Add New Device" %}</p></div>
+                         <div class="panel-body">
+-                            <label>Search Device :</label>
++                            <label>{% trans "Search Device :" %}</label>
+                             <table id="DeviceAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -78,14 +79,14 @@
+                 columns: [
+                     {
+                         field: 'Name',
+-                        title: 'Name',
++                        title: '{% trans "Name" %}',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+@@ -104,7 +105,7 @@
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Device',
++                        title: '{% trans "Device" %}',
+                         sortable: true
+                     }
+                 ],
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index ad33d5c..ad58153 100644
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User Group Edit</title>
++        <title>{% trans "User Group Edit" %}</title>
+     </head>
+ 
+     <body>
+@@ -13,14 +14,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>User Group Edit</li>
++                    <li>{% trans "User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>User Group Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "User Group Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,13 +29,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li class="active">
+-                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">Member List</a>
++                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">{% trans "Device List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -44,14 +45,14 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Group</p>
++                            <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Group Name :
++                                            <span style="color: red;">*</span> {% trans "Group Name :" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Group Name" name="Name" required="required">
+@@ -60,8 +61,8 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/user_group_list'">Cancel</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="location.href='/user_group_list'">{% trans "Cancel" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index fe0ba8e..dceff05 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User Group List</title>
++        <title>{% trans "User Group List" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,13 +15,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User Group List</li>
++                    <li class="active">{% trans "User Group List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>User Group List</small></h1>
++                    <h1 class="page-header"><small>{% trans "User Group List" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,7 +29,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <button id="AddGroup" class="btn btn-default pull-right" onclick="location.href='/user_group_add/'">Create new group</button>
++                            <button id="AddGroup" class="btn btn-default pull-right" onclick="location.href='/user_group_add/'">{% trans "Create new group" %}</button>
+                             <table id="GroupList"></table>
+                         </div>
+                     </div>
+@@ -50,25 +51,25 @@
+                 columns: [
+                     {
+                         field: 'Index',
+-                        title: 'No',
++                        title: '{% trans "No" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Group',
++                        title: '{% trans "Group" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'UserNumber',
+-                        title: 'Users',
++                        title: '{% trans "Users" %}',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick="location.href=\'/user_group_edit?OId=' + row.OId + '\'">Edit</button> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick="location.href=\'/user_group_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index 68aa767..4b1f949 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User Group Member</title>
++        <title>{% trans "User Group Member" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>User Group Edit</li>
++                    <li>{% trans "User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>User Group Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "User Group Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,13 +30,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">Member List</a>
++                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">{% trans "Device List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -44,19 +45,19 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="col-md-8 panel panel-default">
+-                        <div class="panel-heading"><p>Member list</p></div>
++                        <div class="panel-heading"><p>{% trans "Member list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="MemberList"></table>
+                         </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+-                        <div class="panel-heading"><p>Add New Member</p></div>
++                        <div class="panel-heading"><p>{% trans "Add New Member" %}</p></div>
+                         <div class="panel-body">
+-                            <label>Search User :</label>
++                            <label>{% trans "Search User :" %}</label>
+                             <table id="MemberAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -78,14 +79,14 @@
+                 columns: [
+                     {
+                         field: 'Name',
+-                        title: 'Name',
++                        title: '{% trans "Name" %}',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+@@ -104,7 +105,7 @@
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'User',
++                        title: '{% trans "User" %}',
+                         sortable: true
+                     }
+                 ],
+diff --git a/templates/user_list.html b/templates/user_list.html
+index dfcabe3..922b434 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -13,21 +14,21 @@
+ <script src="js/respond.min.js"></script>
+ <![endif]-->
+ 
+-</head>l
++</head>
+ 
+ <body>
+ 	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">User List</li>
++				<li class="active">{% trans "User List" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-                <h1 class="page-header"><small>User List</small></h1>
++                <h1 class="page-header"><small>{% trans "User List" %}</small></h1>
+ 			</div>
+ 		</div><!--/.row-->
+ 
+@@ -35,12 +36,12 @@
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+ 					<div class="panel-body">
+-				        <button id="new_acc" class="btn btn-default" onclick="location.href='/user_add/'" value="">Create new account</button>
++				        <button id="new_acc" class="btn btn-default" onclick="location.href='/user_add/'" value="">{% trans "Create new account" %}</button>
+ 						<table id="userList">
+ 					</div>
+ 				</div>
+ 			</div>
+-		</div><!--/.row-->	
++		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+ 	<script src="{% static "chart.min.js" %}"></script>
+@@ -54,47 +55,47 @@
+ 		var index
+ 		var dataSet = {{obj|safe}};
+         $('#userList').bootstrapTable({
+-            search: true,      
+-            pagination: true,  
+-            pageSize: 10,      
++            search: true,
++            pagination: true,
++            pageSize: 10,
+             pageList: [10, 25, 50, 100],
+-            sortName: 'Name',  
+-            sortOrder: 'desc', 
++            sortName: 'Name',
++            sortOrder: 'desc',
+             toolbar:'#new_acc',
+ 			columns: [{
+ 				field: 'Index',
+-				title: 'No.',
++				title: '{% trans "No." %}',
+ 				sortable: true,
+ 			},{
+ 				field: 'Account',
+-				title: 'Account',
++				title: '{% trans "Account" %}',
+ 				sortable: true,
+                 formatter: function(value, row) {
+                     return '<a href="/user_update?OId=' + row.OId + '"  >'+ value +'</a>';
+                 }
+ 			}, {
+ 				field: 'Name',
+-				title: 'Name',
++				title: '{% trans "Name" %}',
+ 				sortable: true
+ 			}, {
+ 				field: 'RoleOId',
+-				title: 'Role',
++				title: '{% trans "Role" %}',
+ 				sortable: true
+ 			},{
+ 				field: 'CreateDate',
+-				title: 'CreateDate',
++				title: '{% trans "CreateDate" %}',
+ 				sortable: true
+ 			},
+ 			{
+ 				field: 'UpdateDate',
+-				title: 'UpdateDate',
++				title: '{% trans "UpdateDate" %}',
+ 				sortable: true
+ 			},
+ 			{
+ 				field: 'OId',
+ 				title: '',
+ 				formatter: function(value, row) {
+-					return '<button class="btn green" onclick=delete_user("' + value + '")>Delete</button>';
++					return '<button class="btn green" onclick=delete_user("' + value + '")>{% trans "Delete" %}</button>';
+ 				}
+ 			}],
+ 			data: dataSet
+@@ -146,9 +147,9 @@
+         }
+ 
+ 		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+-				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+-			}); 
++			$(document).on("click","ul.nav li.parent > a > span.icon", function(){
++				$(this).find('em:first').toggleClass("glyphicon-minus");
++			});
+ 			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+ 		}(window.jQuery);
+ 
+@@ -158,7 +159,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+-	</script>	
++	</script>
+ </body>
+ 
+ </html>
+diff --git a/templates/user_update.html b/templates/user_update.html
+index 636475f..24b24a1 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User Update</title>
++        <title>{% trans "User Update" %}</title>
+     </head>
+ 
+     <body>
+@@ -13,13 +14,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User update</li>
++                    <li class="active">{% trans "User update" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>User Update</small></h1>
++                    <h1 class="page-header"><small>{% trans "User Update" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -27,14 +28,14 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>User update</p>
++                            <p>{% trans "User update" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            Account
++                                            {% trans "Account" %}
+                                         </label>
+                                         <label class="col-md-3 control-label">
+                                             <p class="text-left" >{{obj.Account}}</p>
+@@ -43,7 +44,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            Name
++                                            {% trans "Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input class="form-control" placeholder="" name="Name" value="{{obj.Name}}" AutoComplete="Off">
+@@ -51,16 +52,16 @@
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+-                                            E-Mail
++                                            {% trans "E-Mail" %}
+                                         </label>
+                                         <label class="col-md-6 control-label">
+                                             <p class="text-left" >{{obj.Email}}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label"> 
++                                        <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            Password
++                                            {% trans "Password" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="password">
+@@ -68,7 +69,7 @@
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            Confirm password
++                                            {% trans "Confirm password" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="confirm">
+@@ -77,7 +78,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            Role
++                                            {% trans "Role" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <select class="form-control" name="role">
+@@ -90,8 +91,8 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="history.back()">Back</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="history.back()">{% trans "Back" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+-- 
+1.9.1
+

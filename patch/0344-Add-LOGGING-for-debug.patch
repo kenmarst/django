@@ -1,0 +1,417 @@
+From 3c4d93cd181d122916ef01d256ee0db4e3e161d3 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 3 Nov 2016 15:10:46 +0800
+Subject: [PATCH 344/443] Add LOGGING for debug.
+
+Add debug logger: face: FaceAdd FaceDelete FaceList
+                  recognition: FaceIdentify FaceVerify
+---
+ api/face.py        | 66 ++++++++++++++++++++++++++++++------------------------
+ api/recognition.py | 28 ++++++++++++++---------
+ br06/settings.py   | 29 ++++++++++++++++++++++++
+ 3 files changed, 83 insertions(+), 40 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 1b4e353..0611488 100755
+--- a/api/face.py
++++ b/api/face.py
+@@ -1,4 +1,4 @@
+-import json, requests, os
++import json, requests, os, logging
+ from collections import ChainMap
+ from django.http import HttpResponse, JsonResponse
+ from .models import Devices, Frusers, Systemlogs, Config
+@@ -12,37 +12,41 @@ result_fail = {'Result' : 'Fail'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
+ true = 'true'
+-#create default group in TCIT
++logger = logging.getLogger(__name__)
++
++# create default group in TCIT
+ try:
+     res_groupList = TCIT_API("/face/query/group_list")
+     if res_groupList.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+         if res_groupList.get('groups', ''):
+             TCIT_Group = res_groupList['groups'][len(res_groupList['groups'])-1]
+-            #print('default TCIT Group: ', TCIT_Group)
++            logger.debug('TCIT Group: default: ' + TCIT_Group)
+             if not len(res_groupList['groups']) == 1:
+-                print("ERROR: there're more than one group in TCIT: ", len(res_groupList['groups']))
++                logger.debug("WARNING: There're more than one group in TCIT.")
+             else:
+                 Config.objects.update_or_create(Name = "TCITGroup", Value = TCIT_Group)
+-                print('default TCIT group exist.')
++                logger.debug('TCIT Group: default exist')
+         else:
+             res_groupCreate = TCIT_API("/face/group/create/")
+             if res_groupCreate.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                 if res_groupCreate.get('group_id', ''):
+                     TCIT_Group = res_groupCreate['group_id']
+                     Config.objects.update_or_create(Name = "TCITGroup", Value = TCIT_Group)
+-                    print('create default TCIT group')
++                    logger.debug('TCIT Group: crate default group.')
+             else:
+-                print('TCIT_group create error.')
++                logger.debug('TCIT Group error: group create error.')
+     else:
+-        print('TCIT group list error.')
++        logger.debug('TCIT Group error: group list error.')
+ except Exception as error:
+-    print('can\'t create default group in TCIT : ', str(error))
++    logContent = str(error)
++    logger.debug("TCIT Group Exception: Writing system log..." + logContent)
++    Systemlogs.objects.create(Category = "TCITGP", LogContent = logContent)
+ 
+ @csrf_exempt
+ def add(request):
+     if request.method == 'POST':
+         request_IP = request.META.get('REMOTE_ADDR',  '')
+-        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Face Add', request_IP = request_IP)
++        message_head = 'API[{API_name}][Request IP: {request_IP}] : '.format(API_name = 'Face Add', request_IP = request_IP)
+         if request_IP == '127.0.0.1':
+             logContent = '{message_head}Request access'.format(message_head = message_head)
+             Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+@@ -52,23 +56,24 @@ def add(request):
+         else :
+             logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+             try:
+-                print("Writing system log...")
++                logger.debug('Writing system log...' + str(logContent))
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             except Exception as error:
+-                print(str(error))
+                 logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                logger.debug(str(logContent))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         try:
+             # check FRUserId
+             fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId', ''))
++            logger.debug(message_head + 'FRUserId: '+ fruser.FRUserId)
+             # check FaceID can't add more than twice before use face_delete api.
+             if fruser.FaceID1 and fruser.FaceID2:
+                 raise Exception('Face already existed')
+             #1. Update load face img to TCIT and get Image Id
+             res_upload = sendImg(request)
+             image_id = res_upload.get('img_id', '')
+-            #print('image_id : ', image_id)
++            logger.debug(message_head + 'TCIT image_id: ' +  image_id)
+             if not res_upload.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                 logContent = '{message_head}TCIT[Storage Upload] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_upload.get('state', '')])
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+@@ -81,7 +86,7 @@ def add(request):
+             else:
+                 if res_face_detect.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     face_id = res_face_detect.get('faces', '')[0].get('face_id', '')
+-                    #print('face_id : ', face_id)
++                    logger.debug(message_head + 'TCIT_API face_detect: ' + 'TCIT face_id: ' +  face_id)
+                 else:
+                     logContent = '{message_head}TCIT[Face Detection] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_face_detect.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+@@ -90,11 +95,11 @@ def add(request):
+             if not fruser.PersonId:
+                 res_personid = TCIT_API('/face/person/create/', data = {'face_id': face_id})
+                 if res_personid.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                    #print('person_id', res_personid['person_id'])
++                    logger.debug(message_head + 'TCIT create personid: ' + res_personid['person_id'])
+                     person_id = res_personid.get('person_id')
+                     # Add Person in TCIT Group
+                     TCITGroup = Config.objects.get(Name = 'TCITGroup').Value
+-                    # print(TCITGroup)
++                    logger.debug(message_head + 'Get TCIT Group in Config: ' + TCITGroup)
+                     res_groupAdd = TCIT_API('/face/group/update/add', data = {'person_id': person_id, 'group_id': TCITGroup})
+                     if not res_groupAdd.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         res_personid_delete = TCIT_API('/face/person/delete/', data = {'person_id': person_id})
+@@ -112,6 +117,7 @@ def add(request):
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+                 person_id = fruser.PersonId
++                logger.debug(message_head + 'get personid: ' + person_id)
+                 res_face_personadd = TCIT_API(
+                     '/face/person/update/add/',
+                     data = {'person_id' : person_id, 'face_id': face_id}
+@@ -128,6 +134,7 @@ def add(request):
+                     Frusers.objects.filter(OId = fruser.OId).update(FaceID2 = face_id, UpdateDate = datetime.now())
+             else:
+                 if Config.objects.get(Name = 'PicCreateSave').Value == true:
++                    logger.debug(message_head + 'save image')
+                     FaceDir = ''.join([
+                         settings.PIC_DIR,
+                         request.POST.get('FRUserId'),
+@@ -160,15 +167,14 @@ def add(request):
+             # return
+             return JsonResponse(result_success)
+         except Exception as error:
+-            print(str(error))
+             logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         finally:
+             try:
+-                print("Writing system log...")
++                logger.debug("Writing system log..." + str(logContent))
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+-                print(str(error))
++                logger.debug('FaceAdd finally Exception: ' + str(error))
+                 logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+@@ -178,7 +184,7 @@ def add(request):
+ def delete(request):
+     if request.method == 'POST':
+         request_IP = request.META.get('REMOTE_ADDR',  '')
+-        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Face Delete', request_IP = request_IP)
++        message_head = 'API[{API_name}][Request IP: {request_IP}] : '.format(API_name = 'Face Delete', request_IP = request_IP)
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId'}
+@@ -186,6 +192,7 @@ def delete(request):
+                 ip_devices = Devices.objects.get(IP = request_IP)
+                 if ip_devices.State != 'Proposed':
+                     fruser = Frusers.objects.get(FRUserId = req.get('FRUserId', ''))
++                    logger.debug(message_head + 'FRUserId: ' + fruser.FRUserId + ' PersonId: ' + fruser.PersonId)
+                     res = json.loads(
+                         requests.post(
+                             'http://' + settings.TCIT_IP + '/face/person/update/remove',
+@@ -200,14 +207,10 @@ def delete(request):
+                             os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face1))
+                         if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face2)):
+                             os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face2))
+-                        if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face3)):
+-                            os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face3))
+                         fruser.Face1 = ''
+                         fruser.Face2 = ''
+-                        fruser.Face3 = ''
+                         fruser.FaceID1 = ''
+                         fruser.FaceID2 = ''
+-                        fruser.FaceID3 = ''
+                         fruser.save()
+                         logContent = '{message_head}Delete face successfully'.format(message_head = message_head)
+                         return JsonResponse(result_success)
+@@ -221,15 +224,14 @@ def delete(request):
+                 logContent = '{message_head}Request parameter error'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         except Exception as error:
+-            print(str(error))
+             logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         finally:
+             try:
+-                print("Writing system log...")
++                logger.debug('Writing system log...' + str(logContent))
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+-                print(str(error))
++                logger.debug('FaceDelete finally Exception: ' + str(error))
+                 logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+@@ -239,27 +241,33 @@ def delete(request):
+ def list(request):
+     if request.method == 'POST':
+         try:
++            ip_devices = Devices.objects.get(IP = request.META.get('REMOTE_ADDR', ''))
++            message_head = 'API[{API_name}][Request IP: {request_IP}] : '.format(API_name = 'Face List', request_IP = ip_devices.IP)
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId', 'FaceIndex'}
+             if all(k in req for k in req_key) and all(req.values()):
+-                ip_devices = Devices.objects.get(IP = request.META.get('REMOTE_ADDR', ''))
+                 if ip_devices.State != 'Proposed':
+                     fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
++                    logger.debug(message_head + 'FRUserId: ' + fruser.FRUserId + ' FaceIndex: ' + str(req.get('FaceIndex', '')))
+                     if (fruser.Face1=="" and fruser.Face2=="") and (fruser.FaceID1=="" and fruser.FaceID2==""):
++                        logger.debug(message_head + 'no Face and no FaceID')
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
+                     if fruser.Face1 and req.get('FaceIndex', '') == 1:
++                        logger.debug(message_head + 'show Face1')
+                         img_1 = open(os.path.join(
+                                     settings.MEDIA_DIR,
+                                     fruser.Face1
+                                 ), 'rb')
+                         return HttpResponse(img_1.read(), content_type="image/jpg")
+                     if fruser.Face2 and req.get('FaceIndex', '') == 2:
++                        logger.debug(message_head + 'show Face2')
+                         img_2 = open(os.path.join(
+                                     settings.MEDIA_DIR,
+                                     fruser.Face2
+                                 ), 'rb')
+                         return HttpResponse(img_2.read(), content_type="image/jpg")
+                     if (fruser.Face1=="" and fruser.Face2=="") and (fruser.FaceID1 and fruser.FaceID2):
++                        logger.debug(message_head + 'show default')
+                         img_def = open(os.path.join(
+                                     settings.MEDIA_DIR,
+                                     settings.DEFAULT_FACE_IMAGE
+@@ -271,7 +279,7 @@ def list(request):
+             else:
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
+         except Exception as error:
+-            print(str(error))
++            logger.debug(message_head + str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+diff --git a/api/recognition.py b/api/recognition.py
+index 534242a..9e5bea5 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -1,4 +1,4 @@
+-import json, requests, os, time
++import json, requests, os, time, logging
+ from collections import ChainMap
+ from django.http import JsonResponse
+ from django.views.decorators.csrf import csrf_exempt
+@@ -14,8 +14,8 @@ result_pass = {'Result' : 'Pass'}
+ result_fail = {'Result' : 'Fail'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
+-
+ true = 'true'
++logger = logging.getLogger(__name__)
+ 
+ @csrf_exempt
+ def face_save(request, id):
+@@ -37,9 +37,9 @@ def face_save(request, id):
+ 
+ @csrf_exempt
+ def face_save_debug(request, device, id, fun):
+-    if settings.DEBUG == False:
++    if not settings.DEBUG:
+         return
+-    print('--------------------------------------------face debug now')
++    logger.debug('face save debug: device name: ' + str(device) + ' FRUserId: '+ str(id) + ' function: ' + fun)
+     FaceDir = ''.join([
+         settings.PIC_DIR_FACE, device,
+         id, fun,
+@@ -63,13 +63,16 @@ def face_verify(request):
+             ip_device = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
+             if ip_device.State != 'Proposed':
+                 fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
++                logger.debug('face_verify: ' + ' FRUserId: ' + fruser.FRUserId)
+                 if fruser.PersonId:
++                    logger.debug('face_verify: ' + ' PersonId: ' + fruser.PersonId)
+                     # get img id
+                     res_upload = sendImg(request)
+-                    #print(res_upload)#
+                     if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         img_id = res_upload['img_id']
+ 
++                        logger.debug('face_verify: ' + ' img_id: ' + img_id)
++
+                         face_save_debug(request, '_' + ip_device.Name + '_',
+                             '_' + fruser.FRUserId + '_',
+                             '_' + 'face_verify' + '_',
+@@ -79,12 +82,12 @@ def face_verify(request):
+                         res_face_detect = TCIT_API("/face/detection/detect/", data = {'img_id' : img_id})
+                         if res_face_detect['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                             face_id = res_face_detect['faces'][0]['face_id']
+-                            #print('face_id', face_id)#
++                            logger.debug('face_verify: ' + ' face_id: ' + face_id)
+                             # face_id and person_id verify
+                             res_face_verify = TCIT_API("/face/person/verify", data = {'person_id' : fruser.PersonId, 'face_id': face_id})
+-                            print(res_face_verify)#
++                            logger.debug('face_verify: ' + ' TCIT_API: ' + str(res_face_verify))
+                             if res_face_verify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                                #print(res_face_verify['confidence'])#
++                                logger.debug('face_verify: ' + ' Confidence: ' + str(res_face_verify['confidence']))
+                                 if res_face_verify['confidence'] > settings.CONFIDENCE[ip_device.FaceBioScore]:
+                                     face_save(request, '')
+                                     for i in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+@@ -125,6 +128,7 @@ def face_identify(request):
+                 res_upload =  sendImg(request)
+ 
+                 if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                    logger.debug('face_identify: ' + ' img_id: ' + res_upload['img_id'])
+ 
+                     face_save_debug(request, '_' + ip_device.Name + '_',
+                         '_None_',
+@@ -137,10 +141,12 @@ def face_identify(request):
+                         data = {'img_id' : res_upload['img_id']}
+                     )
+                     face_id = res_face_detect['faces'][0]['face_id']
++                    logger.debug('face_identify: ' + ' face_id: ' + face_id)
+ 
+                     # TCIT : identify person and face in group
+                     person_similarity = settings.CONFIDENCE[ip_device.FaceBioScore]
+                     for group in TCIT_API('/face/query/group_list')['groups']:
++                        logger.debug('face_identify: ' + ' TCIT group: ' + group)
+                         res_group_identify = TCIT_API(
+                             '/face/group/identify',
+                             data = {'group_id' : group, 'face_id' : face_id}
+@@ -148,6 +154,7 @@ def face_identify(request):
+ 
+                         if res_group_identify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                             person = res_group_identify['persons'][0]
++                            logger.debug('face_identify: ' + ' person_id: ' + person['person_id'] + ' person_similarity: ' + str(person['similarity']))
+                             if person['similarity'] >= person_similarity:
+                                 person_similarity = person['similarity']
+                                 person_id = person['person_id']
+@@ -220,7 +227,6 @@ def face_check(request):
+                     else:
+                         raise Exception('Request TCIT error')
+                     if person_id:
+-                        print(person_id)
+                         fruser = Frusers.objects.get(PersonId = person_id)
+                         return JsonResponse(result_pass)
+                     else:
+@@ -285,7 +291,7 @@ def rfid_check(request):
+ def rfid_delete(request):
+     if request.method == 'POST':
+         request_IP = request.META['REMOTE_ADDR']
+-        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'RFID Delete', request_IP = request_IP)
++        message_head = 'API[{API_name}][Request IP: {request_IP}] : '.format(API_name = 'RFID Delete', request_IP = request_IP)
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId'}
+@@ -322,7 +328,7 @@ def set_result(request):
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+     try:
+         request_IP = request.META.get('REMOTE_ADDR',  '')
+-        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Get Result', request_IP = request_IP)
++        message_head = 'API[{API_name}][Request IP: {request_IP}] : '.format(API_name = 'Get Result', request_IP = request_IP)
+         req = json.loads(request.body.decode('utf-8'))
+         req_key = {'FRUserId', 'Result', 'Message'}
+         if not all(k in req for k in req_key):
+diff --git a/br06/settings.py b/br06/settings.py
+index c99a35c..92cff62 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -29,6 +29,35 @@ SECRET_KEY = '6LcOCx4TAAAAAPE6AF6FY3ZNe-v8ze6fp-PDBvch'
+ 
+ # SECURITY WARNING: don't run with debug turned on in production!
+ DEBUG = False
++import logging
++logger = logging.getLogger(__name__)
++LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO # Python logger level: debug, info, warning, error, critical
++logging.basicConfig(level = LOGGING_LEVEL)
++logger.debug('Enable debug mode')
++LOGGING = {
++    'version': 1,
++    'disable_existing_loggers': False,
++    'handlers': {
++        'file': {
++            'level': LOGGING_LEVEL,
++            'class': 'logging.FileHandler',
++            'filename': os.path.join(BASE_DIR, 'debug.log'),
++        },
++    },
++    'loggers': {
++        'api.face': {
++            'handlers': ['file'],
++            'level': 'DEBUG',
++            'propagate': True,
++        },
++        'api.recognition': {
++            'handlers': ['file'],
++            'level': 'DEBUG',
++            'propagate': True,
++        },
++    }
++}
++
+ 
+ # Set to False when DEBUG=False, but default do not set
+ TEMPLATE_DEBUG = False
+-- 
+1.9.1
+

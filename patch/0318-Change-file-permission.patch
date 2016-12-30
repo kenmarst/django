@@ -1,0 +1,976 @@
+From f2b422d3082ff3eb0d52475f98a397d926b0576c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 13 Oct 2016 12:45:37 +0800
+Subject: [PATCH 318/443] Change file permission
+
+---
+ __init__.py                                         |   0
+ api/__init__.py                                     |   0
+ api/admin.py                                        |   0
+ api/apps.py                                         |   0
+ api/connection.py                                   |   0
+ api/cron.py                                         |   0
+ api/face.py                                         |   0
+ api/fingerprint.py                                  |   0
+ api/group.py                                        |   0
+ api/migrations/__init__.py                          |   0
+ api/models.py                                       |   0
+ api/recognition.py                                  |   0
+ api/tests.py                                        |   0
+ api/user.py                                         |   0
+ api/utility.py                                      |   0
+ api/views.py                                        |   0
+ br06/__init__.py                                    |   0
+ br06/settings.py                                    |   0
+ br06/urls.py                                        |   0
+ br06/wsgi.py                                        |   0
+ dashboard/__init__.py                               |   0
+ dashboard/admin.py                                  |   0
+ dashboard/apps.py                                   |   0
+ dashboard/migrations/__init__.py                    |   0
+ dashboard/models.py                                 |   0
+ dashboard/tests.py                                  |   0
+ dashboard/views.py                                  |   0
+ devices/__init__.py                                 |   0
+ devices/admin.py                                    |   0
+ devices/apps.py                                     |   0
+ devices/migrations/__init__.py                      |   0
+ devices/models.py                                   |   0
+ devices/tests.py                                    |   0
+ devices/views.py                                    |   0
+ frusergroups/__init__.py                            |   0
+ frusergroups/admin.py                               |   0
+ frusergroups/apps.py                                |   0
+ frusergroups/migrations/__init__.py                 |   0
+ frusergroups/models.py                              |   0
+ frusergroups/tests.py                               |   0
+ frusergroups/views.py                               |   0
+ fruserlogs/__init__.py                              |   0
+ fruserlogs/admin.py                                 |   0
+ fruserlogs/apps.py                                  |   0
+ fruserlogs/migrations/__init__.py                   |   0
+ fruserlogs/models.py                                |   0
+ fruserlogs/views.py                                 |   0
+ frusers/__init__.py                                 |   0
+ frusers/admin.py                                    |   0
+ frusers/apps.py                                     |   0
+ frusers/migrations/__init__.py                      |   0
+ frusers/models.py                                   |   0
+ frusers/views.py                                    |   0
+ locale/zh_CN/LC_MESSAGES/django.mo                  | Bin
+ locale/zh_CN/LC_MESSAGES/django.po                  |   0
+ locale/zh_TW/LC_MESSAGES/django.mo                  | Bin
+ locale/zh_TW/LC_MESSAGES/django.po                  |   0
+ login/__init__.py                                   |   0
+ login/admin.py                                      |   0
+ login/apps.py                                       |   0
+ login/migrations/__init__.py                        |   0
+ login/models.py                                     |   0
+ login/tests.py                                      |   0
+ login/views.py                                      |   0
+ logsetting/__init__.py                              |   0
+ logsetting/admin.py                                 |   0
+ logsetting/apps.py                                  |   0
+ logsetting/migrations/__init__.py                   |   0
+ logsetting/models.py                                |   0
+ logsetting/views.py                                 |   0
+ role/__init__.py                                    |   0
+ role/admin.py                                       |   0
+ role/apps.py                                        |   0
+ role/migrations/__init__.py                         |   0
+ role/models.py                                      |   0
+ role/tests.py                                       |   0
+ role/views.py                                       |   0
+ static/css/bootstrap-table.css                      |   0
+ static/css/bootstrap-theme.css                      |   0
+ static/css/bootstrap-theme.css.map                  |   0
+ static/css/bootstrap-theme.min.css                  |   0
+ static/css/bootstrap.css                            |   0
+ static/css/bootstrap.css.map                        |   0
+ static/css/bootstrap.min.css                        |   0
+ static/css/components-rounded.min.css               |   0
+ static/css/datepicker.css                           |   0
+ static/css/datepicker3.css                          |   0
+ static/css/font-awesome.css                         |   0
+ static/css/font-awesome.min.css                     |   0
+ static/css/styles.css                               |   0
+ static/fonts/FontAwesome.otf                        | Bin
+ static/fonts/fontawesome-webfont.eot                | Bin
+ static/fonts/fontawesome-webfont.svg                |   0
+ static/fonts/fontawesome-webfont.ttf                | Bin
+ static/fonts/fontawesome-webfont.woff               | Bin
+ static/fonts/fontawesome-webfont.woff2              | Bin
+ static/img/404eddy.png                              | Bin
+ static/img/background.jpg                           | Bin
+ static/img/shuttle_logo.png                         | Bin
+ static/img/successfully.png                         | Bin
+ static/js/bootstrap-datepicker.js                   |   0
+ static/js/bootstrap-table-cn.js                     |   0
+ static/js/bootstrap-table-tw.js                     |   0
+ static/js/bootstrap-table.js                        |   0
+ static/js/bootstrap.js                              |   0
+ static/js/bootstrap.min.js                          |   0
+ static/js/chart-data.js                             |   0
+ static/js/chart.min.js                              |   0
+ static/js/data1.json                                |   0
+ static/js/easypiechart-data.js                      |   0
+ static/js/easypiechart.js                           |   0
+ static/js/html5shiv.min.js                          |   0
+ static/js/jquery-1.11.1.min.js                      |   0
+ static/js/jquery-1.8.3.min.js                       |   0
+ static/js/login.js                                  |   0
+ static/js/lumino.glyphs.js                          |   0
+ static/js/md5.js                                    |   0
+ static/js/respond.min.js                            |   0
+ static/styles/login.css                             |   0
+ systembackup/.gitignore                             |   0
+ systembackup/log/.gitignore                         |   0
+ systemlogs/__init__.py                              |   0
+ systemlogs/admin.py                                 |   0
+ systemlogs/apps.py                                  |   0
+ systemlogs/migrations/__init__.py                   |   0
+ systemlogs/models.py                                |   0
+ systemlogs/views.py                                 |   0
+ systemsettings/__init__.py                          |   0
+ systemsettings/admin.py                             |   0
+ systemsettings/apps.py                              |   0
+ systemsettings/migrations/__init__.py               |   0
+ systemsettings/models.py                            |   0
+ systemsettings/tests.py                             |   0
+ systemsettings/views.py                             |   0
+ templates/commons_js.html                           |   0
+ templates/dashboard.html                            |   0
+ templates/device_add.html                           |   0
+ templates/device_edit.html                          |   0
+ templates/device_frusergroups.html                  |   0
+ templates/device_list.html                          |   0
+ templates/device_settings.html                      |   0
+ templates/empty.html                                |   0
+ templates/fruser_add.html                           |   0
+ templates/fruser_edit.html                          |   0
+ templates/fruser_list.html                          |   0
+ templates/frusergroup_add.html                      |   0
+ templates/frusergroup_devices.html                  |   0
+ templates/frusergroup_edit.html                     |   0
+ templates/frusergroup_member.html                   |   0
+ templates/frusergroups_list.html                    |   0
+ templates/fruserlog_list.html                       |   0
+ templates/home.html                                 |   0
+ templates/locale/zh_CN/LC_MESSAGES/django.mo        | Bin
+ templates/locale/zh_CN/LC_MESSAGES/django.po        |   0
+ templates/locale/zh_TW/LC_MESSAGES/django.mo        | Bin
+ templates/locale/zh_TW/LC_MESSAGES/django.po        |   0
+ templates/login.html                                |   0
+ templates/login_i18n.html                           |   0
+ templates/logsetting.html                           |   0
+ templates/menu.html                                 |   0
+ templates/registration/forget_password.html         |   0
+ templates/registration/not_found.html               |   0
+ templates/registration/password_reset_complete.html |   0
+ templates/registration/password_reset_email.html    |   0
+ templates/registration/reset_password.html          |   0
+ templates/role_add.html                             |   0
+ templates/role_list.html                            |   0
+ templates/role_permission.html                      |   0
+ templates/role_rename.html                          |   0
+ templates/system_settings.html                      |   0
+ templates/systemlog_list.html                       |   0
+ templates/user_add.html                             |   0
+ templates/user_group_add.html                       |   0
+ templates/user_group_devices.html                   |   0
+ templates/user_group_edit.html                      |   0
+ templates/user_group_list.html                      |   0
+ templates/user_group_members.html                   |   0
+ templates/user_list.html                            |   0
+ templates/user_setting.html                         |   0
+ templates/user_update.html                          |   0
+ user/__init__.py                                    |   0
+ user/admin.py                                       |   0
+ user/apps.py                                        |   0
+ user/migrations/__init__.py                         |   0
+ user/models.py                                      |   0
+ user/views.py                                       |   0
+ usergroups/__init__.py                              |   0
+ usergroups/admin.py                                 |   0
+ usergroups/apps.py                                  |   0
+ usergroups/migrations/__init__.py                   |   0
+ usergroups/models.py                                |   0
+ usergroups/tests.py                                 |   0
+ usergroups/views.py                                 |   0
+ 193 files changed, 0 insertions(+), 0 deletions(-)
+ mode change 100644 => 100755 __init__.py
+ mode change 100644 => 100755 api/__init__.py
+ mode change 100644 => 100755 api/admin.py
+ mode change 100644 => 100755 api/apps.py
+ mode change 100644 => 100755 api/connection.py
+ mode change 100644 => 100755 api/cron.py
+ mode change 100644 => 100755 api/face.py
+ mode change 100644 => 100755 api/fingerprint.py
+ mode change 100644 => 100755 api/group.py
+ mode change 100644 => 100755 api/migrations/__init__.py
+ mode change 100644 => 100755 api/models.py
+ mode change 100644 => 100755 api/recognition.py
+ mode change 100644 => 100755 api/tests.py
+ mode change 100644 => 100755 api/user.py
+ mode change 100644 => 100755 api/utility.py
+ mode change 100644 => 100755 api/views.py
+ mode change 100644 => 100755 br06/__init__.py
+ mode change 100644 => 100755 br06/settings.py
+ mode change 100644 => 100755 br06/urls.py
+ mode change 100644 => 100755 br06/wsgi.py
+ mode change 100644 => 100755 dashboard/__init__.py
+ mode change 100644 => 100755 dashboard/admin.py
+ mode change 100644 => 100755 dashboard/apps.py
+ mode change 100644 => 100755 dashboard/migrations/__init__.py
+ mode change 100644 => 100755 dashboard/models.py
+ mode change 100644 => 100755 dashboard/tests.py
+ mode change 100644 => 100755 dashboard/views.py
+ mode change 100644 => 100755 devices/__init__.py
+ mode change 100644 => 100755 devices/admin.py
+ mode change 100644 => 100755 devices/apps.py
+ mode change 100644 => 100755 devices/migrations/__init__.py
+ mode change 100644 => 100755 devices/models.py
+ mode change 100644 => 100755 devices/tests.py
+ mode change 100644 => 100755 devices/views.py
+ mode change 100644 => 100755 frusergroups/__init__.py
+ mode change 100644 => 100755 frusergroups/admin.py
+ mode change 100644 => 100755 frusergroups/apps.py
+ mode change 100644 => 100755 frusergroups/migrations/__init__.py
+ mode change 100644 => 100755 frusergroups/models.py
+ mode change 100644 => 100755 frusergroups/tests.py
+ mode change 100644 => 100755 frusergroups/views.py
+ mode change 100644 => 100755 fruserlogs/__init__.py
+ mode change 100644 => 100755 fruserlogs/admin.py
+ mode change 100644 => 100755 fruserlogs/apps.py
+ mode change 100644 => 100755 fruserlogs/migrations/__init__.py
+ mode change 100644 => 100755 fruserlogs/models.py
+ mode change 100644 => 100755 fruserlogs/views.py
+ mode change 100644 => 100755 frusers/__init__.py
+ mode change 100644 => 100755 frusers/admin.py
+ mode change 100644 => 100755 frusers/apps.py
+ mode change 100644 => 100755 frusers/migrations/__init__.py
+ mode change 100644 => 100755 frusers/models.py
+ mode change 100644 => 100755 frusers/views.py
+ mode change 100644 => 100755 locale/zh_CN/LC_MESSAGES/django.mo
+ mode change 100644 => 100755 locale/zh_CN/LC_MESSAGES/django.po
+ mode change 100644 => 100755 locale/zh_TW/LC_MESSAGES/django.mo
+ mode change 100644 => 100755 locale/zh_TW/LC_MESSAGES/django.po
+ mode change 100644 => 100755 login/__init__.py
+ mode change 100644 => 100755 login/admin.py
+ mode change 100644 => 100755 login/apps.py
+ mode change 100644 => 100755 login/migrations/__init__.py
+ mode change 100644 => 100755 login/models.py
+ mode change 100644 => 100755 login/tests.py
+ mode change 100644 => 100755 login/views.py
+ mode change 100644 => 100755 logsetting/__init__.py
+ mode change 100644 => 100755 logsetting/admin.py
+ mode change 100644 => 100755 logsetting/apps.py
+ mode change 100644 => 100755 logsetting/migrations/__init__.py
+ mode change 100644 => 100755 logsetting/models.py
+ mode change 100644 => 100755 logsetting/views.py
+ mode change 100644 => 100755 role/__init__.py
+ mode change 100644 => 100755 role/admin.py
+ mode change 100644 => 100755 role/apps.py
+ mode change 100644 => 100755 role/migrations/__init__.py
+ mode change 100644 => 100755 role/models.py
+ mode change 100644 => 100755 role/tests.py
+ mode change 100644 => 100755 role/views.py
+ mode change 100644 => 100755 static/css/bootstrap-table.css
+ mode change 100644 => 100755 static/css/bootstrap-theme.css
+ mode change 100644 => 100755 static/css/bootstrap-theme.css.map
+ mode change 100644 => 100755 static/css/bootstrap-theme.min.css
+ mode change 100644 => 100755 static/css/bootstrap.css
+ mode change 100644 => 100755 static/css/bootstrap.css.map
+ mode change 100644 => 100755 static/css/bootstrap.min.css
+ mode change 100644 => 100755 static/css/components-rounded.min.css
+ mode change 100644 => 100755 static/css/datepicker.css
+ mode change 100644 => 100755 static/css/datepicker3.css
+ mode change 100644 => 100755 static/css/font-awesome.css
+ mode change 100644 => 100755 static/css/font-awesome.min.css
+ mode change 100644 => 100755 static/css/styles.css
+ mode change 100644 => 100755 static/fonts/FontAwesome.otf
+ mode change 100644 => 100755 static/fonts/fontawesome-webfont.eot
+ mode change 100644 => 100755 static/fonts/fontawesome-webfont.svg
+ mode change 100644 => 100755 static/fonts/fontawesome-webfont.ttf
+ mode change 100644 => 100755 static/fonts/fontawesome-webfont.woff
+ mode change 100644 => 100755 static/fonts/fontawesome-webfont.woff2
+ mode change 100644 => 100755 static/img/404eddy.png
+ mode change 100644 => 100755 static/img/background.jpg
+ mode change 100644 => 100755 static/img/shuttle_logo.png
+ mode change 100644 => 100755 static/img/successfully.png
+ mode change 100644 => 100755 static/js/bootstrap-datepicker.js
+ mode change 100644 => 100755 static/js/bootstrap-table-cn.js
+ mode change 100644 => 100755 static/js/bootstrap-table-tw.js
+ mode change 100644 => 100755 static/js/bootstrap-table.js
+ mode change 100644 => 100755 static/js/bootstrap.js
+ mode change 100644 => 100755 static/js/bootstrap.min.js
+ mode change 100644 => 100755 static/js/chart-data.js
+ mode change 100644 => 100755 static/js/chart.min.js
+ mode change 100644 => 100755 static/js/data1.json
+ mode change 100644 => 100755 static/js/easypiechart-data.js
+ mode change 100644 => 100755 static/js/easypiechart.js
+ mode change 100644 => 100755 static/js/html5shiv.min.js
+ mode change 100644 => 100755 static/js/jquery-1.11.1.min.js
+ mode change 100644 => 100755 static/js/jquery-1.8.3.min.js
+ mode change 100644 => 100755 static/js/login.js
+ mode change 100644 => 100755 static/js/lumino.glyphs.js
+ mode change 100644 => 100755 static/js/md5.js
+ mode change 100644 => 100755 static/js/respond.min.js
+ mode change 100644 => 100755 static/styles/login.css
+ mode change 100644 => 100755 systembackup/.gitignore
+ mode change 100644 => 100755 systembackup/log/.gitignore
+ mode change 100644 => 100755 systemlogs/__init__.py
+ mode change 100644 => 100755 systemlogs/admin.py
+ mode change 100644 => 100755 systemlogs/apps.py
+ mode change 100644 => 100755 systemlogs/migrations/__init__.py
+ mode change 100644 => 100755 systemlogs/models.py
+ mode change 100644 => 100755 systemlogs/views.py
+ mode change 100644 => 100755 systemsettings/__init__.py
+ mode change 100644 => 100755 systemsettings/admin.py
+ mode change 100644 => 100755 systemsettings/apps.py
+ mode change 100644 => 100755 systemsettings/migrations/__init__.py
+ mode change 100644 => 100755 systemsettings/models.py
+ mode change 100644 => 100755 systemsettings/tests.py
+ mode change 100644 => 100755 systemsettings/views.py
+ mode change 100644 => 100755 templates/commons_js.html
+ mode change 100644 => 100755 templates/dashboard.html
+ mode change 100644 => 100755 templates/device_add.html
+ mode change 100644 => 100755 templates/device_edit.html
+ mode change 100644 => 100755 templates/device_frusergroups.html
+ mode change 100644 => 100755 templates/device_list.html
+ mode change 100644 => 100755 templates/device_settings.html
+ mode change 100644 => 100755 templates/empty.html
+ mode change 100644 => 100755 templates/fruser_add.html
+ mode change 100644 => 100755 templates/fruser_edit.html
+ mode change 100644 => 100755 templates/fruser_list.html
+ mode change 100644 => 100755 templates/frusergroup_add.html
+ mode change 100644 => 100755 templates/frusergroup_devices.html
+ mode change 100644 => 100755 templates/frusergroup_edit.html
+ mode change 100644 => 100755 templates/frusergroup_member.html
+ mode change 100644 => 100755 templates/frusergroups_list.html
+ mode change 100644 => 100755 templates/fruserlog_list.html
+ mode change 100644 => 100755 templates/home.html
+ mode change 100644 => 100755 templates/locale/zh_CN/LC_MESSAGES/django.mo
+ mode change 100644 => 100755 templates/locale/zh_CN/LC_MESSAGES/django.po
+ mode change 100644 => 100755 templates/locale/zh_TW/LC_MESSAGES/django.mo
+ mode change 100644 => 100755 templates/locale/zh_TW/LC_MESSAGES/django.po
+ mode change 100644 => 100755 templates/login.html
+ mode change 100644 => 100755 templates/login_i18n.html
+ mode change 100644 => 100755 templates/logsetting.html
+ mode change 100644 => 100755 templates/menu.html
+ mode change 100644 => 100755 templates/registration/forget_password.html
+ mode change 100644 => 100755 templates/registration/not_found.html
+ mode change 100644 => 100755 templates/registration/password_reset_complete.html
+ mode change 100644 => 100755 templates/registration/password_reset_email.html
+ mode change 100644 => 100755 templates/registration/reset_password.html
+ mode change 100644 => 100755 templates/role_add.html
+ mode change 100644 => 100755 templates/role_list.html
+ mode change 100644 => 100755 templates/role_permission.html
+ mode change 100644 => 100755 templates/role_rename.html
+ mode change 100644 => 100755 templates/system_settings.html
+ mode change 100644 => 100755 templates/systemlog_list.html
+ mode change 100644 => 100755 templates/user_add.html
+ mode change 100644 => 100755 templates/user_group_add.html
+ mode change 100644 => 100755 templates/user_group_devices.html
+ mode change 100644 => 100755 templates/user_group_edit.html
+ mode change 100644 => 100755 templates/user_group_list.html
+ mode change 100644 => 100755 templates/user_group_members.html
+ mode change 100644 => 100755 templates/user_list.html
+ mode change 100644 => 100755 templates/user_setting.html
+ mode change 100644 => 100755 templates/user_update.html
+ mode change 100644 => 100755 user/__init__.py
+ mode change 100644 => 100755 user/admin.py
+ mode change 100644 => 100755 user/apps.py
+ mode change 100644 => 100755 user/migrations/__init__.py
+ mode change 100644 => 100755 user/models.py
+ mode change 100644 => 100755 user/views.py
+ mode change 100644 => 100755 usergroups/__init__.py
+ mode change 100644 => 100755 usergroups/admin.py
+ mode change 100644 => 100755 usergroups/apps.py
+ mode change 100644 => 100755 usergroups/migrations/__init__.py
+ mode change 100644 => 100755 usergroups/models.py
+ mode change 100644 => 100755 usergroups/tests.py
+ mode change 100644 => 100755 usergroups/views.py
+
+diff --git a/__init__.py b/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/api/__init__.py b/api/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/api/admin.py b/api/admin.py
+old mode 100644
+new mode 100755
+diff --git a/api/apps.py b/api/apps.py
+old mode 100644
+new mode 100755
+diff --git a/api/connection.py b/api/connection.py
+old mode 100644
+new mode 100755
+diff --git a/api/cron.py b/api/cron.py
+old mode 100644
+new mode 100755
+diff --git a/api/face.py b/api/face.py
+old mode 100644
+new mode 100755
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+old mode 100644
+new mode 100755
+diff --git a/api/group.py b/api/group.py
+old mode 100644
+new mode 100755
+diff --git a/api/migrations/__init__.py b/api/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/api/models.py b/api/models.py
+old mode 100644
+new mode 100755
+diff --git a/api/recognition.py b/api/recognition.py
+old mode 100644
+new mode 100755
+diff --git a/api/tests.py b/api/tests.py
+old mode 100644
+new mode 100755
+diff --git a/api/user.py b/api/user.py
+old mode 100644
+new mode 100755
+diff --git a/api/utility.py b/api/utility.py
+old mode 100644
+new mode 100755
+diff --git a/api/views.py b/api/views.py
+old mode 100644
+new mode 100755
+diff --git a/br06/__init__.py b/br06/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/br06/settings.py b/br06/settings.py
+old mode 100644
+new mode 100755
+diff --git a/br06/urls.py b/br06/urls.py
+old mode 100644
+new mode 100755
+diff --git a/br06/wsgi.py b/br06/wsgi.py
+old mode 100644
+new mode 100755
+diff --git a/dashboard/__init__.py b/dashboard/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/dashboard/admin.py b/dashboard/admin.py
+old mode 100644
+new mode 100755
+diff --git a/dashboard/apps.py b/dashboard/apps.py
+old mode 100644
+new mode 100755
+diff --git a/dashboard/migrations/__init__.py b/dashboard/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/dashboard/models.py b/dashboard/models.py
+old mode 100644
+new mode 100755
+diff --git a/dashboard/tests.py b/dashboard/tests.py
+old mode 100644
+new mode 100755
+diff --git a/dashboard/views.py b/dashboard/views.py
+old mode 100644
+new mode 100755
+diff --git a/devices/__init__.py b/devices/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/devices/admin.py b/devices/admin.py
+old mode 100644
+new mode 100755
+diff --git a/devices/apps.py b/devices/apps.py
+old mode 100644
+new mode 100755
+diff --git a/devices/migrations/__init__.py b/devices/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/devices/models.py b/devices/models.py
+old mode 100644
+new mode 100755
+diff --git a/devices/tests.py b/devices/tests.py
+old mode 100644
+new mode 100755
+diff --git a/devices/views.py b/devices/views.py
+old mode 100644
+new mode 100755
+diff --git a/frusergroups/__init__.py b/frusergroups/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/frusergroups/admin.py b/frusergroups/admin.py
+old mode 100644
+new mode 100755
+diff --git a/frusergroups/apps.py b/frusergroups/apps.py
+old mode 100644
+new mode 100755
+diff --git a/frusergroups/migrations/__init__.py b/frusergroups/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/frusergroups/models.py b/frusergroups/models.py
+old mode 100644
+new mode 100755
+diff --git a/frusergroups/tests.py b/frusergroups/tests.py
+old mode 100644
+new mode 100755
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+old mode 100644
+new mode 100755
+diff --git a/fruserlogs/__init__.py b/fruserlogs/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/fruserlogs/admin.py b/fruserlogs/admin.py
+old mode 100644
+new mode 100755
+diff --git a/fruserlogs/apps.py b/fruserlogs/apps.py
+old mode 100644
+new mode 100755
+diff --git a/fruserlogs/migrations/__init__.py b/fruserlogs/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/fruserlogs/models.py b/fruserlogs/models.py
+old mode 100644
+new mode 100755
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+old mode 100644
+new mode 100755
+diff --git a/frusers/__init__.py b/frusers/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/frusers/admin.py b/frusers/admin.py
+old mode 100644
+new mode 100755
+diff --git a/frusers/apps.py b/frusers/apps.py
+old mode 100644
+new mode 100755
+diff --git a/frusers/migrations/__init__.py b/frusers/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/frusers/models.py b/frusers/models.py
+old mode 100644
+new mode 100755
+diff --git a/frusers/views.py b/frusers/views.py
+old mode 100644
+new mode 100755
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+old mode 100644
+new mode 100755
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+old mode 100644
+new mode 100755
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+old mode 100644
+new mode 100755
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+old mode 100644
+new mode 100755
+diff --git a/login/__init__.py b/login/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/login/admin.py b/login/admin.py
+old mode 100644
+new mode 100755
+diff --git a/login/apps.py b/login/apps.py
+old mode 100644
+new mode 100755
+diff --git a/login/migrations/__init__.py b/login/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/login/models.py b/login/models.py
+old mode 100644
+new mode 100755
+diff --git a/login/tests.py b/login/tests.py
+old mode 100644
+new mode 100755
+diff --git a/login/views.py b/login/views.py
+old mode 100644
+new mode 100755
+diff --git a/logsetting/__init__.py b/logsetting/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/logsetting/admin.py b/logsetting/admin.py
+old mode 100644
+new mode 100755
+diff --git a/logsetting/apps.py b/logsetting/apps.py
+old mode 100644
+new mode 100755
+diff --git a/logsetting/migrations/__init__.py b/logsetting/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/logsetting/models.py b/logsetting/models.py
+old mode 100644
+new mode 100755
+diff --git a/logsetting/views.py b/logsetting/views.py
+old mode 100644
+new mode 100755
+diff --git a/role/__init__.py b/role/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/role/admin.py b/role/admin.py
+old mode 100644
+new mode 100755
+diff --git a/role/apps.py b/role/apps.py
+old mode 100644
+new mode 100755
+diff --git a/role/migrations/__init__.py b/role/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/role/models.py b/role/models.py
+old mode 100644
+new mode 100755
+diff --git a/role/tests.py b/role/tests.py
+old mode 100644
+new mode 100755
+diff --git a/role/views.py b/role/views.py
+old mode 100644
+new mode 100755
+diff --git a/static/css/bootstrap-table.css b/static/css/bootstrap-table.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/bootstrap-theme.css b/static/css/bootstrap-theme.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/bootstrap-theme.css.map b/static/css/bootstrap-theme.css.map
+old mode 100644
+new mode 100755
+diff --git a/static/css/bootstrap-theme.min.css b/static/css/bootstrap-theme.min.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/bootstrap.css b/static/css/bootstrap.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/bootstrap.css.map b/static/css/bootstrap.css.map
+old mode 100644
+new mode 100755
+diff --git a/static/css/bootstrap.min.css b/static/css/bootstrap.min.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/components-rounded.min.css b/static/css/components-rounded.min.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/datepicker.css b/static/css/datepicker.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/datepicker3.css b/static/css/datepicker3.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/font-awesome.css b/static/css/font-awesome.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/font-awesome.min.css b/static/css/font-awesome.min.css
+old mode 100644
+new mode 100755
+diff --git a/static/css/styles.css b/static/css/styles.css
+old mode 100644
+new mode 100755
+diff --git a/static/fonts/FontAwesome.otf b/static/fonts/FontAwesome.otf
+old mode 100644
+new mode 100755
+diff --git a/static/fonts/fontawesome-webfont.eot b/static/fonts/fontawesome-webfont.eot
+old mode 100644
+new mode 100755
+diff --git a/static/fonts/fontawesome-webfont.svg b/static/fonts/fontawesome-webfont.svg
+old mode 100644
+new mode 100755
+diff --git a/static/fonts/fontawesome-webfont.ttf b/static/fonts/fontawesome-webfont.ttf
+old mode 100644
+new mode 100755
+diff --git a/static/fonts/fontawesome-webfont.woff b/static/fonts/fontawesome-webfont.woff
+old mode 100644
+new mode 100755
+diff --git a/static/fonts/fontawesome-webfont.woff2 b/static/fonts/fontawesome-webfont.woff2
+old mode 100644
+new mode 100755
+diff --git a/static/img/404eddy.png b/static/img/404eddy.png
+old mode 100644
+new mode 100755
+diff --git a/static/img/background.jpg b/static/img/background.jpg
+old mode 100644
+new mode 100755
+diff --git a/static/img/shuttle_logo.png b/static/img/shuttle_logo.png
+old mode 100644
+new mode 100755
+diff --git a/static/img/successfully.png b/static/img/successfully.png
+old mode 100644
+new mode 100755
+diff --git a/static/js/bootstrap-datepicker.js b/static/js/bootstrap-datepicker.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/bootstrap-table-cn.js b/static/js/bootstrap-table-cn.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/bootstrap-table-tw.js b/static/js/bootstrap-table-tw.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/bootstrap-table.js b/static/js/bootstrap-table.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/bootstrap.js b/static/js/bootstrap.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/bootstrap.min.js b/static/js/bootstrap.min.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/chart-data.js b/static/js/chart-data.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/chart.min.js b/static/js/chart.min.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/data1.json b/static/js/data1.json
+old mode 100644
+new mode 100755
+diff --git a/static/js/easypiechart-data.js b/static/js/easypiechart-data.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/easypiechart.js b/static/js/easypiechart.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/html5shiv.min.js b/static/js/html5shiv.min.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/jquery-1.11.1.min.js b/static/js/jquery-1.11.1.min.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/jquery-1.8.3.min.js b/static/js/jquery-1.8.3.min.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/login.js b/static/js/login.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/lumino.glyphs.js b/static/js/lumino.glyphs.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/md5.js b/static/js/md5.js
+old mode 100644
+new mode 100755
+diff --git a/static/js/respond.min.js b/static/js/respond.min.js
+old mode 100644
+new mode 100755
+diff --git a/static/styles/login.css b/static/styles/login.css
+old mode 100644
+new mode 100755
+diff --git a/systembackup/.gitignore b/systembackup/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/systembackup/log/.gitignore b/systembackup/log/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/systemlogs/__init__.py b/systemlogs/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/systemlogs/admin.py b/systemlogs/admin.py
+old mode 100644
+new mode 100755
+diff --git a/systemlogs/apps.py b/systemlogs/apps.py
+old mode 100644
+new mode 100755
+diff --git a/systemlogs/migrations/__init__.py b/systemlogs/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/systemlogs/models.py b/systemlogs/models.py
+old mode 100644
+new mode 100755
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+old mode 100644
+new mode 100755
+diff --git a/systemsettings/__init__.py b/systemsettings/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/systemsettings/admin.py b/systemsettings/admin.py
+old mode 100644
+new mode 100755
+diff --git a/systemsettings/apps.py b/systemsettings/apps.py
+old mode 100644
+new mode 100755
+diff --git a/systemsettings/migrations/__init__.py b/systemsettings/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/systemsettings/models.py b/systemsettings/models.py
+old mode 100644
+new mode 100755
+diff --git a/systemsettings/tests.py b/systemsettings/tests.py
+old mode 100644
+new mode 100755
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+old mode 100644
+new mode 100755
+diff --git a/templates/commons_js.html b/templates/commons_js.html
+old mode 100644
+new mode 100755
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+old mode 100644
+new mode 100755
+diff --git a/templates/device_add.html b/templates/device_add.html
+old mode 100644
+new mode 100755
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+old mode 100644
+new mode 100755
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+old mode 100644
+new mode 100755
+diff --git a/templates/device_list.html b/templates/device_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+old mode 100644
+new mode 100755
+diff --git a/templates/empty.html b/templates/empty.html
+old mode 100644
+new mode 100755
+diff --git a/templates/fruser_add.html b/templates/fruser_add.html
+old mode 100644
+new mode 100755
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+old mode 100644
+new mode 100755
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+old mode 100644
+new mode 100755
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+old mode 100644
+new mode 100755
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+old mode 100644
+new mode 100755
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+old mode 100644
+new mode 100755
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/home.html b/templates/home.html
+old mode 100644
+new mode 100755
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+old mode 100644
+new mode 100755
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+old mode 100644
+new mode 100755
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+old mode 100644
+new mode 100755
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+old mode 100644
+new mode 100755
+diff --git a/templates/login.html b/templates/login.html
+old mode 100644
+new mode 100755
+diff --git a/templates/login_i18n.html b/templates/login_i18n.html
+old mode 100644
+new mode 100755
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+old mode 100644
+new mode 100755
+diff --git a/templates/menu.html b/templates/menu.html
+old mode 100644
+new mode 100755
+diff --git a/templates/registration/forget_password.html b/templates/registration/forget_password.html
+old mode 100644
+new mode 100755
+diff --git a/templates/registration/not_found.html b/templates/registration/not_found.html
+old mode 100644
+new mode 100755
+diff --git a/templates/registration/password_reset_complete.html b/templates/registration/password_reset_complete.html
+old mode 100644
+new mode 100755
+diff --git a/templates/registration/password_reset_email.html b/templates/registration/password_reset_email.html
+old mode 100644
+new mode 100755
+diff --git a/templates/registration/reset_password.html b/templates/registration/reset_password.html
+old mode 100644
+new mode 100755
+diff --git a/templates/role_add.html b/templates/role_add.html
+old mode 100644
+new mode 100755
+diff --git a/templates/role_list.html b/templates/role_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+old mode 100644
+new mode 100755
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+old mode 100644
+new mode 100755
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+old mode 100644
+new mode 100755
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_add.html b/templates/user_add.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_list.html b/templates/user_list.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_setting.html b/templates/user_setting.html
+old mode 100644
+new mode 100755
+diff --git a/templates/user_update.html b/templates/user_update.html
+old mode 100644
+new mode 100755
+diff --git a/user/__init__.py b/user/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/user/admin.py b/user/admin.py
+old mode 100644
+new mode 100755
+diff --git a/user/apps.py b/user/apps.py
+old mode 100644
+new mode 100755
+diff --git a/user/migrations/__init__.py b/user/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/user/models.py b/user/models.py
+old mode 100644
+new mode 100755
+diff --git a/user/views.py b/user/views.py
+old mode 100644
+new mode 100755
+diff --git a/usergroups/__init__.py b/usergroups/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/usergroups/admin.py b/usergroups/admin.py
+old mode 100644
+new mode 100755
+diff --git a/usergroups/apps.py b/usergroups/apps.py
+old mode 100644
+new mode 100755
+diff --git a/usergroups/migrations/__init__.py b/usergroups/migrations/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/usergroups/models.py b/usergroups/models.py
+old mode 100644
+new mode 100755
+diff --git a/usergroups/tests.py b/usergroups/tests.py
+old mode 100644
+new mode 100755
+diff --git a/usergroups/views.py b/usergroups/views.py
+old mode 100644
+new mode 100755
+-- 
+1.9.1
+

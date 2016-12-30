@@ -1,0 +1,128 @@
+From 66730150993d55be1dc697a18b4abbb942087ab7 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 12 Oct 2016 17:08:55 +0800
+Subject: [PATCH 314/443] Add crontab job to sync 4G user state.
+
+Update fruser state (Enable/Disable)
+cmd: python3.4 manage.py crontab add
+log: /var/log
+---
+ api/cron.py      | 82 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ br06/settings.py |  8 +++++-
+ 2 files changed, 89 insertions(+), 1 deletion(-)
+ create mode 100644 api/cron.py
+
+diff --git a/api/cron.py b/api/cron.py
+new file mode 100644
+index 0000000..09dfd46
+--- /dev/null
++++ b/api/cron.py
+@@ -0,0 +1,82 @@
++from datetime import datetime
++from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlogs
++import time
++import os, sys
++import json, requests
++from django.http import JsonResponse
++from django.conf import settings
++from .utility import md5
++
++print('4G Updating: ', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
++
++def QE_4G(sync_time):
++    try:
++        print('4G Updating: Post to 4G server')
++        res_4G = json.loads(
++            requests.post(
++                settings.QE_4G,
++                data = json.dumps({
++                    'sync_time': sync_time,
++                    'checksum': md5(sync_time + "#Qut0yV84VRfVVaet%")
++                }).encode('utf8'),
++                headers = {'Content-Type': 'application/json'}
++            ).text
++        )
++        print('4G Updating: ', res_4G)
++        return res_4G
++    except Exception as error:
++        print('ERROR: ', str(error))
++        logContent = str(error)
++        Systemlogs.objects.create(Category = 'QE_4G', LogContent = logContent)
++        sys.exit(0)
++
++def Update_4G_User():
++
++    try:
++        if settings.EN_4G:
++            sync_time = '0'
++            # Check last sync time log in Systemlogs
++            SyncT = Systemlogs.objects.filter(Category = '4GSyncT').order_by('-LogDateTime')
++            if not SyncT:
++                print('4G Updating: First time to send init sync_time')
++                res_4G = QE_4G(sync_time)
++                logContent = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
++                Systemlogs.objects.create(Category = '4GSyncT', LogContent = logContent)
++                return
++            # Get last sync time    
++            sync_time = SyncT[0].LogContent
++            print('4G Updating: Last SyncT: ', sync_time)
++            # Sync 4G user state
++            res_4G = QE_4G(sync_time)
++            if not res_4G['response_data']:
++                print('4G Updating: No 4G user to update')
++                logContent = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
++                Systemlogs.objects.create(Category = '4GSyncT', LogContent = logContent)
++                return
++            if not res_4G['status']:
++                logContent = 'ERROR: Can\'t get 4G user for update state'
++                Systemlogs.objects.create(Category = '4GSync', LogContent = logContent)
++                print(logContent)
++                return
++            # Update user state
++            for i in res_4G['response_data']:
++                fruser = Frusers.objects.get(FRUserId = i['account'])
++                if i['status'] == '1':
++                    print('Enable User: ', fruser.FRUserId)
++                    fruser.State = 'Enable'
++                elif i['status'] == '0':
++                    print('Disable User: ', fruser.FRUserId)
++                    fruser.State = 'Disable'
++                fruser.save()
++            # Save sync time in systemlog when user updating success
++            logContent = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
++            Systemlogs.objects.create(Category = '4GSyncT', LogContent = logContent)
++            print('4G Updating: 4G user update done')
++        else:
++            print('4G Updating: Not a 4G Server')
++            return
++    except Exception as error:
++        print('ERROR: ', str(error))
++        logContent = str(error)
++        Systemlogs.objects.create(Category = '4GSync', LogContent = logContent)
++        return
+diff --git a/br06/settings.py b/br06/settings.py
+index 707e473..9a277d2 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -57,7 +57,8 @@ INSTALLED_APPS = [
+     'bootstrap3',
+     'api',
+     'nocaptcha_recaptcha',
+-    'django_nose'
++    'django_nose',
++    'django_crontab',
+ ]
+ 
+ MIDDLEWARE_CLASSES = [
+@@ -195,3 +196,8 @@ EN_4G = 0 # Enable 4Gapi in UserAdd
+ SE_4G = 1 # 4G return status: success
+ LO_4G = 'http://61.247.173.118/daily/LoginApi/face'
+ RE_4G = 'http://61.247.173.118/daily/importApi/UserFaceLoginRecord/add'
++QE_4G = 'http://61.247.173.118/daily/loginApi/faceQuery'
++
++CRONJOBS = [
++    ('*/10 * * * *', 'api.cron.Update_4G_User', '>> /var/log/4G_user_sync.log 2>&1'),
++]
+-- 
+1.9.1
+

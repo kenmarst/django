@@ -1,0 +1,45 @@
+From 039f645062e32444f0cee6ea2a7cfdfd28439260 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 26 Sep 2016 13:42:21 +0800
+Subject: [PATCH 296/443] Update Device Config API for specification: Update
+ Device attributes
+
+Get: Add 'Name', 'Type' in Response
+Set: Add 'Name', 'Type', 'MAC' in Request
+---
+ api/connection.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 861a851..b804789 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -42,6 +42,8 @@ def get(request):
+             devices.save()
+ 
+             return JsonResponse(dict(ChainMap(result_success, {
++                'Name' : devices.Name,
++                'Type' : devices.Type,
+                 'Model' : devices.Model,
+                 'WelcomeR0Action' : devices.WelcomeR0Action,
+                 'WelcomeR0Pulse' : devices.WelcomeR0Pulse,
+@@ -76,12 +78,15 @@ def set(request):
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {
+-                'Model', 'WelcomeR0Action', 'WelcomeR0Pulse', 'WelcomeR1Action', 'WelcomeR1Pulse',
++                'Name', 'MAC', 'Type', 'Model', 'WelcomeR0Action', 'WelcomeR0Pulse', 'WelcomeR1Action', 'WelcomeR1Pulse',
+                 'AccessDeniedR0Action', 'AccessDeniedR0Pulse', 'AccessDeniedR1Action', 'AccessDeniedR1Pulse',
+                 'Timeout', 'ScreenSaver', 'NTP', 'Timezone', 'Audio', 'FaceBioScore', 'FingerBioScore', 'Language'
+             }
+             if all(k in req for k in req_key):
+                 devices.State = 'Getting'
++                devices.Name = req['Name'] or devices.Name
++                devices.MAC = req['MAC'] or devices.MAC
++                devices.Type = req['Type'] or devices.Type
+                 devices.Model = req['Model'] or devices.Model
+                 devices.WelcomeR0Action = req['WelcomeR0Action'] or devices.WelcomeR0Action
+                 devices.WelcomeR0Pulse = req['WelcomeR0Pulse'] or devices.WelcomeR0Pulse
+-- 
+1.9.1
+

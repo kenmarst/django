@@ -1,0 +1,509 @@
+From 6dfe04b361a9c24fb751313bc9894ae956e8a718 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 20:03:13 +0800
+Subject: [PATCH 134/443] Modify frusergroup method
+
+Modify frusergroup method for large data load.
+---
+ br06/urls.py                       |   7 +-
+ frusergroups/views.py              | 166 +++++++++++++++++++++++++++++--------
+ templates/frusergroup_devices.html |  45 ++++++----
+ templates/frusergroup_member.html  |  45 ++++++----
+ templates/frusergroups_list.html   |  21 +++--
+ 5 files changed, 209 insertions(+), 75 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index d0cca40..b661cd6 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -26,7 +26,7 @@ from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+-from frusergroups.views import frusergroups_list, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, add_frusergroup_device, delete_frusergroup_device
++from frusergroups.views import frusergroups_list, frusergroups_list_data, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, frusergroup_member_list_data, frusergroup_member_add_data, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, frusergroup_devices_list_data, frusergroup_devices_add_data, add_frusergroup_device, delete_frusergroup_device
+ from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView, login_i18n, home_view, empty_view
+ from django.conf import settings
+ 
+@@ -114,15 +114,20 @@ urlpatterns += [
+ 
+ urlpatterns += [
+     url(r'^fruser_group/?$', frusergroups_list),
++    url(r'^fruser_group_data/?$', frusergroups_list_data),
+     url(r'^delete_frusergroup/?$', delete_frusergroup),
+     url(r'^frusergroup_add/?$', frusergroup_add_view),
+     url(r'^add_frusergroup/?$', add_frusergroup),
+     url(r'^frusergroup_edit/?$', frusergroup_edit_view),
+     url(r'^change_frusergroup_name/?$', change_frusergroup_name),
+     url(r'^frusergroup_member/?$', frusergroup_member_view),
++    url(r'^frusergroup_member_list_data/?$', frusergroup_member_list_data),
++    url(r'^frusergroup_member_add_data/?$', frusergroup_member_add_data),
+     url(r'^add_frusergroup_member/?$', add_frusergroup_member),
+     url(r'^delete_frusergroup_member/?$', delete_frusergroup_member),
+     url(r'^frusergroup_devices/?$', frusergroup_devices_view),
++    url(r'^frusergroup_devices_list_data/?$', frusergroup_devices_list_data),
++    url(r'^frusergroup_devices_add_data/?$', frusergroup_devices_add_data),
+     url(r'^add_frusergroup_device/?$', add_frusergroup_device),
+     url(r'^delete_frusergroup_device/?$', delete_frusergroup_device),
+ ]
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index 001fec1..032e7b0 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Frusergroups, Frusergroupmember, Frusergroupdevices, Devices, Frusers
+ from datetime import datetime
+ from login.views import check_login
++from django.db.models import Q, Count
+ import json
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -16,18 +17,39 @@ def frusergroups_list(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Frusergroups.objects.all()
+-        groups = [res.as_json() for res in obj]
+-        index = 0
+-        for group in groups:
+-            group['Index'] = index+1
+-            group['UserNumber'] = len(Frusergroupmember.objects.filter(GroupOId = Frusergroups.objects.get(OId = group['OId'])))
+-            index += 1
+-
+-        return render(request, 'frusergroups_list.html', {'active': 'frusergroups_list', 'obj': groups})
++        return render(request, 'frusergroups_list.html', {'active': 'frusergroups_list'})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
++def frusergroups_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            frusergroups = Frusergroups.objects.filter(Q(Name__contains = search)).annotate(UserNumber = Count('frusergroupmember')).order_by(order)
++        else:
++            frusergroups = Frusergroups.objects.annotate(UserNumber = Count('frusergroupmember')).order_by(order)
++        frusergroup_count = frusergroups.count()
++        frusergroups = [frusergroup.as_json() for frusergroup in frusergroups[offset : offset + limit]]
++        index = offset
++        for frusergroup in frusergroups:
++            frusergroup['Index'] = index + 1
++            index += 1
++            frusergroup['UserNumber'] = Frusergroupmember.objects.filter(GroupOId__OId = frusergroup['OId']).count()
++        return JsonResponse({'total': frusergroup_count, 'rows': frusergroups})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
+ def frusergroup_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+@@ -97,25 +119,63 @@ def frusergroup_member_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Frusergroupmember.objects.filter(GroupOId = Frusergroups.objects.get(OId = request.GET['OId']))
+-        members = [res.FRUserOId.as_json() for res in obj]
+-        index = 0
++        return render(request, 'frusergroup_member.html', {'active': 'frusergroup_member', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json()})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def frusergroup_member_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            members = Frusers.objects.filter(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            members = Frusers.objects.filter(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        member_count = members.count()
++        members = [member.as_json() for member in members[offset : offset + limit]]
+         for member in members:
+-            member['Index'] = index+1
+             member['Age'] = member['Age'] or ''
+-            index += 1
+ 
+-        obj_all = Frusers.objects.all()
+-        FR_users = [res_all.as_json() for res_all in obj_all if res_all not in [res.FRUserOId for res in obj]]
+-        index = 0
++        return JsonResponse({'total': member_count, 'rows': members})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
++def frusergroup_member_add_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            FR_users = Frusers.objects.exclude(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            FR_users = Frusers.objects.exclude(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        FR_user_count = FR_users.count()
++        FR_users = [FR_user.as_json() for FR_user in FR_users[offset : offset + limit]]
+         for user in FR_users:
+-            user['Index'] = index+1
+             user['Age'] = user['Age'] or ''
+-            index += 1
+ 
+-        return render(request, 'frusergroup_member.html', {'active': 'frusergroup_member', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json(), 'members': members, 'FR_users': FR_users})
++        return JsonResponse({'total': FR_user_count, 'rows': FR_users})
+     except:
+-        return render(request, 'registration/not_found.html')
++        return JsonResponse({'total': 0, 'rows': []})
+ 
+ def add_frusergroup_member(request):
+     login_request = json.loads(check_login(request, permission))
+@@ -153,23 +213,59 @@ def frusergroup_devices_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Frusergroupdevices.objects.filter(GroupOId = Frusergroups.objects.get(OId = request.GET['OId']))
+-        groupdevices = [res.DeviceOId.as_json() for res in obj]
+-        index = 0
+-        for device in groupdevices:
+-            device['Index'] = index+1
+-            index += 1
++        return render(request, 'frusergroup_devices.html', {'active': 'frusergroup_devices', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json()})
++    except:
++        return render(request, 'registration/not_found.html')
+ 
+-        obj_all = Devices.objects.all()
+-        devices = [res_all.as_json() for res_all in obj_all if res_all not in [res.DeviceOId for res in obj]]
+-        index = 0
+-        for device in devices:
+-            device['Index'] = index+1
+-            index += 1
++def frusergroup_devices_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            groupdevices = Devices.objects.filter(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            groupdevices = Devices.objects.filter(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        groupdevice_count = groupdevices.count()
++        groupdevices = [groupdevice.as_json() for groupdevice in groupdevices[offset : offset + limit]]
+ 
+-        return render(request, 'frusergroup_devices.html', {'active': 'frusergroup_devices', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json(), 'groupdevices': groupdevices, 'devices': devices})
++        return JsonResponse({'total': groupdevice_count, 'rows': groupdevices})
+     except:
+-        return render(request, 'registration/not_found.html')
++        return JsonResponse({'total': 0, 'rows': []})
++
++def frusergroup_devices_add_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            devices = Devices.objects.exclude(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            devices = Devices.objects.exclude(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        device_count = devices.count()
++        devices = [device.as_json() for device in devices[offset : offset + limit]]
++
++        return JsonResponse({'total': device_count, 'rows': devices})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
+ 
+ def add_frusergroup_device(request):
+     login_request = json.loads(check_login(request, permission))
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index fd58449..29e1f90 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -79,12 +79,23 @@
+             var $DeviceAdd = $('#DeviceAdd');
+ 
+             $DeviceList.bootstrapTable({
++                url: '/frusergroup_devices_list_data',
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Name',
+@@ -100,14 +111,26 @@
+                         }
+                     }
+                 ],
+-                data: {{groupdevices|safe}}
+             });
+ 
+             $DeviceAdd.bootstrapTable({
++                url: '/frusergroup_devices_add_data',
+                 search: true,
++                pagination: true,
+                 pageSize: 10,
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         checkbox: true
+@@ -118,7 +141,6 @@
+                         sortable: true
+                     }
+                 ],
+-                data: {{devices|safe}}
+             });
+ 
+ 
+@@ -156,11 +178,8 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                $DeviceAdd.bootstrapTable('append', data);
+-                                $DeviceList.bootstrapTable('remove', {
+-                                    field: 'OId',
+-                                    values: [data.OId]
+-                                });
++                                $DeviceList.bootstrapTable('refresh');
++                                $DeviceAdd.bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete device");
+                             }
+@@ -190,14 +209,8 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            $DeviceList.bootstrapTable('append', $.map(
+-                                $DeviceAdd.bootstrapTable('getSelections'),
+-                                function (row) {return row}
+-                            ));
+-                            $DeviceAdd.bootstrapTable('remove', {
+-                                field: 'OId',
+-                                values: DeviceOIds
+-                            });
++                            $DeviceList.bootstrapTable('refresh');
++                            $DeviceAdd.bootstrapTable('refresh');
+                         } else {
+                             alert("Fail to add device");
+                         }
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 348ec0a..0cabb6e 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -79,12 +79,23 @@
+             var $MemberAdd = $('#MemberAdd');
+ 
+             $MemberList.bootstrapTable({
++                url: '/frusergroup_member_list_data',
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Name',
+@@ -100,14 +111,26 @@
+                         }
+                     }
+                 ],
+-                data: {{members|safe}}
+             });
+ 
+             $MemberAdd.bootstrapTable({
++                url: '/frusergroup_member_add_data',
+                 search: true,
++                pagination: true,
+                 pageSize: 10,
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         checkbox: true
+@@ -118,7 +141,6 @@
+                         sortable: true
+                     }
+                 ],
+-                data: {{FR_users|safe}}
+             });
+ 
+ 
+@@ -156,11 +178,8 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                $MemberAdd.bootstrapTable('append', data);
+-                                $MemberList.bootstrapTable('remove', {
+-                                    field: 'OId',
+-                                    values: [data.OId]
+-                                });
++                                $MemberList.bootstrapTable('refresh');
++                                $MemberAdd.bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete user");
+                             }
+@@ -190,14 +209,8 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            $MemberList.bootstrapTable('append', $.map(
+-                                $MemberAdd.bootstrapTable('getSelections'),
+-                                function (row) {return row}
+-                            ));
+-                            $MemberAdd.bootstrapTable('remove', {
+-                                field: 'OId',
+-                                values: UserOIds
+-                            });
++                            $MemberList.bootstrapTable('refresh');
++                            $MemberAdd.bootstrapTable('refresh');
+                         } else {
+                             alert("Fail to add user");
+                         }
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index 35bc70b..6c9b087 100644
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -48,20 +48,28 @@
+             }
+         </script>
+         <script>
+-            var dataSet = {{obj|safe}};
+             $('#GroupList').bootstrapTable({
++                url: '/fruser_group_data',
+                 search: true,
+                 pagination: true,
+                 toolbar: '#AddGroup',
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+-                sortName: 'Index',
++                sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Index',
+-                        title: '{% trans "No." %}',
+-                        sortable: true
++                        title: '{% trans "No." %}'
+                     },
+                     {
+                         field: 'Name',
+@@ -83,7 +91,6 @@
+                         }
+                     }
+                 ],
+-                data: dataSet
+             });
+ 
+             //For getting CSRF token
+@@ -118,7 +125,7 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                location.reload();
++                                $('#GroupList').bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete group");
+                             }
+-- 
+1.9.1
+

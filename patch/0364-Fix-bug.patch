@@ -1,0 +1,29 @@
+From 686ff7dc52088ef05a5ff5a39213ee4e385cf391 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 18 Nov 2016 16:03:08 +0800
+Subject: [PATCH 364/443] Fix bug.
+
+---
+ api/cron.py | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 1ec1c40..590abd8 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -117,11 +117,9 @@ def chk_new_version():
+         if new_version_date > version_date:
+             print('BR06 update check: new version to update')
+             Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': data['VERSION']})
+-            FTP_download_file(settings.FTP_PATH, settings.FTP_FILE_NAME, settings.FTP_HOST,
+-                                settings.FTP_PORT, settings.FTP_USER, settings.FTP_PW)
+         else:
+             print('BR06 update check: There hadn\'t new version to update')
+-            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': ''})
++            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': settings.VERSION})
+ 
+         #print('BR06 update check: check version for update end')
+     except Exception as error:
+-- 
+1.9.1
+

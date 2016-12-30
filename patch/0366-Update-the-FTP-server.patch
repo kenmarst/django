@@ -1,0 +1,31 @@
+From ea5e98592ea56ff8696fced2180c10ae0e570f7b Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 22 Nov 2016 17:05:23 +0800
+Subject: [PATCH 366/443] Update the FTP server.
+
+---
+ br06/settings.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 468946d..e47ffa0 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -243,10 +243,10 @@ CRONJOBS = [
+ 
+ # FTP server: check the new version for br06 server update
+ UPDATE_DIR = os.path.join(MEDIA_DIR, 'update')
+-FTP_PATH = 'SW1/BR06/SW_Release'
++FTP_PATH = ''
+ FTP_FILE_NAME = 'update.json'
+-FTP_HOST = '61.247.173.105'
++FTP_HOST = 'ftp.tw.shuttle.com'
+ FTP_PORT = 21
+-FTP_USER = 'rd@MobileSW'
+-FTP_PW = 'rd-2014'
++FTP_USER = 'client.br06@swdesign'
++FTP_PW = 'download'
+ FTP_DEBUG_LEVEL = 0
+-- 
+1.9.1
+

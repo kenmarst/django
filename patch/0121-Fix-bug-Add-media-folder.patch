@@ -1,0 +1,1026 @@
+From 4fe62ddd3925d3ada0e58efd7d8afc0cc2e2ba3d Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 8 Jun 2016 16:05:52 +0800
+Subject: [PATCH 121/443] Fix bug & Add media folder
+
+Bug fix:
+-  urls bug
+-  template static bug
+-  user delete bug
+-  device settings web bug
+
+Change setting variable.
+Add media folder for photo upload.
+Correct face api variable value.
+for Config value.
+---
+ api/face.py                                        | 24 +++++++-----
+ api/user.py                                        | 42 +++++++++++----------
+ br06/settings.py                                   | 27 +++++++++-----
+ br06/urls.py                                       |  4 --
+ br06/wsgi.py                                       |  6 ++-
+ fruserlogs/views.py                                |  2 +-
+ fruserpic/.gitignore                               |  4 --
+ frusers/views.py                                   | 43 ++++++++++++----------
+ logsetting/views.py                                |  2 +-
+ static/styles/login.css                            |  8 ++--
+ systemlogs/views.py                                |  2 +-
+ templates/commons_js.html                          |  8 ++--
+ templates/dashboard.html                           | 30 +++++++--------
+ templates/device_frusergroups.html                 |  2 +-
+ templates/device_list.html                         |  2 +-
+ templates/device_settings.html                     |  8 ++--
+ templates/fruser_list.html                         |  2 +-
+ templates/frusergroup_devices.html                 |  2 +-
+ templates/frusergroup_member.html                  |  2 +-
+ templates/frusergroups_list.html                   |  2 +-
+ templates/fruserlog_list.html                      | 12 +++---
+ templates/login.html                               |  8 ++--
+ templates/menu.html                                |  8 ++--
+ templates/registration/forget_password.html        |  6 +--
+ templates/registration/not_found.html              |  8 ++--
+ .../registration/password_reset_complete.html      | 12 +++---
+ templates/registration/reset_password.html         |  6 +--
+ templates/role_list.html                           | 12 +++---
+ templates/role_permission.html                     | 12 +++---
+ templates/system_settings.html                     |  2 +-
+ templates/systemlog_list.html                      | 12 +++---
+ templates/user_group_devices.html                  |  2 +-
+ templates/user_group_list.html                     |  2 +-
+ templates/user_group_members.html                  |  2 +-
+ templates/user_list.html                           | 12 +++---
+ templates/user_setting.html                        |  2 +-
+ 36 files changed, 178 insertions(+), 162 deletions(-)
+ delete mode 100644 fruserpic/.gitignore
+
+diff --git a/api/face.py b/api/face.py
+index 479bc58..aa84121 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -11,7 +11,7 @@ result_success = {'Result' : 'Success'}
+ result_fail = {'Result' : 'Fail'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
+-true = '1'
++true = 'true'
+ 
+ @csrf_exempt
+ def add(request):
+@@ -87,27 +87,31 @@ def add(request):
+                     Frusers.objects.filter(OId = fruser.OId).update(FaceID2 = face_id, UpdateDate = datetime.now())
+             else:
+                 if Config.objects.get(Name = 'PicFaceSave').Value == true:
++                    FaceDir = ''.join([
++                        settings.PIC_DIR,
++                        request.POST.get('FRUserId'),
++                        '_',
++                        datetime.now().strftime("%Y%m%d%H%M%S"),
++                        '.jpg'
++                    ])
+                     open(
+-                        settings.PIC_DIR +
+-                        request.POST.get('FRUserId') +
+-                        '_' +
+-                        datetime.now().strftime("%Y%m%d%H%M%S") +
+-                        '.jpg',
++                        os.path.join(
++                            settings.MEDIA_PAR_DIR,
++                            FaceDir
++                        ),
+                         'wb+'
+                     ).write(request.FILES['image'].file.getvalue())
+ 
+                     #Fruser update
+                     if not fruser.Face1:
+                         Frusers.objects.filter(OId = fruser.OId).update(
+-                                Face1 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+-                                        '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                                Face1 = FaceDir,
+                                 FaceID1 = face_id,
+                                 UpdateDate = datetime.now()
+                         )
+                     else:
+                         Frusers.objects.filter(OId = fruser.OId).update(
+-                                Face2 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+-                                        '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                                Face2 = FaceDir,
+                                 FaceID2 = face_id,
+                                 UpdateDate = datetime.now()
+                         )
+diff --git a/api/user.py b/api/user.py
+index b2350d7..45908c2 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -6,8 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
+ from django.core.exceptions import ObjectDoesNotExist
+ from .utility import TCIT_API, TCIT_res_state
+ from datetime import datetime
+-import os
+ from django.conf import settings
++import os
+ 
+ result_success = {'Result' : 'Success'}
+ result_fail = {'Result' : 'Fail'}
+@@ -104,26 +104,30 @@ def update(request):
+ 
+ def delete_fruser(id):
+     try:
+-        fruser = Frusers.objects.get(FRUserId = id)
+-        if fruser:
++        fruser = Frusers.objects.filter(FRUserId = id)
++        if fruser.exists():
+             # delete personid from TCIT
+-            if fruser.PersonId:
+-                res_personid_delete = TCIT_API('/face/person/delete/', data = { 'person_id' : fruser.PersonId })
++            if fruser[0].PersonId:
++                res_personid_delete = TCIT_API('/face/person/delete/', data = {'person_id' : fruser[0].PersonId})
++                fruser.update(PersonId = '', UpdateDate = datetime.now())
+                 if not res_personid_delete['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                    return dict ( ChainMap (
++                    return dict(ChainMap(
+                         result_fail,
+                         fail_code999,
+-                        {'Message' :  TCIT_res_state[ res_personid_delete['state'] ] }
++                        {'Message' : TCIT_res_state[res_personid_delete['state']]}
+                     ))
+             # delet img
+-            if fruser.Face1:
+-                os.remove(fruser.Face1)
+-            if fruser.Face2:
+-                os.remove(fruser.Face2)
+-            if fruser.Face3:
+-                os.remove(fruser.Face3)
+-            fruser.delete()
+-            return dict( {'Message': 'success'} )# The Message is for logContent
++            if fruser[0].Face1:
++                os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser[0].Face1))
++                fruser.update(Face1 = '', UpdateDate = datetime.now())
++            if fruser[0].Face2:
++                os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser[0].Face2))
++                fruser.update(Face2 = '', UpdateDate = datetime.now())
++            if fruser[0].Face3:
++                os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser[0].Face3))
++                fruser.update(Face3 = '', UpdateDate = datetime.now())
++            fruser[0].delete()
++            return dict({'Message': 'success'})# The Message is for logContent
+         else:
+             return dict(ChainMap(result_fail, fail_code999, {'Message' : 'FRUser Delete error'}))
+     except Exception as error:
+@@ -136,23 +140,23 @@ def delete(request):
+         try:
+             # from server
+             if request.META['REMOTE_ADDR'] == '127.0.0.1':
+-                res_delete = delete_fruser( request.POST.get('FRUserId') )
++                res_delete = delete_fruser(request.POST.get('FRUserId'))
+                 logContent = res_delete['Message']
+                 if logContent == 'success':
+                     return JsonResponse(dict(result_success))
+                 else:
+-                    return JsonResponse( res_delete )
++                    return JsonResponse(res_delete)
+             # from device
+             elif Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+                 req = json.loads(request.body.decode('utf-8'))
+                 req_key = {'FRUserId'}
+                 if all(k in req for k in req_key) and all(req.values()):
+-                    res_delete = delete_fruser( req['FRUserId'] )
++                    res_delete = delete_fruser(req['FRUserId'])
+                     logContent = res_delete['Message']
+                     if logContent == 'success':
+                         return JsonResponse(dict(result_success))
+                     else:
+-                        return JsonResponse( res_delete )
++                        return JsonResponse(res_delete)
+                 else:
+                     logContent = 'Request parameter error'
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+diff --git a/br06/settings.py b/br06/settings.py
+index 41b227e..4550a47 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -16,6 +16,7 @@ from api.utility import get_localtimezone
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ PROJECT_DIR = os.path.dirname(__file__)
++MEDIA_PAR_DIR = os.path.dirname(os.path.dirname(__file__))
+ 
+ # Quick-start development settings - unsuitable for production
+ # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
+@@ -26,14 +27,20 @@ SECRET_KEY = '6LcOCx4TAAAAAPE6AF6FY3ZNe-v8ze6fp-PDBvch'
+ # SECURITY WARNING: don't run with debug turned on in production!
+ DEBUG = True
+ 
+-#default admin login email & password
++# Set to False when DEBUG=False, but default do not set
++#TEMPLATE_DEBddUG = False
++
++# Default admin login email & password
+ ADMIN_MAIL = 'admin@tw.shuttle.com'
+ ADMIN_PASSWORD = '5f4dcc3b5aa765d61d8327deb882cf99'
+ 
+ PERMISSION = {'permission_system', 'permission_device', 'permission_fruserlist', 'permission_frusergroup', 'permission_log'}
+ 
+-ALLOWED_HOSTS = []
+-
++# Add host IP when DEBUG=False
++ALLOWED_HOSTS = [
++    'localhost',
++    '127.0.0.1',
++]
+ 
+ # Application definition
+ 
+@@ -151,17 +158,17 @@ NORECAPTCHA_SECRET_KEY = os.environ.get('NORECAPTCHA_SECRET_KEY', '')
+ # Static files (CSS, JavaScript, Images)
+ # https://docs.djangoproject.com/en/dev/howto/static-files/
+ 
++MEDIA_URL = '/media/'
+ STATIC_URL = '/static/'
+-PIC_DIR = 'fruserpic/'
++
+ STATICFILES_DIRS = [
+-    os.path.join(BASE_DIR, "static"),
+-    'static/js',
+-    'static/styles',
+-    'static/css',
+-    'static/img/',
+-    'logsetting/',
++    os.path.join(BASE_DIR, 'static')
+ ]
+ 
++PIC_DIR = 'media/fruserpic/'
++
++LOGSETTING = 'logsetting/'
++
+ TCIT_IP = 'localhost:8800'
+ 
+ CONFIDENCE = 50
+diff --git a/br06/urls.py b/br06/urls.py
+index 7fef659..4a91440 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -158,7 +158,3 @@ urlpatterns += [
+     url(r'^api/connection/get/?$', connection.get),
+     url(r'^api/connection/set/?$', connection.set),
+ ]
+-
+-urlpatterns += [
+-    url(r'^fruserpic/(?P<path>.*)', 'django.views.static.serve', {'document_root': settings.PIC_DIR}),
+-]
+diff --git a/br06/wsgi.py b/br06/wsgi.py
+index 2b6fcd5..3e19798 100644
+--- a/br06/wsgi.py
++++ b/br06/wsgi.py
+@@ -7,10 +7,14 @@ For more information on this file, see
+ https://docs.djangoproject.com/en/1.9/howto/deployment/wsgi/
+ """
+ 
+-import os
++import os, sys
++from os.path import join,dirname,abspath
+ 
+ from django.core.wsgi import get_wsgi_application
+ 
++PROJECT_DIR = dirname(dirname(abspath(__file__)))
++sys.path.insert(0,PROJECT_DIR)
++
+ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "br06.settings")
+ 
+ application = get_wsgi_application()
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 63d0a97..74e74f5 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -42,7 +42,7 @@ def fruserlog_export(request):
+          "space":' ',
+         }
+     try:
+-     with open(settings.STATICFILES_DIRS[5]+'logssetting.json') as f:
++     with open(settings.LOGSETTING+'logssetting.json') as f:
+       data=f.read()
+       json_data=json.loads(data)
+       symbol=json_data[0]['symbol']
+diff --git a/fruserpic/.gitignore b/fruserpic/.gitignore
+deleted file mode 100644
+index 5e7d273..0000000
+--- a/fruserpic/.gitignore
++++ /dev/null
+@@ -1,4 +0,0 @@
+-# Ignore everything in this directory
+-*
+-# Except this file
+-!.gitignore
+diff --git a/frusers/views.py b/frusers/views.py
+index efe5825..0178041 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -2,10 +2,11 @@ from django.shortcuts import render
+ 
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+-from api.models import Frusers, Frusergroupmember
++from api.models import Frusers, Frusergroups
+ from datetime import datetime
+ from login.views import check_login
+-import csv, tarfile, os, json, requests
++from django.conf import settings
++import csv, tarfile, os, sys, json, requests
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ permission = 'permission_fruserlist'
+@@ -17,15 +18,13 @@ def fruser_list_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Frusers.objects.all()
+-        frusers = [res.as_json() for res in obj]
++        frusers = [fruser.as_json() for fruser in Frusers.objects.all()]
+         index = 0
+         for fruser in frusers:
+             fruser['Age'] = fruser['Age'] or ''
+             fruser['Index'] = index + 1
+             index += 1
+-            groups = Frusergroupmember.objects.filter(FRUserOId = Frusers.objects.get(OId = fruser['OId']))
+-            fruser['Group'] = ', '.join(group.GroupOId.Name for group in groups) if groups else 'Default'
++            fruser['Group'] = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = fruser['OId']).values('Name')) or 'Default'
+ 
+         return render(request, 'fruser_list.html', {'active': 'fruser_list', 'obj': frusers})
+     except:
+@@ -51,21 +50,23 @@ def import_fruser(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        tmpfile_dir = request.FILES['file'].name
+-        with open(tmpfile_dir, 'wb+') as destination:
++        mediadir = os.path.join(settings.MEDIA_PAR_DIR, 'media')
++        csvdir = os.path.join(mediadir, 'frusers.csv')
++        tarfile_dir = os.path.join(mediadir, request.FILES['file'].name)
++        with open(tarfile_dir, 'wb+') as destination:
+             for chunk in request.FILES['file'].chunks():
+                 destination.write(chunk)
+ 
+-        if not tarfile.is_tarfile(tmpfile_dir):
++        if not tarfile.is_tarfile(tarfile_dir):
+             raise Exception('res_code[2]')
+ 
+-        with tarfile.open(tmpfile_dir, 'r:gz') as tar:
++        with tarfile.open(tarfile_dir, 'r:gz') as tar:
+             if all(k in tar.getnames() for k in {'frusers.csv', 'fruserpic'}):
+-                tar.extractall()
++                tar.extractall(mediadir)
+             else:
+                 raise Exception('res_code[2]')
+ 
+-        with open('frusers.csv', 'r') as csvfile:
++        with open(csvdir, 'r') as csvfile:
+             for row in csv.DictReader(csvfile):
+                 try:
+                     Frusers.objects.get(FRUserId = row['FRUserId'])
+@@ -83,7 +84,7 @@ def import_fruser(request):
+                     )
+                     for Face in [row['Face1'], row['Face2']]:
+                         if Face:
+-                            with open(Face, 'rb') as image:
++                            with open(os.path.join(settings.MEDIA_PAR_DIR, Face), 'rb') as image:
+                                 res = json.loads(requests.post(
+                                     'http://127.0.0.1:' + request.META['SERVER_PORT'] + '/api/face/add',
+                                     files = {'image' : (
+@@ -99,8 +100,8 @@ def import_fruser(request):
+ 
+     except Exception as e:
+         try:
+-            os.remove(tmpfile_dir)
+-            os.remove('frusers.csv')
++            os.remove(tarfile_dir)
++            os.remove(csvdir)
+         finally:
+             if e.__str__() == 'res_code[0]':
+                 return JsonResponse(res_code[0])
+@@ -116,7 +117,11 @@ def export_fruser(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        with open('frusers.csv', 'w') as csvfile:
++        mediadir = os.path.join(settings.MEDIA_PAR_DIR, 'media')
++        csvdir = os.path.join(mediadir, 'frusers.csv')
++        picdir = os.path.join(mediadir, 'fruserpic')
++
++        with open(csvdir, 'w') as csvfile:
+             header = ['FRUserId', 'Name', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
+             writer = csv.writer(csvfile)
+             writer.writerow(header)
+@@ -128,14 +133,14 @@ def export_fruser(request):
+         )
+ 
+         with tarfile.open(fileobj = response, mode = 'w:gz') as tar:
+-            tar.add('frusers.csv')
+-            tar.add('fruserpic')
++            tar.add(csvdir, arcname = os.path.split(csvdir)[-1])
++            tar.add(picdir, arcname = os.path.split(picdir)[-1])
+ 
+         raise Exception('res_code[0]')
+ 
+     except Exception as e:
+         try:
+-            os.remove('frusers.csv')
++            os.remove(csvdir)
+         finally:
+             if e.__str__() == 'res_code[0]':
+                 return response
+diff --git a/logsetting/views.py b/logsetting/views.py
+index 45ffb40..036c397 100644
+--- a/logsetting/views.py
++++ b/logsetting/views.py
+@@ -29,7 +29,7 @@ def logsetting(request):
+           s+=','
+       s+='}]'
+ 
+-      file = open(settings.STATICFILES_DIRS[5]+'logssetting.json', 'w', encoding = 'UTF-8')
++      file = open(settings.LOGSETTING+'logssetting.json', 'w', encoding = 'UTF-8')
+       file.write(s)
+ 
+     return render(request, 'logsetting.html', {'CODE':""})
+diff --git a/static/styles/login.css b/static/styles/login.css
+index ea3dd60..6cae6b6 100644
+--- a/static/styles/login.css
++++ b/static/styles/login.css
+@@ -5,7 +5,7 @@ over-ride "Weak" message, show font in dark grey
+ 
+ .progress-bar {
+     color: #333;
+-} 
++}
+ 
+ /*
+ Reference:
+@@ -32,7 +32,7 @@ http://www.bootstrapzen.com/item/135/simple-login-form-logo/
+ 	}
+ 
+ body {
+-	background: url(/static/background.jpg) no-repeat center center fixed;
++	background: url(/static/img/background.jpg) no-repeat center center fixed;
+     -webkit-background-size: cover;
+     -moz-background-size: cover;
+     -o-background-size: cover;
+@@ -64,7 +64,7 @@ form[role=login] {
+ 	form[role=login] > div {
+ 		text-align: center;
+ 	}
+-	
++
+ .form-links {
+ 	text-align: center;
+ 	margin-top: 1em;
+@@ -72,4 +72,4 @@ form[role=login] {
+ }
+ 	.form-links a {
+ 		color: #fff;
+-	}
+\ No newline at end of file
++	}
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 0a7282b..55f1d5b 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -43,7 +43,7 @@ def systemlog_export(request):
+         }
+ 
+     try:
+-     with open(settings.STATICFILES_DIRS[5]+'logssetting.json') as f:
++     with open(settings.LOGSETTING+'logssetting.json') as f:
+       data=f.read()
+       json_data=json.loads(data)
+       symbol=json_data[0]['symbol']
+diff --git a/templates/commons_js.html b/templates/commons_js.html
+index 04516e0..363f461 100644
+--- a/templates/commons_js.html
++++ b/templates/commons_js.html
+@@ -3,8 +3,8 @@
+ <!-- {% bootstrap_javascript %} -->
+ {% load static %}
+ <!-- JS -->
+-<script src="{% static "jquery-1.11.1.min.js" %}"></script>
+-<script src="{% static "bootstrap.min.js" %}"></script>
+-<script src="{% static "lumino.glyphs.js" %}"></script><!--Icons-->
++<script src="{% static "js/jquery-1.11.1.min.js" %}"></script>
++<script src="{% static "js/bootstrap.min.js" %}"></script>
++<script src="{% static "js/lumino.glyphs.js" %}"></script><!--Icons-->
+ <!-- CSS -->
+-<link rel="stylesheet" href="{% static "bootstrap.min.css" %}">
+\ No newline at end of file
++<link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}">
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 8b157ba..bcd0137 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -7,20 +7,20 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <link rel="stylesheet" href="{% static "bootstrap.min.css" %}">
+-        <link rel="stylesheet" href="{% static "datepicker3.css" %}">
+-        <link rel="stylesheet" href="{% static "bootstrap-table.css" %}">
+-        <link rel="stylesheet" href="{% static "styles.css" %}">
++        <link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}">
++        <link rel="stylesheet" href="{% static "css/datepicker3.css" %}">
++        <link rel="stylesheet" href="{% static "css/bootstrap-table.css" %}">
++        <link rel="stylesheet" href="{% static "css/styles.css" %}">
+         <title>{% trans "Dashboard" %}</title>
+     </head>
+ 
+     <body>
+         {% include 'menu.html' %}
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-          <link rel="stylesheet" href="{% static "bootstrap.min.css" %}">
+-          <link rel="stylesheet" href="{% static "datepicker3.css" %}">
+-          <link rel="stylesheet" href="{% static "bootstrap-table.css" %}">
+-          <link rel="stylesheet" href="{% static "styles.css" %}">
++          <link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}">
++          <link rel="stylesheet" href="{% static "css/datepicker3.css" %}">
++          <link rel="stylesheet" href="{% static "css/bootstrap-table.css" %}">
++          <link rel="stylesheet" href="{% static "css/styles.css" %}">
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+@@ -125,13 +125,13 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "chart.min.js" %}"></script>
+-        <script src="{% static "chart-data.js" %}"></script>
+-        <script src="{% static "easypiechart.js" %}"></script>
+-        <script src="{% static "easypiechart-data.js" %}"></script>
+-        <script src="{% static "bootstrap-datepicker.js" %}"></script>
+-        <script src="{% static "easypiechart-data.js" %}"></script>
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/chart.min.js" %}"></script>
++        <script src="{% static "js/chart-data.js" %}"></script>
++        <script src="{% static "js/easypiechart.js" %}"></script>
++        <script src="{% static "js/easypiechart-data.js" %}"></script>
++        <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
++        <script src="{% static "js/easypiechart-data.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             var $DeviceList = $('#DeviceList');
+             var $FRList = $('#FRList');
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 5021acc..b16daa3 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -61,7 +61,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             var $GroupList = $('#GroupList');
+             var $GroupAdd = $('#GroupAdd');
+diff --git a/templates/device_list.html b/templates/device_list.html
+index d009c74..d1068a7 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -38,7 +38,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             $('#DeviceList').bootstrapTable({
+                 search: true,
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index ba474c8..7c666d8 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -201,16 +201,16 @@
+         }
+ 
+         function onSaveClick(){
+-            var Welcome = $('input[name=Welcome]').val();
+-            var AccessDenied = $('input[name=AccessDenied]').val();
++            var Welcome = $('input[name=Welcome]:checked').val();
++            var AccessDenied = $('input[name=AccessDenied]:checked').val();
+             var ScreenSaver = $('select[name=ScreenSaver]').val();
+             var NTP = $('input[name=NTP]').val();
+             var Timezone = $('select[name=Timezone]').val();
+-            var Audio = $('input[name=Audio]').val();
++            var Audio = $('input[name=Audio]').prop('checked');
+             var BioScore = $('select[name=BioScore]').val();
+             var Language = $('select[name=Language]').val();
+ 
+-            if (Audio == true) {
++            if (Audio) {
+                 Audio = 'Enable';
+             } else {
+                 Audio = 'Disable';
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index e6ae134..5f34cb2 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -64,7 +64,7 @@
+             </div>
+         </div>
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             $('#FruserList').bootstrapTable({
+                 search: true,
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 57546c8..fff295e 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -64,7 +64,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             var $DeviceList = $('#DeviceList');
+             var $DeviceAdd = $('#DeviceAdd');
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index b2e5c4c..a2556e4 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -64,7 +64,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             var $MemberList = $('#MemberList');
+             var $MemberAdd = $('#MemberAdd');
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index a293d97..1959656 100644
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -37,7 +37,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             var dataSet = {{obj|safe}};
+             $('#GroupList').bootstrapTable({
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index bab4f3d..39a29db 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -57,12 +57,12 @@
+ 		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+-	<script src="{% static "chart.min.js" %}"></script>
+-	<script src="{% static "chart-data.js" %}"></script>
+-	<script src="{% static "easypiechart.js" %}"></script>
+-	<script src="{% static "easypiechart-data.js" %}"></script>
+-	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+-	<script src="{% static "bootstrap-table.js" %}"></script>
++	<script src="{% static "js/chart.min.js" %}"></script>
++	<script src="{% static "js/chart-data.js" %}"></script>
++	<script src="{% static "js/easypiechart.js" %}"></script>
++	<script src="{% static "js/easypiechart-data.js" %}"></script>
++	<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
++	<script src="{% static "js/bootstrap-table.js" %}"></script>
+ 	<script>
+ 		// var dataSet = {{test|safe}};
+ 		var index
+diff --git a/templates/login.html b/templates/login.html
+index 9773762..ec7c75a 100644
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -4,7 +4,7 @@
+ 
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+-<!-- <body background="{% static "background.jpg" %}"> -->
++<!-- <body background="{% static "img/background.jpg" %}"> -->
+ <head>
+ 	<script src="https://www.google.com/recaptcha/api.js" async defer ></script>
+ </head>
+@@ -14,7 +14,7 @@
+ 		<div class="col-md-offset-4 col-md-4">
+ 			<section class="login-form">
+ 				<form method="post" action="" role="login">{% csrf_token %}
+-					<img src="{% static "shuttle_logo.png" %}" class="img-responsive" alt="" />
++					<img src="{% static "img/shuttle_logo.png" %}" class="img-responsive" alt="" />
+ 					<input type="email" name="email" placeholder="Email" required class="form-control input-lg" />
+ 					<input type="password" class="form-control input-lg" name="password" id="password" placeholder="Password" required="" />
+ 
+@@ -52,8 +52,8 @@
+ </div>
+ </html>
+ 
+-<script src="{% static "login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "login.css" %}">
++<script src="{% static "js/login.js" %}"></script>
++<link rel="stylesheet" href="{% static "styles/login.css" %}">
+ 
+ <script>
+ 	var code = '{{Code}}';
+diff --git a/templates/menu.html b/templates/menu.html
+index 10d0409..49dbee1 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -1,10 +1,10 @@
+ {% load i18n %}
+ {% load static %}
+ 
+-<link rel="stylesheet" href="{% static "bootstrap.min.css" %}">
+-<link rel="stylesheet" href="{% static "datepicker3.css" %}">
+-<link rel="stylesheet" href="{% static "bootstrap-table.css" %}">
+-<link rel="stylesheet" href="{% static "styles.css" %}">
++<link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}">
++<link rel="stylesheet" href="{% static "css/datepicker3.css" %}">
++<link rel="stylesheet" href="{% static "css/bootstrap-table.css" %}">
++<link rel="stylesheet" href="{% static "css/styles.css" %}">
+ 
+ <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+ 	<div class="container-fluid">
+diff --git a/templates/registration/forget_password.html b/templates/registration/forget_password.html
+index 2fae60f..80dba88 100644
+--- a/templates/registration/forget_password.html
++++ b/templates/registration/forget_password.html
+@@ -4,7 +4,7 @@
+ 
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+-<!-- <body background="{% static "background.jpg" %}"> -->
++<!-- <body background="{% static "img/background.jpg" %}"> -->
+ 
+ <head>
+ 	<title>{% trans "Forgotten your password ?" %}</title>
+@@ -39,8 +39,8 @@
+ 	</div>
+ </div>
+ 
+-<script src="{% static "login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "login.css" %}">
++<script src="{% static "js/login.js" %}"></script>
++<link rel="stylesheet" href="{% static "css/login.css" %}">
+ 
+ 
+ <script>
+diff --git a/templates/registration/not_found.html b/templates/registration/not_found.html
+index 3edd7b3..dd5cfe1 100644
+--- a/templates/registration/not_found.html
++++ b/templates/registration/not_found.html
+@@ -4,7 +4,7 @@
+ 
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+-<!-- <body background="{% static "background.jpg" %}"> -->
++<!-- <body background="{% static "img/background.jpg" %}"> -->
+ <title>404 Error Pages Best Of</title>
+ 
+ <div class="container">
+@@ -16,7 +16,7 @@
+                         <p style="font-size:30px">PAGE NOT FOUND</p>
+                     </div>
+                     <br>
+-                    <img src="{% static "404eddy.png" %}" class="img-responsive" alt="" />
++                    <img src="{% static "img/404eddy.png" %}" class="img-responsive" alt="" />
+                     <p style="font-size:18px">A collection of the best 404 not found error pages on the Internet.</p>
+                     <br>
+                 </form>
+@@ -25,8 +25,8 @@
+ 	</div>
+ </div>
+ 
+-<script src="{% static "login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "login.css" %}">
++<script src="{% static "js/login.js" %}"></script>
++<link rel="stylesheet" href="{% static "css/login.css" %}">
+ 
+ <script>
+ 	var code = '{{Code}}';
+diff --git a/templates/registration/password_reset_complete.html b/templates/registration/password_reset_complete.html
+index 32cff16..2e3b41b 100644
+--- a/templates/registration/password_reset_complete.html
++++ b/templates/registration/password_reset_complete.html
+@@ -5,7 +5,7 @@
+ 
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+-<!-- <body background="{% static "background.jpg" %}"> -->
++<!-- <body background="{% static "img/background.jpg" %}"> -->
+ 
+ <head>
+ 	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+@@ -33,23 +33,23 @@
+ 					<a style="font-size:30px">{% trans "Password updated successfully" %}</a>
+ 					</div>
+ 					    <br>
+-                        <img src="{% static "successfully.png" %}" class="img-responsive" alt="" />
++                        <img src="{% static "img/successfully.png" %}" class="img-responsive" alt="" />
+                         <br>
+ 					<div>
+ 						<a style="font-size:22px" href="/">{% trans "Returns sign-in screen" %}</a>
+ 					</div>
+ 				</form>
+-			</section>  
++			</section>
+ 		</div>
+-	  
++
+ 		<div class="col-md-4"></div>
+ 
+ 	</div>
+ 
+ </div>
+ 
+-<script src="{% static "login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "login.css" %}">
++<script src="{% static "js/login.js" %}"></script>
++<link rel="stylesheet" href="{% static "css/login.css" %}">
+ 
+ </html>
+ 
+diff --git a/templates/registration/reset_password.html b/templates/registration/reset_password.html
+index a0ffb3c..b9b6c86 100644
+--- a/templates/registration/reset_password.html
++++ b/templates/registration/reset_password.html
+@@ -5,7 +5,7 @@
+ 
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+-<!-- <body background="{% static "background.jpg" %}"> -->
++<!-- <body background="{% static "img/background.jpg" %}"> -->
+ 
+ <head>
+ 	<title>{% trans "Password reset confirmation" %}</title>
+@@ -39,8 +39,8 @@
+ 	</div>
+ </div>
+ 
+-<script src="{% static "login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "login.css" %}">
++<script src="{% static "js/login.js" %}"></script>
++<link rel="stylesheet" href="{% static "css/login.css" %}">
+ 
+ </html>
+ 
+diff --git a/templates/role_list.html b/templates/role_list.html
+index d2deb49..9bea9e9 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -47,12 +47,12 @@
+             </div>
+         </div>
+ 
+-        <script src="{% static "chart.min.js" %}"></script>
+-        <script src="{% static "chart-data.js" %}"></script>
+-        <script src="{% static "easypiechart.js" %}"></script>
+-        <script src="{% static "easypiechart-data.js" %}"></script>
+-        <script src="{% static "bootstrap-datepicker.js" %}"></script>
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/chart.min.js" %}"></script>
++        <script src="{% static "js/chart-data.js" %}"></script>
++        <script src="{% static "js/easypiechart.js" %}"></script>
++        <script src="{% static "js/easypiechart-data.js" %}"></script>
++        <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+ 
+         <script>
+             var index
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index 4b439ac..81d553d 100644
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -43,12 +43,12 @@
+             </div>
+         </div>
+ 
+-        <script src="{% static "chart.min.js" %}"></script>
+-        <script src="{% static "chart-data.js" %}"></script>
+-        <script src="{% static "easypiechart.js" %}"></script>
+-        <script src="{% static "easypiechart-data.js" %}"></script>
+-        <script src="{% static "bootstrap-datepicker.js" %}"></script>
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/chart.min.js" %}"></script>
++        <script src="{% static "js/chart-data.js" %}"></script>
++        <script src="{% static "js/easypiechart.js" %}"></script>
++        <script src="{% static "js/easypiechart-data.js" %}"></script>
++        <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+ 
+         <script>
+             var dataSet = {{result|safe}};
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 0345b20..3209778 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -185,7 +185,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+ 
+         </script>
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index b3a29ba..3d9955a 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -45,12 +45,12 @@
+ 		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+-	<script src="{% static "chart.min.js" %}"></script>
+-	<script src="{% static "chart-data.js" %}"></script>
+-	<script src="{% static "easypiechart.js" %}"></script>
+-	<script src="{% static "easypiechart-data.js" %}"></script>
+-	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+-	<script src="{% static "bootstrap-table.js" %}"></script>
++	<script src="{% static "js/chart.min.js" %}"></script>
++	<script src="{% static "js/chart-data.js" %}"></script>
++	<script src="{% static "js/easypiechart.js" %}"></script>
++	<script src="{% static "js/easypiechart-data.js" %}"></script>
++	<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
++	<script src="{% static "js/bootstrap-table.js" %}"></script>
+ 	<script>
+ 		// var dataSet = {{test|safe}};
+ 		var index
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index 5ad6442..244faed 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -64,7 +64,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             var $DeviceList = $('#DeviceList');
+             var $DeviceAdd = $('#DeviceAdd');
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index 7666c04..48fdcae 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -37,7 +37,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             $('#GroupList').bootstrapTable({
+                 search: true,
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index 2495792..52df1a4 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -64,7 +64,7 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             var $MemberList = $('#MemberList');
+             var $MemberAdd = $('#MemberAdd');
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 4abb3e8..81c3d3e 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -44,12 +44,12 @@
+ 		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+-	<script src="{% static "chart.min.js" %}"></script>
+-	<script src="{% static "chart-data.js" %}"></script>
+-	<script src="{% static "easypiechart.js" %}"></script>
+-	<script src="{% static "easypiechart-data.js" %}"></script>
+-	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+-	<script src="{% static "bootstrap-table.js" %}"></script>
++	<script src="{% static "js/chart.min.js" %}"></script>
++	<script src="{% static "js/chart-data.js" %}"></script>
++	<script src="{% static "js/easypiechart.js" %}"></script>
++	<script src="{% static "js/easypiechart-data.js" %}"></script>
++	<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
++	<script src="{% static "js/bootstrap-table.js" %}"></script>
+ 	<script>
+ 		// var dataSet = {{test|safe}};
+ 		var index
+diff --git a/templates/user_setting.html b/templates/user_setting.html
+index 50eb4f0..00f3536 100644
+--- a/templates/user_setting.html
++++ b/templates/user_setting.html
+@@ -128,7 +128,7 @@
+ 	</div><!--/.main-->
+ 
+ 	{% load static %}
+-	<script src="{% static "md5.js" %}"></script>
++	<script src="{% static "js/md5.js" %}"></script>
+ 	<script>
+ 	//For getting CSRF token
+ 	function getCookie(name) {
+-- 
+1.9.1
+

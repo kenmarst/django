@@ -1,0 +1,61 @@
+From 0f7cc541642b37fcf6f001af89711c550cfa46c9 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Mon, 28 Nov 2016 11:52:47 +0800
+Subject: [PATCH 374/443] In System Settings page, fix manually backup in every
+ 5 mins issue.
+
+---
+ systemsettings/views.py | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index eb1058b..a5e08c8 100755
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -537,13 +537,14 @@ def settings_system_backup(request):
+             with open(newbackupconfile, mode='wt', encoding='utf-8') as f:
+                 f.write(''.join(backupconf_content))
+ 
+-        else:
++        else:   # BackupMethod Manually
+             # backupconf modify
+             BackupLocal = request.POST.get('BackupLocal', '')
+             print('BackupLocal :', BackupLocal)
+             BackupLocation = 'local'
+             print('BackupLocation :', BackupLocation)
+ 
++            # backup Manually
+             backupconf_content=[]
+             print(backupconf_content)
+             backupconf_content.append('BackupMethod={0}\n'.format(BackupMethod))
+@@ -553,7 +554,17 @@ def settings_system_backup(request):
+             with open(newbackupconfile, mode='wt', encoding='utf-8') as f:
+                 f.write(''.join(backupconf_content))
+ 
+-            #os.system('cd {0} && {1}'.format(settings.BASE_DIR, backupshfile))
++            os.system('cd {0} && {1}'.format(settings.BASE_DIR, backupshfile))
++
++            # backup Manually Done
++            backupconf_content=[]
++            print(backupconf_content)
++            backupconf_content.append('BackupMethod={0}-Done\n'.format(BackupMethod))
++            backupconf_content.append('BackupLocal={0}\n'.format(BackupLocal))
++            backupconf_content.append('BackupLocation={0}\n'.format(BackupLocation))
++            print(backupconf_content)
++            with open(newbackupconfile, mode='wt', encoding='utf-8') as f:
++                f.write(''.join(backupconf_content))
+ 
+         # crontab modify
+         crontabfile = '/etc/crontab'
+@@ -586,7 +597,7 @@ def settings_system_backup(request):
+                     content[content2_idx]=cmd
+ 
+             #os.system('{0}\n'.format(backupshfile))
+-            os.system('cd {0} && {1}\n'.format(settings.BASE_DIR, backupshfile))
++            #os.system('cd {0} && {1}\n'.format(settings.BASE_DIR, backupshfile))
+ 
+         else:
+             #if BackupScheduling == 'Monthly':
+-- 
+1.9.1
+

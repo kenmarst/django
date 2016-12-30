@@ -1,0 +1,34 @@
+From 2bd14c0fe0df5dcaa3c2a707b8452a445c47b1bd Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 13 Jul 2016 14:14:29 +0800
+Subject: [PATCH 176/443] Fix FRUser web serach bug
+
+Bug fix - can not search for default group of FRUser web.
+---
+ frusers/views.py | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index c8f7060..72b1117 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -39,7 +39,15 @@ def fruser_data(request):
+         else:
+             order = '-' + order if order != 'Group' else '-frusergroupmember__GroupOId__Name'
+         if search:
+-            frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).distinct().order_by(order)
++            if 'Default'.find(search) > 0:
++                frusers = Frusers.objects.filter(
++                    Q(FRUserId__contains = search) |
++                    Q(Name__contains = search) |
++                    Q(frusergroupmember__GroupOId__Name__contains = search) |
++                    ~Q(frusergroupmember__GroupOId__Name__contains = '')
++                ).distinct().order_by(order)
++            else:
++                frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).distinct().order_by(order)
+         else:
+             frusers = Frusers.objects.order_by(order)
+         fruser_count = frusers.count()
+-- 
+1.9.1
+

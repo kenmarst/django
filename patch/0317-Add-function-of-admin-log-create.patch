@@ -1,0 +1,46 @@
+From 1b7cd342c3906139b11225981e6961c8b8b773e2 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 12 Oct 2016 20:15:15 +0800
+Subject: [PATCH 317/443] Add function of admin log create.
+
+Add function of admin log create when admin login/logout.
+---
+ login/views.py | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/login/views.py b/login/views.py
+index 016c45c..001722e 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -93,8 +93,8 @@ def login(request):
+     if request.method == "POST":
+         check_result = json.loads(check_user(request))
+         if check_result["CODE"] == "0":
+-            logContent= request.session['Name']+' login success.'
+-            Systemlogs.objects.create(Category = "User", LogContent = logContent)
++            if request.session['Account'] == 'admin':
++                Systemlogs.objects.create(Category = "User", LogContent = 'admin login.')
+             setSessionPermission(request)
+             set_client_ip(request)
+             return HttpResponseRedirect("/home")
+@@ -128,6 +128,8 @@ def check_login(request, permission):
+     timeout = request.session.get_expiry_age()
+     try:
+         if request.session['LoginIP'] != Users.objects.get(OId = request.session['OId']).LoginIP:
++            if request.session['Account'] == 'admin':
++                Systemlogs.objects.create(Category = "User", LogContent = 'admin logout.')
+             request.session.flush()
+             return json.dumps(res_code[2])
+         elif request.session[permission] == 'Disable':
+@@ -151,6 +153,8 @@ def check_login_redirect(request, code):
+ 
+ 
+ def logout(request):
++    if request.session['Account'] == 'admin':
++        Systemlogs.objects.create(Category = "User", LogContent = 'admin logout.')
+     request.session.flush()
+     return HttpResponseRedirect("/")
+ 
+-- 
+1.9.1
+

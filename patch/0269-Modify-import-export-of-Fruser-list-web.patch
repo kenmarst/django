@@ -1,0 +1,154 @@
+From 9c6eb511bfdebbbffdefac69612dc908fd893650 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 8 Sep 2016 19:26:26 +0800
+Subject: [PATCH 269/443] Modify import/export of Fruser list web
+
+Add group column to import/export.
+Add create group if group not exists function in import.
+---
+ api/models.py              |  1 +
+ frusers/views.py           | 78 +++++++++++++++++++++++++++++-----------------
+ templates/fruser_list.html |  2 +-
+ 3 files changed, 51 insertions(+), 30 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 071e04d..939d454 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -398,6 +398,7 @@ class Frusers(models.Model):
+             OId = self.OId,
+             FRUserId = self.FRUserId,
+             Name = self.Name,
++            Group = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = self.OId).values('Name')) or 'Default',
+             Gender = self.Gender,
+             Age = self.Age,
+             PersonId = self.PersonId,
+diff --git a/frusers/views.py b/frusers/views.py
+index dd597fe..84ee7bb 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -2,7 +2,7 @@ from django.shortcuts import render
+ 
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+-from api.models import Frusers, Frusergroups
++from api.models import *
+ from datetime import datetime
+ from login.views import check_login
+ from django.conf import settings
+@@ -105,35 +105,55 @@ def import_fruser(request):
+                 raise Exception(2)
+ 
+         with open(csvdir, 'r') as csvfile:
++            import_success = 0
++            import_fail = 0
+             for row in csv.DictReader(csvfile):
+-                try:
+-                    Frusers.objects.get(FRUserId = row['FRUserId'])
+-                except:
+-                    Frusers.objects.create(
+-                        FRUserId = row['FRUserId'],
+-                        Name = row['Name'],
+-                        Gender = row['Gender'],
+-                        Age = row['Age'],
+-                        Face1 = row['Face1'],
+-                        Face2 = row['Face2'],
+-                        RFIDCard = row['RFIDCard'],
+-                        State = row['State'],
+-                        DisableCauses = row['DisableCauses'],
+-                    )
++                fruser, result = Frusers.objects.get_or_create(FRUserId = row['FRUserId'])
++                for group in row['Group'].split(', '):
++                    if group != 'Default':
++                        group = Frusergroups.objects.get_or_create(Name = group)[0]
++                        Frusergroupmember.objects.get_or_create(GroupOId = group, FRUserOId = fruser)
++                if result:
++                    fruser.Name = row['Name']
++                    fruser.Gender = row['Gender']
++                    fruser.Age = int(row['Age'])
++                    fruser.Face1 = row['Face1']
++                    fruser.Face2 = row['Face2']
++                    fruser.RFIDCard = row['RFIDCard']
++                    fruser.State = row['State']
++                    fruser.DisableCauses = row['DisableCauses']
++                    fruser.save()
+                     for Face in [row['Face1'], row['Face2']]:
+                         if Face:
+-                            with open(os.path.join(mediadir, Face), 'rb') as image:
+-                                res = json.loads(requests.post(
+-                                    'http://127.0.0.1:' + request.META['SERVER_PORT'] + '/api/face/add',
+-                                    files = {'image' : (
+-                                        os.path.basename(image.name),
+-                                        image,
+-                                        'image/jpeg'
+-                                    )},
+-                                    data = {'FRUserId': row['FRUserId']}
+-                                ).text)
+-                                if res['Result'] != 'Success':
+-                                    raise
++                            if os.path.exists(os.path.join(mediadir, Face)):
++                                with open(os.path.join(mediadir, Face), 'rb') as image:
++                                    res = json.loads(requests.post(
++                                        'http://127.0.0.1:' + request.META['SERVER_PORT'] + '/api/face/add',
++                                        files = {'image' : (
++                                            os.path.basename(image.name),
++                                            image,
++                                            'image/jpeg'
++                                        )},
++                                        data = {'FRUserId': row['FRUserId']}
++                                    ).text)
++                                    if res.get('Result', '') != 'Success':
++                                        Systemlogs.objects.create(
++                                            Category = 'System',
++                                            LogContent = 'Import frusers[FRUserId : {0}] : Add face "{1}" fail, response message: {2}'.format(row['FRUserId'], Face, res['Message'])
++                                        )
++                                        import_fail += 1
++                                        break
++                            else:
++                                Systemlogs.objects.create(
++                                    Category = 'System',
++                                    LogContent = 'Import frusers[FRUserId : {0}] : Add face "{1}" fail cause by: photo not exists'.format(row['FRUserId'], Face)
++                                )
++                                import_fail += 1
++                                break
++                    else:
++                        import_success += 1
++                else:
++                    import_success += 1
+         raise Exception(0)
+ 
+     except Exception as e:
+@@ -142,7 +162,7 @@ def import_fruser(request):
+             os.remove(csvdir)
+         finally:
+             try:
+-                return JsonResponse(res_code[int(e.__str__())])
++                return JsonResponse(dict(ChainMap(res_code[int(e.__str__())], {'import_success' : import_success, 'import_fail' : import_fail})))
+             except:
+                 return JsonResponse(res_code[1])
+ 
+@@ -158,7 +178,7 @@ def export_fruser(request):
+         picdir = os.path.join(mediadir, 'fruserpic')
+ 
+         with open(csvdir, 'w') as csvfile:
+-            header = ['FRUserId', 'Name', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
++            header = ['FRUserId', 'Name', 'Group', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
+             writer = csv.writer(csvfile)
+             writer.writerow(header)
+             writer.writerows([[res.as_json()[column] for column in header] for res in Frusers.objects.all()])
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 1560a4d..d249908 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -170,7 +170,7 @@
+                     contentType: false,
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            alert("Import success!");
++                            alert("Import End!\nSuccess : " + data.import_success + "\nFail : " + data.import_fail);
+                             $('#ImportModal').modal("hide");
+                         } else if (data.CODE == "2") {
+                             alert("The file format is not correct!");
+-- 
+1.9.1
+

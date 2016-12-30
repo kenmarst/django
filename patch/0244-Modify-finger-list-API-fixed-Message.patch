@@ -1,0 +1,25 @@
+From 856b40c782b12fe86cd468ddb7070bf8fd7e8750 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 31 Aug 2016 10:32:44 +0800
+Subject: [PATCH 244/443] Modify finger list API : fixed Message
+
+---
+ api/fingerprint.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index 83d2539..d415c47 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -224,7 +224,7 @@ def list(request):
+                     if fruser.FingerprintID1 != b'x00' or fruser.FingerprintID2 != b'x00' :
+                         return JsonResponse(result_true)
+                     else:
+-                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger already exists'})))
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger is null'})))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Device is proposed'})))
+             else:
+-- 
+1.9.1
+

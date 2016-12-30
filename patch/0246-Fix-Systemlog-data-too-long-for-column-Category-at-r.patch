@@ -1,0 +1,33 @@
+From 501e99f25273f967b3b230ceb32e544ccd6c3531 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 31 Aug 2016 14:25:03 +0800
+Subject: [PATCH 246/443] Fix Systemlog data too long for column 'Category' at
+ row 1
+
+---
+ api/recognition.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 893070b..b9a05cc 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -327,7 +327,7 @@ def get_result(request):
+                 if res_4G['status'] == settings.SE_4G:#
+                     logContent = '{message_head}Success'.format(
+                         message_head = message_head)
+-                    Systemlogs.objects.create(Category = "Recognition", LogContent = logContent)
++                    Systemlogs.objects.create(Category = "GetRes", LogContent = logContent)
+                     return JsonResponse(result_success)
+                 else:
+                     raise Exception('The 4G result is fail')
+@@ -338,5 +338,5 @@ def get_result(request):
+     except Exception as error:
+         logContent = '{message_head}Error cause by {error}'.format(
+                 message_head = message_head, error = str(error))
+-        Systemlogs.objects.create(Category = "GetResult", LogContent = logContent)
++        Systemlogs.objects.create(Category = "GetRes", LogContent = logContent)
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+-- 
+1.9.1
+

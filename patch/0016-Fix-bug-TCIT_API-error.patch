@@ -1,0 +1,29 @@
+From cb1f4594679e77c3ed5b1b6d8ca77cb777794b51 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 27 Apr 2016 20:42:08 +0800
+Subject: [PATCH 016/443] Fix bug - TCIT_API error
+
+Fix bug - add return value when TCIT_API request have error.
+---
+ api/utility.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/api/utility.py b/api/utility.py
+index e32668a..b9c888a 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -10,7 +10,10 @@ from django.conf import settings
+ import json, requests, urllib
+ 
+ def TCIT_API(pattern, **kwargs):
+-    return  json.loads(requests.post('http://%s%s' % (settings.TCIT_IP, pattern), **kwargs).text)
++    try:
++        return json.loads(requests.post('http://%s%s' % (settings.TCIT_IP, pattern), **kwargs).text)
++    except Exception as error:
++        return HttpResponse(error)
+ 
+ # Create your views here.
+ 
+-- 
+1.9.1
+

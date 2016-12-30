@@ -1,0 +1,25 @@
+From accfd649cf543fbf8ff4cfdb93bb9c2d4a92e30e Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Fri, 24 Jun 2016 17:03:33 +0800
+Subject: [PATCH 150/443] Modify api connection
+
+Take out the META message
+---
+ api/connection.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index e762b83..ac633db 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -14,7 +14,6 @@ def check(request):
+     if request.method == 'POST':
+         try:
+             client_ip = request.META['REMOTE_ADDR']
+-            print(request.META)
+             from api.models import Devices
+             try:
+                 devices = Devices.objects.get(IP = client_ip)
+-- 
+1.9.1
+

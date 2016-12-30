@@ -1,0 +1,101 @@
+From ec321b876f979fc79789d7c635cf4b8a77c2155d Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Fri, 29 Apr 2016 10:34:40 +0800
+Subject: [PATCH 019/443] add dropdown menu
+
+---
+ templates/menu.html | 71 +++++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 64 insertions(+), 7 deletions(-)
+
+diff --git a/templates/menu.html b/templates/menu.html
+index 574a0ae..bf680eb 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -13,7 +13,7 @@
+ 				<span class="icon-bar"></span>
+ 				<span class="icon-bar"></span>
+ 			</button>
+-			<a class="navbar-brand" href="/home"><span>Shuttle</span> BR06</a>
++			<a class="navbar-brand" href="/home"><span>Shuttle</span>/BR06</a>
+ 			<ul class="user-menu">
+ 				<li class="dropdown pull-right">
+ 					<a href="#" class="dropdown-toggle" data-toggle="dropdown"><svg class="glyph stroked male-user"><use xlink:href="#stroked-male-user"></use></svg> {{ request.session.Name }} <span class="caret"></span></a>
+@@ -36,12 +36,69 @@
+ 		</div>
+ 	</form>
+ 	<ul class="nav menu">
+-		<li name="user_list"><a href="/user_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> User List</a></li>
+-		<li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser List</a></li>
+-		<li name="syslog_list"><a href="/log_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> System Log List</a></li>
+-		<li name="FRlog_list"><a href="/FRlog_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser Log List</a></li>
+-		<li name="setting"><a href="/setting"><svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg> Setting</a></li>
+-
++		<li class="parent ">
++				<a href="#">
++					<span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System 
++				</a>
++				<ul class="children collapse" id="sub-item-1">
++					<li>
++						<a class="" href="user_list">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> User List
++						</a>
++					</li>
++					<li>
++						<a class="" href="#">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Group List
++						</a>
++					</li>
++					<li>
++						<a class="" href="#">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Role & Permission
++						</a>
++					</li>
++                    <li>
++						<a class="" href="#">
++							<svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg>  Setting
++						</a>
++					</li>
++				</ul>
++			</li>
++        <li class="parent ">
++				<a href="#">
++					<span data-toggle="collapse" href="#sub-item-2"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Device 
++				</a>
++				<ul class="children collapse" id="sub-item-2">
++					<li>
++						<a class="" href="/user_list">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Config
++						</a>
++					</li>
++                </ul>
++		</li>
++        <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser List</a></li>
++        <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser Group</a></li>
++         <li class="parent ">
++				<a href="#">
++					<span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log 
++				</a>
++				<ul class="children collapse" id="sub-item-3">
++					<li>
++						<a class="" href="/FRlog_list">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> FRUser Log List
++						</a>
++					</li>
++                    <li>
++						<a class="" href="/log_list">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> System Log List
++						</a>
++					</li>
++                    <li>
++						<a class="" href="/setting"">
++							<svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg>  Setting
++						</a>
++					</li>
++				</ul>
++			</li>
+ 		<li role="presentation" class="divider"></li>
+ 		<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"/></svg> Log Out</a></li>
+ 	</ul>
+-- 
+1.9.1
+

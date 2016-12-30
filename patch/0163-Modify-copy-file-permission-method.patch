@@ -1,0 +1,26 @@
+From 5cc2581f10866151017c1fbe4fd590dcbf1cda85 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 14:23:58 +0800
+Subject: [PATCH 163/443] Modify copy file permission method
+
+---
+ systemsettings/views.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 96358e4..fa40cfb 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -538,7 +538,8 @@ def settings_system_backup(request):
+ 
+             cpcmd = 'cp -f {0} {1}\n'.format(newcrontabfile, crontabfile)
+             #print('cpcmd:'+cpcmd)
+-            os.system('echo {0}|sudo -S {1}'.format('1', cpcmd))
++            #os.system('echo {0}|sudo -S {1}'.format('1', cpcmd))
++            os.system('{0}'.format(cpcmd))
+ 
+         return JsonResponse(res_code[0])
+     except:
+-- 
+1.9.1
+

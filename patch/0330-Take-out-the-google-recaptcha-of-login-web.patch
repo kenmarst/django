@@ -1,0 +1,177 @@
+From 7e339cc0a9d6159a22134dcb3bb94a71010eb1a4 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 24 Oct 2016 09:50:23 +0800
+Subject: [PATCH 330/443] Take out the google recaptcha of login web.
+
+---
+ login/views.py       |  13 ++++++
+ templates/login.html | 116 ++++++++++++++++++++++++---------------------------
+ 2 files changed, 68 insertions(+), 61 deletions(-)
+
+diff --git a/login/views.py b/login/views.py
+index 001722e..8c93688 100755
+--- a/login/views.py
++++ b/login/views.py
+@@ -22,6 +22,7 @@ def check_user(request):
+     mail = request.POST.get('email', '')
+     password = md5(request.POST.get('password', ''))
+     data = request.POST
++    """ Check recaptcha
+     response = data.get('g-recaptcha-response')
+     if checkRecaptcha(response, SECRET_KEY):
+         try:
+@@ -38,6 +39,18 @@ def check_user(request):
+     else:
+         print("reCAPTCHA validation failed")
+         return json.dumps(res_code[1])
++    """
++    try:
++        obj = Users.objects.get(Email = mail, Password = password)
++        # set session
++        request.session['Account'] = obj.Account
++        request.session['Email'] = obj.Email
++        request.session['Name'] = obj.Name
++        request.session['OId'] = str(obj.OId)
++        return json.dumps(res_code[0])
++    except:
++        print("mail or passsword are not match")
++        return json.dumps(res_code[2])
+ 
+ 
+ def change_passwd(request):
+diff --git a/templates/login.html b/templates/login.html
+index 332a6d1..5465e4d 100755
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -1,73 +1,67 @@
+ <!DOCTYPE html>
+ <html xml:lang="{{ LANGUAGE_CODE }}" lang="{{ LANGUAGE_CODE }}">
+-{% include 'commons_js.html' %}
++    {% include 'commons_js.html' %}
++    {% load static %}
++    <!--
++    <body background="{% static "img/background.jpg" %}">
++    -->
++    <head>
++        <script src="https://www.google.com/recaptcha/api.js" async defer ></script>
++    </head>
+ 
+-{% load static %}
+-<!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+-<!-- <body background="{% static "img/background.jpg" %}"> -->
+-<head>
+-	<script src="https://www.google.com/recaptcha/api.js" async defer ></script>
+-</head>
++    <div class="container">
++        <div class="row" id="pwd-container">
++            <div class="col-md-offset-4 col-md-4">
++                <section class="login-form">
++                    <form method="post" action="" role="login">{% csrf_token %}
++                        <img src="{% static "img/shuttle_logo.png" %}" class="img-responsive" alt="" />
++                        <input type="email" name="email" placeholder="Email" required class="form-control input-lg" />
++                        <input type="password" class="form-control input-lg" name="password" id="password" placeholder="Password" required="" />
+ 
+-<div class="container">
+-	<div class="row" id="pwd-container">
+-		<div class="col-md-offset-4 col-md-4">
+-			<section class="login-form">
+-				<form method="post" action="" role="login">{% csrf_token %}
+-					<img src="{% static "img/shuttle_logo.png" %}" class="img-responsive" alt="" />
+-					<input type="email" name="email" placeholder="Email" required class="form-control input-lg" />
+-					<input type="password" class="form-control input-lg" name="password" id="password" placeholder="Password" required="" />
++                        <!-- check password strength and recaptcha
++                        <div class="pwstrength_viewport_progress"></div>
+ 
+-					<div class="pwstrength_viewport_progress"></div>
+-
+-					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY"
+-					     style="-moz-transform:scale(1);
+-					           -webkit-transform:scale(1);
+-					           -webkit-transform:scale(1);
+-					           -o-transform:scale(1);
+-					           -ms-transform:scale(1);
+-					           transform:scale(1);"
+-					     align="center">
+-					</div>
+-					<br>
+-					<iframe src="login_i18n" style="width:160px;height:40px" frameborder="0" scrolling="no"></iframe>
+-					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">Sign in</button>
+-					<div>
+-						<a href="account/forget_password">Forget password</a>
+-					</div>
+-				</form>
+-				<!-- <div class="form-links">
+-					<a href="#">www.website.com</a>
+-				</div> -->
+-
+-			</section>
+-		</div>
+-	</div>
+-
+-<!-- 	<p>
+-		<a href="http://validator.w3.org/check?uri=http%3A%2F%2Fbootsnipp.com%2Fiframe%2FW00op" target="_blank"><small>HTML</small><sup>5</sup></a>
+-		<br>
+-		<br>
+-	</p>    -->
+-</div>
++                        <div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY"
++                            style="-moz-transform:scale(1);
++                            -webkit-transform:scale(1);
++                            -webkit-transform:scale(1);
++                            -o-transform:scale(1);
++                            -ms-transform:scale(1);
++                            transform:scale(1);"
++                            align="center">
++                        </div>
++                        <br>
++                        -->
++                        <iframe src="login_i18n" style="width:160px;height:40px" frameborder="0" scrolling="no"></iframe>
++                        <button type="submit" name="go" class="btn btn-lg btn-primary btn-block">Sign in</button>
++                        <div>
++                            <a href="account/forget_password">Forget password</a>
++                        </div>
++                    </form>
++                </section>
++            </div>
++        </div>
++    </div>
+ </html>
+ 
+ <script src="{% static "js/login.js" %}"></script>
+ <link rel="stylesheet" href="{% static "styles/login.css" %}">
+ 
+ <script>
+-	var code = '{{Code}}';
+-	if (code == "9999") {
+-		location.href = '/';
+-		alert("Wrong password or account");
+-	} else if (code == "9998") {
+-		location.href = '/';
+-		alert("reCAPTCHA validation failed");
+-	} else if (code == "9997") {
+-		location.href = '/';
+-		alert("Repeat Sign-in, Logout!");
+-	} else if (code == "9996") {
+-		location.href = '/';
+-		alert("Login Expired! Please Login Again.");
+-	}
++    var code = '{{Code}}';
++    if (code == "9999") {
++        location.href = '/';
++        alert("Wrong password or account");
++    /*
++    } else if (code == "9998") {
++        location.href = '/';
++        alert("reCAPTCHA validation failed");
++    */
++    } else if (code == "9997") {
++        location.href = '/';
++        alert("Repeat Sign-in, Logout!");
++    } else if (code == "9996") {
++        location.href = '/';
++        alert("Login Expired! Please Login Again.");
++    }
+ </script>
+-- 
+1.9.1
+

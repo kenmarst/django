@@ -1,0 +1,32 @@
+From f0e240efcefbd692c19c901570e0b6ed1048cced Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 3 Nov 2016 17:50:11 +0800
+Subject: [PATCH 349/443] Fix logger and '4g sync log' path at MEDIA_DIR.
+
+---
+ br06/settings.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index f30d658..1ddf334 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -41,7 +41,7 @@ LOGGING = {
+         'file': {
+             'level': LOGGING_LEVEL,
+             'class': 'logging.FileHandler',
+-            'filename': os.path.join(BASE_DIR, 'debug.log'),
++            'filename': os.path.join(MEDIA_DIR, 'debug.log'),
+         },
+     },
+     'loggers': {
+@@ -233,5 +233,5 @@ RE_4G = 'http://4g.shuttle.com/daily/importApi/UserFaceLoginRecord/add'
+ QE_4G = 'http://4g.shuttle.com/daily/loginApi/faceQuery'
+ 
+ CRONJOBS = [
+-    ('*/10 * * * *', 'api.cron.Update_4G_User', '>> ~/4G_user_sync.log 2>&1'),
++    ('*/10 * * * *', 'api.cron.Update_4G_User', '>> {0}/4G_user_sync.log 2>&1'.format(MEDIA_DIR)),
+ ]
+-- 
+1.9.1
+

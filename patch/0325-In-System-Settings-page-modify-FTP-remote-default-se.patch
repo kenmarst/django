@@ -1,0 +1,224 @@
+From 650dd9c644e4d7feae3725f94e6681a9af23e09b Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 19 Oct 2016 17:02:50 +0800
+Subject: [PATCH 325/443] In System Settings page, modify FTP remote default
+ setting value
+
+---
+ systembackup/br06backup.sh | 86 +++++++++++++++++++++++++---------------------
+ systemsettings/views.py    | 24 +++++++------
+ 2 files changed, 60 insertions(+), 50 deletions(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 19b32a2..4014874 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -1,7 +1,6 @@
+ #!/bin/bash
+ 
+ PWD=$(pwd)
+-echo "PWD:$PWD"
+ 
+ if [ -e $PWD/systembackup/backup.conf ]; then
+   . $PWD/systembackup/backup.conf
+@@ -18,51 +17,63 @@ fi
+ DATE=$(date +%F)
+ DAYOFMONTH=$(date +%-d)
+ DAYOFWEEK=$(date +%u)
+-echo "DATE:$DATE"
+-echo "DAYOFMONTH:$DAYOFMONTH"
+-echo "DAYOFWEEK:$DAYOFWEEK"
+-
+ DATE30=$(date +%F --date -30days)
+-echo "DATE30:$DATE30"
+-
+ TIME=$(date +%H%M)
+ TIMEHOUR=$(date +%-H)
+ TIMEMIN=$(date +%-M)
+-echo "TIMEHOUR:$TIMEHOUR"
+-echo "TIMEMIN:$TIMEMIN"
+-
+-echo "BackupMethod:$BackupMethod"
+-echo "BackupScheduling:$BackupScheduling"
+-echo "BackupMonthlyDate:$BackupMonthlyDate"
+-echo "BackupWeeklyDateSh:$BackupWeeklyDateSh"
+-echo "BackupTime_hours:$BackupTime_hours"
+-echo "BackupTime_mins:$BackupTime_mins"
+-echo "BackupLocal:$BackupLocal"
+-echo "BackupRemoteHost:$BackupRemoteHost"
+-echo "BackupRemotePort:$BackupRemotePort"
+-echo "BackupRemotePath:$BackupRemotePath"
+-echo "BackupRemoteAccount:$BackupRemoteAccount"
+-echo "BackupRemotePassword:$BackupRemotePassword"
+-echo "PicCreateSave:$PicCreateSave"
+-echo "PicFaceSave:$PicFaceSave"
+-
+-
+ 
+ GZIP=$(which gzip)
+ RM=$(which rm)
++
+ MYSQL=$(which mysql)
+ MYSQLDUMP=$(which mysqldump)
+ MYSQLUSER="root"
+ MYSQLPASS="1"
++
+ MONGODUMP=$(which mongodump)
++
+ LOCALBAKPATH="$BackupLocal/$DATE"
+-echo "LOCALBAKPATH:$LOCALBAKPATH"
++
+ FRUSERPICDIR="media/fruserpic"
+ BR06DIR="br06.git"
++
+ DAYMATCH="false"
+ TIMEMATCH="false"
+ ACTION="false"
+ 
++logdump()
++{
++  echo "PWD:$PWD"
++  echo "DATE:$DATE"
++  echo "TIMEHOUR:$TIMEHOUR"
++  echo "TIMEMIN:$TIMEMIN"
++
++  echo "DAYOFMONTH:$DAYOFMONTH"
++  echo "DAYOFWEEK:$DAYOFWEEK"
++
++  echo "DATE30:$DATE30"
++
++  echo "BackupMethod:$BackupMethod"
++  echo "BackupScheduling:$BackupScheduling"
++  echo "BackupMonthlyDate:$BackupMonthlyDate"
++  echo "BackupWeeklyDateSh:$BackupWeeklyDateSh"
++  echo "BackupTime_hours:$BackupTime_hours"
++  echo "BackupTime_mins:$BackupTime_mins"
++  echo "BackupLocal:$BackupLocal"
++  echo "LOCALBAKPATH:$LOCALBAKPATH"
++  echo "BackupRemoteHost:$BackupRemoteHost"
++  echo "BackupRemotePort:$BackupRemotePort"
++  echo "BackupRemotePath:$BackupRemotePath"
++  echo "BackupRemoteAccount:$BackupRemoteAccount"
++  echo "BackupRemotePassword:$BackupRemotePassword"
++  echo "PicCreateSave:$PicCreateSave"
++  echo "PicFaceSave:$PicFaceSave"
++
++  echo "DAYMATCH:$DAYMATCH"
++  echo "TIMEMATCH:$TIMEMATCH"
++  echo "ACTION:$ACTION"
++}
++
+ if [ $BackupMethod = 'Manually' ]; then
+   ACTION="Manually"
+ fi
+@@ -70,14 +81,14 @@ fi
+ if [ $BackupMethod = 'Automatic' ]; then
+ 
+   if [ $BackupScheduling = 'Monthly' ]; then
+-    echo "BackupScheduling:$BackupScheduling"
++    #echo "BackupScheduling:$BackupScheduling"
+     if [ $DAYOFMONTH = $BackupMonthlyDate ]; then
+       DAYMATCH="true"
+     fi
+   fi
+ 
+   if [ $BackupScheduling = 'Weekly' ]; then
+-    echo "BackupScheduling:$BackupScheduling"
++    #echo "BackupScheduling:$BackupScheduling"
+     for dow in $BackupWeeklyDateSh
+     do
+       if [ $dow = $DAYOFWEEK ]; then
+@@ -96,12 +107,10 @@ if [ $DAYMATCH = 'true' ] && [ $TIMEMATCH = 'true' ]; then
+   ACTION="Automatic"
+ fi
+ 
+-echo "DAYMATCH:$DAYMATCH"
+-echo "TIMEMATCH:$TIMEMATCH"
+-echo "ACTION:$ACTION"
+-
+ if [ $ACTION = 'Manually' ] || [ $ACTION = 'Automatic' ]; then
+ 
++  logdump
++
+   [ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
+ 
+   MYDBS=$($MYSQL -u $MYSQLUSER -p$MYSQLPASS -Bse 'show databases')
+@@ -127,12 +136,11 @@ if [ $ACTION = 'Manually' ] || [ $ACTION = 'Automatic' ]; then
+     tar czf $FILE ./$FRUSERPICDIR
+   fi
+ 
+-  ListRemoteFolder=$(lftp -c "open $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword; renlist $BackupRemotePath/backupDB/$DATE")
+-
+-  CheckRemoteFolder=$(echo "$ListRemoteFolder" | head -1)
+-
+ #  if [ $ACTION = 'Manually' ]; then
+   if [ $BackupLocation = 'ftp' ] && [ $ACTION = 'Automatic' ]; then
++    ListRemoteFolder=$(lftp -c "open $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword; renlist $BackupRemotePath/backupDB/$DATE")
++    CheckRemoteFolder=$(echo "$ListRemoteFolder" | head -1)
++
+     echo "Uploading backup files to ftp..."
+     if [ $CheckRemoteFolder ] && [ $CheckRemoteFolder != '' ]; then
+       echo "Upload files to $BackupRemotePath/backupDB/$DATE"
+@@ -152,6 +160,6 @@ EOF
+     echo "Uploading backup files complete."
+   fi
+ 
+-  $RM -rf $BackupLocal/$DATE30
++  #$RM -rf $BackupLocal/$DATE30
++  echo "=========================================================================="
+ fi
+-echo "=========================================================================="
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 2b5928a..b87b180 100755
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -73,10 +73,10 @@ try:
+     Config.objects.get(Name = 'BackupLocation').Name
+ except:
+     try:
+-        Config.objects.create(Name = 'BackupLocation', Value = 'ftp')
+-        print('create default BackupLocation: ftp')
++        Config.objects.create(Name = 'BackupLocation', Value = 'local')
++        print('create default BackupLocation: local')
+     except:
+-        print('can\'t create default BackupLocation: ftp')
++        print('can\'t create default BackupLocation: local')
+ else:
+     print('default BackupLocation exist.')
+ 
+@@ -97,10 +97,10 @@ try:
+     Config.objects.get(Name = 'BackupRemoteHost').Name
+ except:
+     try:
+-        Config.objects.create(Name = 'BackupRemoteHost', Value = '0.0.0.0')
+-        print('create default BackupRemoteHost: 0.0.0.0')
++        Config.objects.create(Name = 'BackupRemoteHost', Value = '127.0.0.1')
++        print('create default BackupRemoteHost: 127.0.0.1')
+     except:
+-        print('can\'t create default BackupRemoteHost: 0.0.0.0')
++        print('can\'t create default BackupRemoteHost: 127.0.0.1')
+ else:
+     print('default BackupRemoteHost exist.')
+ 
+@@ -526,11 +526,13 @@ def settings_system_backup(request):
+             backupconf_content.append('BackupTime_mins={0}\n'.format(BackupTime_mins))
+             backupconf_content.append('BackupLocal={0}\n'.format(BackupLocal))
+             backupconf_content.append('BackupLocation={0}\n'.format(BackupLocation))
+-            backupconf_content.append('BackupRemoteHost={0}\n'.format(BackupRemoteHost))
+-            backupconf_content.append('BackupRemotePort={0}\n'.format(BackupRemotePort))
+-            backupconf_content.append('BackupRemotePath={0}\n'.format(BackupRemotePath))
+-            backupconf_content.append('BackupRemoteAccount={0}\n'.format(BackupRemoteAccount))
+-            backupconf_content.append('BackupRemotePassword={0}\n'.format(BackupRemotePassword))
++            if rftp_chk == 'true':
++                backupconf_content.append('BackupRemoteHost={0}\n'.format(BackupRemoteHost))
++                backupconf_content.append('BackupRemotePort={0}\n'.format(BackupRemotePort))
++                backupconf_content.append('BackupRemotePath={0}\n'.format(BackupRemotePath))
++                backupconf_content.append('BackupRemoteAccount={0}\n'.format(BackupRemoteAccount))
++                backupconf_content.append('BackupRemotePassword={0}\n'.format(BackupRemotePassword))
++
+             print(backupconf_content)
+             with open(newbackupconfile, mode='wt', encoding='utf-8') as f:
+                 f.write(''.join(backupconf_content))
+-- 
+1.9.1
+

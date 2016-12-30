@@ -1,0 +1,658 @@
+From 453aee6987ff4849fda647d17adb49c0ac3d7878 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Tue, 15 Nov 2016 16:13:50 +0800
+Subject: [PATCH 359/443] Add the Server Version info on 'Dashboard' page
+
+---
+ dashboard/views.py                           |   4 ++-
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/dashboard.html                     |   3 ++
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 19941 -> 20003 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  51 ++++++++++++++-------------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 19941 -> 20003 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  51 ++++++++++++++-------------
+ 10 files changed, 62 insertions(+), 51 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 62c6070..9bb5c7b 100755
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -1,5 +1,6 @@
+ from django.shortcuts import render, render_to_response
+ from django.http import HttpResponseRedirect, JsonResponse
++from django.conf import settings
+ from datetime import timedelta, datetime
+ from time import gmtime, strftime
+ from api.utility import get_localtimezone
+@@ -120,6 +121,7 @@ def dashboard_views(request):
+                       'device_offline_count' : device_offline_count,
+                       'device_proposed_count' : device_proposed_count,
+                       'devices': devices,
+-                      'frusers': frusers
++                      'frusers': frusers,
++                      'softwave_version' : settings.VERSION
+                       }
+                   )
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 1a77b8848f97a2912859b16fefd277237bf4e314..1bddcb54cf1bf9102c1da5672a075d92d99ff779 100755
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrMf(9Fufa^puqMgTTx1)%@{
+
+delta 18
+ZcmZo-X=0i1irqxP(A3J*VB<$YMgTTP1)Bf>
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index ed096be..cc37c69 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-14 15:50+0800\n"
++"POT-Creation-Date: 2016-11-15 16:09+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 1a77b8848f97a2912859b16fefd277237bf4e314..1bddcb54cf1bf9102c1da5672a075d92d99ff779 100755
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrMf(9Fufa^puqMgTTx1)%@{
+
+delta 18
+ZcmZo-X=0i1irqxP(A3J*VB<$YMgTTP1)Bf>
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index ed096be..cc37c69 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-14 15:50+0800\n"
++"POT-Creation-Date: 2016-11-15 16:09+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index b2e1500..06c5cff 100755
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -91,6 +91,9 @@
+                                 <dd>{{uptime_days}} days, {{uptime_hms}}</dd>
+                                 <dt>{% trans "System Current Time" %}</dt>
+                                 <dd>{{now}} ({{tz}})</dd>
++                                <dt>{% trans "Software Version" %}</dt>
++                                <dd>{{softwave_version}}</dd>
++
+                             </dl>
+ 
+                             <div class="row">
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 7a3e5d43dfbd2538b6dd67a672320a4d5e6fb3d2..3a65f8d4a5f936f8d149f5de1d55ca4d9a979299 100755
+GIT binary patch
+delta 7195
+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
+
+delta 7106
+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
+KOLylF4g4R*e5IlQ
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 840271d..d2e3b93 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-14 15:50+0800\n"
++"POT-Creation-Date: 2016-11-15 16:09+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -34,7 +34,7 @@ msgstr "硬碟使用空间"
+ msgid "Memory Usage"
+ msgstr "RAM 使用量"
+ 
+-#: templates/dashboard.html:68 templates/dashboard.html.py:113
++#: templates/dashboard.html:68 templates/dashboard.html.py:116
+ msgid "FR User Count"
+ msgstr "建档总人数"
+ 
+@@ -50,48 +50,52 @@ msgstr "开机多久时间"
+ msgid "System Current Time"
+ msgstr "系统当地时间"
+ 
+-#: templates/dashboard.html:99
++#: templates/dashboard.html:94
++msgid "Software Version"
++msgstr "软件版号"
++
++#: templates/dashboard.html:102
+ msgid "Device Info"
+ msgstr "设备资讯"
+ 
+-#: templates/dashboard.html:101
++#: templates/dashboard.html:104
+ msgid "Device Count"
+ msgstr "设备总数量"
+ 
+-#: templates/dashboard.html:101
++#: templates/dashboard.html:104
+ msgid "proposed"
+ msgstr "待审数"
+ 
+-#: templates/dashboard.html:104 templates/dashboard.html.py:116
++#: templates/dashboard.html:107 templates/dashboard.html.py:119
+ msgid "View Detail"
+ msgstr "查看详情"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:114
+ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+-#: templates/dashboard.html:146 templates/dashboard.html.py:164
++#: templates/dashboard.html:149 templates/dashboard.html.py:167
+ #: templates/fruser_list.html:105 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "编号"
+ 
+-#: templates/dashboard.html:150 templates/device_add.html.py:39
++#: templates/dashboard.html:153 templates/device_add.html.py:39
+ #: templates/device_edit.html:53 templates/device_list.html.py:83
+ #: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "设备名称"
+ 
+-#: templates/dashboard.html:154 templates/dashboard.html.py:176
++#: templates/dashboard.html:157 templates/dashboard.html.py:179
+ msgid "Latest Update Time"
+ msgstr "最后更新时间"
+ 
+-#: templates/dashboard.html:168
++#: templates/dashboard.html:171
+ msgid "User ID"
+ msgstr "工号"
+ 
+-#: templates/dashboard.html:172
++#: templates/dashboard.html:175
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -146,7 +150,7 @@ msgstr "请输入正确的设备IP格式！使用数字与'.'"
+ #: templates/role_add.html.py:50 templates/role_permission.html:37
+ #: templates/role_rename.html.py:44 templates/user_add.html:95
+ #: templates/user_group_add.html.py:45 templates/user_group_devices.html:53
+-#: templates/user_group_edit.html:62 templates/user_group_members.html:53
++#: templates/user_group_edit.html.py:62 templates/user_group_members.html:53
+ #: templates/user_setting.html.py:118 templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+@@ -192,7 +196,7 @@ msgstr "设备修改"
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+ #: templates/frusergroup_devices.html:34 templates/frusergroup_edit.html:32
+ #: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++#: templates/user_group_edit.html.py:32 templates/user_group_members.html:33
+ msgid "Information"
+ msgstr "一般"
+ 
+@@ -359,8 +363,8 @@ msgstr "新增群组失败"
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:41
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:46 templates/role_permission.html:80
+-#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+-#: templates/user_group_members.html:39
++#: templates/user_group_devices.html.py:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html.py:39
+ msgid "Device List"
+ msgstr "设备管理"
+ 
+@@ -732,7 +736,7 @@ msgstr "FR使用者群组修改"
+ 
+ #: templates/frusergroup_devices.html:37 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+-#: templates/user_group_edit.html:35 templates/user_group_members.html:36
++#: templates/user_group_edit.html.py:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成员管理"
+ 
+@@ -748,22 +752,21 @@ msgstr "新增设备"
+ msgid "Search Device"
+ msgstr "搜寻设备"
+ 
+-#: templates/frusergroup_devices.html:172
+-#: templates/frusergroup_member.html:170 templates/user_group_devices.html:170
+-#: templates/user_group_list.html:116 templates/user_group_members.html:170
++#: templates/frusergroup_devices.html:172 templates/frusergroup_member.html:170
++#: templates/user_group_devices.html:170 templates/user_group_list.html:116
++#: templates/user_group_members.html:170
+ msgid "from this group"
+ msgstr "群组"
+ 
+-#: templates/frusergroup_devices.html:221
+-#: templates/user_group_devices.html:219
++#: templates/frusergroup_devices.html:221 templates/user_group_devices.html:219
+ msgid "Fail to add device"
+ msgstr "新增设备失败"
+ 
+-#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html.py:109
+ msgid "Change group name successfully"
+ msgstr "群组名称变更成功"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html.py:112
+ msgid "Fail to change group name"
+ msgstr "变更群组名称失败"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index ae5a2efbd171c860f6acf889f389f2df1c88c8a8..40199a2992711108cc3b33341cbbe6b855d226a5 100755
+GIT binary patch
+delta 7195
+zcmZwL3w)1dAII@~o0-{x&1@LkWHvLju`x57)0`5<I%rD7Ld#)fEr-8q$)S*(n~+L)
+zDl9x%NK&ahg(MZG$6=A`Q7IkN=ezqiuU@^L`_*sn>-t^yeVy*ZrnAp@tt<8NoD8k8
+z#Np`c<v5M8ptj?bQ+^{%S;u)P(s63y1`NW@=!d&89N$47Jb}S@8g<_HR=;NLL3Hj*
+zJ_P+S0&6&q$7xC-ghU*2u9JrKFc%YXH1eObm>;!p3r68i%O6K|d<E;`?`BXFx8EpK
+zzeyN~{ZRc6!2rg0?x&!c7h@fqjg4@*)ypuH`aaY|KSd2xi4E{7vT05zv(n0%nDMBc
+zNk;XTY7Rv0=zWs$ok9xgpcpm75)8nn%vI(Fa~o=+dr{XNviz4=H8Iq!xr$nO-Dvlg
+zwL+brf?7xxdbIK!3M|68+nj;i8>bYtwQEr`UXO$E70Y|axD%~~>NpJbY(%5Zk4JB8
+zV<w}XjTEz64EwK{3?!lFZ3Jqoi_E#G{3_JWY(;gj2Q{&SsQeLBKNYB*xr};NyqmfU
+z3qUP20kyC+tdE_WdfY7=OhN;XG>cFj&P8oyDQauWupz#U5qJ{WW#<a&p{jp_+i`-K
+zg<8NZsP?hu3{=01JeJsCiCtFz#Ojq+{}VOidd=LeO+Za32{oav=!1EvtsjQECHbgl
+zX(DRprd#_w)DC(UQP7FYQ8QX+^_{34*pJ$>W9FBr0ZyYjti*J@f*L3}*1fJX>Q)Ru
+z{&R-$LvKe3YNzKT3-UN?Dfp1sfqHn#Q623=b?_1DH9LiDg7b^zBb&SJiKy#4VGYbe
+z-TNM>iQbIrFW0;q^~@BYpWgps3ce&BMs@T!>S39OEXrAF?#2}AUttVJ#JO9ahT6eF
+zs0rMO8ejx^<9JlRh1NdBoQl4T@65ClW}z;ai#hltY9*&o9aox{P+NG}+I{2QhcOs?
+zl8-~Z_xGb->p7^0Z$0XkmSZX&L=WNkwBQxQMAU`T%;lIy{Wa`|mv9KCC%9j<#i$*6
+z75VBqM^M*)Z|#9C-3i2F4Eb!-!<vtJ)@HV3|Mh8HMj{`#qF$GViS7Vx(3g52)D8?l
+zKg`A2I25%L_hJA(gtc%M*2D#<>zASiF17r2)a$z|k^R?}93`QZo=43rrj<Kj2UL3o
+z`eT3dcGSZ;0t2uR^^nd$y{5}hTmCZY-tR>%U_Zv<`^YE5`OZT@D-LPxJ~VNt*Q%Y>
+zyP^i@kLu_S)DGN*npnQoA4IKuChEH|2Q}bI)K08MUH>9#Asa34d5wZ*T8<j%Bh=P@
+zf$HcSYNbD85c;)o>-A9+X^y&utx-GI8*jp4$cy4^!bx}twesv6-TYXL(fhxU!W}eh
+zK|PFtN$w{#1*54C#=$rV>BD&!nTvA;HBfA_yRr$W6;DR(M6vmZwa>Hm1(sioL3;mJ
+zQP9daVGQm-t>`n<J^cZ-BY|z*t&Bho6otXq3`4Lj*1;ZTuH{Ffc4`W0>t~p=F+lJC
+zA_|)Evr6E4)Kgn#_197NZa=D{1E{C@ka-dBqwd?z-NA{d^H!j~Cu^}TK98E<HdO!n
+z(W8z&pr93<MO}CSwc^XDd-@0J!xF~lPw#miD*qsArxu_Vuo0^!j`|L~j+*#U48-Hs
+ze$M<Rh5hg1#XuzVl(uW{o|ulR_rg%@Z}s8UJ{q->2h7K;eTi9$8gQM}H(PxNs=v3b
+zeylzFuc!133H=_g-N79=0d?<_P#5&E{7_WK_m~q<6Pb>Bx}UWCR@8NStbQ2vT{wk0
+z|0mQA`Fi;3DACkRHoKZRs0)Xq1}?IEiPaaQws<Y7!xvBs*^Ao23iCYb`fpL={bqGf
+zKu5Qsf!W+_Yi61K%pqnzYK4=`S*QV5SbYs@z%uhqY(V`WYC-3a^F7Y*c7jj3+d*Bt
+zjT0iQKHi*SPDi~ZC01XE8fcmMJZgnoP&=~MJb`*$uVMt&>ZEq=e+-2%5*etO<(T(k
+zL+aBp5|^PmD6{%os1=_?U3V6>BfnWbIK!>iH(QvUFp~57tFHHdtTjwWb+iz*RWDk8
+zkJS%b`$fxpb#^-nLk*mSx~@B_pP|-XX!-f5^VXwwXeWA<c%OnUIDwkk52%N#PNsW7
+zJyd%fDxZPspo`@PqWa0VdNFEe7MM#>w`djWyp2}hmC62BO~6h(fg0e9)hkg0e~10i
+zH_Pof7j?_>P!pMen)pm>FGcmc&fISK1Lnt;KbGZjJGekX9sP=$Y3(kq5oRoEV##Kz
+z<vUuvr`7wKx1oMpjzsN5p;?UTXQtIlJQVnA$(e^OaU1HlTLtQa65Q2YSvypR15h2_
+ziTY(S((2>P2h3^aqvl-mDRVg%aJ^@>B?7y-9oIv3+z7Q3v6fFp?NA!>206V^Tl}cG
+z6m|Xvb34XU--lYrMdUxHZg=+~9gN&sk5fP)j)q4t6*r&;IEDJP+Ng(nK`Z0}C)><3
+zCz_9&t56dyGxu5k2o56uwbe7SwE*t_APU;jQK;X31*nH>GB(9IsFiL)?aXfTJ=ArF
+z&Eu#ER-ks`3hI{m^mOYX$lokZ6so@gSoQD!5fn7zF{lfR%~|Hts0-Gh-tRK2e~23J
+z6#C##SQD>e6gs_JqfzH&qWaG@hoeV{aTGLxsi=<TnF~<uPop|sW3IRSD^@Qz-$Gq~
+zz}gR5{&Um<PFwy*)2lc8uPqJk?VixUOf)l5?K!Ahk%x_OI`V77S&7<_Pw-Z}gpIIA
+zANQ>ph8lP(>fxJ@I{%P)p%3?8TjSH0?ZJkqt-IYUviwri%8sIT;<#C1p11aIt$rD`
+zqgPQo=zo)IIBFryP#>&p4+TwNxSddh8lVLIaUQCpCD#4|>in&!4&Fnp@C@p@pRN6x
+z)x-L^?UAT{+E_gk)xRf)LLh}a)Cxyiy#Up5F>1gkFb|(Y{V{nBHDH~aUBl6fdK0Th
+zn{lY?TU))m*%z6B$H}1($O(Da21la?UWU4GqxmLk#-E}FuE20SkDB;3%X{;SLjC!h
+z;i!pe_5VE1>iv(P)lX;GQHq)fO-@7d?^wPDWpB#+2|vsIh~4a3J&^IlPQsU55HX$d
+z??eotBb1!}_=rRu{u)HbCZe$=y|FX#3OW66*$y~{2qLZ$cM-o3vxqEW6`^A(;Y)l<
+z6cg14kAmYxKYwBpzJx`@jg&nzDcnM&P^nM6O1TcU!2fqlBl(y$WO1I3;VxA_v&prh
+z)Ru^{_Cm_Di8VwFx#v*F1KQ+$6mBE*UPjY67>^SpiB5zLz1wwZJ6Bb6f1C%tBiD}^
+zl=!qe-w|`KXZeGZ@(X{f-%fcbQBsv-|4&<^KLg}iSx@?lR?Z;*FUmd`N3<X^sJADc
+zA;u92#2{iN@dz=M*h~y0UMBuc=xFUy^)K#|l<%y*|H{YGaVGJWom5Rax%R{jL`_R}
+zqO4;PaX)bn@ig&1kx%^nSo^oiYRY_*oXf-(!qbu;O^H)PJL{BU)xQUipkA#u$`fU9
+zi0Dl@koc8yZM+Y4Y$cMZClESXV;U|e9wj0PeLHFszY($SOGb&~4`M-8iB(z$T`-m0
+zM&e204&qy47txh?lc+^JOz8NA2;-WI_&jlm&~Y~rN^~X?Y41)nq5NUhOHQE~v7SgL
+zHV_SoXd<2y*I`>+g7b*#<6a8y5g$}1aI%#TV?Qe&z&D6(R$q*bh>r9bQhooQAaRX|
+zBf1l>69Whx$A|z<{shDED5haKzD86ZSFF&0wmw$A5xY|FjkRzzrVwuvm4v4e$vqUB
+z6C;RrL?-di<5?0tiT_$dAFk7}op`XS<o<P|Vm7gt2qT(t-dA`7F^8x=qTGVVN#%qo
+zR65`pYyAQPh%Uqm;weJMB%(g?CGkJvb7B~wqZQW&6FL%!hltOJv4oDEw1vAx=LZ~5
+z^zdT;hfoNiag;TFWL9%Cg>FOz(bNW@c>QQjt|bvn=JD%Uw{QYJCgu}6h}}dz>!UH{
+zpNI0JKk+@$godAR0->Y8#rfJ4y*Ov0)dS6B%psN$?-Cb?{}2ny9*aB|5}ZG|Xn5hM
+zm|I5`P8u_QT-oT>oBjM!W0KpaCv_}~PQ5EMu(Evh*P9lfpEJ91#p<$Yy~fo13k8J5
+A)&Kwi
+
+delta 7106
+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
+LymVLo(7^uzP(Y@Y
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 21d2a7e..caccbe3 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-14 15:50+0800\n"
++"POT-Creation-Date: 2016-11-15 16:09+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -34,7 +34,7 @@ msgstr "硬碟使用空間"
+ msgid "Memory Usage"
+ msgstr "RAM 使用量"
+ 
+-#: templates/dashboard.html:68 templates/dashboard.html.py:113
++#: templates/dashboard.html:68 templates/dashboard.html.py:116
+ msgid "FR User Count"
+ msgstr "建檔總人數"
+ 
+@@ -50,48 +50,52 @@ msgstr "開機多久時間"
+ msgid "System Current Time"
+ msgstr "系統當地時間"
+ 
+-#: templates/dashboard.html:99
++#: templates/dashboard.html:94
++msgid "Software Version"
++msgstr "軟體版號"
++
++#: templates/dashboard.html:102
+ msgid "Device Info"
+ msgstr "設備資訊"
+ 
+-#: templates/dashboard.html:101
++#: templates/dashboard.html:104
+ msgid "Device Count"
+ msgstr "設備總數量"
+ 
+-#: templates/dashboard.html:101
++#: templates/dashboard.html:104
+ msgid "proposed"
+ msgstr "待審數"
+ 
+-#: templates/dashboard.html:104 templates/dashboard.html.py:116
++#: templates/dashboard.html:107 templates/dashboard.html.py:119
+ msgid "View Detail"
+ msgstr "查看詳情"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:114
+ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+-#: templates/dashboard.html:146 templates/dashboard.html.py:164
++#: templates/dashboard.html:149 templates/dashboard.html.py:167
+ #: templates/fruser_list.html:105 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "編號"
+ 
+-#: templates/dashboard.html:150 templates/device_add.html.py:39
++#: templates/dashboard.html:153 templates/device_add.html.py:39
+ #: templates/device_edit.html:53 templates/device_list.html.py:83
+ #: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "設備名稱"
+ 
+-#: templates/dashboard.html:154 templates/dashboard.html.py:176
++#: templates/dashboard.html:157 templates/dashboard.html.py:179
+ msgid "Latest Update Time"
+ msgstr "最後更新時間"
+ 
+-#: templates/dashboard.html:168
++#: templates/dashboard.html:171
+ msgid "User ID"
+ msgstr "工號"
+ 
+-#: templates/dashboard.html:172
++#: templates/dashboard.html:175
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -146,7 +150,7 @@ msgstr "請輸入正確的設備IP格式！使用數字與'.'"
+ #: templates/role_add.html.py:50 templates/role_permission.html:37
+ #: templates/role_rename.html.py:44 templates/user_add.html:95
+ #: templates/user_group_add.html.py:45 templates/user_group_devices.html:53
+-#: templates/user_group_edit.html:62 templates/user_group_members.html:53
++#: templates/user_group_edit.html.py:62 templates/user_group_members.html:53
+ #: templates/user_setting.html.py:118 templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+@@ -192,7 +196,7 @@ msgstr "設備修改"
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+ #: templates/frusergroup_devices.html:34 templates/frusergroup_edit.html:32
+ #: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++#: templates/user_group_edit.html.py:32 templates/user_group_members.html:33
+ msgid "Information"
+ msgstr "一般"
+ 
+@@ -359,8 +363,8 @@ msgstr "新增群組失敗"
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:41
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:46 templates/role_permission.html:80
+-#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+-#: templates/user_group_members.html:39
++#: templates/user_group_devices.html.py:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html.py:39
+ msgid "Device List"
+ msgstr "設備管理"
+ 
+@@ -732,7 +736,7 @@ msgstr "FR使用者群組修改"
+ 
+ #: templates/frusergroup_devices.html:37 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+-#: templates/user_group_edit.html:35 templates/user_group_members.html:36
++#: templates/user_group_edit.html.py:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成員管理"
+ 
+@@ -748,22 +752,21 @@ msgstr "新增設備"
+ msgid "Search Device"
+ msgstr "搜尋設備"
+ 
+-#: templates/frusergroup_devices.html:172
+-#: templates/frusergroup_member.html:170 templates/user_group_devices.html:170
+-#: templates/user_group_list.html:116 templates/user_group_members.html:170
++#: templates/frusergroup_devices.html:172 templates/frusergroup_member.html:170
++#: templates/user_group_devices.html:170 templates/user_group_list.html:116
++#: templates/user_group_members.html:170
+ msgid "from this group"
+ msgstr "群組"
+ 
+-#: templates/frusergroup_devices.html:221
+-#: templates/user_group_devices.html:219
++#: templates/frusergroup_devices.html:221 templates/user_group_devices.html:219
+ msgid "Fail to add device"
+ msgstr "新增設備失敗"
+ 
+-#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html.py:109
+ msgid "Change group name successfully"
+ msgstr "群組名稱變更成功"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html.py:112
+ msgid "Fail to change group name"
+ msgstr "變更群組名稱失敗"
+ 
+-- 
+1.9.1
+

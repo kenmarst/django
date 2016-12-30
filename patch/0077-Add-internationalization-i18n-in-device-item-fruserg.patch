@@ -1,0 +1,3211 @@
+From cff191ce4de7ff161967d59fc396ef44fd2795bc Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 25 May 2016 14:00:21 +0800
+Subject: [PATCH 077/443] Add internationalization (i18n) in device item,
+ frusergroup item, role item, fruserlog, logsetting, password_reset_email,
+ user_group.
+
+Add internationalization (i18n) in device item, frusergroup item, role item, fruserlog, logsetting, password_reset_email, user_group.
+---
+ frusergroups/views.py                            |   1 -
+ locale/zh_CN/LC_MESSAGES/django.mo               | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po               |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo               | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po               |   2 +-
+ templates/device_add.html                        |  15 +-
+ templates/device_edit.html                       |  23 +-
+ templates/device_frusergroups.html               |  25 +-
+ templates/device_list.html                       |  25 +-
+ templates/device_settings.html                   |  19 +-
+ templates/frusergroup_add.html                   |  17 +-
+ templates/frusergroup_devices.html               |  25 +-
+ templates/frusergroup_edit.html                  |  21 +-
+ templates/frusergroup_member.html                |  25 +-
+ templates/frusergroups_list.html                 |  19 +-
+ templates/fruserlog_list.html                    |  25 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo     | Bin 4151 -> 6983 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po     | 575 ++++++++++++++++-------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo     | Bin 4151 -> 6983 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po     | 575 ++++++++++++++++-------
+ templates/logsetting.html                        |  39 +-
+ templates/registration/forget_password.html      |   4 +
+ templates/registration/password_reset_email.html |   1 +
+ templates/registration/reset_password.html       |  15 +-
+ templates/role_add.html                          |  15 +-
+ templates/role_list.html                         |  27 +-
+ templates/role_permission.html                   |  23 +-
+ templates/role_rename.html                       |  15 +-
+ templates/user_group_devices.html                |   2 +-
+ templates/user_group_edit.html                   |   2 +-
+ templates/user_group_members.html                |   2 +-
+ 31 files changed, 995 insertions(+), 544 deletions(-)
+
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index eab7c07..aeaf018 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -70,7 +70,6 @@ def frusergroup_member_view(request):
+         return HttpResponseRedirect("/")
+     try:
+         obj = Frusergroupmember.objects.filter(GroupOId = Frusergroups.objects.get(OId = request.GET['OId']))
+-        print(obj)
+         members = [res.FRUserOId.as_json() for res in obj]
+         index = 0
+         for member in members:
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index d95735ef14dc421077f2781efb41527ab7166353..304bd589f2cb0e79e0242e05a3c9dda2636b8f51 100644
+GIT binary patch
+delta 17
+YcmZo-X=0i1ip^BP(Adgk;|C!|05OXNXaE2J
+
+delta 17
+YcmZo-X=0i1ip@m9(Adgw;|C!|05Ng}WB>pF
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 1cf13fe..5f8e97b 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"POT-Creation-Date: 2016-05-25 13:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index d95735ef14dc421077f2781efb41527ab7166353..304bd589f2cb0e79e0242e05a3c9dda2636b8f51 100644
+GIT binary patch
+delta 17
+YcmZo-X=0i1ip^BP(Adgk;|C!|05OXNXaE2J
+
+delta 17
+YcmZo-X=0i1ip@m9(Adgw;|C!|05Ng}WB>pF
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 1cf13fe..5f8e97b 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"POT-Creation-Date: 2016-05-25 13:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/device_add.html b/templates/device_add.html
+index b3f1094..a859b02 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device Add</title>
++        <title>{% trans "Device Add" %}</title>
+ 
+     </head>
+ 
+@@ -14,13 +15,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Device Add</li>
++                    <li class="active">{% trans "Device Add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device add</small></h1>
++                    <h1 class="page-header"><small>{% trans "Device add" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,14 +29,14 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Device</p>
++                            <p>{% trans "Device" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Device Name
++                                            <span style="color: red;">*</span> {% trans "Device Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="text" class="form-control" placeholder="Please input Device Name" name="Name" required="required">
+@@ -60,8 +61,8 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">Cancel</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="location.href='/device_list'">{% trans "Cancel" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index c2cde81..845d371 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device Edit</title>
++        <title>{% trans "Device Edit" %}</title>
+ 
+     </head>
+ 
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>Device Edit</li>
++                    <li>{% trans "Device Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "Device Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,10 +30,10 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li class="active">
+-                            <a href="/device_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/device_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/device_frusergroups?OId={{obj.OId}}" class="input-lg">FRUser Group List</a>
++                            <a href="/device_frusergroups?OId={{obj.OId}}" class="input-lg">{% trans "FRUser Group List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -42,14 +43,14 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Device</p>
++                            <p>{% trans "Device" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Device Name :
++                                            <span style="color: red;">*</span> {% trans "Device Name" %} :
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Device Name" name="Name" required="required">
+@@ -71,8 +72,8 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">Cancel</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="location.href='/device_list'">{% trans "Cancel" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+@@ -83,7 +84,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Device parameter</p>
++                            <p>{% trans "Device parameter" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+@@ -159,7 +160,7 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_settings?OId={{obj.OId}}'">Settings</button>
++                                <button class="btn btn-default" onclick="location.href='/device_settings?OId={{obj.OId}}'">{% trans "parameterSettings" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 978e39b..c5f28f3 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device Edit</title>
++        <title>{% trans "Device Edit" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>Device Edit</li>
++                    <li>{% trans "Device Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "Device Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,10 +30,10 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/device_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/device_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/device_frusergroups?OId={{obj.OId}}" class="input-lg">FRUser Group List</a>
++                            <a href="/device_frusergroups?OId={{obj.OId}}" class="input-lg">{% trans "FRUser Group List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -41,19 +42,19 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="col-md-8 panel panel-default">
+-                        <div class="panel-heading"><p>Group list</p></div>
++                        <div class="panel-heading"><p>{% trans "Group list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="GroupList"></table>
+                         </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+-                        <div class="panel-heading"><p>Add New Group</p></div>
++                        <div class="panel-heading"><p>{% trans "Add New Group" %}</p></div>
+                         <div class="panel-body">
+-                            <label>Search Group :</label>
++                            <label>{% trans "Search Group" %} :</label>
+                             <table id="GroupAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -76,14 +77,14 @@
+                 columns: [
+                     {
+                         field: 'Name',
+-                        title: 'FRUser Group',
++                        title: '{% trans "FRUser Group" %}',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+@@ -104,7 +105,7 @@
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Group',
++                        title: '{% trans "Group" %}',
+                         sortable: true
+                     }
+                 ],
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 941e878..652b11d 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device List</title>
++        <title>{% trans "Device List" %}</title>
+         <link rel="stylesheet" href="{% static "css/font-awesome.min.css" %}">
+     </head>
+     <body>
+@@ -15,13 +16,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Device List</li>
++                    <li class="active">{% trans "Device List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device List</small></h1>
++                    <h1 class="page-header"><small>{% trans "Device List" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,7 +30,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <button id="AddDevice" class="btn btn-default pull-right" onclick="location.href='/device_add/'">Create new device</button>
++                            <button id="AddDevice" class="btn btn-default pull-right" onclick="location.href='/device_add/'">{% trans "Create new device" %}</button>
+                             <table id="DeviceList"></table>
+                         </div>
+                     </div>
+@@ -61,12 +62,12 @@
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Device Name',
++                        title: '{% trans "Device Name" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'State',
+-                        title: 'Status',
++                        title: '{% trans "Status" %}',
+                         formatter: function(value) {
+                             if (value == 'Offline') {
+                                 return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:red"></i>';
+@@ -79,7 +80,7 @@
+                     },
+                     {
+                         field: 'UpdateDate',
+-                        title: 'Sync time',
++                        title: '{% trans "Sync time" %}',
+                         sortable: true
+                     },
+                     {
+@@ -87,15 +88,15 @@
+                             if (row.State == 'Proposed') {
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick=accept_device("' + row.OId + '","' +row.Name+ '")>Accept</button> \
+-                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Reject</button> \
++                                        <button class="btn btn-default" onclick=accept_device("' + row.OId + '","' +row.Name+ '")>{% trans "Accept" %}</button> \
++                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Reject" %}</button> \
+                                     </div>';
+                             } else {
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick="location.href=\'/device_edit?OId=' + row.OId + '\'">Edit</button> \
+-                                        <button class="btn btn-default" onclick="location.href=\'/device_settings?OId=' + row.OId + '\'">Settings</button> \
+-                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                        <button class="btn btn-default" onclick="location.href=\'/device_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                        <button class="btn btn-default" onclick="location.href=\'/device_settings?OId=' + row.OId + '\'">{% trans "Settings" %}</button> \
++                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                     </div>';
+                             }
+                         }
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 9a42f49..574d000 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device Settings</title>
++        <title>{% trans "Device Settings" %}</title>
+ 
+     </head>
+ 
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>Device Settings</li>
++                    <li>{% trans "Device Settings" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device Settings</small></h1>
++                    <h1 class="page-header"><small>{% trans "Device Settings" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,7 +30,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Device parameter setup</p>
++                            <p>{% trans "Device parameter setup" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+@@ -137,17 +138,17 @@
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Language">
+                                                 <option value=""></option>
+-                                                <option value="en">en</option>
+-                                                <option value="zh-cn">zh-cn</option>
+-                                                <option value="zh-tw">zh-tw</option>
++                                                <option value="en">{% trans "en" %}</option>
++                                                <option value="zh-cn">{% trans "zh-cn" %}</option>
++                                                <option value="zh-tw">{% trans "zh-tw" %}</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">Cancel</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="location.href='/device_list'">{% trans "Cancel" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index e0b122f..d65f024 100644
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>FR User Group Add</title>
++        <title>{% trans "FR User Group Add" %}</title>
+     </head>
+ 
+     <body>
+@@ -13,13 +14,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">FR User Group Add</li>
++                    <li class="active">{% trans "FR User Group Add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>FR User Group Add</small></h1>
++                    <h1 class="page-header"><small>{% trans "FR User Group Add" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -27,14 +28,14 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Group</p>
++                            <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Group Name
++                                            <span style="color: red;">*</span> {% trans "Group Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="text" class="form-control" placeholder="Please input Group Name" name="Name" required="required">
+@@ -43,9 +44,9 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-4 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/fruser_group'">Cancel</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
+-                                <button class="btn btn-default" onclick="onSaveAnotherClick()">Save and add another</button>
++                                <button class="btn btn-default" onclick="location.href='/fruser_group'">{% trans "Cancel" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
++                                <button class="btn btn-default" onclick="onSaveAnotherClick()">{% trans "Save and add another" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 3b60e1e..7a363cf 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>FR User Group Device</title>
++        <title>{% trans "FR User Group Device" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>FR User Group Edit</li>
++                    <li>{% trans "FR User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>FR User Group Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "FR User Group Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,13 +30,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">Member List</a>
++                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">{% trans "Device List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -44,19 +45,19 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="col-md-8 panel panel-default">
+-                        <div class="panel-heading"><p>Device list</p></div>
++                        <div class="panel-heading"><p>{% trans "Device list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="DeviceList"></table>
+                         </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+-                        <div class="panel-heading"><p>Add New Device</p></div>
++                        <div class="panel-heading"><p>{% trans "Add New Device" %}</p></div>
+                         <div class="panel-body">
+-                            <label>Search Device :</label>
++                            <label>{% trans "Search Device" %} :</label>
+                             <table id="DeviceAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -78,7 +79,7 @@
+                 columns: [
+                     {
+                         field: 'Name',
+-                        title: 'Name',
++                        title: '{% trans "Name" %}',
+                         sortable: true
+                     },
+                     {
+@@ -104,7 +105,7 @@
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Device',
++                        title: '{% trans "Device" %}',
+                         sortable: true
+                     }
+                 ],
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index 1b8253e..d5bb007 100644
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>FR User Group Edit</title>
++        <title>{% trans "FR User Group Edit" %}</title>
+     </head>
+ 
+     <body>
+@@ -13,14 +14,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>FR User Group Edit</li>
++                    <li>{% trans "FR User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>FR User Group Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "FR User Group Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,13 +29,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li class="active">
+-                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">Member List</a>
++                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">{% trans "Device List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -44,14 +45,14 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Group</p>
++                            <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Group Name :
++                                            <span style="color: red;">*</span> {% trans "Group Name" %} :
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Group Name" name="Name" required="required">
+@@ -60,8 +61,8 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/fruser_group'">Cancel</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="location.href='/fruser_group'">{% trans "Cancel" %}</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 88e1853..c9505c0 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>FR User Group Member</title>
++        <title>{% trans "FR User Group Member" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>FR User Group Edit</li>
++                    <li>{% trans "FR User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>FR User Group Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "FR User Group Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,13 +30,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">Member List</a>
++                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+                         </li>
+                         <li>
+-                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">{% trans "Device List" %}</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -44,19 +45,19 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="col-md-8 panel panel-default">
+-                        <div class="panel-heading"><p>Member list</p></div>
++                        <div class="panel-heading"><p>{% trans "Member list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="MemberList"></table>
+                         </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+-                        <div class="panel-heading"><p>Add New Member</p></div>
++                        <div class="panel-heading"><p>{% trans "Add New Member" %}</p></div>
+                         <div class="panel-body">
+-                            <label>Search User :</label>
++                            <label>{% trans "Search User" %} :</label>
+                             <table id="MemberAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -78,7 +79,7 @@
+                 columns: [
+                     {
+                         field: 'Name',
+-                        title: 'Name',
++                        title: '{% trans "Name" %}',
+                         sortable: true
+                     },
+                     {
+@@ -104,7 +105,7 @@
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'User',
++                        title: '{% trans "User" %}',
+                         sortable: true
+                     }
+                 ],
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index 12e025e..82be674 100644
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User Group List</title>
++        <title>{% trans "FR User Group List" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,13 +15,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">FR User Group List</li>
++                    <li class="active">{% trans "FR User Group List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>FR User Group List</small></h1>
++                    <h1 class="page-header"><small>{% trans "FR User Group List" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,7 +29,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <button id="AddGroup" class="btn btn-default pull-right" onclick="location.href='/frusergroup_add/'">Create new group</button>
++                            <button id="AddGroup" class="btn btn-default pull-right" onclick="location.href='/frusergroup_add/'">{% trans "Create new group" %}</button>
+                             <table id="GroupList"></table>
+                         </div>
+                     </div>
+@@ -50,25 +51,25 @@
+                 columns: [
+                     {
+                         field: 'Index',
+-                        title: 'No',
++                        title: '{% trans "No." %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Group',
++                        title: '{% trans "Group" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'UserNumber',
+-                        title: 'Users',
++                        title: '{% trans "Users" %}',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">Edit</button> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 252d5da..53a81b8 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>FRUser Log List</title>
++<title>{% trans "FRUser Log List" %}</title>
+ 
+ <!--[if lt IE 9]>
+ <script src="js/html5shiv.js"></script>
+@@ -21,23 +22,23 @@
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">FRUser Log List</li>
++				<li class="active">{% trans "FRUser Log List" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>FRUser Log List</small></h1>
++                    <h1 class="page-header"><small>{% trans "FRUser Log List" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+- 
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+ 					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 				     <div class="panel-body">
+ 						<!-- data-url="{%static "data1.json"%}" -->
+-                         <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/fruserlog_export/'">Export</button>
++                         <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/fruserlog_export/'">{% trans "Export" %}</button>
+ 						 <table id="FRUserloglist"></table>
+ 						<!-- kimi test
+ 						{% for story in obj %}
+@@ -77,31 +78,31 @@
+                 sortOrder: 'asc',
+ 			columns: [{
+ 				field: 'Index',
+-				title: 'No.',
++				title: '{% trans "No." %}',
+ 				sortable: true,
+ 			},{
+ 				field: 'FRUserId',
+-				title: 'FRUserId',
++				title: '{% trans "FRUserId" %}',
+ 				sortable: true
+ 			}, {
+ 				field: 'FRUserName',
+-				title: 'Name',
++				title: '{% trans "Name" %}',
+ 				sortable: true
+ 			}, {
+ 				field: 'DeviceOId',
+-				title: 'Device Name',
++				title: '{% trans "Device Name" %}',
+ 				sortable: true,
+ 				//formatter: function(value, row, index) {
+ 				//	return 'Device 1';
+ 				//}
+ 			},{
+ 				field: 'LogDateTime',
+-				title: 'CreateDate',
++				title: '{% trans "CreateDate" %}',
+ 				sortable: true
+ 			},
+ 			{
+                                 field: 'LogContent',
+-                                title: 'Note',
++                                title: '{% trans "Note" %}',
+                                 sortable: true
+                         },
+             ],
+@@ -121,7 +122,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+- 	
++
+ 	</script>
+ </body>
+ 
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 4f8197e4a6159b2af4405e68c8565026bb2dba8e..8988d68604e9aa015d1a94f536623e3e62b7fe0c 100644
+GIT binary patch
+literal 6983
+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
+IJ95f@0oaZ9%>V!Z
+
+delta 2020
+zcmX|>e@xVM7{@;a9R%EQa@WCS(3ybw3!wwdgA_#2M9E2Ytc@Dsg;=MCNNtgql}`VN
+zu6=~r$d=8@`Ns*fO`D2t%~gN!hs!^rnzhDxXs-UKwYAym^&Ag9`@Zk>d7jVb`+1&w
+zzTeOHtJ<@H*!6<UVS{Z(51_a2Hl_#O&g2I><S-@+9)=n4J?MhN$`eqQo`GEE96#Cc
+z5_H3_l~b?)|Cajyz#L;@#>MXUGT~P)gv^=c%4(R4U#DEJ@pdSQpMm$l=U_XG==>Kj
+z5C1Zh`zK*OoKoI|e)5~Y8OR16%BCXYSC&HAU<H&7>Y)_60ZJ#fLT)ur>-@7&3g4mr
+z%gWcG6nYrSenXHZn^BlSe)Ay%Dd1zsWlr)lACALfI0?7FU*SAhPZd7c24&+2l=u$y
+z2cZ{#Ka_tw0-f+vC<T8G*~(miF$r8@AeB!-x#5~}8cIk0gp%lAD9=8Vpd|D_Szo5C
+z(RedtsR={rTo;stQS}F){NXoq=)V+jh(N<##>Al%a+SM;-$7~FPf!xw*7zM|29vTb
+z2g<s6$`UB+mn!Qt-l~3w`rGs9zihCVfN)SJ-crVu$8`Rb`r|On`U#Eu=&wAoVt5~1
+zrT!C;CFVtqzX~PKkj@Xsbip{3)=ubxN#!-=56WMl9HX1+-+_`KgPVnJC<%(8Jc3g7
+zE0i_LdS$GMfo!-@*$LO;?}oDB8I50tvhlYX|6ctRlz;pi<T9D`J^gM#Szo4HrVJ`W
+zki0R|I6E*;LP^*IrSg8rW%g-&2uh++m_8j)3ZK;Y&ydUfrF8K15#I-8zj7!ARYG31
+zbSzuWzgQJ|7|FSAL}IM_-zpf%&7~SCgCSI>{xY}{NkR{5Mq-=LDkL3gL2{hS(R%bC
+z+93HKLjhET#H!K#XfcvwvIfnWv{*jVVy#FzCS6#8#8#sk<VVZVLrAO=EkJUN=S)6A
+z`u~lo#o0VJ10O+6XdzmP#H8)(P(3O{k0UYp7|A=cL>%l<Bp;v#Bvvwu^y8D^A{0cN
+z;>z^---yGDoc`DVo<Vo_uDv_^P2;w0qCi{ZmB6~lKyP=%{*lvWqq&84Bsb*V)VrtO
+z%*F#RF}5vvyKT@}V8c$I9dNcf+Pb2VK*(NkhHaV4YgfBk>`~Vi+nL{BZ{;s?2STPj
+z($&|!J@C|?NFNL9-SchKU2d<sk7RZ4+WA6nU(^N)Ivmx3s$i(f?kkvfB+tc@@1C`T
+zo)UY?v(mb}MYh(v#(wGbI8uq@srW(ryZ4w4``p&;^VuGs)4t~G$WF%JNqsg(hAH3H
+z1?jQ5F*24seK7UWev`T|!j^NGNsQUf!YVsj*kqfFg7$jRlEoByBmP11^!e$Fmr_Sg
+m&b)De$V_4)bulrA)cfa?2R^aS`z!2^{%^8U#}hM&6Xrk6A^Qse
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 2ce248b..569b00c 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"POT-Creation-Date: 2016-05-25 13:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,6 +17,273 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
++#: templates/device_add.html:8 templates/device_add.html.py:18
++msgid "Device Add"
++msgstr "新增设备"
++
++#: templates/device_add.html:24
++msgid "Device add"
++msgstr "新增设备"
++
++#: templates/device_add.html:32 templates/device_edit.html.py:46
++#: templates/frusergroup_devices.html:108
++#: templates/user_group_devices.html:108
++msgid "Device"
++msgstr "设备"
++
++#: templates/device_add.html:39 templates/device_edit.html.py:53
++#: templates/device_list.html:65 templates/fruserlog_list.html.py:93
++msgid "Device Name"
++msgstr "设备名称"
++
++#: templates/device_add.html:64 templates/device_edit.html.py:75
++#: templates/device_settings.html:150 templates/frusergroup_add.html.py:47
++#: templates/frusergroup_edit.html:64 templates/user_group_add.html.py:47
++#: templates/user_group_edit.html:64
++msgid "Cancel"
++msgstr "关闭"
++
++#: templates/device_add.html:65 templates/device_edit.html.py:76
++#: templates/device_settings.html:151 templates/frusergroup_add.html.py:48
++#: templates/frusergroup_edit.html:65 templates/logsetting.html.py:124
++#: templates/role_add.html:62 templates/role_permission.html.py:38
++#: templates/role_rename.html:51 templates/user_add.html.py:98
++#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
++#: templates/user_setting.html:119 templates/user_update.html.py:95
++msgid "Save"
++msgstr "储存"
++
++#: templates/device_edit.html:8 templates/device_edit.html.py:18
++#: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
++#: templates/device_frusergroups.html:18 templates/device_frusergroups.html:25
++msgid "Device Edit"
++msgstr "设备修改"
++
++#: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
++#: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
++#: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
++#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++msgid "Imformation"
++msgstr "一般"
++
++#: templates/device_edit.html:36 templates/device_frusergroups.html.py:36
++msgid "FRUser Group List"
++msgstr "FR群组管理"
++
++#: templates/device_edit.html:87
++msgid "Device parameter"
++msgstr "设备参数"
++
++#: templates/device_edit.html:163
++msgid "parameterSettings"
++msgstr "设置参数"
++
++#: templates/device_frusergroups.html:45
++msgid "Group list"
++msgstr "群组管理"
++
++#: templates/device_frusergroups.html:51
++msgid "Add New Group"
++msgstr "建立新群组"
++
++#: templates/device_frusergroups.html:53
++msgid "Search Group"
++msgstr "搜寻群组"
++
++#: templates/device_frusergroups.html:57 templates/frusergroup_devices.html:60
++#: templates/frusergroup_member.html:60 templates/user_group_devices.html:60
++#: templates/user_group_members.html:60
++msgid "Add"
++msgstr "新增"
++
++#: templates/device_frusergroups.html:80 templates/menu.html.py:74
++msgid "FRUser Group"
++msgstr "设备使用者群组管理"
++
++#: templates/device_frusergroups.html:87 templates/device_list.html.py:99
++#: templates/frusergroups_list.html:72 templates/role_list.html.py:100
++#: templates/user_group_devices.html:89 templates/user_group_list.html:72
++#: templates/user_group_members.html:89 templates/user_list.html.py:100
++msgid "Delete"
++msgstr "删除"
++
++#: templates/device_frusergroups.html:108 templates/frusergroup_add.html:31
++#: templates/frusergroup_edit.html.py:48 templates/frusergroups_list.html:59
++#: templates/user_group_add.html.py:31 templates/user_group_edit.html:48
++#: templates/user_group_list.html.py:59
++msgid "Group"
++msgstr "群组"
++
++#: templates/device_list.html:10 templates/device_list.html.py:19
++#: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
++#: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
++#: templates/menu.html.py:72 templates/role_permission.html:76
++#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html:39
++msgid "Device List"
++msgstr "设备管理"
++
++#: templates/device_list.html:33
++msgid "Create new device"
++msgstr "建立新设备"
++
++#: templates/device_list.html:70
++msgid "Status"
++msgstr "状态"
++
++#: templates/device_list.html:83
++msgid "Sync time"
++msgstr "同步时间"
++
++#: templates/device_list.html:91
++msgid "Accept"
++msgstr "接受"
++
++#: templates/device_list.html:92
++msgid "Reject"
++msgstr "拒绝"
++
++#: templates/device_list.html:97 templates/frusergroups_list.html.py:71
++#: templates/user_group_list.html:71
++msgid "Edit"
++msgstr "编辑"
++
++#: templates/device_list.html:98 templates/menu.html.py:23
++msgid "Settings"
++msgstr "设置"
++
++#: templates/device_settings.html:8 templates/device_settings.html.py:18
++#: templates/device_settings.html:25
++msgid "Device Settings"
++msgstr "设备设置"
++
++#: templates/device_settings.html:33
++msgid "Device parameter setup"
++msgstr "建立设备参数"
++
++#: templates/device_settings.html:141
++msgid "en"
++msgstr "英文"
++
++#: templates/device_settings.html:142
++msgid "zh-cn"
++msgstr "简体中文"
++
++#: templates/device_settings.html:143
++msgid "zh-tw"
++msgstr "繁体中文"
++
++#: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
++#: templates/frusergroup_add.html:23
++msgid "FR User Group Add"
++msgstr "新增设备使用者群组"
++
++#: templates/frusergroup_add.html:38 templates/frusergroup_edit.html.py:55
++#: templates/user_group_add.html:38 templates/user_group_edit.html.py:55
++msgid "Group Name"
++msgstr "群组名称"
++
++#: templates/frusergroup_add.html:49 templates/user_group_add.html.py:49
++msgid "Save and add another"
++msgstr "储存并继续建立"
++
++#: templates/frusergroup_devices.html:10
++msgid "FR User Group Device"
++msgstr "FR设备管理"
++
++#: templates/frusergroup_devices.html:18 templates/frusergroup_devices.html:25
++#: templates/frusergroup_edit.html:8 templates/frusergroup_edit.html.py:17
++#: templates/frusergroup_edit.html:24 templates/frusergroup_member.html:18
++#: templates/frusergroup_member.html:25
++msgid "FR User Group Edit"
++msgstr "FR使用者群组修改"
++
++#: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
++#: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
++#: templates/user_group_edit.html:35 templates/user_group_members.html:36
++msgid "Member List"
++msgstr "成员管理"
++
++#: templates/frusergroup_devices.html:48 templates/user_group_devices.html:48
++msgid "Device list"
++msgstr "设备管理"
++
++#: templates/frusergroup_devices.html:54 templates/user_group_devices.html:54
++msgid "Add New Device"
++msgstr "新增设备"
++
++#: templates/frusergroup_devices.html:56 templates/user_group_devices.html:56
++msgid "Search Device"
++msgstr "搜寻设备"
++
++#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
++#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
++#: templates/user_group_devices.html.py:82
++#: templates/user_group_members.html:82 templates/user_list.html.py:78
++#: templates/user_setting.html:54 templates/user_update.html.py:47
++msgid "Name"
++msgstr "姓名"
++
++#: templates/frusergroup_member.html:10
++msgid "FR User Group Member"
++msgstr "FR群组成员管理"
++
++#: templates/frusergroup_member.html:48 templates/user_group_members.html:48
++msgid "Member list"
++msgstr "成员管理"
++
++#: templates/frusergroup_member.html:54 templates/user_group_members.html:54
++msgid "Add New Member"
++msgstr "建立新成员"
++
++#: templates/frusergroup_member.html:56 templates/user_group_members.html:56
++msgid "Search User"
++msgstr "搜寻使用者"
++
++#: templates/frusergroup_member.html:108 templates/user_group_members.html:108
++msgid "User"
++msgstr "使用者"
++
++#: templates/frusergroups_list.html:10 templates/frusergroups_list.html:18
++#: templates/frusergroups_list.html:24
++msgid "FR User Group List"
++msgstr "设备使用者群组管理"
++
++#: templates/frusergroups_list.html:32 templates/user_group_list.html.py:32
++msgid "Create new group"
++msgstr "建立新群组"
++
++#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
++#: templates/role_list.html:67 templates/systemlog_list.html.py:68
++#: templates/user_list.html:67
++msgid "No."
++msgstr "编号"
++
++#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:64
++msgid "Users"
++msgstr "使用者"
++
++#: templates/fruserlog_list.html:10 templates/fruserlog_list.html.py:25
++#: templates/fruserlog_list.html:31 templates/menu.html.py:82
++msgid "FRUser Log List"
++msgstr "设备使用者登入纪录"
++
++#: templates/fruserlog_list.html:41 templates/systemlog_list.html.py:40
++msgid "Export"
++msgstr "汇出"
++
++#: templates/fruserlog_list.html:85
++msgid "FRUserId"
++msgstr "工号"
++
++#: templates/fruserlog_list.html:100 templates/user_list.html.py:86
++msgid "CreateDate"
++msgstr "创立时间"
++
++#: templates/fruserlog_list.html:105
++msgid "Note"
++msgstr "摘要"
++
+ #: templates/login.html:35
+ msgid "Sign in"
+ msgstr "登入"
+@@ -29,15 +296,26 @@ msgstr "忘记密码"
+ msgid "Languages"
+ msgstr "语言"
+ 
+-#: templates/menu.html:23
+-msgid "Settings"
+-msgstr "设置"
++#: templates/logsetting.html:8 templates/menu.html.py:52
++#: templates/user_add.html:8 templates/user_list.html.py:25
++#: templates/user_list.html:31 templates/user_setting.html.py:8
++msgid "User List"
++msgstr "网站使用者管理"
++
++#: templates/logsetting.html:23 templates/logsetting.html.py:29
++#: templates/menu.html:92
++msgid "Log Setting"
++msgstr "纪录汇出设置"
++
++#: templates/logsetting.html:40
++msgid "Separator Options"
++msgstr "分隔符号"
+ 
+ #: templates/menu.html:24
+ msgid "Logout"
+ msgstr "登出"
+ 
+-#: templates/menu.html:42
++#: templates/menu.html:42 templates/role_permission.html.py:66
+ msgid "System"
+ msgstr "系统"
+ 
+@@ -45,76 +323,54 @@ msgstr "系统"
+ msgid "Dashboard"
+ msgstr "系统仪表板"
+ 
+-#: templates/menu.html:52 templates/setting.html.py:8
+-#: templates/user_add.html:8 templates/user_list.html.py:25
+-#: templates/user_list.html:31
+-msgid "User List"
+-msgstr "网站使用者管理"
+-
+ #: templates/menu.html:57
+ msgid "Group List"
+ msgstr "网站使用者群组管理"
+ 
+ #: templates/menu.html:62
+ msgid "Role & Permission"
+-msgstr "角色管理"
++msgstr "角色管理与权限"
+ 
+-#: templates/menu.html:67 templates/setting.html.py:23
+-#: templates/setting.html:29
++#: templates/menu.html:67 templates/user_setting.html.py:23
++#: templates/user_setting.html:29
+ msgid "Setting"
+ msgstr "设置"
+ 
+-#: templates/menu.html:72 templates/user_group_devices.html.py:39
+-#: templates/user_group_edit.html:38 templates/user_group_members.html:39
+-msgid "Device List"
+-msgstr "设备管理"
+-
+ #: templates/menu.html:73
+ msgid "FRUser List"
+ msgstr "设备使用者管理"
+ 
+-#: templates/menu.html:74
+-msgid "FRUser Group"
+-msgstr "设备使用者群组管理"
+-
+-#: templates/menu.html:77
++#: templates/menu.html:77 templates/role_permission.html.py:112
+ msgid "Log"
+ msgstr "纪录"
+ 
+-#: templates/menu.html:82
+-msgid "FRUser Log List"
+-msgstr "设备使用者登入纪录"
+-
+ #: templates/menu.html:87 templates/systemlog_list.html.py:10
+ #: templates/systemlog_list.html:25
+ msgid "System Log List"
+ msgstr "系统事件纪录"
+ 
+-#: templates/menu.html:92
+-msgid "Log Setting"
+-msgstr "纪录汇出设置"
+-
+ #: templates/menu.html:98
+ msgid "Log Out"
+ msgstr "登出"
+ 
+-#: templates/registration/forget_password.html:17
++#: templates/registration/forget_password.html:10
++#: templates/registration/forget_password.html:21
+ msgid "Forgotten your password ?"
+ msgstr "忘记您的密码？"
+ 
+-#: templates/registration/forget_password.html:20
++#: templates/registration/forget_password.html:24
+ msgid ""
+ "Enter your email address below, and we'll email instructions for setting a "
+ "new one."
+ msgstr "在下面输入您的电子信箱，我们将透过电子邮件通知重设密码说明"
+ 
+-#: templates/registration/forget_password.html:25
++#: templates/registration/forget_password.html:29
+ msgid "Reset my password"
+ msgstr "重设密码"
+ 
+-#: templates/registration/forget_password.html:28
++#: templates/registration/forget_password.html:32
+ #: templates/registration/password_reset_complete.html:39
+-#: templates/registration/reset_password.html:43
++#: templates/registration/reset_password.html:32
+ msgid "Returns sign-in screen"
+ msgstr "回到登入页面"
+ 
+@@ -127,100 +383,131 @@ msgstr "密码更新成功"
+ msgid ""
+ "You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+-msgstr ""
++msgstr "您收到这封邮件是因为您要求在 %(site_name)s 网站上重新设置新的密码 "
+ 
+ #: templates/registration/password_reset_email.html:4
+ #, python-format
+ msgid ""
+ "Please reset your password in %(expired)s minutes, go to the following page "
+ "and choose a new password:"
+-msgstr ""
++msgstr "请在 %(expired)s 分钟内变更密码，点选下列网址重新设置新密码"
+ 
+ #: templates/registration/password_reset_email.html:8
+ msgid "Your account, in case you've forgotten:"
+-msgstr ""
++msgstr "您的帐号是:"
+ 
+-#: templates/registration/password_reset_email.html:10
++#: templates/registration/password_reset_email.html:11
+ msgid "Thanks for using our site!"
+-msgstr ""
++msgstr "谢谢您使用我们的网站！"
+ 
+-#: templates/registration/password_reset_email.html:12
++#: templates/registration/password_reset_email.html:13
+ #, python-format
+ msgid "The %(site_name)s team"
+-msgstr ""
++msgstr " %(site_name)s 团队 敬上"
+ 
+-#: templates/registration/reset_password.html:33
++#: templates/registration/reset_password.html:11
++#: templates/registration/reset_password.html:22
+ msgid "Password reset confirmation"
+ msgstr "密码重置确认"
+ 
+-#: templates/registration/reset_password.html:36
++#: templates/registration/reset_password.html:25
+ msgid ""
+ "Please enter your new password twice so we can verify you typed it in "
+ "correctly."
+ msgstr "请输入两次新密码，以便我们确认您输入是否一致"
+ 
+-#: templates/registration/reset_password.html:40
++#: templates/registration/reset_password.html:29
+ msgid "confirm"
+ msgstr "确认"
+ 
+-#: templates/setting.html:41 templates/user_add.html.py:39
+-#: templates/user_list.html:71 templates/user_update.html.py:38
+-msgid "Account"
+-msgstr "帐号"
+-
+-#: templates/setting.html:54 templates/user_add.html.py:48
+-#: templates/user_group_devices.html:82 templates/user_group_members.html:82
+-#: templates/user_list.html.py:78 templates/user_update.html:47
+-msgid "Name"
+-msgstr "名称"
++#: templates/role_add.html:8 templates/role_list.html.py:10
++#: templates/role_list.html:30
++msgid "Role List"
++msgstr "角色管理"
+ 
+-#: templates/setting.html:66
+-msgid "Email"
+-msgstr "电子信箱"
++#: templates/role_add.html:17
++msgid "Role add"
++msgstr "增加角色"
+ 
+-#: templates/setting.html:79 templates/user_add.html.py:67
+-#: templates/user_update.html:64
+-msgid "Password"
+-msgstr "密码"
++#: templates/role_add.html:23
++msgid "Create New Role"
++msgstr "建立新角色"
+ 
+-#: templates/setting.html:91
+-msgid "New Password"
+-msgstr "新密码"
++#: templates/role_add.html:34 templates/role_list.html.py:72
++msgid "Role Name"
++msgstr "角色名称"
+ 
+-#: templates/setting.html:103
+-msgid "Confirm Password"
+-msgstr "确认密码"
++#: templates/role_add.html:46 templates/role_list.html.py:77
++msgid "Sort"
++msgstr "类别"
+ 
+-#: templates/setting.html:118 templates/user_add.html.py:97
+-#: templates/user_update.html:94
++#: templates/role_add.html:61 templates/role_permission.html.py:37
++#: templates/role_rename.html:50 templates/user_add.html.py:97
++#: templates/user_setting.html:118 templates/user_update.html.py:94
+ msgid "Back"
+ msgstr "返回"
+ 
+-#: templates/setting.html:119 templates/user_add.html.py:98
+-#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+-#: templates/user_update.html:95
+-msgid "Save"
+-msgstr "储存"
++#: templates/role_list.html:19
++msgid "Role and Permission"
++msgstr "角色管理与权限"
+ 
+-#: templates/systemlog_list.html:31
+-msgid "System log List"
+-msgstr "系统事件纪录"
++#: templates/role_list.html:24
++msgid "Create new Role"
++msgstr "建立新角色"
+ 
+-#: templates/systemlog_list.html:40
+-msgid "Export"
+-msgstr "汇出"
++#: templates/role_list.html:25
++msgid "Role Permission"
++msgstr "角色权限"
+ 
+-#: templates/systemlog_list.html:68 templates/user_list.html.py:67
+-msgid "No."
+-msgstr "编号"
+-
+-#: templates/systemlog_list.html:73
++#: templates/role_list.html:82 templates/systemlog_list.html.py:73
+ msgid "Category"
+ msgstr "类别"
+ 
++#: templates/role_list.html:87
++msgid "Create Date"
++msgstr "创立时间"
++
++#: templates/role_list.html:92
++msgid "Update Date"
++msgstr "更新时间"
++
++#: templates/role_list.html:99
++msgid "Rename"
++msgstr "重新命名"
++
++#: templates/role_permission.html:10 templates/role_permission.html.py:19
++#: templates/role_permission.html:25
++msgid "Permission Settings"
++msgstr "权限设置"
++
++#: templates/role_permission.html:61
++msgid "Account/Permission"
++msgstr "帐号权限"
++
++#: templates/role_permission.html:88
++msgid "FR User List"
++msgstr "设备使用者管理"
++
++#: templates/role_permission.html:100
++msgid "FR User Group"
++msgstr "设备使用者群组管理"
++
++#: templates/role_rename.html:8 templates/role_rename.html.py:18
++#: templates/role_rename.html:24
++msgid "Role Rename"
++msgstr "角色重新命名"
++
++#: templates/role_rename.html:35
++msgid "New Name"
++msgstr "新名称"
++
++#: templates/systemlog_list.html:31
++msgid "System log List"
++msgstr "系统事件纪录"
++
+ #: templates/systemlog_list.html:78
+ msgid "Notes"
+-msgstr "记要"
++msgstr "摘要"
+ 
+ #: templates/systemlog_list.html:82
+ msgid "Date/Time"
+@@ -231,10 +518,20 @@ msgstr "日期时间"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
++#: templates/user_add.html:39 templates/user_list.html.py:71
++#: templates/user_setting.html:41 templates/user_update.html.py:38
++msgid "Account"
++msgstr "帐号"
++
+ #: templates/user_add.html:58 templates/user_update.html.py:55
+ msgid "E-Mail"
+ msgstr "电子信箱"
+ 
++#: templates/user_add.html:67 templates/user_setting.html.py:79
++#: templates/user_update.html:64
++msgid "Password"
++msgstr "密码"
++
+ #: templates/user_add.html:75 templates/user_update.html.py:72
+ msgid "Confirm password"
+ msgstr "确认密码"
+@@ -249,23 +546,6 @@ msgstr "角色"
+ msgid "User Group Add"
+ msgstr "建立新群组"
+ 
+-#: templates/user_group_add.html:31 templates/user_group_edit.html.py:48
+-#: templates/user_group_list.html:59
+-msgid "Group"
+-msgstr "群组"
+-
+-#: templates/user_group_add.html:38
+-msgid "Group Name"
+-msgstr "群组名称"
+-
+-#: templates/user_group_add.html:47 templates/user_group_edit.html.py:64
+-msgid "Cancel"
+-msgstr "关闭"
+-
+-#: templates/user_group_add.html:49
+-msgid "Save and add another"
+-msgstr "储存并继续建立"
+-
+ #: templates/user_group_devices.html:10
+ msgid "User Group Device"
+ msgstr "设备管理"
+@@ -277,98 +557,39 @@ msgstr "设备管理"
+ msgid "User Group Edit"
+ msgstr "使用者群组修改"
+ 
+-#: templates/user_group_devices.html:33 templates/user_group_edit.html:32
+-#: templates/user_group_members.html:33
+-msgid "Imformation"
+-msgstr "一般"
+-
+-#: templates/user_group_devices.html:36 templates/user_group_edit.html:35
+-#: templates/user_group_members.html:36
+-msgid "Member List"
+-msgstr "成员管理"
+-
+-#: templates/user_group_devices.html:48
+-msgid "Device list"
+-msgstr "设备管理"
+-
+-#: templates/user_group_devices.html:54
+-msgid "Add New Device"
+-msgstr "新增设备"
+-
+-#: templates/user_group_devices.html:56
+-msgid "Search Device :"
+-msgstr "搜寻设备 :"
+-
+-#: templates/user_group_devices.html:60 templates/user_group_members.html:60
+-msgid "Add"
+-msgstr "新增"
+-
+-#: templates/user_group_devices.html:89 templates/user_group_list.html:72
+-#: templates/user_group_members.html:89 templates/user_list.html.py:98
+-msgid "Delete"
+-msgstr "删除"
+-
+-#: templates/user_group_devices.html:108
+-msgid "Device"
+-msgstr "设备"
+-
+-#: templates/user_group_edit.html:55
+-msgid "Group Name :"
+-msgstr "群组名称 :"
+-
+ #: templates/user_group_list.html:10 templates/user_group_list.html.py:18
+ #: templates/user_group_list.html:24
+ msgid "User Group List"
+ msgstr "网站使用者群组管理"
+ 
+-#: templates/user_group_list.html:32
+-msgid "Create new group"
+-msgstr "建立新群组"
+-
+ #: templates/user_group_list.html:54
+ msgid "No"
+ msgstr "编号"
+ 
+-#: templates/user_group_list.html:64
+-msgid "Users"
+-msgstr "使用者"
+-
+-#: templates/user_group_list.html:71
+-msgid "Edit"
+-msgstr "编辑"
+-
+ #: templates/user_group_members.html:10
+ msgid "User Group Member"
+ msgstr "群组成员管理"
+ 
+-#: templates/user_group_members.html:48
+-msgid "Member list"
+-msgstr "成员管理"
+-
+-#: templates/user_group_members.html:54
+-msgid "Add New Member"
+-msgstr "建立新成员"
+-
+-#: templates/user_group_members.html:56
+-msgid "Search User :"
+-msgstr "搜寻使用者 :"
+-
+-#: templates/user_group_members.html:108
+-msgid "User"
+-msgstr "使用者"
+-
+ #: templates/user_list.html:39
+ msgid "Create new account"
+ msgstr "建立新帐号"
+ 
+-#: templates/user_list.html:86
+-msgid "CreateDate"
+-msgstr "创立时间"
+-
+ #: templates/user_list.html:91
+ msgid "UpdateDate"
+ msgstr "更新时间"
+ 
++#: templates/user_list.html:96 templates/user_setting.html.py:66
++msgid "Email"
++msgstr "电子信箱"
++
++#: templates/user_setting.html:91
++msgid "New Password"
++msgstr "新密码"
++
++#: templates/user_setting.html:103
++msgid "Confirm Password"
++msgstr "确认密码"
++
+ #: templates/user_update.html:8 templates/user_update.html.py:23
+ msgid "User Update"
+ msgstr "建立新用户"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 7006a307f7e52087e39e4fb77b665b856685754a..4f20dfc6bde1b599f3e063c353c1abf71ae3869b 100644
+GIT binary patch
+literal 6983
+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
+It8E$Ozb<(0XaE2J
+
+delta 2019
+zcmX|>e@xVM7{@;a9R%EQ-dzWmLEjWGe<8>Z^B{!~G*NO=9cx)5ybudDL~4t?e(7{g
+zM*9d$$y%)1jV+VWrj@B%bJZXG;qs5DX034^nyWu*ZEd!CJ;y`OzVCZ|p6B!VexB!^
+z@Avcls`|7OyW&e9GT3Hx7kd3xV>;oDbbhcyE@Lv_VVDNrgdRAgd>_iv3CLy6@RJG8
+zLofVVIR$<A*VX?AW*HMR9(KQ-iI8$3WX>#CR>Exj8s&P8w?aw$7`zQW30q-Q=Rbux
+z_!pquKM8Z;l=2!3k>C8yKsNAGHWitWvIxosE1+yp3#HHvP&%;{a;te%=bwO5_)hho
+zQ@#YH(8Eyn8-O&~jKDPVn|ByU0i%%1#QB*I$6*1Sgj?XRa2~9siXd!(vT+nje5d;T
+zFo6FGlz%)7-S9&w1%CqB%AAEU30!0#l}|#s;j(fXN=N>LlIUM3&pw@?B=kdBU#zUs
+zcq3$~i9qRGJCuao>i0qU!>?x1e<|P)fx26a8H7^ECGHY_2c=~{K}mE&<2RLQOv<_}
+zDC_1a3!$uEs;tp?v-)l7@5rJ5vcWzA!hW52O*yDMq4Q(vkHZM-&uKhJf8~)Cz&qe-
+z^&f&PG0$lH1t@t2bbctN3&x?e_M9%5R9;s8p!@~OF}kMyO(+S{xLN3hlAr*}BPde8
+zR9U60RmK_^$c7u0+u#HEd!TGMq45h)HvU%Q->aX5@{fOmTqd2qr``=H>x-4kloiS_
+zByY^r&koGPP!e`Rsk|3*nf)3cfRbngrcMWx!Y4KUGvqRVDP4Sh#1BH*uLMd#Wsp}b
+z70Z<KFIJB3MRKm|kr?a#w^BxObCE`hVHnk@zYMNIlF*MDk=Q1*8c9c*kR0a{v>x4!
+zHc0;ak%RJ)SS7j>Ek<%o)}lF+7RzT^tQkqiqzfyM*cw!YLTEW!fW*qsJxGr6oXJN>
+z|GzQSIGg8Y;7Zhh7NVs{OxnH<)uKG~AQF?0k-RfY#KG=E@&T$tVuiCvJw6#OLKTQp
+zT$Vcj8*zA%Qy&|^GwA5py>C~qso%a`<g`Sech*Jwx;movkE|Bkot<Zgv%}s^U3+`Y
+zY}|R4v2DuPV=LS~8*vA1pS#)B(%v0)!uFy&Vv9WiyT;RG-|}p++j8sd_1r~XCu~}y
+z?L8ekoJaOXdstZOoo~CnCH9i{Xhz5GT~BxQbX&*Q=BjkcE5hY=zi--=I5RPG>|NXM
+zFSKL+Rn`;8x7C5Q_RE0Zl|1=ga`2%2J#fNCf?n$l25o21ZC?zwWhMrXB;(^`m<n!n
+zQe$&<_*CNKgUQjeCV4u}mUEbi+sE@(+L62l+n8TrujDUTOr2K;-%gx*WBQBp$)oX^
+mmk$t`iGP$hd3+AZW1lAud|;mnmD(Re-()05KbsjlV*Ufw!}<IG
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index e4b0672..6c02dfb 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-24 13:16+0800\n"
++"POT-Creation-Date: 2016-05-25 13:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,6 +17,273 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
++#: templates/device_add.html:8 templates/device_add.html.py:18
++msgid "Device Add"
++msgstr "新增設備"
++
++#: templates/device_add.html:24
++msgid "Device add"
++msgstr "新增設備"
++
++#: templates/device_add.html:32 templates/device_edit.html.py:46
++#: templates/frusergroup_devices.html:108
++#: templates/user_group_devices.html:108
++msgid "Device"
++msgstr "設備"
++
++#: templates/device_add.html:39 templates/device_edit.html.py:53
++#: templates/device_list.html:65 templates/fruserlog_list.html.py:93
++msgid "Device Name"
++msgstr "設備名稱"
++
++#: templates/device_add.html:64 templates/device_edit.html.py:75
++#: templates/device_settings.html:150 templates/frusergroup_add.html.py:47
++#: templates/frusergroup_edit.html:64 templates/user_group_add.html.py:47
++#: templates/user_group_edit.html:64
++msgid "Cancel"
++msgstr "關閉"
++
++#: templates/device_add.html:65 templates/device_edit.html.py:76
++#: templates/device_settings.html:151 templates/frusergroup_add.html.py:48
++#: templates/frusergroup_edit.html:65 templates/logsetting.html.py:124
++#: templates/role_add.html:62 templates/role_permission.html.py:38
++#: templates/role_rename.html:51 templates/user_add.html.py:98
++#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
++#: templates/user_setting.html:119 templates/user_update.html.py:95
++msgid "Save"
++msgstr "儲存"
++
++#: templates/device_edit.html:8 templates/device_edit.html.py:18
++#: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
++#: templates/device_frusergroups.html:18 templates/device_frusergroups.html:25
++msgid "Device Edit"
++msgstr "設備修改"
++
++#: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
++#: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
++#: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
++#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++msgid "Imformation"
++msgstr "一般"
++
++#: templates/device_edit.html:36 templates/device_frusergroups.html.py:36
++msgid "FRUser Group List"
++msgstr "FR群組管理"
++
++#: templates/device_edit.html:87
++msgid "Device parameter"
++msgstr "設備參數"
++
++#: templates/device_edit.html:163
++msgid "parameterSettings"
++msgstr "設定參數"
++
++#: templates/device_frusergroups.html:45
++msgid "Group list"
++msgstr "群組管理"
++
++#: templates/device_frusergroups.html:51
++msgid "Add New Group"
++msgstr "建立新群組"
++
++#: templates/device_frusergroups.html:53
++msgid "Search Group"
++msgstr "搜尋群組"
++
++#: templates/device_frusergroups.html:57 templates/frusergroup_devices.html:60
++#: templates/frusergroup_member.html:60 templates/user_group_devices.html:60
++#: templates/user_group_members.html:60
++msgid "Add"
++msgstr "新增"
++
++#: templates/device_frusergroups.html:80 templates/menu.html.py:74
++msgid "FRUser Group"
++msgstr "設備使用者群組管理"
++
++#: templates/device_frusergroups.html:87 templates/device_list.html.py:99
++#: templates/frusergroups_list.html:72 templates/role_list.html.py:100
++#: templates/user_group_devices.html:89 templates/user_group_list.html:72
++#: templates/user_group_members.html:89 templates/user_list.html.py:100
++msgid "Delete"
++msgstr "刪除"
++
++#: templates/device_frusergroups.html:108 templates/frusergroup_add.html:31
++#: templates/frusergroup_edit.html.py:48 templates/frusergroups_list.html:59
++#: templates/user_group_add.html.py:31 templates/user_group_edit.html:48
++#: templates/user_group_list.html.py:59
++msgid "Group"
++msgstr "群組"
++
++#: templates/device_list.html:10 templates/device_list.html.py:19
++#: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
++#: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
++#: templates/menu.html.py:72 templates/role_permission.html:76
++#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html:39
++msgid "Device List"
++msgstr "設備管理"
++
++#: templates/device_list.html:33
++msgid "Create new device"
++msgstr "建立新設備"
++
++#: templates/device_list.html:70
++msgid "Status"
++msgstr "狀態"
++
++#: templates/device_list.html:83
++msgid "Sync time"
++msgstr "同步時間"
++
++#: templates/device_list.html:91
++msgid "Accept"
++msgstr "接受"
++
++#: templates/device_list.html:92
++msgid "Reject"
++msgstr "拒絕"
++
++#: templates/device_list.html:97 templates/frusergroups_list.html.py:71
++#: templates/user_group_list.html:71
++msgid "Edit"
++msgstr "編輯"
++
++#: templates/device_list.html:98 templates/menu.html.py:23
++msgid "Settings"
++msgstr "設定"
++
++#: templates/device_settings.html:8 templates/device_settings.html.py:18
++#: templates/device_settings.html:25
++msgid "Device Settings"
++msgstr "設備設定"
++
++#: templates/device_settings.html:33
++msgid "Device parameter setup"
++msgstr "建立設備參數"
++
++#: templates/device_settings.html:141
++msgid "en"
++msgstr "英文"
++
++#: templates/device_settings.html:142
++msgid "zh-cn"
++msgstr "簡體中文"
++
++#: templates/device_settings.html:143
++msgid "zh-tw"
++msgstr "繁體中文"
++
++#: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
++#: templates/frusergroup_add.html:23
++msgid "FR User Group Add"
++msgstr "新增設備使用者群組"
++
++#: templates/frusergroup_add.html:38 templates/frusergroup_edit.html.py:55
++#: templates/user_group_add.html:38 templates/user_group_edit.html.py:55
++msgid "Group Name"
++msgstr "群組名稱"
++
++#: templates/frusergroup_add.html:49 templates/user_group_add.html.py:49
++msgid "Save and add another"
++msgstr "儲存並繼續建立"
++
++#: templates/frusergroup_devices.html:10
++msgid "FR User Group Device"
++msgstr "FR設備管理"
++
++#: templates/frusergroup_devices.html:18 templates/frusergroup_devices.html:25
++#: templates/frusergroup_edit.html:8 templates/frusergroup_edit.html.py:17
++#: templates/frusergroup_edit.html:24 templates/frusergroup_member.html:18
++#: templates/frusergroup_member.html:25
++msgid "FR User Group Edit"
++msgstr "FR使用者群組修改"
++
++#: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
++#: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
++#: templates/user_group_edit.html:35 templates/user_group_members.html:36
++msgid "Member List"
++msgstr "成員管理"
++
++#: templates/frusergroup_devices.html:48 templates/user_group_devices.html:48
++msgid "Device list"
++msgstr "設備管理"
++
++#: templates/frusergroup_devices.html:54 templates/user_group_devices.html:54
++msgid "Add New Device"
++msgstr "新增設備"
++
++#: templates/frusergroup_devices.html:56 templates/user_group_devices.html:56
++msgid "Search Device"
++msgstr "搜尋設備"
++
++#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
++#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
++#: templates/user_group_devices.html.py:82
++#: templates/user_group_members.html:82 templates/user_list.html.py:78
++#: templates/user_setting.html:54 templates/user_update.html.py:47
++msgid "Name"
++msgstr "姓名"
++
++#: templates/frusergroup_member.html:10
++msgid "FR User Group Member"
++msgstr "FR群組成員管理"
++
++#: templates/frusergroup_member.html:48 templates/user_group_members.html:48
++msgid "Member list"
++msgstr "成員管理"
++
++#: templates/frusergroup_member.html:54 templates/user_group_members.html:54
++msgid "Add New Member"
++msgstr "建立新成員"
++
++#: templates/frusergroup_member.html:56 templates/user_group_members.html:56
++msgid "Search User"
++msgstr "搜尋使用者"
++
++#: templates/frusergroup_member.html:108 templates/user_group_members.html:108
++msgid "User"
++msgstr "使用者"
++
++#: templates/frusergroups_list.html:10 templates/frusergroups_list.html:18
++#: templates/frusergroups_list.html:24
++msgid "FR User Group List"
++msgstr "設備使用者群組管理"
++
++#: templates/frusergroups_list.html:32 templates/user_group_list.html.py:32
++msgid "Create new group"
++msgstr "建立新群組"
++
++#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
++#: templates/role_list.html:67 templates/systemlog_list.html.py:68
++#: templates/user_list.html:67
++msgid "No."
++msgstr "編號"
++
++#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:64
++msgid "Users"
++msgstr "使用者"
++
++#: templates/fruserlog_list.html:10 templates/fruserlog_list.html.py:25
++#: templates/fruserlog_list.html:31 templates/menu.html.py:82
++msgid "FRUser Log List"
++msgstr "設備使用者登入紀錄"
++
++#: templates/fruserlog_list.html:41 templates/systemlog_list.html.py:40
++msgid "Export"
++msgstr "匯出"
++
++#: templates/fruserlog_list.html:85
++msgid "FRUserId"
++msgstr "工號"
++
++#: templates/fruserlog_list.html:100 templates/user_list.html.py:86
++msgid "CreateDate"
++msgstr "創立時間"
++
++#: templates/fruserlog_list.html:105
++msgid "Note"
++msgstr "摘要"
++
+ #: templates/login.html:35
+ msgid "Sign in"
+ msgstr "登入"
+@@ -29,15 +296,26 @@ msgstr "忘記密碼"
+ msgid "Languages"
+ msgstr "語言"
+ 
+-#: templates/menu.html:23
+-msgid "Settings"
+-msgstr "設定"
++#: templates/logsetting.html:8 templates/menu.html.py:52
++#: templates/user_add.html:8 templates/user_list.html.py:25
++#: templates/user_list.html:31 templates/user_setting.html.py:8
++msgid "User List"
++msgstr "網站使用者管理"
++
++#: templates/logsetting.html:23 templates/logsetting.html.py:29
++#: templates/menu.html:92
++msgid "Log Setting"
++msgstr "紀錄匯出設定"
++
++#: templates/logsetting.html:40
++msgid "Separator Options"
++msgstr "分隔符號"
+ 
+ #: templates/menu.html:24
+ msgid "Logout"
+ msgstr "登出"
+ 
+-#: templates/menu.html:42
++#: templates/menu.html:42 templates/role_permission.html.py:66
+ msgid "System"
+ msgstr "系統"
+ 
+@@ -45,76 +323,54 @@ msgstr "系統"
+ msgid "Dashboard"
+ msgstr "系統儀表板"
+ 
+-#: templates/menu.html:52 templates/setting.html.py:8
+-#: templates/user_add.html:8 templates/user_list.html.py:25
+-#: templates/user_list.html:31
+-msgid "User List"
+-msgstr "網站使用者管理"
+-
+ #: templates/menu.html:57
+ msgid "Group List"
+ msgstr "網站使用者群組管理"
+ 
+ #: templates/menu.html:62
+ msgid "Role & Permission"
+-msgstr "角色管理"
++msgstr "角色管理與權限"
+ 
+-#: templates/menu.html:67 templates/setting.html.py:23
+-#: templates/setting.html:29
++#: templates/menu.html:67 templates/user_setting.html.py:23
++#: templates/user_setting.html:29
+ msgid "Setting"
+ msgstr "設定"
+ 
+-#: templates/menu.html:72 templates/user_group_devices.html.py:39
+-#: templates/user_group_edit.html:38 templates/user_group_members.html:39
+-msgid "Device List"
+-msgstr "設備管理"
+-
+ #: templates/menu.html:73
+ msgid "FRUser List"
+ msgstr "設備使用者管理"
+ 
+-#: templates/menu.html:74
+-msgid "FRUser Group"
+-msgstr "設備使用者群組管理"
+-
+-#: templates/menu.html:77
++#: templates/menu.html:77 templates/role_permission.html.py:112
+ msgid "Log"
+ msgstr "紀錄"
+ 
+-#: templates/menu.html:82
+-msgid "FRUser Log List"
+-msgstr "設備使用者登入紀錄"
+-
+ #: templates/menu.html:87 templates/systemlog_list.html.py:10
+ #: templates/systemlog_list.html:25
+ msgid "System Log List"
+ msgstr "系統事件紀錄"
+ 
+-#: templates/menu.html:92
+-msgid "Log Setting"
+-msgstr "紀錄匯出設定"
+-
+ #: templates/menu.html:98
+ msgid "Log Out"
+ msgstr "登出"
+ 
+-#: templates/registration/forget_password.html:17
++#: templates/registration/forget_password.html:10
++#: templates/registration/forget_password.html:21
+ msgid "Forgotten your password ?"
+ msgstr "忘記您的密碼？"
+ 
+-#: templates/registration/forget_password.html:20
++#: templates/registration/forget_password.html:24
+ msgid ""
+ "Enter your email address below, and we'll email instructions for setting a "
+ "new one."
+ msgstr "在下面輸入您的電子信箱，我們將透過電子郵件通知重設密碼說明"
+ 
+-#: templates/registration/forget_password.html:25
++#: templates/registration/forget_password.html:29
+ msgid "Reset my password"
+ msgstr "重設密碼"
+ 
+-#: templates/registration/forget_password.html:28
++#: templates/registration/forget_password.html:32
+ #: templates/registration/password_reset_complete.html:39
+-#: templates/registration/reset_password.html:43
++#: templates/registration/reset_password.html:32
+ msgid "Returns sign-in screen"
+ msgstr "回到登入頁面"
+ 
+@@ -127,100 +383,131 @@ msgstr "密碼更新成功"
+ msgid ""
+ "You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+-msgstr ""
++msgstr "您收到這封郵件是因為您要求在 %(site_name)s 網站上重新設定新的密碼 "
+ 
+ #: templates/registration/password_reset_email.html:4
+ #, python-format
+ msgid ""
+ "Please reset your password in %(expired)s minutes, go to the following page "
+ "and choose a new password:"
+-msgstr ""
++msgstr "請在 %(expired)s 分鐘內變更密碼，點選下列網址重新設定新密碼"
+ 
+ #: templates/registration/password_reset_email.html:8
+ msgid "Your account, in case you've forgotten:"
+-msgstr ""
++msgstr "您的帳號是:"
+ 
+-#: templates/registration/password_reset_email.html:10
++#: templates/registration/password_reset_email.html:11
+ msgid "Thanks for using our site!"
+-msgstr ""
++msgstr "謝謝您使用我們的網站！"
+ 
+-#: templates/registration/password_reset_email.html:12
++#: templates/registration/password_reset_email.html:13
+ #, python-format
+ msgid "The %(site_name)s team"
+-msgstr ""
++msgstr " %(site_name)s 團隊 敬上"
+ 
+-#: templates/registration/reset_password.html:33
++#: templates/registration/reset_password.html:11
++#: templates/registration/reset_password.html:22
+ msgid "Password reset confirmation"
+ msgstr "密碼重置確認"
+ 
+-#: templates/registration/reset_password.html:36
++#: templates/registration/reset_password.html:25
+ msgid ""
+ "Please enter your new password twice so we can verify you typed it in "
+ "correctly."
+ msgstr "請輸入兩次新密碼，以便我們確認您輸入是否一致"
+ 
+-#: templates/registration/reset_password.html:40
++#: templates/registration/reset_password.html:29
+ msgid "confirm"
+ msgstr "確認"
+ 
+-#: templates/setting.html:41 templates/user_add.html.py:39
+-#: templates/user_list.html:71 templates/user_update.html.py:38
+-msgid "Account"
+-msgstr "帳號"
+-
+-#: templates/setting.html:54 templates/user_add.html.py:48
+-#: templates/user_group_devices.html:82 templates/user_group_members.html:82
+-#: templates/user_list.html.py:78 templates/user_update.html:47
+-msgid "Name"
+-msgstr "名稱"
++#: templates/role_add.html:8 templates/role_list.html.py:10
++#: templates/role_list.html:30
++msgid "Role List"
++msgstr "角色管理"
+ 
+-#: templates/setting.html:66
+-msgid "Email"
+-msgstr "電子信箱"
++#: templates/role_add.html:17
++msgid "Role add"
++msgstr "增加角色"
+ 
+-#: templates/setting.html:79 templates/user_add.html.py:67
+-#: templates/user_update.html:64
+-msgid "Password"
+-msgstr "密碼"
++#: templates/role_add.html:23
++msgid "Create New Role"
++msgstr "建立新角色"
+ 
+-#: templates/setting.html:91
+-msgid "New Password"
+-msgstr "新密碼"
++#: templates/role_add.html:34 templates/role_list.html.py:72
++msgid "Role Name"
++msgstr "角色名稱"
+ 
+-#: templates/setting.html:103
+-msgid "Confirm Password"
+-msgstr "確認密碼"
++#: templates/role_add.html:46 templates/role_list.html.py:77
++msgid "Sort"
++msgstr "類別"
+ 
+-#: templates/setting.html:118 templates/user_add.html.py:97
+-#: templates/user_update.html:94
++#: templates/role_add.html:61 templates/role_permission.html.py:37
++#: templates/role_rename.html:50 templates/user_add.html.py:97
++#: templates/user_setting.html:118 templates/user_update.html.py:94
+ msgid "Back"
+ msgstr "返回"
+ 
+-#: templates/setting.html:119 templates/user_add.html.py:98
+-#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+-#: templates/user_update.html:95
+-msgid "Save"
+-msgstr "儲存"
++#: templates/role_list.html:19
++msgid "Role and Permission"
++msgstr "角色管理與權限"
+ 
+-#: templates/systemlog_list.html:31
+-msgid "System log List"
+-msgstr "系統事件紀錄"
++#: templates/role_list.html:24
++msgid "Create new Role"
++msgstr "建立新角色"
+ 
+-#: templates/systemlog_list.html:40
+-msgid "Export"
+-msgstr "匯出"
++#: templates/role_list.html:25
++msgid "Role Permission"
++msgstr "角色權限"
+ 
+-#: templates/systemlog_list.html:68 templates/user_list.html.py:67
+-msgid "No."
+-msgstr "編號"
+-
+-#: templates/systemlog_list.html:73
++#: templates/role_list.html:82 templates/systemlog_list.html.py:73
+ msgid "Category"
+ msgstr "類別"
+ 
++#: templates/role_list.html:87
++msgid "Create Date"
++msgstr "創立時間"
++
++#: templates/role_list.html:92
++msgid "Update Date"
++msgstr "更新時間"
++
++#: templates/role_list.html:99
++msgid "Rename"
++msgstr "重新命名"
++
++#: templates/role_permission.html:10 templates/role_permission.html.py:19
++#: templates/role_permission.html:25
++msgid "Permission Settings"
++msgstr "權限設定"
++
++#: templates/role_permission.html:61
++msgid "Account/Permission"
++msgstr "帳號權限"
++
++#: templates/role_permission.html:88
++msgid "FR User List"
++msgstr "設備使用者管理"
++
++#: templates/role_permission.html:100
++msgid "FR User Group"
++msgstr "設備使用者群組管理"
++
++#: templates/role_rename.html:8 templates/role_rename.html.py:18
++#: templates/role_rename.html:24
++msgid "Role Rename"
++msgstr "角色重新命名"
++
++#: templates/role_rename.html:35
++msgid "New Name"
++msgstr "新名稱"
++
++#: templates/systemlog_list.html:31
++msgid "System log List"
++msgstr "系統事件紀錄"
++
+ #: templates/systemlog_list.html:78
+ msgid "Notes"
+-msgstr "記要"
++msgstr "摘要"
+ 
+ #: templates/systemlog_list.html:82
+ msgid "Date/Time"
+@@ -231,10 +518,20 @@ msgstr "日期時間"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
++#: templates/user_add.html:39 templates/user_list.html.py:71
++#: templates/user_setting.html:41 templates/user_update.html.py:38
++msgid "Account"
++msgstr "帳號"
++
+ #: templates/user_add.html:58 templates/user_update.html.py:55
+ msgid "E-Mail"
+ msgstr "電子信箱"
+ 
++#: templates/user_add.html:67 templates/user_setting.html.py:79
++#: templates/user_update.html:64
++msgid "Password"
++msgstr "密碼"
++
+ #: templates/user_add.html:75 templates/user_update.html.py:72
+ msgid "Confirm password"
+ msgstr "確認密碼"
+@@ -249,23 +546,6 @@ msgstr "角色"
+ msgid "User Group Add"
+ msgstr "建立新群組"
+ 
+-#: templates/user_group_add.html:31 templates/user_group_edit.html.py:48
+-#: templates/user_group_list.html:59
+-msgid "Group"
+-msgstr "群組"
+-
+-#: templates/user_group_add.html:38
+-msgid "Group Name"
+-msgstr "群組名稱"
+-
+-#: templates/user_group_add.html:47 templates/user_group_edit.html.py:64
+-msgid "Cancel"
+-msgstr "關閉"
+-
+-#: templates/user_group_add.html:49
+-msgid "Save and add another"
+-msgstr "儲存並繼續建立"
+-
+ #: templates/user_group_devices.html:10
+ msgid "User Group Device"
+ msgstr "設備管理"
+@@ -277,98 +557,39 @@ msgstr "設備管理"
+ msgid "User Group Edit"
+ msgstr "使用者群組修改"
+ 
+-#: templates/user_group_devices.html:33 templates/user_group_edit.html:32
+-#: templates/user_group_members.html:33
+-msgid "Imformation"
+-msgstr "一般"
+-
+-#: templates/user_group_devices.html:36 templates/user_group_edit.html:35
+-#: templates/user_group_members.html:36
+-msgid "Member List"
+-msgstr "成員管理"
+-
+-#: templates/user_group_devices.html:48
+-msgid "Device list"
+-msgstr "設備管理"
+-
+-#: templates/user_group_devices.html:54
+-msgid "Add New Device"
+-msgstr "新增設備"
+-
+-#: templates/user_group_devices.html:56
+-msgid "Search Device :"
+-msgstr "搜尋設備 :"
+-
+-#: templates/user_group_devices.html:60 templates/user_group_members.html:60
+-msgid "Add"
+-msgstr "新增"
+-
+-#: templates/user_group_devices.html:89 templates/user_group_list.html:72
+-#: templates/user_group_members.html:89 templates/user_list.html.py:98
+-msgid "Delete"
+-msgstr "刪除"
+-
+-#: templates/user_group_devices.html:108
+-msgid "Device"
+-msgstr "設備"
+-
+-#: templates/user_group_edit.html:55
+-msgid "Group Name :"
+-msgstr "群組名稱 :"
+-
+ #: templates/user_group_list.html:10 templates/user_group_list.html.py:18
+ #: templates/user_group_list.html:24
+ msgid "User Group List"
+ msgstr "網站使用者群組管理"
+ 
+-#: templates/user_group_list.html:32
+-msgid "Create new group"
+-msgstr "建立新群組"
+-
+ #: templates/user_group_list.html:54
+ msgid "No"
+ msgstr "編號"
+ 
+-#: templates/user_group_list.html:64
+-msgid "Users"
+-msgstr "使用者"
+-
+-#: templates/user_group_list.html:71
+-msgid "Edit"
+-msgstr "編輯"
+-
+ #: templates/user_group_members.html:10
+ msgid "User Group Member"
+ msgstr "群組成員管理"
+ 
+-#: templates/user_group_members.html:48
+-msgid "Member list"
+-msgstr "成員管理"
+-
+-#: templates/user_group_members.html:54
+-msgid "Add New Member"
+-msgstr "建立新成員"
+-
+-#: templates/user_group_members.html:56
+-msgid "Search User :"
+-msgstr "搜尋使用者 :"
+-
+-#: templates/user_group_members.html:108
+-msgid "User"
+-msgstr "使用者"
+-
+ #: templates/user_list.html:39
+ msgid "Create new account"
+ msgstr "建立新帳號"
+ 
+-#: templates/user_list.html:86
+-msgid "CreateDate"
+-msgstr "創立時間"
+-
+ #: templates/user_list.html:91
+ msgid "UpdateDate"
+ msgstr "更新時間"
+ 
++#: templates/user_list.html:96 templates/user_setting.html.py:66
++msgid "Email"
++msgstr "電子信箱"
++
++#: templates/user_setting.html:91
++msgid "New Password"
++msgstr "新密碼"
++
++#: templates/user_setting.html:103
++msgid "Confirm Password"
++msgstr "確認密碼"
++
+ #: templates/user_update.html:8 templates/user_update.html.py:23
+ msgid "User Update"
+ msgstr "建立新用戶"
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 9c1f8f0..b648b0f 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>User List</title>
++<title>{% trans "User List" %}</title>
+ 
+ <!--[if lt IE 9]>
+ <script src="js/html5shiv.js"></script>
+@@ -15,20 +16,20 @@
+ 
+ <body>
+ 	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">Log Setting</li>
++				<li class="active">{% trans "Log Setting" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-				<h1 class="page-header">Log Setting</h1>
++				<h1 class="page-header">{% trans "Log Setting" %}</h1>
+ 			</div>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+@@ -36,7 +37,7 @@
+ 					<div class="panel-body">
+                             <div class="form-body">
+                                 <div class="container">
+-                                    <h4>Separator Options</h4>
++                                    <h4>{% trans "Separator Options" %}</h4>
+ 									<br>
+                                     <!--p>Separator Options</p-->
+                                     <form role="form">
+@@ -86,13 +87,13 @@
+                                      </tr>
+                                      </table>
+                                </div>
+-                                 
++
+                                 <!--div class="form-group form-md-line-input">
+                                     <label class="col-md-3 control-label" for="form_control_1">Account
+                                         <span class="required"> </span>
+                                     </label>
+                                     <div class="col-md-6">
+-                                    	<div class="input-icon"> 
++                                      <div class="input-icon">
+                                         	<input readonly type="text" class="form-control" placeholder="" name="Account" value="{{obj.Account}}">
+                                         	<div class="form-control-focus"> </div>
+                                             <i class="fa fa-envelope"></i>
+@@ -105,22 +106,22 @@
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+-                                    	<div class="input-icon"> 
++                                      <div class="input-icon">
+                                         	<input type="text" class="form-control" placeholder="" name="name" value="{{obj.Name}}">
+                                         	<div class="form-control-focus"> </div>
+                                             <i class="fa fa-envelope"></i>
+                                         </div>
+                                     </div>
+                                 </div-->
+-                               
+-                                
+-                               
++
++
++
+                                    <br><br>
+-                            
++
+                             <div class="form-actions">
+                                 <div class="row">
+                                     <div class="col-md-offset-3 col-md-9">
+-                                       <a onClick="onSaveClick()" type="" class="btn green">Save</a>
++                                       <a onClick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+                             </div>
+@@ -128,14 +129,14 @@
+ 					</div>
+ 				</div>
+ 			</div>
+-		</div><!--/.row-->	
++		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+     <script>
+ 	$(function () {
+       $("#add").click(function () {
+-	    var $option = $("#select1 option:selected");  
+-        $option.appendTo("#select2");  
++	    var $option = $("#select1 option:selected");
++        $option.appendTo("#select2");
+       });
+       //$("#add_all").click(function () {
+       //  var $option = $("#select1 option");
+@@ -208,7 +209,7 @@
+ 			}
+ 		});
+ 	}
+-	</script>	
++	</script>
+ </body>
+ 
+ </html>
+diff --git a/templates/registration/forget_password.html b/templates/registration/forget_password.html
+index f32636d..2fae60f 100644
+--- a/templates/registration/forget_password.html
++++ b/templates/registration/forget_password.html
+@@ -6,6 +6,10 @@
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+ <!-- <body background="{% static "background.jpg" %}"> -->
+ 
++<head>
++	<title>{% trans "Forgotten your password ?" %}</title>
++</head>
++
+ <div class="container">
+ 	<div class="row" id="pwd-container">
+ 	<div class="col-md-4"></div>
+diff --git a/templates/registration/password_reset_email.html b/templates/registration/password_reset_email.html
+index 3a93380..f211200 100644
+--- a/templates/registration/password_reset_email.html
++++ b/templates/registration/password_reset_email.html
+@@ -7,6 +7,7 @@
+ {% endblock %}
+ {% trans "Your account, in case you've forgotten:" %} {{ user }}
+ 
++
+ {% trans "Thanks for using our site!" %}
+ 
+ {% blocktrans %}The {{ site_name }} team{% endblocktrans %}
+diff --git a/templates/registration/reset_password.html b/templates/registration/reset_password.html
+index 68df2ea..a0ffb3c 100644
+--- a/templates/registration/reset_password.html
++++ b/templates/registration/reset_password.html
+@@ -8,18 +8,7 @@
+ <!-- <body background="{% static "background.jpg" %}"> -->
+ 
+ <head>
+-	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+-	<title>Password reset confirmation</title>
+-		<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+-		<script type="text/javascript">
+-			function selectdo(obj) {
+-			          str="/i18n/setlang/";
+-			          myform = document.getElementById('testform');
+-			          myform.method = "POST";
+-			          myform.action = str;
+-			          myform.submit();
+-			}
+-		</script>
++	<title>{% trans "Password reset confirmation" %}</title>
+ </head>
+ 
+ <div class="container">
+@@ -43,7 +32,7 @@
+ 						<a href="/">{% trans "Returns sign-in screen" %}</a>
+ 					</div>
+ 				</form>
+-			</section>  
++			</section>
+ 		</div>
+ 
+ 	<div class="col-md-4"></div>
+diff --git a/templates/role_add.html b/templates/role_add.html
+index 9ff2074..3185429 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -1,10 +1,11 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Role List</title>
++        <title>{% trans "Role List" %}</title>
+     </head>
+ 
+ <body>
+@@ -13,13 +14,13 @@
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">Role add</li>
++				<li class="active">{% trans "Role add" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-				<h1 class="page-header">Create New Role</h1>
++				<h1 class="page-header">{% trans "Create New Role" %}</h1>
+ 			</div>
+ 		</div><!--/.row-->
+ 
+@@ -30,7 +31,7 @@
+ 						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+                             <div class="form-body">
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Role Name
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Role Name" %}
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+@@ -42,7 +43,7 @@
+                                     </div>
+                                 </div>
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Sort
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Sort" %}
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+@@ -57,8 +58,8 @@
+                             <div class="form-actions">
+                                 <div class="row">
+                                     <div class="col-md-offset-3 col-md-9">
+-                                        <a onclick="history.back()" type="reset" class="btn default">Back</a>
+-                                        <a onclick="onSaveClick()" type="" class="btn green">Save</a>
++                                        <a onclick="history.back()" type="reset" class="btn default">{% trans "Back" %}</a>
++                                        <a onclick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+                             </div>
+diff --git a/templates/role_list.html b/templates/role_list.html
+index a486a12..ddd54f9 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+ 		<meta charset="utf-8">
+ 		<meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Role List</title>
++        <title>{% trans "Role List" %}</title>
+     </head>
+ 
+     <body>
+@@ -15,18 +16,18 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Role and Permission</li>
++                    <li class="active">{% trans "Role and Permission" %}</li>
+                 </ol>
+             </div>
+ 
+             <div id='toolbar'>
+-                <button class="btn btn-default" onclick="location.href='/role_add/'" value="">Create new Role</button>
+-                <button class="btn btn-default" onclick="location.href='/role_permission/'" value="">Role Permission</button>
++                <button class="btn btn-default" onclick="location.href='/role_add/'" value="">{% trans "Create new Role" %}</button>
++                <button class="btn btn-default" onclick="location.href='/role_permission/'" value="">{% trans "Role Permission" %}</button>
+             </div>
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header">Role List</h1>
++                    <h1 class="page-header">{% trans "Role List" %}</h1>
+                 </div>
+             </div>
+ 
+@@ -63,40 +64,40 @@
+                 columns: [
+                     {
+                         field: 'Index',
+-                        title: 'No.',
++                        title: '{% trans "No." %}',
+                         sortable: true,
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Role Name',
++                        title: '{% trans "Role Name" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'Sort',
+-                        title: 'Sort',
++                        title: '{% trans "Sort" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'Category',
+-                        title: 'Category',
++                        title: '{% trans "Category" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'CreateDate',
+-                        title: 'Create Date',
++                        title: '{% trans "Create Date" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'UpdateDate',
+-                        title: 'Update Date',
++                        title: '{% trans "Update Date" %}',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                         <div align="center"> \
+-                            <button class="btn btn-default" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">Rename</button> \
+-                            <button class="btn btn-default" onclick=role_delete("' + row.OId + '")>Delete</button> \
++                            <button class="btn btn-default" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">{% trans "Rename" %}</button> \
++                            <button class="btn btn-default" onclick=role_delete("' + row.OId + '")>{% trans "Delete" %}</button> \
+                         </div>';
+                         }
+                     }
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index f95a45b..b837242 100644
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+ 		<meta charset="utf-8">
+ 		<meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Permission Settings</title>
++        <title>{% trans "Permission Settings" %}</title>
+     </head>
+ 
+     <body>
+@@ -15,13 +16,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Permission Settings</li>
++                    <li class="active">{% trans "Permission Settings" %}</li>
+                 </ol>
+             </div>
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header">Permission Settings</h1>
++                    <h1 class="page-header">{% trans "Permission Settings" %}</h1>
+                 </div>
+             </div>
+ 
+@@ -33,8 +34,8 @@
+                         </div>
+                         <div class="panel-footer">
+                             <div>
+-                                <a onclick=history.back() type="reset" class="btn default">Back</a>
+-                                <a onclick=permission_save() type="" class="btn green">Save</a>
++                                <a onclick=history.back() type="reset" class="btn default">{% trans "Back" %}</a>
++                                <a onclick=permission_save() type="" class="btn green">{% trans "Save" %}</a>
+                             </div>
+                         </div>
+                     </div>
+@@ -57,12 +58,12 @@
+                 columns: [
+                     {
+                         field: 'role_name',
+-                        title: 'Account/Permission',
++                        title: '{% trans "Account/Permission" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'permission_system',
+-                        title: 'System',
++                        title: '{% trans "System" %}',
+                         formatter: function(value, row) {
+                             if (value == 'Enable') var good_checked = "checked"
+                             return '<input type="checkbox"  name="checkPermission"  \
+@@ -72,7 +73,7 @@
+                     },
+                     {
+                         field: 'permission_device',
+-                        title: 'Device List',
++                        title: '{% trans "Device List" %}',
+                         formatter: function(value, row) {
+                             if (value == 'Enable') var good_checked = "checked"
+                             if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
+@@ -84,7 +85,7 @@
+                     },
+                     {
+                         field: 'permission_fruserlist',
+-                        title: 'FR User List',
++                        title: '{% trans "FR User List" %}',
+                         formatter: function(value, row) {
+                             if (value == 'Enable') var good_checked = "checked"
+                             if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
+@@ -96,7 +97,7 @@
+                     },
+                     {
+                         field: 'permission_frusergroup',
+-                        title: 'FR User Group',
++                        title: '{% trans "FR User Group" %}',
+                         formatter: function(value, row) {
+                             if (value == 'Enable') var good_checked = "checked"
+                             if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
+@@ -108,7 +109,7 @@
+                     },
+                     {
+                         field: 'permission_log',
+-                        title: 'Log',
++                        title: '{% trans "Log" %}',
+                         formatter: function(value, row) {
+                             if (value == 'Enable') var good_checked = "checked"
+                             if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index 572fd85..c8eb313 100644
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -1,12 +1,13 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Role Rename</title>
++        <title>{% trans "Role Rename" %}</title>
+ 
+-    </head>l
++    </head>
+ 
+ <body>
+ 	{% include 'menu.html' %}
+@@ -14,13 +15,13 @@
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">Role Rename</li>
++				<li class="active">{% trans "Role Rename" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-				<h1 class="page-header">Role Rename</h1>
++				<h1 class="page-header">{% trans "Role Rename" %}</h1>
+ 			</div>
+ 		</div><!--/.row-->
+ 
+@@ -31,7 +32,7 @@
+ 						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+                             <div class="form-body">
+                                 <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">New Name
++                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "New Name" %}
+                                         <span class="required">*</span>
+                                     </label>
+                                     <div class="col-md-6">
+@@ -46,8 +47,8 @@
+                             <div class="form-actions">
+                                 <div class="row">
+                                     <div class="col-md-offset-3 col-md-9">
+-                                        <a onclick="history.back()" type="reset" class="btn default">Back</a>
+-                                        <a onclick="onSaveClick()" type="" class="btn green">Save</a>
++                                        <a onclick="history.back()" type="reset" class="btn default">{% trans "Back" %}</a>
++                                        <a onclick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+                             </div>
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index 37c9adb..7bb6690 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -53,7 +53,7 @@
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Device" %}</p></div>
+                         <div class="panel-body">
+-                            <label>{% trans "Search Device :" %}</label>
++                            <label>{% trans "Search Device" %} :</label>
+                             <table id="DeviceAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index ad58153..3660b51 100644
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -52,7 +52,7 @@
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> {% trans "Group Name :" %}
++                                            <span style="color: red;">*</span> {% trans "Group Name" %} :
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Group Name" name="Name" required="required">
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index 4b1f949..68d03fd 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -53,7 +53,7 @@
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Member" %}</p></div>
+                         <div class="panel-body">
+-                            <label>{% trans "Search User :" %}</label>
++                            <label>{% trans "Search User" %} :</label>
+                             <table id="MemberAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-- 
+1.9.1
+

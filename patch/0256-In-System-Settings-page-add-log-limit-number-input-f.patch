@@ -1,0 +1,131 @@
+From 484f27c860aac66ae00368c37b1e9efcfbd61e3f Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 11:21:36 +0800
+Subject: [PATCH 256/443] In System Settings page, add log limit number input
+ field checking, and backup monthly date input range confirm.
+
+---
+ templates/system_settings.html | 63 +++++++++++++++++++++++-------------------
+ 1 file changed, 35 insertions(+), 28 deletions(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 3171289..f7997dc 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -47,18 +47,18 @@
+                                 <div class = "form-group form-inline" >
+                                     <div class="col-md-12">
+                                         <input type="radio" value="Monthly" id="BackupScheduling_Month" name="BackupScheduling">{% trans "Every Month" %}
+-                                        <input type="text" maxlength=2 size=1 id="BackupMonthlyDate" name="BackupMonthlyDate">{% trans "Day" %}, {% trans "Time" %}:
++                                        <input type="number" min="1" max="31" maxlength=2 size=1 id="BackupMonthlyDate" name="BackupMonthlyDate">{% trans "Day" %}, {% trans "Time" %}:
+                                         <select id="BackupMonthlyDate_hours" name="BackupMonthlyDate_hours">
+-                                            <option value="0">00</option>
+-                                            <option value="1">01</option>
+-                                            <option value="2">02</option>
+-                                            <option value="3">03</option>
+-                                            <option value="4">04</option>
+-                                            <option value="5">05</option>
+-                                            <option value="6">06</option>
+-                                            <option value="7">07</option>
+-                                            <option value="8">08</option>
+-                                            <option value="9">09</option>
++                                            <option value="00">00</option>
++                                            <option value="01">01</option>
++                                            <option value="02">02</option>
++                                            <option value="03">03</option>
++                                            <option value="04">04</option>
++                                            <option value="05">05</option>
++                                            <option value="06">06</option>
++                                            <option value="07">07</option>
++                                            <option value="08">08</option>
++                                            <option value="09">09</option>
+                                             <option value="10">10</option>
+                                             <option value="11">11</option>
+                                             <option value="12">12</option>
+@@ -76,8 +76,8 @@
+                                         </select>
+                                         <label>:</label>
+                                         <select id="BackupMonthlyDate_mins"  name="BackupMonthlyDate_mins">
+-                                            <option value="0">00</option>
+-                                            <option value="5">05</option>
++                                            <option value="00">00</option>
++                                            <option value="05">05</option>
+                                             <option value="10">10</option>
+                                             <option value="15">15</option>
+                                             <option value="20">20</option>
+@@ -102,16 +102,16 @@
+                                         <input type="checkbox" id="fri_chk" name="fri_chk" value="5">{% trans "Fri" %},
+                                         <input type="checkbox" id="sat_chk" name="sat_chk" value="6">{% trans "Sat" %}, Time:
+                                         <select id="BackupWeeklyDate_hours" name="BackupWeeklyDate_hours">
+-                                            <option value="0">00</option>
+-                                            <option value="1">01</option>
+-                                            <option value="2">02</option>
+-                                            <option value="3">03</option>
+-                                            <option value="4">04</option>
+-                                            <option value="5">05</option>
+-                                            <option value="6">06</option>
+-                                            <option value="7">07</option>
+-                                            <option value="8">08</option>
+-                                            <option value="9">09</option>
++                                            <option value="00">00</option>
++                                            <option value="01">01</option>
++                                            <option value="02">02</option>
++                                            <option value="03">03</option>
++                                            <option value="04">04</option>
++                                            <option value="05">05</option>
++                                            <option value="06">06</option>
++                                            <option value="07">07</option>
++                                            <option value="08">08</option>
++                                            <option value="09">09</option>
+                                             <option value="10">10</option>
+                                             <option value="11">11</option>
+                                             <option value="12">12</option>
+@@ -129,8 +129,8 @@
+                                         </select>
+                                         <label>:</label>
+                                         <select id="BackupWeeklyDate_mins"  name="BackupWeeklyDate_mins">
+-                                            <option value="0">00</option>
+-                                            <option value="5">05</option>
++                                            <option value="00">00</option>
++                                            <option value="05">05</option>
+                                             <option value="10">10</option>
+                                             <option value="15">15</option>
+                                             <option value="20">20</option>
+@@ -148,7 +148,7 @@
+                                             <!--{% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=20 placeholder="IP ADDRESS" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$">-->
+                                             {% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=25 placeholder="HOST NAME / IP ADDRESS">
+                                             {% trans "PORT" %}(P):<input type="text" id="BackupRemotePort" name="BackupRemotePort" maxlength=5 size=4 placeholder="21">
+-                                            {% trans "PATH" %}(D):<input type="text" id="BackupRemotePath" name="BackupRemotePath" maxlength=256 size=20 placeholder="SW1/BR06">
++                                            {% trans "PATH" %}(D):<input type="text" id="BackupRemotePath" name="BackupRemotePath" maxlength=256 size=20 placeholder="BR06">
+                                         </div>
+                                         <div class="col-md-12">
+                                             {% trans "USERNAME" %}(U):<input type="text" id="BackupRemoteAccount" name="BackupRemoteAccount" maxlength=20 size=20 placeholder="USERNAME">
+@@ -181,9 +181,9 @@
+                             <form role="form">
+                                 <div class="form-group">
+                                     <p>{% trans "Log count limit" %}:
+-                                    <input type="text" maxlength=7 size=10 id="LogLimit" name="LogLimit">
++                                    <input type="number" min="1" maxlength=7 size=10 id="LogLimit" name="LogLimit">
+                                     , {% trans "if the logs exceeds limit" %}, {% trans "keep" %}
+-                                    <input type="text" maxlength=2 size=1 id="LogPreservation" name="LogPreservation">
++                                    <input type="number" min="1" max="24" maxlength=2 size=1 id="LogPreservation" name="LogPreservation">
+                                     {% trans "month data" %}(default=1), {% trans "others will be remove." %}</p>
+                                     <p>* {% trans "In limit duration, the logs can be record to 150% amount." %}<br>
+                                     * {% trans "Over 150% amount, system will keep latest logs, and remove the other older logs." %}</p>
+@@ -290,6 +290,13 @@
+                 return;
+             }
+ 
++            if (BackupMonthlyDate > 28) {
++                var ret = confirm("The backup may not be processed monthly, if you choose monthly date from 29 to 31 !\n\nWould you want to continue ?");
++                if (ret != true) {
++                    return;
++                }
++            }
++
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+-- 
+1.9.1
+

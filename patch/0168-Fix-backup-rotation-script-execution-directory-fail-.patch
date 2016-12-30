@@ -1,0 +1,29 @@
+From 8b00509bb61b11ef166a856b403bd9240ccd017d Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 7 Jul 2016 09:58:52 +0800
+Subject: [PATCH 168/443] Fix backup rotation script execution directory fail
+ issue.
+
+---
+ systemsettings/views.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index a2607e7..44d25e1 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -546,9 +546,9 @@ def settings_system_backup(request):
+ 
+         else:
+             if BackupScheduling == 'Monthly':
+-                cmd = '{0} {1}\t{2} * *\troot\t{3} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate, backupshfile)
++                cmd = '{0} {1}\t{2} * *\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate, settings.BASE_DIR, backupshfile)
+             else:
+-                cmd = '{0} {1}\t* * {2}\troot\t{3} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate, backupshfile)
++                cmd = '{0} {1}\t* * {2}\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate, settings.BASE_DIR, backupshfile)
+ 
+             #print('cmd:'+cmd)
+             if content2_idx != -1:
+-- 
+1.9.1
+

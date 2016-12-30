@@ -1,0 +1,27 @@
+From f6fc6f06af03d020b2281151bf19c75b32f1e028 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 26 Apr 2016 19:10:05 +0800
+Subject: [PATCH 011/443] fixed error "Add google reCAPTCHA"
+
+[install app in localhost]
+pip install django-nocaptcha-recaptcha
+---
+ user/views.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/user/views.py b/user/views.py
+index 459fbf4..e47e6da 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -37,7 +37,7 @@ def check_user(request):
+     response = data.get('g-recaptcha-response')
+     if checkRecaptcha(response,SECRET_KEY):
+         try:
+-            obj = User.objects.get(Email=mail, Password=password)
++            obj = Users.objects.get(Email=mail, Password=password)
+             # set session
+             request.session['Account'] = obj.Account
+             request.session['Email'] = obj.Email
+-- 
+1.9.1
+

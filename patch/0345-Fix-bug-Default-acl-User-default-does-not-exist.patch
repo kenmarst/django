@@ -1,0 +1,39 @@
+From e5787eb0ca1fa48c040d1387b267936fae9e9cf8 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 3 Nov 2016 15:31:31 +0800
+Subject: [PATCH 345/443] Fix bug - Default acl User(default) does not exist
+
+Bug fix - default acl in User(default) of role does not exist.
+---
+ br06/settings.py | 1 +
+ role/views.py    | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 92cff62..f30d658 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -67,6 +67,7 @@ ADMIN_MAIL = 'admin@tw.shuttle.com'
+ ADMIN_PASSWORD = '5f4dcc3b5aa765d61d8327deb882cf99'
+ 
+ PERMISSION = {'permission_system', 'permission_device', 'permission_fruserlist', 'permission_frusergroup', 'permission_log'}
++PERMISSION_USER = {'permission_device', 'permission_fruserlist', 'permission_frusergroup'}
+ 
+ # Add host IP when DEBUG=False
+ ALLOWED_HOSTS = [
+diff --git a/role/views.py b/role/views.py
+index d4e0a3e..62e192a 100755
+--- a/role/views.py
++++ b/role/views.py
+@@ -30,6 +30,8 @@ except:
+         Role.objects.create(Name = 'Users(default)', Sort = '2', Category = 'System')
+         for x in PERMISSION:
+             Acl.objects.create(FunctionName = x, RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++        for x in PERMISSION_USER:
++            Acl.objects.filter(FunctionName = x, RoleOId = Role.objects.get(Name = 'Users(default)')).update(ACL = 'Enable')
+         print('create default role: users')
+     except:
+         print('can\'t create default role: users')
+-- 
+1.9.1
+

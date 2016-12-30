@@ -1,0 +1,42 @@
+From 97855ba36ce12fe3fe24be8b3c4daf40288a3c8b Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 15 Nov 2016 15:34:10 +0800
+Subject: [PATCH 358/443] Modify checking file method of fruser import.
+
+---
+ frusers/views.py | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 1b51dfe..5389a50 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -112,9 +112,13 @@ def import_fruser(request):
+             raise Exception(2)
+ 
+         with zipfile.ZipFile(zipfile_dir) as zipFile:
+-            if all(k in zipFile.namelist() for k in {'frusers.csv', 'fruserpic/'}):
+-                zipFile.extractall(mediadir)
+-            else:
++            try:
++                members = [zipFile.getinfo('frusers.csv')]
++                for fileinfo in zipFile.infolist():
++                    if fileinfo.filename[:10] == 'fruserpic/':
++                        members.append(fileinfo)
++                zipFile.extractall(mediadir, members)
++            except:
+                 raise Exception(2)
+ 
+         with open(csvdir, 'r') as csvfile:
+@@ -182,7 +186,7 @@ def import_fruser(request):
+         finally:
+             try:
+                 return JsonResponse(dict(ChainMap(res_code[int(e.__str__())], {'import_success' : import_success, 'import_fail' : import_fail})))
+-            except:
++            except Exception as e:
+                 return JsonResponse(res_code[1])
+ 
+ def export_fruser(request):
+-- 
+1.9.1
+

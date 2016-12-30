@@ -1,0 +1,47 @@
+From 9d88ffec9393df1d6d21238945acf0143f6339fd Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 22 Jul 2016 17:23:26 +0800
+Subject: [PATCH 195/443] Complete the log limit function
+
+Complete the log limit function of system setting set.
+---
+ api/models.py | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/api/models.py b/api/models.py
+index 10398f3..882a875 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -2,6 +2,7 @@ from __future__ import unicode_literals
+ 
+ from django.db import models
+ from django.utils import timezone
++from datetime import datetime
+ import uuid
+ 
+ class Config(models.Model):
+@@ -441,6 +442,10 @@ class Fruserlogs(models.Model):
+         db_table = 'fruserlogs'
+         ordering = ['OId']
+ 
++    def __del__(self):
++        if Fruserlogs.objects.count() > int(Config.objects.get(Name = 'LogLimit').Value):
++            Fruserlogs.objects.filter(LogDateTime__lt = datetime.now().replace(month = datetime.now().month - int(Config.objects.get(Name = 'LogPreservation').Value))).delete()
++
+     def __str__(self):
+         return '%s %s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
+ 
+@@ -474,6 +479,10 @@ class Systemlogs(models.Model):
+         db_table = 'systemlogs'
+         ordering = ['OId']
+ 
++    def __del__(self):
++        if Systemlogs.objects.count() > int(Config.objects.get(Name = 'LogLimit').Value):
++            Systemlogs.objects.filter(LogDateTime__lt = datetime.now().replace(month = datetime.now().month - int(Config.objects.get(Name = 'LogPreservation').Value))).delete()
++
+     def __str__(self):
+         return '%s %s' % (self.Category, self.LogDateTime)
+ 
+-- 
+1.9.1
+

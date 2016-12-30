@@ -1,0 +1,51 @@
+From b74319ad3d31b237651e348e17ef3e21a4d2ba0a Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 15 Jul 2016 12:06:10 +0800
+Subject: [PATCH 186/443] Modify CONFIDENCE value : Low, Medium, High from
+ Device BioScore.
+
+CONFIDENCE value be used in Face Recognition API :
+Face Verify, Face Identify
+---
+ api/recognition.py | 4 ++--
+ br06/settings.py   | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index b4bd310..bfe5ad5 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -37,7 +37,7 @@ def face_verify(request):
+                             print(res_face_verify)#
+                             if res_face_verify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                                 print(res_face_verify['confidence'])#
+-                                if res_face_verify['confidence'] > settings.CONFIDENCE:#
++                                if res_face_verify['confidence'] > settings.CONFIDENCE[ip_device.BioScore]:
+                                     for i in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+                                         print(i.GroupOId.OId)
+                                         for j in i.GroupOId.frusergroupdevices_set.filter(GroupOId = i.GroupOId.OId):
+@@ -96,7 +96,7 @@ def face_identify(request):
+                                 res_group_identify['persons'],
+                                 key = itemgetter('similarity'),
+                             )[len(res_group_identify['persons'])-1]
+-                            if person['similarity'] >= settings.CONFIDENCE:
++                            if person['similarity'] >= settings.CONFIDENCE[ip_device.BioScore]:
+                                 person_id = person['person_id']
+                             else:
+                                 raise Exception("Similarity is too low")
+diff --git a/br06/settings.py b/br06/settings.py
+index 002bfb4..57ee45f 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -171,7 +171,7 @@ LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ 
+ TCIT_IP = 'localhost:8800'
+ 
+-CONFIDENCE = 50
++CONFIDENCE = {'Low':50, 'Medium':100, 'High':500}
+ EMAIL_HOST = 'webmail.tw.shuttle.com'
+ EMAIL_HOST_USER = 'fr_serivce'
+ EMAIL_HOST_PASSWORD = 'Pa0000'
+-- 
+1.9.1
+

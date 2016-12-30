@@ -1,0 +1,164 @@
+From a8eab6f2c84aa812b46f4f53536bd461b0d34e2b Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Mon, 12 Sep 2016 18:28:00 +0800
+Subject: [PATCH 274/443] 1.[Bug1545] Fixed separator options save show "input
+ error" in Log setting. 2.load log setting from
+ /media/logsetting/logsetting.json if the file exist.
+
+---
+ fruserlogs/views.py       |  2 +-
+ logsetting/views.py       | 19 ++++++++++++++++++-
+ systemlogs/views.py       |  2 +-
+ templates/logsetting.html | 46 ++++++++++++++++++++++++++++++++++------------
+ 4 files changed, 54 insertions(+), 15 deletions(-)
+
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 00f3035..0d752ce 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -63,7 +63,7 @@ def fruserlog_export(request):
+             raise
+     except:
+         header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
+-        symbol = "!"
++        symbol = ","
+ 
+     response = HttpResponse(content_type = 'text/csv')
+     response['Content-Disposition'] = 'attachment; filename=fruserlog-export-{0}.csv'.format(
+diff --git a/logsetting/views.py b/logsetting/views.py
+index 920c841..95ce4cb 100644
+--- a/logsetting/views.py
++++ b/logsetting/views.py
+@@ -17,7 +17,24 @@ def logsetting_view(request):
+         return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+-        return render(request, 'logsetting.html')
++        try:
++            with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
++                json_data = json.loads(f.read())
++            if json_data['symbol']:
++                symbol = json_data['symbol']
++                header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++                header2=[]
++                for field in json_data.get('fields'):
++                   header.remove(field)
++                   header2.append(field)
++            else:
++                header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++                symbol = "tab"
++        except:
++              header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++              header2=[]
++              symbol = "tab"
++        return render(request, 'logsetting.html',{'active': 'logsetting', 'symbol': symbol, 'header': header ,'header2' : header2})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 122919b..28ba9db 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -62,7 +62,7 @@ def systemlog_export(request):
+             raise
+     except:
+         header = ['OId', 'LogDateTime', 'Category', 'LogContent']
+-        symbol = "!"
++        symbol = ","
+ 
+     response = HttpResponse(content_type = 'text/csv')
+     response['Content-Disposition'] = 'attachment; filename=systemlog-export-{0}.csv'.format(
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index e77fcc4..920598f 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -38,20 +38,41 @@
+                                     <h4>{% trans "Separator Options" %}</h4><br>
+                                     <form role="form">
+                                         <div class="radio">
++                                         {% if symbol == "tab" %}
++                                            <label><input type="radio" name="optradio" checked="checked" value="tab">tab</label>
++                                         {% else %}
+                                             <label><input type="radio" name="optradio" value="tab">tab</label>
++                                         {% endif %}
+                                         </div>
+                                         <div class="radio">
+-                                            <label><input type="radio" name="optradio" value="comma">comma</label>
++                                         {% if symbol == "comma" %}
++                                            <label><input type="radio" name="optradio" checked="checked" value="comma">comma</label>
++                                         {% else %}
++                                             <label><input type="radio" name="optradio" value="comma">comma</label>
++                                         {% endif %}
+                                         </div>
+                                         <div class="radio">
++                                         {% if symbol == "dot" %}
++                                            <label><input type="radio" name="optradio" checked="checked" value="dot">dot</label>
++                                         {% else %}
+                                             <label><input type="radio" name="optradio" value="dot">dot</label>
++                                         {% endif %}
+                                         </div>
+                                         <div class="radio">
++                                         {% if symbol == "space" %}
++                                            <label><input type="radio" name="optradio" checked="checked" value="space">space</label>
++                                         {% else %}
+                                             <label><input type="radio" name="optradio" value="space">space</label>
++                                         {% endif %}
+                                         </div>
+                                         <div class="radio">
++                                         {% if symbol != "tab" and symbol != "comma" and symbol != "dot" and symbol != "space" %}
++                                            <label><input type="radio" name="optradio" checked="checked" value="5">custom</label>
++                                            <label><input type="text" class="form-control" style="width:150px; height:20px" name="customsymbol" value={{symbol}}></label>
++                                         {% else %}
+                                             <label><input type="radio" name="optradio" value="5">custom</label>
+                                             <label><input type="text" class="form-control" style="width:150px; height:20px" name="customsymbol" placeholder=" 1 character only"></label>
++                                         {% endif %}
+                                         </div>
+                                     </form><br>
+ 
+@@ -59,15 +80,9 @@
+                                         <tr>
+                                             <td>
+                                                 <select multiple class="form-control" id="select1" style="width:200px; height:150px">
+-                                                    <option value="OId">OId</option>
+-                                                    <option value="LogDateTime">Log Date Time</option>
+-                                                    <option value="FRUserOId">FR User OId</option>
+-                                                    <option value="FRUserId">FR User Id</option>
+-                                                    <option value="FRUserName">FR User Name</option>
+-                                                    <option value="DeviceOId">Device OId</option>
+-                                                    <option value="DeviceName">Device Name</option>
+-                                                    <option value="Category">Category</option>
+-                                                    <option value="LogContent">Log Content</option>
++                                                    {% for i in header %}
++                                                     <option value="{{i}}">{{i}}</option>
++                                                    {% endfor %}
+                                                 </select>
+                                             </td>
+                                             <td>
+@@ -77,7 +92,11 @@
+                                                 <div>
+                                             </td>
+                                             <td>
+-                                                <select multiple class="form-control" id="select2" style="width:200px;height:150px"></select>
++                                                <select multiple class="form-control" id="select2" style="width:200px;height:150px">
++                                                    {% for i in header2 %}
++                                                     <option value="{{i}}">{{i}}</option>
++                                                    {% endfor %}    
++                                                </select>
+                                             </td>
+                                         </tr>
+                                     </table>
+@@ -125,7 +144,10 @@
+             var csrftoken = getCookie('csrftoken');
+             var symbol1 = $('input[name=optradio]').filter(":checked").val()
+             var symbol2 = $('input[name=customsymbol]').val()
+-            var s = $("#select2 option").val();
++			$("#select2").children().each(function(){
++				this.selected = true; 
++			});
++			var s = $("#select2").val()
+             symbol = symbol1;
+             if ((symbol1 == 5 && (symbol2 == "") || (symbol2.length > 1)) || (symbol1 == undefined) || s == null) {
+                 alert("{% trans "input error" %}");
+-- 
+1.9.1
+

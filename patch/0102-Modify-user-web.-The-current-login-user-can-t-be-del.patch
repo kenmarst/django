@@ -1,0 +1,49 @@
+From f090b08fa46b72be817e87710032654a41c8cd7b Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 27 May 2016 13:30:49 +0800
+Subject: [PATCH 102/443] Modify user web. The current login user can't be
+ deleted.
+
+---
+ templates/user_list.html | 2 ++
+ user/views.py            | 4 +++-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 9a1965d..746f259 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -142,6 +142,8 @@
+                         location.reload();
+                     } else if (data.CODE == "2") {
+                         alert("Admin is can't be deleted");
++                    } else if (data.CODE == "3") {
++                        alert("Doesn't have permission");
+                     } else {
+                         alert("Fail to delete user");
+                     }
+diff --git a/user/views.py b/user/views.py
+index f5f3303..d5bcf75 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -10,7 +10,7 @@ import json
+ from datetime import datetime
+ 
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ 
+ def user_setting(request):
+     if not 'OId' in request.session:
+@@ -99,6 +99,8 @@ def delete_user(request):
+     try:
+         if request.POST['Account'] == 'admin' :
+             return JsonResponse(res_code[2])
++        elif request.session['Account'] == request.POST['Account'] :
++            return JsonResponse(res_code[3])
+         else :
+             Users.objects.get(OId = request.POST['OId']).delete()
+             return JsonResponse(res_code[0])
+-- 
+1.9.1
+

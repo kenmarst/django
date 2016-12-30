@@ -1,0 +1,1280 @@
+From 15870e47c33d0842892105f97592d6b392c7fb2f Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 7 Nov 2016 11:00:09 +0800
+Subject: [PATCH 352/443] Modify FTP remote backup function for Spec.
+
+Modify FTP remote backup function for Specification.
+  -  check remote path
+  -  check written permission
+  -  add message of tips
+Add testing icon.
+Modify fruser uploading icon.
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ systemsettings/views.py                      |  46 ++++++--
+ templates/fruser_list.html                   |   6 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 19289 -> 19687 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 161 ++++++++++++++++-----------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 19289 -> 19687 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 161 ++++++++++++++++-----------
+ templates/system_settings.html               |  23 +++-
+ 11 files changed, 250 insertions(+), 151 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 24989f30ce4d8ceb62e0e52efa1b1b14ad6265c3..f8c404d4e2097c8ee1ad8739deb345cee0e21a57 100755
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irqxP(89{paN|coMgTTs1)l%_
+
+delta 18
+ZcmZo-X=0i1irrYj(A>(<c;iPwMgTTL1)Bf>
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 73395a3..6d54394 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-03 17:13+0800\n"
++"POT-Creation-Date: 2016-11-04 18:51+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 24989f30ce4d8ceb62e0e52efa1b1b14ad6265c3..f8c404d4e2097c8ee1ad8739deb345cee0e21a57 100755
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irqxP(89{paN|coMgTTs1)l%_
+
+delta 18
+ZcmZo-X=0i1irrYj(A>(<c;iPwMgTTL1)Bf>
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 73395a3..6d54394 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-03 17:13+0800\n"
++"POT-Creation-Date: 2016-11-04 18:51+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index b87b180..eb1058b 100755
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -4,7 +4,7 @@ from api.models import Config
+ from login.views import check_login, check_login_redirect
+ import json
+ import os
+-from ftplib import FTP
++import ftplib, socket
+ from django.conf import settings
+ 
+ # create default system settings configs
+@@ -201,7 +201,7 @@ except:
+ else:
+     print('default PicFaceSave exist.')
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}, {"CODE": "4"}, {"CODE": "5"}]
+ permission = 'permission_system'
+ 
+ def system_settings_views(request):
+@@ -632,18 +632,44 @@ def settings_system_connect_test(request):
+         BackupRemotePassword = request.POST.get('BackupRemotePassword', '')
+         print('Test BackupRemotePassword :', BackupRemotePassword)
+ 
++        BackupRemotePath = request.POST.get('BackupRemotePath', '')
++        print('Test BackupRemotePath :', BackupRemotePath)
++
++        ftp = ftplib.FTP()
++        try:
++            ftp.connect(BackupRemoteHost, int(BackupRemotePort), 30)
++        except (ConnectionRefusedError, socket.error, socket.gaierror):
++            print('Connected fail!')
++            return JsonResponse(res_code[2])
+         try:
+-            ftp = FTP()
+-            ftp.connect(BackupRemoteHost, int(BackupRemotePort))
+             ftp.login(BackupRemoteAccount, BackupRemotePassword)
+-            print('Connected! Welcome msg is ' + ftp.getwelcome())
++        except ftplib.error_perm:
++            print('Login incorrect!')
+             ftp.quit()
+-        except:
+-            print('Connected fail!')
+-            return JsonResponse(res_code[1])
+-
++            return JsonResponse(res_code[3])
++        try:
++            ftp.cwd(BackupRemotePath)
++            try:
++                try:
++                    ftp.cwd('br06_backup_test')
++                except:
++                    ftp.mkd('br06_backup_test')
++                else:
++                    ftp.cwd('..')
++                ftp.rmd('br06_backup_test')
++            except ftplib.error_perm:
++                print('Written permission denied!')
++                ftp.quit()
++                return JsonResponse(res_code[5])
++        except ftplib.error_perm:
++            print('"{0}" does not exist or can not be accessed'.format(BackupRemotePath))
++            ftp.quit()
++            return JsonResponse(res_code[4])
++        print('Connected! Welcome msg is ' + ftp.getwelcome())
++        ftp.quit()
+         return JsonResponse(res_code[0])
+-    except:
++    except Exception as e:
++        print(e)
+         return JsonResponse(res_code[1])
+ 
+ def settings_system_log(request):
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 6e4a8a0..0f86e07 100755
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -205,7 +205,11 @@
+                     var data = new FormData($('#ImportForm')[0]);
+                     data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+ 
+-                    $('#ImportFormBody').html('<div class="col-sm-offset-1">Please do not leave this page and wait for uploading!</div>');
++                    $('#ImportFormBody').html('\
++                        <div class="col-sm-offset-1">\
++                            {% trans "Please do not leave this page and wait for uploading!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
++                        </div>\
++                    ');
+                     $('#ImportFruser').prop('disabled', true);
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index cc456e98a21be9a1883ad729221d17a797ec17e0..6611531ff930c7976213426b541a79bd52043569 100755
+GIT binary patch
+delta 7421
+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
+
+delta 7035
+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
+aaIi0D&=t?pkp)YA=L$+azPpBcJ^u$*8Mu%D
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 9b5131b..67f285f 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-03 17:13+0800\n"
++"POT-Creation-Date: 2016-11-04 18:51+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -156,8 +156,8 @@ msgstr "返回"
+ #: templates/fruser_edit.html:109 templates/frusergroup_add.html.py:46
+ #: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
+ #: templates/role_add.html:51 templates/role_permission.html.py:38
+-#: templates/role_rename.html:45 templates/system_settings.html.py:162
+-#: templates/system_settings.html:199 templates/user_add.html.py:96
++#: templates/role_rename.html:45 templates/system_settings.html.py:165
++#: templates/system_settings.html:202 templates/user_add.html.py:96
+ #: templates/user_group_add.html:46 templates/user_group_edit.html.py:63
+ #: templates/user_setting.html:119 templates/user_update.html.py:97
+ msgid "Save"
+@@ -334,7 +334,7 @@ msgid "Group"
+ msgstr "群组"
+ 
+ #: templates/device_frusergroups.html:167 templates/device_list.html.py:171
+-#: templates/fruser_list.html:241 templates/frusergroup_devices.html.py:172
++#: templates/fruser_list.html:245 templates/frusergroup_devices.html.py:172
+ #: templates/frusergroup_member.html:170 templates/frusergroups_list.html:121
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+ #: templates/user_group_members.html:170 templates/user_list.html.py:137
+@@ -391,8 +391,8 @@ msgid "Edit"
+ msgstr "编辑"
+ 
+ #: templates/device_list.html:118 templates/menu.html.py:41
+-#: templates/system_settings.html:10 templates/system_settings.html.py:19
+-#: templates/system_settings.html:25
++#: templates/system_settings.html:11 templates/system_settings.html.py:20
++#: templates/system_settings.html:26
+ msgid "Settings"
+ msgstr "设定"
+ 
+@@ -422,8 +422,8 @@ msgstr "注册机"
+ msgid "Recognition"
+ msgstr "辨识机"
+ 
+-#: templates/device_settings.html:52 templates/fruser_edit.html.py:83
+-#: templates/fruser_list.html:129
++#: templates/device_settings.html:52 templates/fruser_edit.html.py:93
++#: templates/fruser_list.html:140
+ msgid "FR"
+ msgstr "人脸辨识"
+ 
+@@ -608,7 +608,7 @@ msgstr "设备使用者新增失败"
+ msgid "Fruser Edit"
+ msgstr "修改用户资讯"
+ 
+-#: templates/fruser_edit.html:93 templates/fruser_list.html.py:140
++#: templates/fruser_edit.html:83 templates/fruser_list.html.py:129
+ msgid "RFID"
+ msgstr "RFID卡"
+ 
+@@ -663,23 +663,27 @@ msgstr "建立时间"
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
+-#: templates/fruser_list.html:225
++#: templates/fruser_list.html:210
++msgid "Please do not leave this page and wait for uploading!"
++msgstr "请等待上传且勿离开此页面！"
++
++#: templates/fruser_list.html:229
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正确"
+ 
+-#: templates/fruser_list.html:227
++#: templates/fruser_list.html:231
+ msgid "Please wait for uploading!"
+ msgstr "请等待上传！"
+ 
+-#: templates/fruser_list.html:229
++#: templates/fruser_list.html:233
+ msgid "Fail to import fruser!"
+ msgstr "汇入设备使用者失败"
+ 
+-#: templates/fruser_list.html:257
++#: templates/fruser_list.html:261
+ msgid "Fail to delete fruser"
+ msgstr "删除设备使用者失败"
+ 
+-#: templates/fruser_list.html:267
++#: templates/fruser_list.html:271
+ msgid "Duplicate export!"
+ msgstr "重复汇出"
+ 
+@@ -904,13 +908,13 @@ msgstr "重设密码"
+ msgid "Returns sign-in screen"
+ msgstr "回到登入页面"
+ 
+-#: templates/registration/forget_password.html:49
+-#: templates/registration/password_reset_complete.html:59
++#: templates/registration/forget_password.html:48
++#: templates/registration/password_reset_complete.html:58
+ msgid "Reset password link has been sent to your E-Mail address"
+ msgstr "重置密码连结已发送到您的电子信箱"
+ 
+-#: templates/registration/forget_password.html:52
+-#: templates/registration/password_reset_complete.html:62
++#: templates/registration/forget_password.html:51
++#: templates/registration/password_reset_complete.html:61
+ msgid "E-Mail address does not exist"
+ msgstr "电子信箱不存在"
+ 
+@@ -960,11 +964,11 @@ msgstr "请输入两次新密码，以便我们确认您输入是否一致"
+ msgid "confirm"
+ msgstr "确认"
+ 
+-#: templates/registration/reset_password.html:50
++#: templates/registration/reset_password.html:52
+ msgid "Update error. Please contact us."
+ msgstr "更新错误，请跟我们联络"
+ 
+-#: templates/registration/reset_password.html:53
++#: templates/registration/reset_password.html:55
+ msgid "Password not match, plase check 'New Password' and 'Confirm Password'."
+ msgstr "请确认输入的'新密码'与'确认密码'是否一致"
+ 
+@@ -1069,128 +1073,129 @@ msgstr "预设角色不能重新命名"
+ msgid "Fail to rename Role"
+ msgstr "角色重新命名失败"
+ 
+-#: templates/system_settings.html:32
++#: templates/system_settings.html:33
+ msgid "Backup Scheduling"
+ msgstr "备份排程"
+ 
+-#: templates/system_settings.html:38
++#: templates/system_settings.html:39
+ msgid "Manually"
+ msgstr "手动备份"
+ 
+-#: templates/system_settings.html:39
++#: templates/system_settings.html:40
+ msgid "Instantly backup after clicking save"
+ msgstr "点击储存后立即备份"
+ 
+-#: templates/system_settings.html:44
++#: templates/system_settings.html:45
+ msgid "Automatic"
+ msgstr "自动备份"
+ 
+-#: templates/system_settings.html:49
++#: templates/system_settings.html:50
+ msgid "Every Month"
+ msgstr "每月"
+ 
+-#: templates/system_settings.html:50
++#: templates/system_settings.html:51
+ msgid "Day"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:50
++#: templates/system_settings.html:51
+ msgid "Time"
+ msgstr "时间"
+ 
+-#: templates/system_settings.html:96
++#: templates/system_settings.html:97
+ msgid "Every Week"
+ msgstr "每周"
+ 
+-#: templates/system_settings.html:97
++#: templates/system_settings.html:98
+ msgid "Sun"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:98
++#: templates/system_settings.html:99
+ msgid "Mon"
+ msgstr "一"
+ 
+-#: templates/system_settings.html:99
++#: templates/system_settings.html:100
+ msgid "Tue"
+ msgstr "二"
+ 
+-#: templates/system_settings.html:100
++#: templates/system_settings.html:101
+ msgid "Wed"
+ msgstr "三"
+ 
+-#: templates/system_settings.html:101
++#: templates/system_settings.html:102
+ msgid "Thu"
+ msgstr "四"
+ 
+-#: templates/system_settings.html:102
++#: templates/system_settings.html:103
+ msgid "Fri"
+ msgstr "五"
+ 
+-#: templates/system_settings.html:103
++#: templates/system_settings.html:104
+ msgid "Sat"
+ msgstr "六"
+ 
+-#: templates/system_settings.html:145
++#: templates/system_settings.html:146
+ msgid "Local backup location"
+ msgstr "本地备份地点"
+ 
+-#: templates/system_settings.html:146
++#: templates/system_settings.html:147
+ msgid "Remote backup FTP Setting"
+ msgstr "异地备份FTP设定"
+ 
+-#: templates/system_settings.html:148 templates/system_settings.html.py:149
++#: templates/system_settings.html:149 templates/system_settings.html.py:150
+ msgid "HOST"
+ msgstr "主机"
+ 
+-#: templates/system_settings.html:150
++#: templates/system_settings.html:151
+ msgid "PORT"
+ msgstr "连接埠"
+ 
+-#: templates/system_settings.html:151
++#: templates/system_settings.html:152
+ msgid "PATH"
+ msgstr "路径"
+ 
+-#: templates/system_settings.html:154
++#: templates/system_settings.html:155
+ msgid "USERNAME"
+ msgstr "使用者名称"
+ 
+-#: templates/system_settings.html:155
++#: templates/system_settings.html:156
+ msgid "PASSWORD"
+ msgstr "密码"
+ 
+-#: templates/system_settings.html:156
++#: templates/system_settings.html:158 templates/system_settings.html.py:268
++#: templates/system_settings.html:272
+ msgid "Connect Test"
+ msgstr "测试连线"
+ 
+-#: templates/system_settings.html:179
++#: templates/system_settings.html:182
+ msgid "System Log"
+ msgstr "系统纪录"
+ 
+-#: templates/system_settings.html:183
++#: templates/system_settings.html:186
+ msgid "Log count limit"
+ msgstr "Log笔数限制"
+ 
+-#: templates/system_settings.html:185
++#: templates/system_settings.html:188
+ msgid "if the logs exceeds limit"
+ msgstr "若超过笔数限制"
+ 
+-#: templates/system_settings.html:185
++#: templates/system_settings.html:188
+ msgid "keep"
+ msgstr "保留"
+ 
+-#: templates/system_settings.html:187
++#: templates/system_settings.html:190
+ msgid "month data"
+ msgstr "月资料"
+ 
+-#: templates/system_settings.html:187
++#: templates/system_settings.html:190
+ msgid "others will be remove."
+ msgstr "其他移除"
+ 
+-#: templates/system_settings.html:188
++#: templates/system_settings.html:191
+ #, python-format
+ msgid "In limit duration, the logs can be record to 150%% amount."
+ msgstr "若期限内超过笔数限制，最多可以纪录到1.5倍的笔数限制。"
+ 
+-#: templates/system_settings.html:189
++#: templates/system_settings.html:192
+ #, python-format
+ msgid ""
+ "Over 150%% amount, system will keep latest logs, and remove the other older "
+@@ -1198,65 +1203,85 @@ msgid ""
+ msgstr ""
+ "若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
+ 
+-#: templates/system_settings.html:192
++#: templates/system_settings.html:195
+ msgid "Save FR user register photo image"
+ msgstr "储存脸部注册成功照片"
+ 
+-#: templates/system_settings.html:195
++#: templates/system_settings.html:198
+ msgid "Save FR user recognition photo image"
+ msgstr "储存脸部辨识成功照片"
+ 
+-#: templates/system_settings.html:249
++#: templates/system_settings.html:238
++msgid "Testing"
++msgstr "测试中"
++
++#: templates/system_settings.html:256
+ msgid "FTP connect test successfully"
+ msgstr "FTP连线测试成功"
+ 
+-#: templates/system_settings.html:251
+-msgid "Fail to connect FTP"
+-msgstr "FTP连线失败"
++#: templates/system_settings.html:258
++msgid "Connect to FTP fail"
++msgstr "无法连线到FTP"
++
++#: templates/system_settings.html:260
++msgid "Login incorrect"
++msgstr "无法登入"
++
++#: templates/system_settings.html:262
++msgid "The path does not exist or can not be accessed"
++msgstr "路径不存在或无法进入"
++
++#: templates/system_settings.html:264
++msgid "Written permission denied"
++msgstr "写入权限不足"
+ 
+-#: templates/system_settings.html:289
++#: templates/system_settings.html:266
++msgid "Unknown error"
++msgstr "未知错误"
++
++#: templates/system_settings.html:308
+ msgid "Must select one week day!"
+ msgstr "必须选择一个工作日"
+ 
+-#: templates/system_settings.html:294
++#: templates/system_settings.html:313
+ msgid "Must select correct monthly day!"
+ msgstr "必须选择正确的月份日期！"
+ 
+-#: templates/system_settings.html:299
++#: templates/system_settings.html:318
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "选择每月 29~31 日，可能无法每月进行自动备份，您确定要继续吗?"
+ 
+-#: templates/system_settings.html:314
++#: templates/system_settings.html:333
+ msgid "Must input correct FTP remote path!"
+ msgstr "必须输入正确的远端 FTP 路径！"
+ 
+-#: templates/system_settings.html:352
++#: templates/system_settings.html:371
+ msgid "Backup successfully"
+ msgstr "备份成功"
+ 
+-#: templates/system_settings.html:354
++#: templates/system_settings.html:373
+ msgid "Backup setting successfully"
+ msgstr "备份设定成功"
+ 
+-#: templates/system_settings.html:358
++#: templates/system_settings.html:377
+ msgid "Fail to setting Backup"
+ msgstr "备份设定失败"
+ 
+-#: templates/system_settings.html:373
++#: templates/system_settings.html:392
+ msgid "Must input correct log limit value!"
+ msgstr "必须输入正确的Log笔数限制值！"
+ 
+-#: templates/system_settings.html:378
++#: templates/system_settings.html:397
+ msgid "Must input correct month value for log preservation!"
+ msgstr "Log的保留月份必须输入正确的值！"
+ 
+-#: templates/system_settings.html:397
++#: templates/system_settings.html:416
+ msgid "Log setting successfully"
+ msgstr "Log设定成功"
+ 
+-#: templates/system_settings.html:400
++#: templates/system_settings.html:419
+ msgid "Fail to setting Log"
+ msgstr "Log设定失败"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index ea3eae7a9e54df6751d760567496312fb71334f4..9f99123c2aac111722335b6fab1eecfc68e1dfa6 100755
+GIT binary patch
+delta 7421
+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
+
+delta 7035
+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
+V70>b!h0A^C3QIk{yM}l@{|CSvxFY}n
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index efe9a9a..8084009 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-03 17:13+0800\n"
++"POT-Creation-Date: 2016-11-04 18:51+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -156,8 +156,8 @@ msgstr "返回"
+ #: templates/fruser_edit.html:109 templates/frusergroup_add.html.py:46
+ #: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
+ #: templates/role_add.html:51 templates/role_permission.html.py:38
+-#: templates/role_rename.html:45 templates/system_settings.html.py:162
+-#: templates/system_settings.html:199 templates/user_add.html.py:96
++#: templates/role_rename.html:45 templates/system_settings.html.py:165
++#: templates/system_settings.html:202 templates/user_add.html.py:96
+ #: templates/user_group_add.html:46 templates/user_group_edit.html.py:63
+ #: templates/user_setting.html:119 templates/user_update.html.py:97
+ msgid "Save"
+@@ -334,7 +334,7 @@ msgid "Group"
+ msgstr "群組"
+ 
+ #: templates/device_frusergroups.html:167 templates/device_list.html.py:171
+-#: templates/fruser_list.html:241 templates/frusergroup_devices.html.py:172
++#: templates/fruser_list.html:245 templates/frusergroup_devices.html.py:172
+ #: templates/frusergroup_member.html:170 templates/frusergroups_list.html:121
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+ #: templates/user_group_members.html:170 templates/user_list.html.py:137
+@@ -391,8 +391,8 @@ msgid "Edit"
+ msgstr "編輯"
+ 
+ #: templates/device_list.html:118 templates/menu.html.py:41
+-#: templates/system_settings.html:10 templates/system_settings.html.py:19
+-#: templates/system_settings.html:25
++#: templates/system_settings.html:11 templates/system_settings.html.py:20
++#: templates/system_settings.html:26
+ msgid "Settings"
+ msgstr "設定"
+ 
+@@ -422,8 +422,8 @@ msgstr "註冊機"
+ msgid "Recognition"
+ msgstr "辨識機"
+ 
+-#: templates/device_settings.html:52 templates/fruser_edit.html.py:83
+-#: templates/fruser_list.html:129
++#: templates/device_settings.html:52 templates/fruser_edit.html.py:93
++#: templates/fruser_list.html:140
+ msgid "FR"
+ msgstr "人臉辨識"
+ 
+@@ -608,7 +608,7 @@ msgstr "設備使用者新增失敗"
+ msgid "Fruser Edit"
+ msgstr "修改用戶資訊"
+ 
+-#: templates/fruser_edit.html:93 templates/fruser_list.html.py:140
++#: templates/fruser_edit.html:83 templates/fruser_list.html.py:129
+ msgid "RFID"
+ msgstr "RFID卡"
+ 
+@@ -663,23 +663,27 @@ msgstr "建立時間"
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
+-#: templates/fruser_list.html:225
++#: templates/fruser_list.html:210
++msgid "Please do not leave this page and wait for uploading!"
++msgstr "請等待上傳且勿離開此頁面！"
++
++#: templates/fruser_list.html:229
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正確"
+ 
+-#: templates/fruser_list.html:227
++#: templates/fruser_list.html:231
+ msgid "Please wait for uploading!"
+ msgstr "請等待上傳！"
+ 
+-#: templates/fruser_list.html:229
++#: templates/fruser_list.html:233
+ msgid "Fail to import fruser!"
+ msgstr "匯入設備使用者失敗"
+ 
+-#: templates/fruser_list.html:257
++#: templates/fruser_list.html:261
+ msgid "Fail to delete fruser"
+ msgstr "刪除設備使用者失敗"
+ 
+-#: templates/fruser_list.html:267
++#: templates/fruser_list.html:271
+ msgid "Duplicate export!"
+ msgstr "重複匯出"
+ 
+@@ -904,13 +908,13 @@ msgstr "重設密碼"
+ msgid "Returns sign-in screen"
+ msgstr "回到登入頁面"
+ 
+-#: templates/registration/forget_password.html:49
+-#: templates/registration/password_reset_complete.html:59
++#: templates/registration/forget_password.html:48
++#: templates/registration/password_reset_complete.html:58
+ msgid "Reset password link has been sent to your E-Mail address"
+ msgstr "重置密碼連結已發送到您的電子信箱"
+ 
+-#: templates/registration/forget_password.html:52
+-#: templates/registration/password_reset_complete.html:62
++#: templates/registration/forget_password.html:51
++#: templates/registration/password_reset_complete.html:61
+ msgid "E-Mail address does not exist"
+ msgstr "電子信箱不存在"
+ 
+@@ -960,11 +964,11 @@ msgstr "請輸入兩次新密碼，以便我們確認您輸入是否一致"
+ msgid "confirm"
+ msgstr "確認"
+ 
+-#: templates/registration/reset_password.html:50
++#: templates/registration/reset_password.html:52
+ msgid "Update error. Please contact us."
+ msgstr "更新錯誤，請跟我們聯絡"
+ 
+-#: templates/registration/reset_password.html:53
++#: templates/registration/reset_password.html:55
+ msgid "Password not match, plase check 'New Password' and 'Confirm Password'."
+ msgstr "請確認輸入的'新密碼'與'確認密碼'是否一致"
+ 
+@@ -1069,128 +1073,129 @@ msgstr "預設角色不能重新命名"
+ msgid "Fail to rename Role"
+ msgstr "角色重新命名失敗"
+ 
+-#: templates/system_settings.html:32
++#: templates/system_settings.html:33
+ msgid "Backup Scheduling"
+ msgstr "備份排程"
+ 
+-#: templates/system_settings.html:38
++#: templates/system_settings.html:39
+ msgid "Manually"
+ msgstr "手動備份"
+ 
+-#: templates/system_settings.html:39
++#: templates/system_settings.html:40
+ msgid "Instantly backup after clicking save"
+ msgstr "點擊儲存後立即備份"
+ 
+-#: templates/system_settings.html:44
++#: templates/system_settings.html:45
+ msgid "Automatic"
+ msgstr "自動備份"
+ 
+-#: templates/system_settings.html:49
++#: templates/system_settings.html:50
+ msgid "Every Month"
+ msgstr "每月"
+ 
+-#: templates/system_settings.html:50
++#: templates/system_settings.html:51
+ msgid "Day"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:50
++#: templates/system_settings.html:51
+ msgid "Time"
+ msgstr "時間"
+ 
+-#: templates/system_settings.html:96
++#: templates/system_settings.html:97
+ msgid "Every Week"
+ msgstr "每週"
+ 
+-#: templates/system_settings.html:97
++#: templates/system_settings.html:98
+ msgid "Sun"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:98
++#: templates/system_settings.html:99
+ msgid "Mon"
+ msgstr "一"
+ 
+-#: templates/system_settings.html:99
++#: templates/system_settings.html:100
+ msgid "Tue"
+ msgstr "二"
+ 
+-#: templates/system_settings.html:100
++#: templates/system_settings.html:101
+ msgid "Wed"
+ msgstr "三"
+ 
+-#: templates/system_settings.html:101
++#: templates/system_settings.html:102
+ msgid "Thu"
+ msgstr "四"
+ 
+-#: templates/system_settings.html:102
++#: templates/system_settings.html:103
+ msgid "Fri"
+ msgstr "五"
+ 
+-#: templates/system_settings.html:103
++#: templates/system_settings.html:104
+ msgid "Sat"
+ msgstr "六"
+ 
+-#: templates/system_settings.html:145
++#: templates/system_settings.html:146
+ msgid "Local backup location"
+ msgstr "本地備份地點"
+ 
+-#: templates/system_settings.html:146
++#: templates/system_settings.html:147
+ msgid "Remote backup FTP Setting"
+ msgstr "異地備份FTP設定"
+ 
+-#: templates/system_settings.html:148 templates/system_settings.html.py:149
++#: templates/system_settings.html:149 templates/system_settings.html.py:150
+ msgid "HOST"
+ msgstr "主機"
+ 
+-#: templates/system_settings.html:150
++#: templates/system_settings.html:151
+ msgid "PORT"
+ msgstr "連接埠"
+ 
+-#: templates/system_settings.html:151
++#: templates/system_settings.html:152
+ msgid "PATH"
+ msgstr "路徑"
+ 
+-#: templates/system_settings.html:154
++#: templates/system_settings.html:155
+ msgid "USERNAME"
+ msgstr "使用者名稱"
+ 
+-#: templates/system_settings.html:155
++#: templates/system_settings.html:156
+ msgid "PASSWORD"
+ msgstr "密碼"
+ 
+-#: templates/system_settings.html:156
++#: templates/system_settings.html:158 templates/system_settings.html.py:268
++#: templates/system_settings.html:272
+ msgid "Connect Test"
+ msgstr "測試連線"
+ 
+-#: templates/system_settings.html:179
++#: templates/system_settings.html:182
+ msgid "System Log"
+ msgstr "系統紀錄"
+ 
+-#: templates/system_settings.html:183
++#: templates/system_settings.html:186
+ msgid "Log count limit"
+ msgstr "Log筆數限制"
+ 
+-#: templates/system_settings.html:185
++#: templates/system_settings.html:188
+ msgid "if the logs exceeds limit"
+ msgstr "若超過筆數限制"
+ 
+-#: templates/system_settings.html:185
++#: templates/system_settings.html:188
+ msgid "keep"
+ msgstr "保留"
+ 
+-#: templates/system_settings.html:187
++#: templates/system_settings.html:190
+ msgid "month data"
+ msgstr "月資料"
+ 
+-#: templates/system_settings.html:187
++#: templates/system_settings.html:190
+ msgid "others will be remove."
+ msgstr "其他移除"
+ 
+-#: templates/system_settings.html:188
++#: templates/system_settings.html:191
+ #, python-format
+ msgid "In limit duration, the logs can be record to 150%% amount."
+ msgstr "若期限內超過筆數限制，最多可以紀錄到1.5倍的筆數限制。"
+ 
+-#: templates/system_settings.html:189
++#: templates/system_settings.html:192
+ #, python-format
+ msgid ""
+ "Over 150%% amount, system will keep latest logs, and remove the other older "
+@@ -1198,65 +1203,85 @@ msgid ""
+ msgstr ""
+ "若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
+ 
+-#: templates/system_settings.html:192
++#: templates/system_settings.html:195
+ msgid "Save FR user register photo image"
+ msgstr "儲存臉部註冊成功照片"
+ 
+-#: templates/system_settings.html:195
++#: templates/system_settings.html:198
+ msgid "Save FR user recognition photo image"
+ msgstr "儲存臉部辨識成功照片"
+ 
+-#: templates/system_settings.html:249
++#: templates/system_settings.html:238
++msgid "Testing"
++msgstr "測試中"
++
++#: templates/system_settings.html:256
+ msgid "FTP connect test successfully"
+ msgstr "FTP連線測試成功"
+ 
+-#: templates/system_settings.html:251
+-msgid "Fail to connect FTP"
+-msgstr "FTP連線失敗"
++#: templates/system_settings.html:258
++msgid "Connect to FTP fail"
++msgstr "無法連線到FTP"
++
++#: templates/system_settings.html:260
++msgid "Login incorrect"
++msgstr "無法登入"
++
++#: templates/system_settings.html:262
++msgid "The path does not exist or can not be accessed"
++msgstr "路徑不存在或無法進入"
++
++#: templates/system_settings.html:264
++msgid "Written permission denied"
++msgstr "寫入權限不足"
+ 
+-#: templates/system_settings.html:289
++#: templates/system_settings.html:266
++msgid "Unknown error"
++msgstr "未知錯誤"
++
++#: templates/system_settings.html:308
+ msgid "Must select one week day!"
+ msgstr "必須選擇一個工作日"
+ 
+-#: templates/system_settings.html:294
++#: templates/system_settings.html:313
+ msgid "Must select correct monthly day!"
+ msgstr "必須選擇正確的月份日期！"
+ 
+-#: templates/system_settings.html:299
++#: templates/system_settings.html:318
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "選擇每月 29~31 日，可能無法每月進行自動備份，您確定要繼續嗎?"
+ 
+-#: templates/system_settings.html:314
++#: templates/system_settings.html:333
+ msgid "Must input correct FTP remote path!"
+ msgstr "必須輸入正確的遠端 FTP 路徑！"
+ 
+-#: templates/system_settings.html:352
++#: templates/system_settings.html:371
+ msgid "Backup successfully"
+ msgstr "備份成功"
+ 
+-#: templates/system_settings.html:354
++#: templates/system_settings.html:373
+ msgid "Backup setting successfully"
+ msgstr "備份設定成功"
+ 
+-#: templates/system_settings.html:358
++#: templates/system_settings.html:377
+ msgid "Fail to setting Backup"
+ msgstr "備份設定失敗"
+ 
+-#: templates/system_settings.html:373
++#: templates/system_settings.html:392
+ msgid "Must input correct log limit value!"
+ msgstr "必須輸入正確的Log筆數限制值！"
+ 
+-#: templates/system_settings.html:378
++#: templates/system_settings.html:397
+ msgid "Must input correct month value for log preservation!"
+ msgstr "Log的保留月份必須輸入正確的值！"
+ 
+-#: templates/system_settings.html:397
++#: templates/system_settings.html:416
+ msgid "Log setting successfully"
+ msgstr "Log設定成功"
+ 
+-#: templates/system_settings.html:400
++#: templates/system_settings.html:419
+ msgid "Fail to setting Log"
+ msgstr "Log設定失敗"
+ 
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 7105626..29d4ede 100755
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -7,6 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
++        <link rel="stylesheet" href="{% static "css/font-awesome.min.css" %}">
+         <title>{% trans "Settings" %}</title>
+     </head>
+ 
+@@ -153,7 +154,9 @@
+                                         <div class="col-md-12">
+                                             {% trans "USERNAME" %}(U):<input type="text" id="BackupRemoteAccount" name="BackupRemoteAccount" maxlength=20 size=20 placeholder="USERNAME">
+                                             {% trans "PASSWORD" %}(W):<input type="password" id="BackupRemotePassword" name="BackupRemotePassword" maxlength=20 size=20 placeholder="PASSWORD">
+-                                            <input type="button" class="btn btn-info btn-sm" id="connect_test" name="connect_test" onclick="OnConnectTestClick()" value="{% trans "Connect Test" %}">
++                                            <button type="button" class="btn btn-info btn-sm" id="connect_test" name="connect_test" onclick="OnConnectTestClick()">
++                                                {% trans "Connect Test" %}
++                                            </button>
+                                         </div>
+                                     </div>
+                                 </div>
+@@ -230,7 +233,10 @@
+             var BackupRemotePort = $('input[name=BackupRemotePort]').val();
+             var BackupRemoteAccount = $('input[name=BackupRemoteAccount]').val();
+             var BackupRemotePassword = $('input[name=BackupRemotePassword]').val();
++            var BackupRemotePath = $('input[name=BackupRemotePath]').val();
+ 
++            $('#connect_test').html('{% trans "Testing" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>');
++            $('#connect_test').prop('disabled', true);
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+@@ -243,15 +249,28 @@
+                     'BackupRemotePort': BackupRemotePort,
+                     'BackupRemoteAccount': BackupRemoteAccount,
+                     'BackupRemotePassword': BackupRemotePassword,
++                    'BackupRemotePath': BackupRemotePath,
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("{% trans "FTP connect test successfully" %}");
++                    } else if (data.CODE == "2") {
++                        alert("{% trans "Connect to FTP fail" %}");
++                    } else if (data.CODE == "3") {
++                        alert("{% trans "Login incorrect" %}");
++                    } else if (data.CODE == "4") {
++                        alert("{% trans "The path does not exist or can not be accessed" %}");
++                    } else if (data.CODE == "5") {
++                        alert("{% trans "Written permission denied" %}");
+                     } else {
+-                        alert("{% trans "Fail to connect FTP" %}");
++                        alert("{% trans "Unknown error" %}");
+                     }
++                    $('#connect_test').html('{% trans "Connect Test" %}');
++                    $('#connect_test').prop('disabled', false);
+                 },
+                 error: function(data) {
++                    $('#connect_test').html('{% trans "Connect Test" %}');
++                    $('#connect_test').prop('disabled', false);
+                 }
+             });
+         }
+-- 
+1.9.1
+

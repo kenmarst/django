@@ -1,0 +1,20 @@
+From 37c56e5f5df41000084474452aa69c6329dc55fe Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 14:04:51 +0800
+Subject: [PATCH 160/443] Commit media/fruserpic folder
+
+---
+ media/fruserpic/.gitignore | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 media/fruserpic/.gitignore
+
+diff --git a/media/fruserpic/.gitignore b/media/fruserpic/.gitignore
+new file mode 100644
+index 0000000..f935021
+--- /dev/null
++++ b/media/fruserpic/.gitignore
+@@ -0,0 +1 @@
++!.gitignore
+-- 
+1.9.1
+

@@ -1,0 +1,35 @@
+From 876936fc00276f2a728a0bb7d158654819c9c655 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 29 Nov 2016 14:30:22 +0800
+Subject: [PATCH 380/443] [FaceIdentify, RFIDVerify] Add fruser name in json
+ response for return to devices.
+
+---
+ api/recognition.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 9e5bea5..054e998 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -168,7 +168,7 @@ def face_identify(request):
+                             for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
+                                 if device.DeviceOId == ip_device:
+                                     Fruserlogs.objects.create(FRUserOId = fruser.OId, FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face identify pass')
+-                                    return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
++                                    return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId}, {'Name' : fruser.Name})))
+                         raise Exception("Permission denied")
+                     else:
+                         raise Exception("Similarity is too low")
+@@ -254,7 +254,7 @@ def rfid_verify(request):
+                     for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+                         for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
+                             if device.DeviceOId == ip_device:
+-                                return JsonResponse(dict(ChainMap(result_pass, {'FRUserId':fruser.FRUserId})))
++                                return JsonResponse(dict(ChainMap(result_pass, {'FRUserId':fruser.FRUserId}, {'Name':fruser.Name})))
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'There is no permission device'})))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+-- 
+1.9.1
+

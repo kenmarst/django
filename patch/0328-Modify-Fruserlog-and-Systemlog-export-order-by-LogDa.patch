@@ -1,0 +1,38 @@
+From ac9c1a9e5f4175f95a87c25368e8b896b34c8896 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 21 Oct 2016 15:33:13 +0800
+Subject: [PATCH 328/443] Modify Fruserlog and Systemlog export order by
+ 'LogDateTime'
+
+---
+ fruserlogs/views.py | 2 +-
+ systemlogs/views.py | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 3903150..25e7384 100755
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -72,6 +72,6 @@ def fruserlog_export(request):
+ 
+     writer = csv.writer(response)
+     writer.writerow([symbol.join(header)])
+-    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Fruserlogs.objects.all()])
++    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Fruserlogs.objects.all().order_by('LogDateTime')])
+ 
+     return response
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 30d6f11..8b0ccd5 100755
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -71,6 +71,6 @@ def systemlog_export(request):
+ 
+     writer = csv.writer(response)
+     writer.writerow([symbol.join(header)])
+-    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Systemlogs.objects.all()])
++    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Systemlogs.objects.all().order_by('LogDateTime')])
+ 
+     return response
+-- 
+1.9.1
+

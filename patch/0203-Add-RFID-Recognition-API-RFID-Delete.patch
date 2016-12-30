@@ -1,0 +1,67 @@
+From 019bda7036da780d1dea908050d03bbb8fd4fd16 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 25 Jul 2016 18:55:13 +0800
+Subject: [PATCH 203/443] Add RFID Recognition API : RFID Delete
+
+---
+ api/recognition.py | 34 ++++++++++++++++++++++++++++++++++
+ br06/urls.py       |  1 +
+ 2 files changed, 35 insertions(+)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 66d0798..7c9881f 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -224,3 +224,37 @@ def rfid_check(request):
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
++
++@csrf_exempt
++def rfid_delete(request):
++    if request.method == 'POST':
++        request_IP = request.META['REMOTE_ADDR']
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'RFID Delete', request_IP = request_IP)
++        try:
++            req = json.loads(request.body.decode('utf-8'))
++            req_key = {'FRUserId'}
++            if all(k in req for k in req_key) and all(req.values()):
++                ip_devices = Devices.objects.get(IP = request_IP)
++                fruser = Frusers.objects.get(FRUserId = req.get('FRUserId', ''))
++                fruser.RFIDCard = ''
++                fruser.save()
++                logContent = '{message_head}Delete RFID successfully'.format(message_head = message_head)
++                return JsonResponse(result_success)
++            else:
++                logContent = '{message_head}Request parameter error'.format(message_head = message_head)
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++
++        except Exception as error:
++            logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        finally:
++            try:
++                print("Writing system log...")
++                Systemlogs.objects.create(Category = "RFID", LogContent = logContent)
++            except Exception as error:
++                logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++    else:
++        return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
++
++
+diff --git a/br06/urls.py b/br06/urls.py
+index 42a6065..b1e9044 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -186,6 +186,7 @@ urlpatterns += [
+     url(r'^api/recognition/face/check/?$', recognition.face_check),
+     url(r'^api/recognition/RFID/verify/?$', recognition.rfid_verify),
+     url(r'^api/recognition/RFID/check/?$', recognition.rfid_check),
++    url(r'^api/recognition/RFID/delete/?$', recognition.rfid_delete),
+ ]
+ 
+ urlpatterns += [
+-- 
+1.9.1
+

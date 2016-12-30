@@ -1,0 +1,23 @@
+From 3558c412f5c4bc6ba90d7abe25fce3c9ce8b8923 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 18 Oct 2016 17:28:21 +0800
+Subject: [PATCH 324/443] Fix 4G sync log path
+
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 476f311..a0e919d 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -199,5 +199,5 @@ RE_4G = 'http://61.247.173.118/daily/importApi/UserFaceLoginRecord/add'
+ QE_4G = 'http://61.247.173.118/daily/loginApi/faceQuery'
+ 
+ CRONJOBS = [
+-    ('*/10 * * * *', 'api.cron.Update_4G_User', '>> /var/log/4G_user_sync.log 2>&1'),
++    ('*/10 * * * *', 'api.cron.Update_4G_User', '>> ~/4G_user_sync.log 2>&1'),
+ ]
+-- 
+1.9.1
+

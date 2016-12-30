@@ -1,0 +1,45 @@
+From b977e42d3d2611fee3135274a83a15e1dd5f5c33 Mon Sep 17 00:00:00 2001
+From: Frank <frank_lin@tw.shuttle.com>
+Date: Tue, 27 Dec 2016 17:38:16 +0800
+Subject: [PATCH 438/443] Modify device IP can duplicate.
+
+---
+ devices/views.py          | 2 +-
+ templates/device_add.html | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+ mode change 100755 => 100644 devices/views.py
+ mode change 100755 => 100644 templates/device_add.html
+
+diff --git a/devices/views.py b/devices/views.py
+old mode 100755
+new mode 100644
+index 7eb1d25..d970991
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -141,7 +141,7 @@ def add_device(request):
+             return JsonResponse(res_code[2])
+         if MAC != '' and Devices.objects.filter(MAC = MAC).exists():
+             return JsonResponse(res_code[3])
+-        if IP == '' or Devices.objects.filter(IP = IP).exists():
++        if not IP:
+             return JsonResponse(res_code[4])
+         Devices.objects.create(Name = Name, MAC = MAC, IP = IP)
+         return JsonResponse(res_code[0])
+diff --git a/templates/device_add.html b/templates/device_add.html
+old mode 100755
+new mode 100644
+index 2311847..e25e22c
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -99,7 +99,7 @@
+                     } else if (data.CODE == "3") {
+                         alert("{% trans "The device MAC-Address is duplicated!" %}");
+                     } else if (data.CODE == "4") {
+-                        alert("{% trans "The device IP address is duplicated!" %}");
++                        alert("{% trans "Please input the correct device IP format! Only numbers and '.' are allowed." %}");
+                     } else {
+                         alert("{% trans "Fail to add the device" %}");
+                     }
+-- 
+1.9.1
+

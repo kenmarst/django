@@ -1,0 +1,25 @@
+From 88289c5dcbb7cd94ad29ac42f49245a5bdd249da Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Mon, 9 May 2016 11:45:18 +0800
+Subject: [PATCH 024/443] fix userlist display bug
+
+---
+ api/models.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/models.py b/api/models.py
+index a02c1b6..4fd84ff 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -202,7 +202,7 @@ class Users(models.Model):
+             Account=self.Account,
+             Password=self.Password,
+             Name=self.Name,
+-            RoleOId=self.RoleOId.Category,
++            RoleOId=self.RoleOId.Name,
+             CreateDate=self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+             UpdateDate=self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+         )
+-- 
+1.9.1
+

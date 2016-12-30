@@ -1,0 +1,52 @@
+From dd504027485ef00da31b82fff9183ea3c55e7bfb Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 2 Aug 2016 13:51:59 +0800
+Subject: [PATCH 213/443] Fix fruser edit of web state bug
+
+Bug fix - fruser edit of web state disable function is not used.
+---
+ frusers/views.py           | 1 +
+ templates/fruser_edit.html | 8 ++++++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 816d7d6..6531ecb 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -193,6 +193,7 @@ def update_fruser(request):
+         Frusers.objects.filter(OId = request.POST['OId']).update(
+             Gender = request.POST['Gender'],
+             Age = request.POST['Age'] or 0,
++            State = request.POST['State'],
+             DisableCauses = request.POST['DisableCauses']
+         )
+         return JsonResponse(res_code[0])
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index 31f1f19..fb27a27 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -134,6 +134,13 @@
+             var Gender = $('select[name=Gender]').val();
+             var Age = $('input[name=Age]').val();
+             var DisableCauses = $('input[name=DisableCauses]').val();
++            var State = $('input[name=State]').prop('checked');
++
++            if (State) {
++                State = 'Disable';
++            } else {
++                State = 'Enable';
++            }
+ 
+             $.ajax({
+                 type: 'post',
+@@ -146,6 +153,7 @@
+                     'OId': {{obj|safe}}.OId,
+                     'Gender': Gender,
+                     'Age': Age,
++                    'State': State,
+                     'DisableCauses': DisableCauses
+                 },
+                 success: function(data) {
+-- 
+1.9.1
+

@@ -1,0 +1,44 @@
+From d2e66f080709b23680b9dcb8ad2d4a81c54d629f Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 18 May 2016 14:41:44 +0800
+Subject: [PATCH 043/443] add systemlog message when user login success
+
+---
+ logsetting/logssetting.json | 1 -
+ user/views.py               | 4 +++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+ delete mode 100644 logsetting/logssetting.json
+
+diff --git a/logsetting/logssetting.json b/logsetting/logssetting.json
+deleted file mode 100644
+index 7f85806..0000000
+--- a/logsetting/logssetting.json
++++ /dev/null
+@@ -1 +0,0 @@
+-[{"symbol":"comma","val0":""}]
+\ No newline at end of file
+diff --git a/user/views.py b/user/views.py
+index c395757..9322a4a 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -3,7 +3,7 @@ from django.shortcuts import render
+ # Create your views here.
+ from datetime import datetime
+ from django.http import HttpResponse
+-from api.models import Users,Role
++from api.models import Users,Role,Systemlogs
+ from django.shortcuts import render
+ from django.contrib import auth
+ from django.http import HttpResponseRedirect
+@@ -112,6 +112,8 @@ def login(request):
+     if request.method == "POST":
+         check_result = json.loads(check_user(request))
+         if check_result["CODE"] == "0":
++            logContent= request.session['Name']+' login success.'
++            Systemlogs.objects.create(Category="User",LogContent=logContent)
+             return HttpResponseRedirect("/user_list")
+         elif check_result["CODE"] == "1":
+             return render(request, 'login.html', {'Result':"Fail",'Code': "9998","Message":"reCAPTCHA validation failed"})
+-- 
+1.9.1
+

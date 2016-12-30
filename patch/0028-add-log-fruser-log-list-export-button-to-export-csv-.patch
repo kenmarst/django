@@ -1,0 +1,145 @@
+From dddb198f802334c944490b2a1354a68e9dd0f447 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 11 May 2016 17:25:34 +0800
+Subject: [PATCH 028/443] add log/fruser log list/export button to export csv
+ file
+
+---
+ br06/urls.py                  |  3 ++-
+ fruserlogs/views.py           | 48 +++++++++++++++++++++++++++++++++++++++++++
+ templates/fruserlog_list.html | 15 +++++++++++++-
+ 3 files changed, 64 insertions(+), 2 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index c7ddb57..314d825 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -19,7 +19,7 @@ from api import user, group, face, recognition, connection
+ from user.views import user_list_view, user_setting, login, logout, change_passwd
+ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view
+-from fruserlogs.views import fruserlog_list_view
++from fruserlogs.views import fruserlog_list_view,fruserlog_export
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, add_device, delete_device
+ 
+ urlpatterns = [
+@@ -31,6 +31,7 @@ urlpatterns = [
+     url(r'^fruser_list/?$', fruser_list_view),
+     url(r'^systemlog_list/?$', systemlog_list_view),
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
++    url(r'^fruserlog_export/?$',fruserlog_export),
+ ]
+ 
+ urlpatterns += [
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 55ed1a8..888e2a8 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -4,6 +4,10 @@ from django.http import JsonResponse
+ from django.http import HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+ from api.models import Fruserlogs, Systemlogs
++from django.views.decorators.csrf import csrf_exempt
++import datetime,types
++import csv
++import json
+ 
+ # Create your views here.
+ 
+@@ -18,3 +22,47 @@ def fruserlog_list_view(request):
+         x['Index'] = index+1
+         index += 1
+     return render(request, 'fruserlog_list.html', {'active': "fruserlog_list", 'obj': result})
++
++@csrf_exempt
++def fruserlog_export(request):
++    #data2=[{'symbol':'!','val0':'FRUserName','val1':'LogDateTime', 'val2':'DeviceOId', 'val3':'LogContent'}]
++    #with open('fruserlogssetting.json', 'w') as outfile:
++    #  json.dump(data2, outfile)
++    try:	
++     with open('fruserlogssetting.json') as f:
++      data=f.read()
++      json_data=json.loads(data)
++      symbol=json_data[0]['symbol']
++      header=[]
++      for i in range(0,len(json_data[0])-1):
++        field = "val"+str(i)
++        header.append(json_data[0][field])
++
++    except:
++      header=['FRUserName','LogDateTime','DeviceOId', 'LogContent']
++      symbol="!" 
++    
++    #json_data=json.loads(data)
++    #symbol=json_data[0]['symbol']
++    #header=[]
++    #for i in range(0,len(json_data[0])-1):
++    #  field = "val"+str(i)
++    #  header.append(json_data[0][field])
++    
++    response = HttpResponse(content_type='text/csv')
++    response['Content-Disposition'] = 'attachment; filename=fruserlog-export-%s.csv' % (
++                        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'),
++                    )
++
++    writer = csv.writer(response)
++
++    obj = Fruserlogs.objects.all()
++
++    writer.writerow([symbol.join([i for i in header])])
++
++    result = [res.as_json() for res in obj]
++    for x in result:
++       writer.writerow([symbol.join([x[i] for i in header])])
++   
++    return response
++
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 9fe1798..3c9bfc2 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -29,13 +29,17 @@
+ 			<div class="col-lg-12">
+ 				<h1 class="page-header">FRUser Log List</h1>
+ 			</div>
++                        <div class="col-lg-12">
++		              <button onClick="onExportClick()" class="btn green pull-right"  value="">Export</button>
++                        <div>
++
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+ 					<!-- <div class="panel-heading">Advanced Table</div> -->
+-					<div class="panel-body">
++				<div class="panel-body">
+ 						<!-- data-url="{%static "data1.json"%}" -->
+ 						<table id="userList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
+ 						    <thead>
+@@ -99,6 +103,11 @@
+ 				title: 'CreateDate',
+ 				sortable: true
+ 			},
++			{
++                                field: 'LogContent',
++                                title: 'Note',
++                                sortable: true
++                        },
+             ],
+ 			data: dataSet
+ 		});
+@@ -116,6 +125,10 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
++ 	function onExportClick(){
++		 //alert("export");
++                 window.location.href = "/fruserlog_export/"  
++	}
+ 	</script>
+ </body>
+ 
+-- 
+1.9.1
+

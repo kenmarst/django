@@ -1,0 +1,25 @@
+From e60d382be800ac2e71a2e3378de6d52cd77d36cc Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Tue, 14 Jun 2016 14:36:40 +0800
+Subject: [PATCH 124/443] change user_add email type.
+
+---
+ templates/user_add.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/user_add.html b/templates/user_add.html
+index e51ef88..6f4644e 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -58,7 +58,7 @@
+                                             {% trans "E-Mail" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                                <input type="text" class="form-control" placeholder="" name="email">
++                                                <input type="email" class="form-control" placeholder="" name="email">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+-- 
+1.9.1
+

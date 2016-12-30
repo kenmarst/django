@@ -1,0 +1,1924 @@
+From d537ebc19210fe2605887d2d429cd0045e95a32b Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 29 Sep 2016 15:04:24 +0800
+Subject: [PATCH 297/443] Add the input field check function
+
+Add the input field check function of fruser group & user group & role.
+Modify the back button function for new specification.
+Bug fix - dashboard & role list web page will show error message in log.
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ role/views.py                                |  14 +--
+ templates/dashboard.html                     |   8 +-
+ templates/fruser_add.html                    |   6 +-
+ templates/fruser_edit.html                   |   2 +-
+ templates/frusergroup_add.html               |  69 +++---------
+ templates/frusergroup_edit.html              |  65 +++++------
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 16401 -> 16597 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 156 ++++++++++++++-------------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 16401 -> 16597 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 156 ++++++++++++++-------------
+ templates/role_add.html                      |  58 ++++------
+ templates/role_list.html                     |  30 +-----
+ templates/role_permission.html               |  21 ----
+ templates/role_rename.html                   |  45 +++-----
+ templates/user_add.html                      |   4 +-
+ templates/user_group_add.html                |  69 +++---------
+ templates/user_group_edit.html               |  65 +++++------
+ templates/user_update.html                   |   5 +-
+ 22 files changed, 296 insertions(+), 481 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 22e23183a045be2a198c9eff8edf6b6c0ed73836..454b3074037c902c9de3b3ca74abecf7a7890958 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrGd(8S8bY~x2kMgTUB1*8A~
+
+delta 18
+ZcmZo-X=0i1irrYj(A>(za^puqMgTT*1*8A~
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index bbf630d..2fb8c5a 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 17:49+0800\n"
++"POT-Creation-Date: 2016-09-29 14:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index b05ff56c83f95533608db796206036482e42d084..454b3074037c902c9de3b3ca74abecf7a7890958 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irrGd(8S8bY~x2kMgTUB1*8A~
+
+delta 18
+ZcmZo-X=0i1irrYj(A>(zV&g|aMgTT$1)~4}
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 43ed5f8..2fb8c5a 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 17:48+0800\n"
++"POT-Creation-Date: 2016-09-29 14:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/role/views.py b/role/views.py
+index 6638f4f..12f39c6 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -128,7 +128,7 @@ def role_rename_view(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+-    return render(request, 'role_rename.html', {'obj': {'OId': request.GET['OId']}})
++    return render(request, 'role_rename.html', {'obj': Role.objects.get(OId = request.GET['OId']).as_json()})
+ 
+ 
+ def permission_save(request):
+@@ -167,14 +167,14 @@ def rename_role(request):
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+         if Role.objects.get(OId = request.POST['OId']).Category == 'System':
+-            return JsonResponse(res_code[0])
++            return JsonResponse(res_code[2])
+         Role.objects.filter(OId = request.POST['OId']).update(
+             Name = request.POST['Name'],
+             UpdateDate = datetime.now()
+         )
+-        return JsonResponse(res_code[1])
++        return JsonResponse(res_code[0])
+     except:
+-        return JsonResponse(res_code[2])
++        return JsonResponse(res_code[1])
+ 
+ def delete_role(request):
+     login_request = json.loads(check_login(request, permission))
+@@ -182,13 +182,13 @@ def delete_role(request):
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+         if Role.objects.get(OId = request.POST['OId']).Category == 'System':
+-            return JsonResponse(res_code[0])
++            return JsonResponse(res_code[2])
+         Users.objects.filter(RoleOId = request.POST['OId']).update(
+             RoleOId = Role.objects.get(Name = 'Users(default)'),
+             UpdateDate = datetime.now()
+         )
+         Role.objects.filter(OId = request.POST['OId']).delete()
+         Acl.objects.filter(RoleOId = request.POST['OId']).delete()
+-        return JsonResponse(res_code[1])
++        return JsonResponse(res_code[0])
+     except:
+-        return JsonResponse(res_code[2])
++        return JsonResponse(res_code[1])
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 6d0129d..b2e1500 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -125,12 +125,6 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "js/chart.min.js" %}"></script>
+-        <script src="{% static "js/chart-data.js" %}"></script>
+-        <script src="{% static "js/easypiechart.js" %}"></script>
+-        <script src="{% static "js/easypiechart-data.js" %}"></script>
+-        <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+-        <script src="{% static "js/easypiechart-data.js" %}"></script>
+         <script>
+             var language = "{{ LANGUAGE_CODE }}";
+             if (language == "zh-tw") {
+@@ -182,7 +176,7 @@
+                     title: '{% trans "Latest Update Time" %}',
+                 }
+                 ],
+-                    data: {{frusers|safe}}
++                data: {{frusers|safe}}
+             });
+         </script>
+     </body>
+diff --git a/templates/fruser_add.html b/templates/fruser_add.html
+index 041fd57..9358cac 100644
+--- a/templates/fruser_add.html
++++ b/templates/fruser_add.html
+@@ -39,14 +39,14 @@
+                                             {% trans "FRUserId" %} :
+                                         </label>
+                                         <div class="col-md-2">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Input the user ID" %}" title="{% trans "Input the user ID" %}" name="FRUserId" AutoComplete="Off" pattern="[\w-]{1,16}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "User ID can only contain 1 to 16 bit of English or Number or '_' or '-'" %}`)" autofocus required>
++                                            <input type="text" class="form-control" placeholder="{% trans "Input the user ID" %}" title="{% trans "Input the user ID" %}" name="FRUserId" AutoComplete="Off" pattern="[\w-]{1,16}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "The user ID can only contain 1 to 16 bit of English or Number or '_' or '-'" %}`)" autofocus required>
+                                         </div>
+                                         <label class="col-md-1 control-label">
+ 					                        <i style="color: red;">*</i>
+                                             {% trans "Name" %} :
+                                         </label>
+                                         <div class="col-md-2">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Input your name" %}" title="{% trans "Input your name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
++                                            <input type="text" class="form-control" placeholder="{% trans "Input your name" %}" title="{% trans "Input your name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+                                         <label class="col-md-1 control-label checkbox">
+                                             <input type="checkbox" name="State">{% trans "Disable" %}
+@@ -71,7 +71,7 @@
+                                             {% trans "Age" %} :
+                                         </label>
+                                         <div class="col-md-2">
+-                                            <input type="number" class="form-control" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input the number" %}')" required>
++                                            <input type="number" class="form-control" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" min="1" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "The age can only be positive integers" %}')" required>
+                                         </div>
+                                         <div class="col-md-offset-1 col-md-3" align="right">
+                                             <button type="button" class="btn btn-default" onclick="location.href='/fruser_list'">{% trans "Back" %}</button>
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index 642aebc..e805b45 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -67,7 +67,7 @@
+                                             {% trans "Age" %} :
+                                         </label>
+                                         <div class="col-md-2">
+-                                            <input type="number" class="form-control" value="{{obj.Age}}" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input the number" %}')" required>
++                                            <input type="number" class="form-control" value="{{obj.Age}}" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" min="1" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "The age can only be positive integers" %}')" required>
+                                         </div>
+                                         <div class="col-md-offset-1 col-md-3" align="right">
+                                             <button type="button" class="btn btn-default" onclick="location.href='/fruser_list'">{% trans "Back" %}</button>
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index c09bc36..4cb9592 100644
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -31,25 +31,23 @@
+                             <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <span style="color: red;">*</span> {% trans "Group Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input Group Name" name="Name" required="required">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the group name" %}" title="{% trans "Please input the group name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+                                     </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default" onclick="addAnother = false;">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-default" onclick="addAnother = true;">{% trans "Save and Add another" %}</button>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                    <a class="btn default" onclick="onSaveAnotherClick()">{% trans "Save and Add another" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -76,45 +74,11 @@
+             return cookieValue;
+         }
+ 
+-        function onSaveClick(){
+-            var Name = $('input[name=Name]').val();
++        var addAnother = false;
+ 
+-            if(!Name){
+-                alert("{% trans "please enter correct information" %}");
+-                return
+-            }
+-
+-            $.ajax({
+-                type: 'post',
+-                traditional: true,
+-                url: '/add_frusergroup/',
+-                async: true,
+-                dataType: 'json',
+-                data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
+-                    'Name': Name,
+-                },
+-                success: function(data) {
+-                    if (data.CODE == "0") {
+-                        alert("{% trans "Group add successfully" %}");
+-                        location.href = '/fruser_group/';
+-                    } else {
+-                        alert("{% trans "Fail to add group" %}");
+-                    }
+-                },
+-                error: function(data) {
+-                }
+-            });
+-        }
+-
+-        function onSaveAnotherClick(){
++        function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+-            if(!Name){
+-                alert("{% trans "please enter correct information" %}");
+-                return
+-            }
+-
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+@@ -128,22 +92,17 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("{% trans "Group add successfully" %}");
+-                        location = loaction;
++                        if (addAnother) {
++                            location.reload();
++                        } else {
++                            location.href = '/fruser_group/';
++                        }
+                     } else {
+                         alert("{% trans "Fail to add group" %}");
+                     }
+                 },
+-                error: function(data) {
+-                }
+             });
+         }
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index df35540..fa87023 100644
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -48,24 +48,22 @@
+                             <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+                                             <span style="color: red;">*</span> {% trans "Group Name" %} :
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Group Name" name="Name" required="required">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="{% trans "Please input the group name" %}" title="{% trans "Please input the group name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+                                     </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="location.href='/fruser_group'">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -95,40 +93,27 @@
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+-            if (Name) {
+-                $.ajax({
+-                    type: 'post',
+-                    traditional: true,
+-                    url: '/change_frusergroup_name/',
+-                    async: true,
+-                    dataType: 'json',
+-                    data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
+-                        'OId': {{obj|safe}}.OId,
+-                        'Name': Name
+-                    },
+-                    success: function(data) {
+-                        if (data.CODE == "0") {
+-                            alert("{% trans "Change group name successfully" %}");
+-                            location.reload();
+-                        } else {
+-                            alert("{% trans "Fail to change group name" %}");
+-                        }
+-                    },
+-                    error: function(data) {
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/change_frusergroup_name/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': {{obj|safe}}.OId,
++                    'Name': Name
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("{% trans "Change group name successfully" %}");
++                        location.reload();
++                    } else {
++                        alert("{% trans "Fail to change group name" %}");
+                     }
+-                });
+-            } else {
+-                alert("{% trans "Please input group name" %}");
+-            }
++                },
++            });
+         }
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index ccf346560418f1d5887d33a60bde0725b5d8bcc4..bbb27bfd0cfcb0e0fb1e55a948b31364bf0a5772 100644
+GIT binary patch
+delta 6180
+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
+MWJvi>J(EKJ16`QCYybcN
+
+delta 5958
+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
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 3fce0e9..51e78df 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 17:49+0800\n"
++"POT-Creation-Date: 2016-09-29 14:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -70,28 +70,28 @@ msgstr "查看详情"
+ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+-#: templates/dashboard.html:152 templates/dashboard.html.py:170
++#: templates/dashboard.html:146 templates/dashboard.html.py:164
+ #: templates/fruser_list.html:100 templates/frusergroups_list.html.py:72
+-#: templates/fruserlog_list.html:93 templates/role_list.html.py:89
++#: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "编号"
+ 
+-#: templates/dashboard.html:156 templates/device_add.html.py:39
++#: templates/dashboard.html:150 templates/device_add.html.py:39
+ #: templates/device_edit.html:53 templates/device_list.html.py:83
+ #: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "设备名称"
+ 
+-#: templates/dashboard.html:160 templates/dashboard.html.py:182
++#: templates/dashboard.html:154 templates/dashboard.html.py:176
+ msgid "Latest Update Time"
+ msgstr "最后更新时间"
+ 
+-#: templates/dashboard.html:174
++#: templates/dashboard.html:168
+ msgid "User ID"
+ msgstr "工号"
+ 
+-#: templates/dashboard.html:178
++#: templates/dashboard.html:172
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -111,31 +111,28 @@ msgstr "设备"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+ #: templates/device_settings.html:300 templates/fruser_add.html.py:77
+-#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:48
+-#: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
+-#: templates/role_permission.html:37 templates/role_rename.html.py:42
+-#: templates/user_add.html:95 templates/user_group_add.html.py:48
+-#: templates/user_group_edit.html:65 templates/user_setting.html.py:118
++#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:45
++#: templates/frusergroup_edit.html:62 templates/role_add.html.py:50
++#: templates/role_permission.html:37 templates/role_rename.html.py:44
++#: templates/user_add.html:95 templates/user_group_add.html.py:45
++#: templates/user_group_edit.html:62 templates/user_setting.html.py:118
+ #: templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+ #: templates/device_settings.html:301 templates/fruser_add.html.py:78
+-#: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:49
+-#: templates/frusergroup_edit.html:66 templates/logsetting.html.py:106
+-#: templates/role_add.html:47 templates/role_permission.html.py:38
+-#: templates/role_rename.html:43 templates/system_settings.html.py:162
++#: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:46
++#: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
++#: templates/role_add.html:51 templates/role_permission.html.py:38
++#: templates/role_rename.html:45 templates/system_settings.html.py:162
+ #: templates/system_settings.html:199 templates/user_add.html.py:96
+-#: templates/user_group_add.html:49 templates/user_group_edit.html.py:66
++#: templates/user_group_add.html:46 templates/user_group_edit.html.py:63
+ #: templates/user_setting.html:119 templates/user_update.html.py:97
+ msgid "Save"
+ msgstr "储存"
+ 
+-#: templates/device_add.html:101 templates/frusergroup_add.html.py:83
+-#: templates/frusergroup_add.html:114 templates/role_add.html.py:78
+-#: templates/role_rename.html:74 templates/user_group_add.html.py:83
+-#: templates/user_group_add.html:114
++#: templates/device_add.html:101
+ msgid "please enter correct information"
+ msgstr "请输入正确的讯息"
+ 
+@@ -209,7 +206,7 @@ msgstr "设备使用者群组管理"
+ 
+ #: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+ #: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
+-#: templates/role_list.html:126 templates/user_group_devices.html.py:110
++#: templates/role_list.html:121 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+@@ -239,16 +236,15 @@ msgstr "设备"
+ msgid "Fail to delete group"
+ msgstr "删除群组失败"
+ 
+-#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:102
+-#: templates/frusergroup_add.html.py:133 templates/user_group_add.html:102
+-#: templates/user_group_add.html.py:133
++#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:101
++#: templates/user_group_add.html.py:101
+ msgid "Fail to add group"
+ msgstr "新增群组失败"
+ 
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+-#: templates/menu.html.py:44 templates/role_permission.html:85
++#: templates/menu.html.py:44 templates/role_permission.html:80
+ #: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+ #: templates/user_group_members.html:39
+ msgid "Device List"
+@@ -342,7 +338,8 @@ msgid "Input the user ID"
+ msgstr "请输入使用者ID"
+ 
+ #: templates/fruser_add.html:42
+-msgid "User ID can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgid ""
++"The user ID can only contain 1 to 16 bit of English or Number or '_' or '-'"
+ msgstr "使用者ID只能包含1到16码的英文、数字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+@@ -358,12 +355,15 @@ msgstr "姓名"
+ msgid "Input your name"
+ msgstr "请输入姓名"
+ 
+-#: templates/fruser_add.html:49 templates/user_add.html.py:51
++#: templates/fruser_add.html:49 templates/frusergroup_add.html.py:41
++#: templates/frusergroup_edit.html:58 templates/role_add.html.py:38
++#: templates/role_rename.html:40 templates/user_add.html.py:51
++#: templates/user_group_add.html:41 templates/user_group_edit.html.py:58
+ #: templates/user_update.html:52
+ msgid ""
+-"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
+-"'-'"
+-msgstr "帐号只能包含25码的中文、英文、数字、'_'、'-'"
++"The name can only contain 1 to 25 bit of Chinese or English or Number or '_' "
++"or '-'"
++msgstr "名称只能包含25码的中文、英文、数字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:52 templates/fruser_edit.html.py:48
+ msgid "Disable"
+@@ -394,8 +394,8 @@ msgid "Ex : 25"
+ msgstr "例如 : 25"
+ 
+ #: templates/fruser_add.html:74 templates/fruser_edit.html.py:70
+-msgid "Please input the number"
+-msgstr "请输入号码"
++msgid "The age can only be positive integers"
++msgstr "年龄只能是正整数"
+ 
+ #: templates/fruser_add.html:142
+ msgid "Create fruser successfully"
+@@ -424,7 +424,7 @@ msgstr "更新设备使用者失败"
+ 
+ #: templates/fruser_list.html:10 templates/fruser_list.html.py:18
+ #: templates/fruser_list.html:24 templates/menu.html.py:47
+-#: templates/role_permission.html:97
++#: templates/role_permission.html:92
+ msgid "FR User List"
+ msgstr "设备使用者管理"
+ 
+@@ -453,7 +453,7 @@ msgstr "关闭"
+ msgid "Upload"
+ msgstr "上传"
+ 
+-#: templates/fruser_list.html:119 templates/role_list.html.py:108
++#: templates/fruser_list.html:119 templates/role_list.html.py:103
+ msgid "Create Date"
+ msgstr "建立时间"
+ 
+@@ -491,12 +491,17 @@ msgstr "新增设备使用者群组"
+ msgid "Group Name"
+ msgstr "群组名称"
+ 
+-#: templates/frusergroup_add.html:50 templates/user_group_add.html.py:50
++#: templates/frusergroup_add.html:41 templates/frusergroup_edit.html.py:58
++#: templates/user_group_add.html:41 templates/user_group_edit.html.py:58
++msgid "Please input the group name"
++msgstr "请输入群组名称"
++
++#: templates/frusergroup_add.html:47 templates/role_add.html.py:52
++#: templates/user_group_add.html:47
+ msgid "Save and Add another"
+ msgstr "储存并继续建立"
+ 
+-#: templates/frusergroup_add.html:99 templates/frusergroup_add.html.py:130
+-#: templates/user_group_add.html:99 templates/user_group_add.html.py:130
++#: templates/frusergroup_add.html:94 templates/user_group_add.html.py:94
+ msgid "Group add successfully"
+ msgstr "群组新增成功"
+ 
+@@ -535,18 +540,14 @@ msgstr "搜寻设备"
+ msgid "from this group"
+ msgstr "群组"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
+ msgid "Change group name successfully"
+ msgstr "群组名称变更成功"
+ 
+-#: templates/frusergroup_edit.html:115 templates/user_group_edit.html:115
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
+ msgid "Fail to change group name"
+ msgstr "变更群组名称失败"
+ 
+-#: templates/frusergroup_edit.html:122 templates/user_group_edit.html:122
+-msgid "Please input group name"
+-msgstr "请输入群组名称"
+-
+ #: templates/frusergroup_member.html:10
+ msgid "FR User Group Member"
+ msgstr "FR群组成员管理"
+@@ -631,7 +632,7 @@ msgstr "成功"
+ msgid "Fail"
+ msgstr "失败"
+ 
+-#: templates/menu.html:33 templates/role_permission.html.py:75
++#: templates/menu.html:33 templates/role_permission.html.py:70
+ msgid "System"
+ msgstr "系统"
+ 
+@@ -650,11 +651,11 @@ msgstr "网站使用者群组管理"
+ msgid "Role and Permission"
+ msgstr "角色管理与权限"
+ 
+-#: templates/menu.html:50 templates/role_permission.html.py:109
++#: templates/menu.html:50 templates/role_permission.html.py:104
+ msgid "FR User Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/menu.html:54 templates/role_permission.html.py:121
++#: templates/menu.html:54 templates/role_permission.html.py:116
+ msgid "Log"
+ msgstr "纪录"
+ 
+@@ -757,26 +758,35 @@ msgstr "请确认输入的'新密码'与'确认密码'是否一致"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:36 templates/role_list.html.py:93
++#: templates/role_add.html:36 templates/role_list.html.py:88
++#: templates/role_rename.html:37
+ msgid "Role Name"
+ msgstr "角色名称"
+ 
+-#: templates/role_add.html:40 templates/role_list.html.py:98
++#: templates/role_add.html:38 templates/role_rename.html.py:40
++msgid "Please input the role name"
++msgstr "请输入角色名称"
++
++#: templates/role_add.html:43 templates/role_list.html.py:93
+ msgid "Sort"
+ msgstr "排序"
+ 
+-#: templates/role_add.html:95
++#: templates/role_add.html:46
++msgid "Please input the sort number."
++msgstr "请输入排序号码"
++
++#: templates/role_add.html:46
++msgid "The sort number can only be positive integer."
++msgstr "排序号码只能是正整数"
++
++#: templates/role_add.html:99
+ msgid "Role add successfully"
+ msgstr "角色新增成功"
+ 
+-#: templates/role_add.html:98
++#: templates/role_add.html:106
+ msgid "Fail to add Role"
+ msgstr "角色新增失败"
+ 
+-#: templates/role_add.html:118
+-msgid "Please input 'Sort' number."
+-msgstr "请输入排序号码"
+-
+ #: templates/role_list.html:10 templates/role_list.html.py:24
+ #: templates/role_list.html:35
+ msgid "Role List"
+@@ -790,27 +800,27 @@ msgstr "建立新角色"
+ msgid "Role Permission"
+ msgstr "角色权限"
+ 
+-#: templates/role_list.html:103 templates/systemlog_list.html.py:85
++#: templates/role_list.html:98 templates/systemlog_list.html.py:85
+ msgid "Category"
+ msgstr "类别"
+ 
+-#: templates/role_list.html:113
++#: templates/role_list.html:108
+ msgid "Update Date"
+ msgstr "更新时间"
+ 
+-#: templates/role_list.html:125
++#: templates/role_list.html:120
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:150
++#: templates/role_list.html:145
+ msgid "Confirm to delete this Role"
+ msgstr "您是否确认要删除这个角色"
+ 
+-#: templates/role_list.html:165
++#: templates/role_list.html:160
+ msgid "Default role cannot delete"
+ msgstr "预设的角色无法删除"
+ 
+-#: templates/role_list.html:169
++#: templates/role_list.html:162
+ msgid "Fail to delete role"
+ msgstr "删除这个角色失败"
+ 
+@@ -819,11 +829,11 @@ msgstr "删除这个角色失败"
+ msgid "Permission Settings"
+ msgstr "权限设定"
+ 
+-#: templates/role_permission.html:70
++#: templates/role_permission.html:65
+ msgid "Role / Permission"
+ msgstr "角色 / 权限"
+ 
+-#: templates/role_permission.html:167
++#: templates/role_permission.html:162
+ msgid "permission save successfully"
+ msgstr "权限储存成功"
+ 
+@@ -832,19 +842,15 @@ msgstr "权限储存成功"
+ msgid "Role Rename"
+ msgstr "角色重新命名"
+ 
+-#: templates/role_rename.html:36
+-msgid "New Name"
+-msgstr "新名称"
++#: templates/role_rename.html:90
++msgid "Role Rename successfully"
++msgstr "角色重新命名成功"
+ 
+-#: templates/role_rename.html:92
++#: templates/role_rename.html:93
+ msgid "Default role cannot rename"
+ msgstr "预设角色不能重新命名"
+ 
+-#: templates/role_rename.html:95
+-msgid "Role Rename successfully"
+-msgstr "角色重新命名成功"
+-
+-#: templates/role_rename.html:98
++#: templates/role_rename.html:96
+ msgid "Fail to rename Role"
+ msgstr "角色重新命名失败"
+ 
+@@ -1066,7 +1072,8 @@ msgid "Please input your account"
+ msgstr "请输入帐号"
+ 
+ #: templates/user_add.html:42
+-msgid "Account can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgid ""
++"The account can only contain 1 to 16 bit of English or Number or '_' or '-'"
+ msgstr "帐号只能包含1到16码的英文、数字、'_'、'-'"
+ 
+ #: templates/user_add.html:51 templates/user_update.html.py:52
+@@ -1214,6 +1221,3 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失败"
+-
+-#~ msgid "Save user photo image"
+-#~ msgstr "储存建档资料"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 23aba2c66f3a05587f41fb6f90d9cc9689355c05..023e2b734347b1312fa1edfe419ffdf686602330 100644
+GIT binary patch
+delta 6179
+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
+MWJu)?eUd}}1CL?6<^TWy
+
+delta 5958
+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
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 592a431..de603b3 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 17:48+0800\n"
++"POT-Creation-Date: 2016-09-29 14:46+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -70,28 +70,28 @@ msgstr "查看詳情"
+ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+-#: templates/dashboard.html:152 templates/dashboard.html.py:170
++#: templates/dashboard.html:146 templates/dashboard.html.py:164
+ #: templates/fruser_list.html:100 templates/frusergroups_list.html.py:72
+-#: templates/fruserlog_list.html:93 templates/role_list.html.py:89
++#: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "編號"
+ 
+-#: templates/dashboard.html:156 templates/device_add.html.py:39
++#: templates/dashboard.html:150 templates/device_add.html.py:39
+ #: templates/device_edit.html:53 templates/device_list.html.py:83
+ #: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "設備名稱"
+ 
+-#: templates/dashboard.html:160 templates/dashboard.html.py:182
++#: templates/dashboard.html:154 templates/dashboard.html.py:176
+ msgid "Latest Update Time"
+ msgstr "最後更新時間"
+ 
+-#: templates/dashboard.html:174
++#: templates/dashboard.html:168
+ msgid "User ID"
+ msgstr "工號"
+ 
+-#: templates/dashboard.html:178
++#: templates/dashboard.html:172
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -111,31 +111,28 @@ msgstr "設備"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+ #: templates/device_settings.html:300 templates/fruser_add.html.py:77
+-#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:48
+-#: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
+-#: templates/role_permission.html:37 templates/role_rename.html.py:42
+-#: templates/user_add.html:95 templates/user_group_add.html.py:48
+-#: templates/user_group_edit.html:65 templates/user_setting.html.py:118
++#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:45
++#: templates/frusergroup_edit.html:62 templates/role_add.html.py:50
++#: templates/role_permission.html:37 templates/role_rename.html.py:44
++#: templates/user_add.html:95 templates/user_group_add.html.py:45
++#: templates/user_group_edit.html:62 templates/user_setting.html.py:118
+ #: templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+ #: templates/device_settings.html:301 templates/fruser_add.html.py:78
+-#: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:49
+-#: templates/frusergroup_edit.html:66 templates/logsetting.html.py:106
+-#: templates/role_add.html:47 templates/role_permission.html.py:38
+-#: templates/role_rename.html:43 templates/system_settings.html.py:162
++#: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:46
++#: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
++#: templates/role_add.html:51 templates/role_permission.html.py:38
++#: templates/role_rename.html:45 templates/system_settings.html.py:162
+ #: templates/system_settings.html:199 templates/user_add.html.py:96
+-#: templates/user_group_add.html:49 templates/user_group_edit.html.py:66
++#: templates/user_group_add.html:46 templates/user_group_edit.html.py:63
+ #: templates/user_setting.html:119 templates/user_update.html.py:97
+ msgid "Save"
+ msgstr "儲存"
+ 
+-#: templates/device_add.html:101 templates/frusergroup_add.html.py:83
+-#: templates/frusergroup_add.html:114 templates/role_add.html.py:78
+-#: templates/role_rename.html:74 templates/user_group_add.html.py:83
+-#: templates/user_group_add.html:114
++#: templates/device_add.html:101
+ msgid "please enter correct information"
+ msgstr "請輸入正確的訊息"
+ 
+@@ -209,7 +206,7 @@ msgstr "設備使用者群組管理"
+ 
+ #: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+ #: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
+-#: templates/role_list.html:126 templates/user_group_devices.html.py:110
++#: templates/role_list.html:121 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+@@ -239,16 +236,15 @@ msgstr "設備"
+ msgid "Fail to delete group"
+ msgstr "刪除群組失敗"
+ 
+-#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:102
+-#: templates/frusergroup_add.html.py:133 templates/user_group_add.html:102
+-#: templates/user_group_add.html.py:133
++#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:101
++#: templates/user_group_add.html.py:101
+ msgid "Fail to add group"
+ msgstr "新增群組失敗"
+ 
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+-#: templates/menu.html.py:44 templates/role_permission.html:85
++#: templates/menu.html.py:44 templates/role_permission.html:80
+ #: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+ #: templates/user_group_members.html:39
+ msgid "Device List"
+@@ -342,7 +338,8 @@ msgid "Input the user ID"
+ msgstr "請輸入使用者ID"
+ 
+ #: templates/fruser_add.html:42
+-msgid "User ID can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgid ""
++"The user ID can only contain 1 to 16 bit of English or Number or '_' or '-'"
+ msgstr "使用者ID只能包含1到16碼的英文、數字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+@@ -358,12 +355,15 @@ msgstr "姓名"
+ msgid "Input your name"
+ msgstr "請輸入姓名"
+ 
+-#: templates/fruser_add.html:49 templates/user_add.html.py:51
++#: templates/fruser_add.html:49 templates/frusergroup_add.html.py:41
++#: templates/frusergroup_edit.html:58 templates/role_add.html.py:38
++#: templates/role_rename.html:40 templates/user_add.html.py:51
++#: templates/user_group_add.html:41 templates/user_group_edit.html.py:58
+ #: templates/user_update.html:52
+ msgid ""
+-"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
+-"'-'"
+-msgstr "帳號只能包含25碼的中文、英文、數字、'_'、'-'"
++"The name can only contain 1 to 25 bit of Chinese or English or Number or '_' "
++"or '-'"
++msgstr "名稱只能包含25碼的中文、英文、數字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:52 templates/fruser_edit.html.py:48
+ msgid "Disable"
+@@ -394,8 +394,8 @@ msgid "Ex : 25"
+ msgstr "例如 : 25"
+ 
+ #: templates/fruser_add.html:74 templates/fruser_edit.html.py:70
+-msgid "Please input the number"
+-msgstr "請輸入號碼"
++msgid "The age can only be positive integers"
++msgstr "年齡只能是正整數"
+ 
+ #: templates/fruser_add.html:142
+ msgid "Create fruser successfully"
+@@ -424,7 +424,7 @@ msgstr "更新設備使用者失敗"
+ 
+ #: templates/fruser_list.html:10 templates/fruser_list.html.py:18
+ #: templates/fruser_list.html:24 templates/menu.html.py:47
+-#: templates/role_permission.html:97
++#: templates/role_permission.html:92
+ msgid "FR User List"
+ msgstr "設備使用者管理"
+ 
+@@ -453,7 +453,7 @@ msgstr "關閉"
+ msgid "Upload"
+ msgstr "上傳"
+ 
+-#: templates/fruser_list.html:119 templates/role_list.html.py:108
++#: templates/fruser_list.html:119 templates/role_list.html.py:103
+ msgid "Create Date"
+ msgstr "建立時間"
+ 
+@@ -491,12 +491,17 @@ msgstr "新增設備使用者群組"
+ msgid "Group Name"
+ msgstr "群組名稱"
+ 
+-#: templates/frusergroup_add.html:50 templates/user_group_add.html.py:50
++#: templates/frusergroup_add.html:41 templates/frusergroup_edit.html.py:58
++#: templates/user_group_add.html:41 templates/user_group_edit.html.py:58
++msgid "Please input the group name"
++msgstr "請輸入群組名稱"
++
++#: templates/frusergroup_add.html:47 templates/role_add.html.py:52
++#: templates/user_group_add.html:47
+ msgid "Save and Add another"
+ msgstr "儲存並繼續建立"
+ 
+-#: templates/frusergroup_add.html:99 templates/frusergroup_add.html.py:130
+-#: templates/user_group_add.html:99 templates/user_group_add.html.py:130
++#: templates/frusergroup_add.html:94 templates/user_group_add.html.py:94
+ msgid "Group add successfully"
+ msgstr "群組新增成功"
+ 
+@@ -535,18 +540,14 @@ msgstr "搜尋設備"
+ msgid "from this group"
+ msgstr "群組"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
+ msgid "Change group name successfully"
+ msgstr "群組名稱變更成功"
+ 
+-#: templates/frusergroup_edit.html:115 templates/user_group_edit.html:115
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
+ msgid "Fail to change group name"
+ msgstr "變更群組名稱失敗"
+ 
+-#: templates/frusergroup_edit.html:122 templates/user_group_edit.html:122
+-msgid "Please input group name"
+-msgstr "請輸入群組名稱"
+-
+ #: templates/frusergroup_member.html:10
+ msgid "FR User Group Member"
+ msgstr "FR群組成員管理"
+@@ -631,7 +632,7 @@ msgstr "成功"
+ msgid "Fail"
+ msgstr "失敗"
+ 
+-#: templates/menu.html:33 templates/role_permission.html.py:75
++#: templates/menu.html:33 templates/role_permission.html.py:70
+ msgid "System"
+ msgstr "系統"
+ 
+@@ -650,11 +651,11 @@ msgstr "網站使用者群組管理"
+ msgid "Role and Permission"
+ msgstr "角色管理與權限"
+ 
+-#: templates/menu.html:50 templates/role_permission.html.py:109
++#: templates/menu.html:50 templates/role_permission.html.py:104
+ msgid "FR User Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/menu.html:54 templates/role_permission.html.py:121
++#: templates/menu.html:54 templates/role_permission.html.py:116
+ msgid "Log"
+ msgstr "紀錄"
+ 
+@@ -757,26 +758,35 @@ msgstr "請確認輸入的'新密碼'與'確認密碼'是否一致"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:36 templates/role_list.html.py:93
++#: templates/role_add.html:36 templates/role_list.html.py:88
++#: templates/role_rename.html:37
+ msgid "Role Name"
+ msgstr "角色名稱"
+ 
+-#: templates/role_add.html:40 templates/role_list.html.py:98
++#: templates/role_add.html:38 templates/role_rename.html.py:40
++msgid "Please input the role name"
++msgstr "請輸入角色名稱"
++
++#: templates/role_add.html:43 templates/role_list.html.py:93
+ msgid "Sort"
+ msgstr "排序"
+ 
+-#: templates/role_add.html:95
++#: templates/role_add.html:46
++msgid "Please input the sort number."
++msgstr "請輸入排序號碼"
++
++#: templates/role_add.html:46
++msgid "The sort number can only be positive integer."
++msgstr "排序號碼只能是正整數"
++
++#: templates/role_add.html:99
+ msgid "Role add successfully"
+ msgstr "角色新增成功"
+ 
+-#: templates/role_add.html:98
++#: templates/role_add.html:106
+ msgid "Fail to add Role"
+ msgstr "角色新增失敗"
+ 
+-#: templates/role_add.html:118
+-msgid "Please input 'Sort' number."
+-msgstr "請輸入排序號碼"
+-
+ #: templates/role_list.html:10 templates/role_list.html.py:24
+ #: templates/role_list.html:35
+ msgid "Role List"
+@@ -790,27 +800,27 @@ msgstr "建立新角色"
+ msgid "Role Permission"
+ msgstr "角色權限"
+ 
+-#: templates/role_list.html:103 templates/systemlog_list.html.py:85
++#: templates/role_list.html:98 templates/systemlog_list.html.py:85
+ msgid "Category"
+ msgstr "類別"
+ 
+-#: templates/role_list.html:113
++#: templates/role_list.html:108
+ msgid "Update Date"
+ msgstr "更新時間"
+ 
+-#: templates/role_list.html:125
++#: templates/role_list.html:120
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:150
++#: templates/role_list.html:145
+ msgid "Confirm to delete this Role"
+ msgstr "您是否確認要刪除這個角色"
+ 
+-#: templates/role_list.html:165
++#: templates/role_list.html:160
+ msgid "Default role cannot delete"
+ msgstr "預設的角色無法刪除"
+ 
+-#: templates/role_list.html:169
++#: templates/role_list.html:162
+ msgid "Fail to delete role"
+ msgstr "刪除這個角色失敗"
+ 
+@@ -819,11 +829,11 @@ msgstr "刪除這個角色失敗"
+ msgid "Permission Settings"
+ msgstr "權限設定"
+ 
+-#: templates/role_permission.html:70
++#: templates/role_permission.html:65
+ msgid "Role / Permission"
+ msgstr "角色 / 權限"
+ 
+-#: templates/role_permission.html:167
++#: templates/role_permission.html:162
+ msgid "permission save successfully"
+ msgstr "權限儲存成功"
+ 
+@@ -832,19 +842,15 @@ msgstr "權限儲存成功"
+ msgid "Role Rename"
+ msgstr "角色重新命名"
+ 
+-#: templates/role_rename.html:36
+-msgid "New Name"
+-msgstr "新名稱"
++#: templates/role_rename.html:90
++msgid "Role Rename successfully"
++msgstr "角色重新命名成功"
+ 
+-#: templates/role_rename.html:92
++#: templates/role_rename.html:93
+ msgid "Default role cannot rename"
+ msgstr "預設角色不能重新命名"
+ 
+-#: templates/role_rename.html:95
+-msgid "Role Rename successfully"
+-msgstr "角色重新命名成功"
+-
+-#: templates/role_rename.html:98
++#: templates/role_rename.html:96
+ msgid "Fail to rename Role"
+ msgstr "角色重新命名失敗"
+ 
+@@ -1066,7 +1072,8 @@ msgid "Please input your account"
+ msgstr "請輸入帳號"
+ 
+ #: templates/user_add.html:42
+-msgid "Account can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgid ""
++"The account can only contain 1 to 16 bit of English or Number or '_' or '-'"
+ msgstr "帳號只能包含1到16碼的英文、數字、'_'、'-'"
+ 
+ #: templates/user_add.html:51 templates/user_update.html.py:52
+@@ -1214,6 +1221,3 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失敗"
+-
+-#~ msgid "Save user photo image"
+-#~ msgstr "儲存建檔資料"
+diff --git a/templates/role_add.html b/templates/role_add.html
+index 4706cd6..9f80f77 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -30,21 +30,26 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label"><i style="color: red;">*</i> {% trans "Role Name" %} </label>
+-                                        <div class="col-md-6"><input type="text" class="form-control" placeholder="" name="name"></div>
++                                        <div class="col-md-6">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the role name" %}" title="{% trans "Please input the role name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
++                                        </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label"><i style="color: red;">*</i> {% trans "Sort" %} </label>
+-                                        <div class="col-md-6"><input type="number" class="form-control" placeholder="" name="sort" style="ime-mode:disabled" onkeyup="return ValidateNumber(this,value)"></div>
++                                        <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i> {% trans "Sort" %}
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="number" class="form-control" placeholder="{% trans "Please input the sort number." %}" title="{% trans "Please input the sort number." %}" name="Sort" style="ime-mode:disabled" min="1" max="100" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The sort number can only be positive integer." %}`)" required>
++                                        </div>
+                                     </div>
+-                                </div>
+-                                <div class="form-actions">
+                                     <div class="col-md-offset-3 col-md-9">
+-                                        <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                                        <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                        <button type="button" class="btn btn-default" onclick="location.href='/role_list/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default" onclick="addAnother = false;">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-default" onclick="addAnother = true;">{% trans "Save and Add another" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -70,14 +75,13 @@
+             return cookieValue;
+         }
+ 
++        var addAnother = false;
++
+         function onSaveClick(){
+-            var name = $('input[name=name]').val();
+-            var sort = $('input[name=sort]').val();
++            var name = $('input[name=Name]').val();
++            var sort = $('input[name=Sort]').val();
+             var category = 'User'
+-            if(!name || !sort){
+-                alert("{% trans "please enter correct information" %}");
+-                return
+-            }
++
+             $.ajax({
+                 type: 'post',
+                 url: '/add_role/',
+@@ -93,33 +97,17 @@
+                     console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         alert("{% trans "Role add successfully" %}");
+-                        location.href = '/role_list/';
++                        if (addAnother) {
++                            location.reload();
++                        } else {
++                            location.href = '/role_list/';
++                        }
+                     } else {
+                         alert("{% trans "Fail to add Role" %}");
+                     }
+                 },
+-                error: function(data) {
+-                }
+             });
+         }
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+-
+-        function ValidateNumber(e, pnumber)
+-        {
+-            if (!/^\d+$/.test(pnumber))
+-            {
+-                $(e).val(/^\d+/.exec($(e).val()));
+-                alert("{% trans "Please input 'Sort' number." %}");
+-            }
+-            return false;
+-        }
+-
+         </script>
+     </body>
+ </html>
+diff --git a/templates/role_list.html b/templates/role_list.html
+index f37edeb..f9f214b 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -47,11 +47,6 @@
+             </div>
+         </div>
+ 
+-        <script src="{% static "js/chart.min.js" %}"></script>
+-        <script src="{% static "js/chart-data.js" %}"></script>
+-        <script src="{% static "js/easypiechart.js" %}"></script>
+-        <script src="{% static "js/easypiechart-data.js" %}"></script>
+-        <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+         <script>
+             var language = "{{ LANGUAGE_CODE }}";
+             if (language == "zh-tw") {
+@@ -148,7 +143,6 @@
+ 
+             function role_delete(OId) {
+                 var ret = confirm('{% trans "Confirm to delete this Role" %} ?');
+-                console.log(ret);
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+@@ -160,37 +154,17 @@
+                             'OId': OId
+                         },
+                         success: function(data) {
+-                            console.log("CODE = ",data.CODE);
+                             if (data.CODE == "0") {
+-                                alert("{% trans "Default role cannot delete" %}");
+-                            } else if (data.CODE == "1") {
+                                 $('#roleList').bootstrapTable('refresh');
++                            } else if (data.CODE == "2") {
++                                alert("{% trans "Default role cannot delete" %}");
+                             } else {
+                                 alert("{% trans "Fail to delete role" %}");
+                             }
+                         },
+-                        error: function(data) {
+-                            console.log('why nunu');
+-                        }
+                     })
+                 }
+             }
+-
+-            !function ($) {
+-                $(document).on("click","ul.nav li.parent > a > span.icon", function(){
+-                    $(this).find('em:first').toggleClass("glyphicon-minus");
+-                });
+-                $(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+-            }(window.jQuery);
+-
+-            $(window).on('resize', function () {
+-              if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
+-            })
+-
+-            $(window).on('resize', function () {
+-              if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+-            })
+-
+         </script>
+     </body>
+ </html>
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index a79c260..d9adecd 100644
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -43,11 +43,6 @@
+             </div>
+         </div>
+ 
+-        <script src="{% static "js/chart.min.js" %}"></script>
+-        <script src="{% static "js/chart-data.js" %}"></script>
+-        <script src="{% static "js/easypiechart.js" %}"></script>
+-        <script src="{% static "js/easypiechart-data.js" %}"></script>
+-        <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+         <script>
+             var language = "{{ LANGUAGE_CODE }}";
+             if (language == "zh-tw") {
+@@ -182,22 +177,6 @@
+                 }
+                 return cookieValue;
+             }
+-
+-            !function ($) {
+-                $(document).on("click","ul.nav li.parent > a > span.icon", function(){
+-                    $(this).find('em:first').toggleClass("glyphicon-minus");
+-                });
+-                $(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+-            }(window.jQuery);
+-
+-            $(window).on('resize', function () {
+-              if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
+-            })
+-
+-            $(window).on('resize', function () {
+-              if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+-            })
+-
+         </script>
+     </body>
+ </html>
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index 99e3b46..cca0a30 100644
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -30,17 +30,19 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label"><i style="color: red;">*</i> {% trans "New Name" %} </label>
+-                                        <div class="col-md-6"><input type="text" class="form-control" placeholder="" name="name"></div>
++                                        <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i> {% trans "Role Name" %}
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="{% trans "Please input the role name" %}" title="{% trans "Please input the role name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
++                                        </div>
+                                     </div>
+-                                </div>
+-                                <div class="form-actions">
+                                     <div class="col-md-offset-3 col-md-9">
+-                                        <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                                        <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                        <button type="button" class="btn btn-default" onclick="location.href='/role_list/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -67,13 +69,9 @@
+         }
+ 
+         function onSaveClick() {
+-            var name = $('input[name=name]').val();
+-            var sort = $('input[name=sort]').val();
+-            console.log({{obj|safe}}.OId);
+-            if(!name){
+-                alert("{% trans "please enter correct information" %}");
+-                return
+-            }
++            var name = $('input[name=Name]').val();
++            var sort = $('input[name=Sort]').val();
++
+             $.ajax({
+                 type: 'post',
+                 url: '/rename_role/',
+@@ -89,28 +87,17 @@
+                 success: function(data) {
+                     console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+-                        alert("{% trans "Default role cannot rename" %}")
+-                        location.href = '/role_list/';
+-                    } else if (data.CODE == "1"){
+                         alert("{% trans "Role Rename successfully" %}");
+-                        location.href = '/role_list/';
++                        location.reload();
++                    } else if (data.CODE == "2"){
++                        alert("{% trans "Default role cannot rename" %}")
++                        location.reload();
+                     } else {
+                         alert("{% trans "Fail to rename Role" %}");
+                     }
+                 },
+-
+-                error: function(data) {
+-                    console.log('why nunu');
+-                }
+             });
+         }
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ </html>
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 2be3ca1..57ed9ca 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -39,7 +39,7 @@
+                                             {% trans "Account" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Please input your account" %}" title="{% trans "Please input your account" %}" name="Account" AutoComplete="Off" pattern="[\w-]{1,16}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "Account can only contain 1 to 16 bit of English or Number or '_' or '-'" %}`)" autofocus required>
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input your account" %}" title="{% trans "Please input your account" %}" name="Account" AutoComplete="Off" pattern="[\w-]{1,16}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "The account can only contain 1 to 16 bit of English or Number or '_' or '-'" %}`)" autofocus required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -48,7 +48,7 @@
+                                             {% trans "Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" {% if obj.Account == 'admin' %} disabled="disabled" {% else %} oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required {% endif %}>
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" {% if obj.Account == 'admin' %} disabled="disabled" {% else %} oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required {% endif %}>
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index 606ad21..5d8ea30 100644
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -31,25 +31,23 @@
+                             <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <span style="color: red;">*</span> {% trans "Group Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input Group Name" name="Name" required="required">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the group name" %}" title="{% trans "Please input the group name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+                                     </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <button type="button" class="btn btn-default" onclick="location.href='/user_group_list/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default" onclick="addAnother = false;">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-default" onclick="addAnother = true;">{% trans "Save and Add another" %}</button>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                    <a class="btn default" onclick="onSaveAnotherClick()">{% trans "Save and Add another" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -76,45 +74,11 @@
+             return cookieValue;
+         }
+ 
+-        function onSaveClick(){
+-            var Name = $('input[name=Name]').val();
++        var addAnother = false;
+ 
+-            if(!Name){
+-                alert("{% trans "please enter correct information" %}");
+-                return
+-            }
+-
+-            $.ajax({
+-                type: 'post',
+-                traditional: true,
+-                url: '/add_user_group/',
+-                async: true,
+-                dataType: 'json',
+-                data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
+-                    'Name': Name,
+-                },
+-                success: function(data) {
+-                    if (data.CODE == "0") {
+-                        alert("{% trans "Group add successfully" %}");
+-                        location.href = '/user_group_list/';
+-                    } else {
+-                        alert("{% trans "Fail to add group" %}");
+-                    }
+-                },
+-                error: function(data) {
+-                }
+-            });
+-        }
+-
+-        function onSaveAnotherClick(){
++        function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+-            if(!Name){
+-                alert("{% trans "please enter correct information" %}");
+-                return
+-            }
+-
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+@@ -128,22 +92,17 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("{% trans "Group add successfully" %}");
+-                        location.reload();
++                        if (addAnother) {
++                            location.reload();
++                        } else {
++                            location.href = '/user_group_list/';
++                        }
+                     } else {
+                         alert("{% trans "Fail to add group" %}");
+                     }
+                 },
+-                error: function(data) {
+-                }
+             });
+         }
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index 6cdeda5..c259bcb 100644
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -48,24 +48,22 @@
+                             <p>{% trans "Group" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+                                             <span style="color: red;">*</span> {% trans "Group Name" %} :
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Group Name" name="Name" required="required">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="{% trans "Please input the group name" %}" title="{% trans "Please input the group name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+                                     </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <button type="button" class="btn btn-default" onclick="location.href='/user_group_list/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="location.href='/user_group_list'">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -95,40 +93,27 @@
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+-            if (Name) {
+-                $.ajax({
+-                    type: 'post',
+-                    traditional: true,
+-                    url: '/change_user_group_name/',
+-                    async: true,
+-                    dataType: 'json',
+-                    data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
+-                        'OId': {{obj|safe}}.OId,
+-                        'Name': Name
+-                    },
+-                    success: function(data) {
+-                        if (data.CODE == "0") {
+-                            alert("{% trans "Change group name successfully" %}");
+-                            location.reload();
+-                        } else {
+-                            alert("{% trans "Fail to change group name" %}");
+-                        }
+-                    },
+-                    error: function(data) {
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/change_user_group_name/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': {{obj|safe}}.OId,
++                    'Name': Name
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("{% trans "Change group name successfully" %}");
++                        location.reload();
++                    } else {
++                        alert("{% trans "Fail to change group name" %}");
+                     }
+-                });
+-            } else {
+-                alert("{% trans "Please input group name" %}");
+-            }
++                },
++            });
+         }
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/user_update.html b/templates/user_update.html
+index 1c54709..780a2e5 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -49,7 +49,7 @@
+                                             {% trans "Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" value="{{obj.Name}}" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" {% if obj.Account == 'admin' %} disabled="disabled" {% else %} oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required {% endif %}>
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" value="{{obj.Name}}" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" {% if obj.Account == 'admin' %} disabled="disabled" {% else %} oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required {% endif %}>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+@@ -171,9 +171,6 @@
+                         } else
+                             alert('{% trans "Fail to update User" %}');
+                     },
+-                    error: function(data) {
+-                        console.log('why nunu');
+-                    }
+                 });
+             }
+         </script>
+-- 
+1.9.1
+

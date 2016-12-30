@@ -1,0 +1,1512 @@
+From 8772077196b781daf0d5e803e43a6d7ca6a1524c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 23 Sep 2016 16:22:51 +0800
+Subject: [PATCH 292/443] Add fruser add web and function for specification
+
+Add fruser add web for specification.
+Modify fruser edit web for specification.
+Limit input data format of fruser add web and fruser edit web.
+---
+ br06/urls.py                                    |   4 +-
+ frusers/views.py                                |  93 ++++++++++-----
+ locale/zh_CN/LC_MESSAGES/django.mo              | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po              |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo              | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po              |   2 +-
+ templates/{fruser_edit.html => fruser_add.html} | 117 +++++++------------
+ templates/fruser_edit.html                      |  69 +++--------
+ templates/fruser_list.html                      |  11 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo    | Bin 15626 -> 16372 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po    | 145 ++++++++++++++----------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo    | Bin 15626 -> 16372 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po    | 145 ++++++++++++++----------
+ templates/user_add.html                         |   2 +-
+ 14 files changed, 314 insertions(+), 276 deletions(-)
+ copy templates/{fruser_edit.html => fruser_add.html} (55%)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 3398562..87f8308 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -17,7 +17,7 @@ from django.conf.urls import url, include
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection, views, fingerprint
+ from user.views import user_setting, user_list_view, user_list_data, user_add_view, user_update_view, add_user, update_user, delete_user
+-from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser, fruser_data
++from frusers.views import fruser_list_view, fruser_add_view, fruser_edit_view, import_fruser, export_fruser, add_fruser, update_fruser, delete_fruser, fruser_data
+ from systemlogs.views import systemlog_list_view, systemlog_export, systemlog_data
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_data
+ from logsetting.views import logsetting_view, settinglog
+@@ -154,9 +154,11 @@ urlpatterns += [
+ 
+ urlpatterns += [
+     url(r'^fruser_list/?$', fruser_list_view),
++    url(r'^fruser_add/?$', fruser_add_view),
+     url(r'^fruser_edit/?$', fruser_edit_view),
+     url(r'^import_fruser/?$', import_fruser),
+     url(r'^export_fruser/?$', export_fruser),
++    url(r'^add_fruser/?$', add_fruser),
+     url(r'^update_fruser/?$', update_fruser),
+     url(r'^delete_fruser/?$', delete_fruser),
+     url(r'^fruser_data/?$', fruser_data),
+diff --git a/frusers/views.py b/frusers/views.py
+index 2c9432b..990ff24 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -18,7 +18,7 @@ def fruser_list_view(request):
+         return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+-        return render(request, 'fruser_list.html', {'active': 'fruser_list'})
++        return render(request, 'fruser_list.html', {'active': 'fruser_list', 'export_error' : 'false'})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+@@ -60,6 +60,15 @@ def fruser_data(request):
+     except:
+         return JsonResponse({'total': 0, 'rows': []})
+ 
++def fruser_add_view(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++    try:
++        return render(request, 'fruser_add.html', {'active': 'fruser_add'})
++    except:
++        return render(request, 'registration/not_found.html')
++
+ def fruser_edit_view(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+@@ -181,40 +190,68 @@ def export_fruser(request):
+         csvdir = os.path.join(mediadir, 'frusers.csv')
+         picdir = os.path.join(mediadir, 'fruserpic')
+ 
+-        with open(csvdir, 'w') as csvfile:
+-            header = ['FRUserId', 'Name', 'Group', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
+-            writer = csv.writer(csvfile)
+-            writer.writerow(header)
+-            writer.writerows([[res.as_json()[column] for column in header] for res in Frusers.objects.all()])
+-
+-        temp = tempfile.TemporaryFile()
+-        with zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as archive:
+-            root = ''
+-            for dirname, subdirs, files in os.walk(picdir):
+-                root = os.path.join(root, os.path.split(dirname)[-1])
+-                archive.write(dirname, root)
+-                for filename in files:
+-                    archive.write(os.path.join(dirname, filename), os.path.join(root, filename))
+-            archive.write(csvdir, os.path.split(csvdir)[-1])
+-
+-        frusers_zip = open(temp.name, 'rb')
+-        temp.seek(0)
+-        response = HttpResponse(frusers_zip, content_type = 'application/zip')
+-        response['Content-Disposition'] = 'attachment; filename=fruser-%s.zip' % (
+-            datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+-        )
++        if not os.path.exists(csvdir):
++            with open(csvdir, 'w') as csvfile:
++                header = ['FRUserId', 'Name', 'Group', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
++                writer = csv.writer(csvfile)
++                writer.writerow(header)
++                writer.writerows([[res.as_json()[column] for column in header] for res in Frusers.objects.all()])
++
++            temp = tempfile.TemporaryFile()
++            with zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as archive:
++                archive.write(csvdir, os.path.split(csvdir)[-1])
++                root = ''
++                for dirname, subdirs, files in os.walk(picdir):
++                    root = os.path.join(root, os.path.split(dirname)[-1])
++                    archive.write(dirname, root)
++                    for filename in files:
++                        archive.write(os.path.join(dirname, filename), os.path.join(root, filename))
++
++            frusers_zip = open(temp.name, 'rb')
++            temp.seek(0)
++            response = HttpResponse(frusers_zip, content_type = 'application/zip')
++            response['Content-Disposition'] = 'attachment; filename=fruser-%s.zip' % (
++                datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
++            )
++        else:
++            raise Exception(2)
+ 
+-        raise Exception('res_code[0]')
++        raise Exception(0)
+ 
+     except Exception as e:
+         try:
+             os.remove(csvdir)
+         finally:
+-            if e.__str__() == 'res_code[0]':
+-                return response
+-            else:
++            try:
++                if int(e.__str__()) == 0:
++                    return response
++                elif int(e.__str__()) == 2:
++                    return render(request, 'fruser_list.html', {'active' : 'fruser_list', 'export_error' : 'true'})
++                else:
++                    raise
++            except:
+                 return JsonResponse(res_code[1])
+ 
++def add_fruser(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++    try:
++        if Frusers.objects.filter(FRUserId = request.POST['FRUserId']).exists():
++            return JsonResponse(res_code[2])
++        else:
++            Frusers.objects.create(
++                FRUserId = request.POST['FRUserId'],
++                Name = request.POST['Name'],
++                Gender = request.POST['Gender'],
++                Age = int(request.POST['Age']) or 0,
++                State = request.POST['State'],
++                DisableCauses = request.POST['DisableCauses']
++            )
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
+ def update_fruser(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+@@ -223,7 +260,7 @@ def update_fruser(request):
+     try:
+         Frusers.objects.filter(OId = request.POST['OId']).update(
+             Gender = request.POST['Gender'],
+-            Age = request.POST['Age'] or 0,
++            Age = int(request.POST['Age']) or 0,
+             State = request.POST['State'],
+             DisableCauses = request.POST['DisableCauses']
+         )
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 4dc71bee843bee1a9c0139a2cf3889f37b9e1ca9..056a59f65e197489f3a3aa200f3093849cb1ccab 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc`V{#CYRJK}G;6bOjgy
+
+delta 15
+WcmZo-X=0i1mc`J@#A4$|K}G;6Z3P(s
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index f823d0a..4e3f0ec 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 11:48+0800\n"
++"POT-Creation-Date: 2016-09-23 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 4dc71bee843bee1a9c0139a2cf3889f37b9e1ca9..056a59f65e197489f3a3aa200f3093849cb1ccab 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc`V{#CYRJK}G;6bOjgy
+
+delta 15
+WcmZo-X=0i1mc`J@#A4$|K}G;6Z3P(s
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index f823d0a..4e3f0ec 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 11:48+0800\n"
++"POT-Creation-Date: 2016-09-23 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/fruser_edit.html b/templates/fruser_add.html
+similarity index 55%
+copy from templates/fruser_edit.html
+copy to templates/fruser_add.html
+index bf66d66..041fd57 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_add.html
+@@ -6,23 +6,21 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>{% trans "Fruser Edit" %}</title>
++        <title>{% trans "Fruser Add" %}</title>
+     </head>
+-
+     <body>
+         {% include 'menu.html' %}
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>{% trans "Fruser Edit" %}</li>
+-                    <li class="active">{{obj.Name}}</li>
++                    <li>{% trans "Fruser Add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>{% trans "Fruser Edit" %}</small></h1>
++                    <h1 class="page-header"><small>{% trans "Fruser Add" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -33,75 +31,55 @@
+                             <p>{% trans "Fruser" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">{% trans "FRUserId" %} :</label>
+-                                        <label class="col-md-1 control-label">
+-                                            <p class="text-left">{{obj.FRUserId}}</p>
++                                        <label class="col-md-2 control-label">
++					                        <i style="color: red;">*</i>
++                                            {% trans "FRUserId" %} :
+                                         </label>
+-                                        <label class="col-md-2 control-label">{% trans "Name" %} :</label>
++                                        <div class="col-md-2">
++                                            <input type="text" class="form-control" placeholder="{% trans "Input the user ID" %}" title="{% trans "Input the user ID" %}" name="FRUserId" AutoComplete="Off" pattern="[\w-]{1,16}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "User ID can only contain 1 to 16 bit of English or Number or '_' or '-'" %}`)" autofocus required>
++                                        </div>
+                                         <label class="col-md-1 control-label">
+-                                            <p class="text-left">{{obj.Name}}</p>
++					                        <i style="color: red;">*</i>
++                                            {% trans "Name" %} :
+                                         </label>
+-
+-                                        <label class="col-md-2 control-label checkbox">
++                                        <div class="col-md-2">
++                                            <input type="text" class="form-control" placeholder="{% trans "Input your name" %}" title="{% trans "Input your name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
++                                        </div>
++                                        <label class="col-md-1 control-label checkbox">
+                                             <input type="checkbox" name="State">{% trans "Disable" %}
+                                         </label>
+                                         <div class="col-md-3">
+-                                            <input type="text" class="form-control" value="{{obj.DisableCauses}}" placeholder="Please input Disable Causes" name="DisableCauses">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input disable causes" %}" title="{% trans "Please input disable causes" %}" name="DisableCauses" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input disable causes" %}')" disabled required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">{% trans "Gender" %} :</label>
++                                        <label class="col-md-2 control-label">
++					                        <i style="color: red;">*</i>
++                                            {% trans "Gender" %} :
++                                        </label>
+                                         <div class="col-md-2">
+                                             <select class="form-control" name="Gender">
+-                                                <option value=""></option>
+                                                 <option value="Male">{% trans "Male" %}</option>
+                                                 <option value="Female">{% trans "Female" %}</option>
+                                             </select>
+                                         </div>
+-                                        <label class="col-md-1 control-label">{% trans "Age" %} :</label>
+-                                        <div class="col-md-2">
+-                                            <input type="text" class="form-control" value="{{obj.Age}}" placeholder="Ex : 25" name="Age">
+-                                        </div>
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <label class="col-md-2 control-label">Card ID :</label>
+-                                        <label class="col-md-3 control-label">
+-                                            <p class="text-left">{{obj.RFIDCard}}</p>
+-                                        </label>
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <label class="col-md-2 control-label">Face ID1 :</label>
+-                                        <label class="col-md-3 control-label">
+-                                            <p class="text-left">{{obj.FaceID1}}</p>
+-                                        </label>
+-                                        <label class="col-md-2 control-label">Face ID2 :</label>
+-                                        <label class="col-md-3 control-label">
+-                                            <p class="text-left">{{obj.FaceID2}}</p>
++                                        <label class="col-md-1 control-label">
++					                        <i style="color: red;">*</i>
++                                            {% trans "Age" %} :
+                                         </label>
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <div class="col-md-6">
+-                                            {% if obj.Face1 %}
+-                                                <img class="img-responsive" src="{{obj.Face1}}">
+-                                            {% endif %}
++                                        <div class="col-md-2">
++                                            <input type="number" class="form-control" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input the number" %}')" required>
+                                         </div>
+-                                        <div class="col-md-6">
+-                                            {% if obj.Face2 %}
+-                                                <img class="img-responsive" src="{{obj.Face2}}">
+-                                            {% endif %}
++                                        <div class="col-md-offset-1 col-md-3" align="right">
++                                            <button type="button" class="btn btn-default" onclick="location.href='/fruser_list'">{% trans "Back" %}</button>
++                                            <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="location.href='/fruser_list'">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -109,7 +87,7 @@
+         </div><!--/.main-->
+         <script>
+         $('input[name="State"]').change(function() {
+-            $('input[name="DisableCauses"]').prop('disabled', !this.checked);
++            $('input[name=DisableCauses]').prop('disabled', !this.checked);
+         });
+ 
+         //For getting CSRF token
+@@ -131,10 +109,12 @@
+         }
+ 
+         function onSaveClick(){
++            var FRUserId = $('input[name=FRUserId]').val();
++            var Name = $('input[name=Name]').val();
+             var Gender = $('select[name=Gender]').val();
+             var Age = $('input[name=Age]').val();
+-            var DisableCauses = $('input[name=DisableCauses]').val();
+             var State = $('input[name=State]').prop('checked');
++            var DisableCauses = $('input[name=DisableCauses]').val();
+ 
+             if (State) {
+                 State = 'Disable';
+@@ -145,12 +125,13 @@
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+-                url: '/update_fruser/',
++                url: '/add_fruser/',
+                 async: true,
+                 dataType: 'json',
+                 data: {
+                     csrfmiddlewaretoken : getCookie('csrftoken'),
+-                    'OId': {{obj|safe}}.OId,
++                    'FRUserId': FRUserId,
++                    'Name': Name,
+                     'Gender': Gender,
+                     'Age': Age,
+                     'State': State,
+@@ -158,34 +139,16 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("{% trans "Update fruser successfully" %}");
++                        alert("{% trans "Create fruser successfully" %}");
+                         location.href = '/fruser_list';
++                    } else if (data.CODE == "2") {
++                        alert("{% trans "Fruser exists" %}");
+                     } else {
+-                        alert("{% trans "Fail to update fruser" %}");
++                        alert("{% trans "Fail to add fruser" %}");
+                     }
+-                },
+-                error: function(data) {
+                 }
+             });
+         }
+-
+-        $(document).ready(function() {
+-            if ({{obj|safe}}.State == 'Enable') {
+-                $('input[name="State"]').prop('checked', false);
+-                $('input[name="DisableCauses"]').prop('disabled', true);
+-            } else {
+-                $('input[name="State"]').prop('checked', true);
+-                $('input[name="DisableCauses"]').prop('disabled', false);
+-            }
+-            $('select[name="Gender"]').val({{obj|safe}}.Gender);
+-        });
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index bf66d66..642aebc 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -33,75 +33,49 @@
+                             <p>{% trans "Fruser" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-2 control-label">{% trans "FRUserId" %} :</label>
+-                                        <label class="col-md-1 control-label">
++                                        <label class="col-md-2 control-label">
+                                             <p class="text-left">{{obj.FRUserId}}</p>
+                                         </label>
+-                                        <label class="col-md-2 control-label">{% trans "Name" %} :</label>
+-                                        <label class="col-md-1 control-label">
++                                        <label class="col-md-1 control-label">{% trans "Name" %} :</label>
++                                        <label class="col-md-2 control-label">
+                                             <p class="text-left">{{obj.Name}}</p>
+                                         </label>
+-
+-                                        <label class="col-md-2 control-label checkbox">
++                                        <label class="col-md-1 control-label checkbox">
+                                             <input type="checkbox" name="State">{% trans "Disable" %}
+                                         </label>
+                                         <div class="col-md-3">
+-                                            <input type="text" class="form-control" value="{{obj.DisableCauses}}" placeholder="Please input Disable Causes" name="DisableCauses">
++                                            <input type="text" class="form-control" value="{{obj.DisableCauses}}" placeholder="{% trans "Please input disable causes" %}" title="{% trans "Please input disable causes" %}" name="DisableCauses" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input disable causes" %}')" required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">{% trans "Gender" %} :</label>
++                                        <label class="col-md-2 control-label">
++					                        <i style="color: red;">*</i>
++                                            {% trans "Gender" %} :
++                                        </label>
+                                         <div class="col-md-2">
+                                             <select class="form-control" name="Gender">
+-                                                <option value=""></option>
+                                                 <option value="Male">{% trans "Male" %}</option>
+                                                 <option value="Female">{% trans "Female" %}</option>
+                                             </select>
+                                         </div>
+-                                        <label class="col-md-1 control-label">{% trans "Age" %} :</label>
+-                                        <div class="col-md-2">
+-                                            <input type="text" class="form-control" value="{{obj.Age}}" placeholder="Ex : 25" name="Age">
+-                                        </div>
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <label class="col-md-2 control-label">Card ID :</label>
+-                                        <label class="col-md-3 control-label">
+-                                            <p class="text-left">{{obj.RFIDCard}}</p>
+-                                        </label>
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <label class="col-md-2 control-label">Face ID1 :</label>
+-                                        <label class="col-md-3 control-label">
+-                                            <p class="text-left">{{obj.FaceID1}}</p>
+-                                        </label>
+-                                        <label class="col-md-2 control-label">Face ID2 :</label>
+-                                        <label class="col-md-3 control-label">
+-                                            <p class="text-left">{{obj.FaceID2}}</p>
++                                        <label class="col-md-1 control-label">
++					                        <i style="color: red;">*</i>
++                                            {% trans "Age" %} :
+                                         </label>
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <div class="col-md-6">
+-                                            {% if obj.Face1 %}
+-                                                <img class="img-responsive" src="{{obj.Face1}}">
+-                                            {% endif %}
++                                        <div class="col-md-2">
++                                            <input type="number" class="form-control" value="{{obj.Age}}" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input the number" %}')" required>
+                                         </div>
+-                                        <div class="col-md-6">
+-                                            {% if obj.Face2 %}
+-                                                <img class="img-responsive" src="{{obj.Face2}}">
+-                                            {% endif %}
++                                        <div class="col-md-offset-1 col-md-3" align="right">
++                                            <button type="button" class="btn btn-default" onclick="location.href='/fruser_list'">{% trans "Back" %}</button>
++                                            <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="location.href='/fruser_list'">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -179,13 +153,6 @@
+             }
+             $('select[name="Gender"]').val({{obj|safe}}.Gender);
+         });
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 0aaf8c9..3c05318 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -30,6 +30,7 @@
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+                             <div id="ImExport">
++                                <button class="btn btn-default" onclick="location.href='/fruser_add'">{% trans "Create FR User" %}</button>
+                                 <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal">{% trans "Import" %}</button>
+                                 <button class="btn btn-default" onclick="location.href='/export_fruser'">{% trans "Export" %}</button>
+                             </div>
+@@ -158,7 +159,7 @@
+                 var data = new FormData($('#ImportForm')[0]);
+                 data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+ 
+-                $('#ImportFormBody').html('<div class="col-sm-offset-1">Please do not leave this page and waiting for uploading!</div>');
++                $('#ImportFormBody').html('<div class="col-sm-offset-1">Please do not leave this page and wait for uploading!</div>');
+                 $('#ImportFruser').prop('disabled', true);
+                 $.ajax({
+                     type: 'post',
+@@ -170,8 +171,9 @@
+                     processData: false,
+                     contentType: false,
+                     success: function(data) {
++                        console.log(data.CODE);
+                         if (data.CODE == "0") {
+-                            alert("Import End!\nSuccess : " + data.import_success + "\nFail : " + data.import_fail);
++                            alert("Import End!\nSuccess : " + data.import_success + "\nFailure : " + data.import_fail);
+                             $('#ImportModal').modal("hide");
+                         } else if (data.CODE == "2") {
+                             alert("{% trans "The file format is not correct!" %}");
+@@ -214,6 +216,11 @@
+                     });
+                 }
+             }
++            $(document).ready(function() {
++                if ({{export_error}}) {
++                    alert('{% trans "Duplicate export!" %}');
++                }
++            });
+         </script>
+     </body>
+ </html>
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 52481d0720f0e64f729e3bc873037294f6cb7965..ab6042bd6920e2be2765dfe09b57e85dc0731536 100644
+GIT binary patch
+delta 6247
+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
+b`{MdJ!8+}ZL{<9T-GMHR+XO@DjUs;m3l8u}
+
+delta 5707
+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
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index b238067..29bbaa7 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 11:48+0800\n"
++"POT-Creation-Date: 2016-09-23 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -71,7 +71,7 @@ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+ #: templates/dashboard.html:152 templates/dashboard.html.py:170
+-#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:72
++#: templates/fruser_list.html:100 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:89
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+@@ -110,8 +110,8 @@ msgid "Device"
+ msgstr "设备"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:300 templates/fruser_add.html.py:75
+-#: templates/fruser_edit.html:101 templates/frusergroup_add.html.py:48
++#: templates/device_settings.html:300 templates/fruser_add.html.py:77
++#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:48
+ #: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
+ #: templates/role_permission.html:37 templates/role_rename.html.py:42
+ #: templates/user_add.html:95 templates/user_group_add.html.py:48
+@@ -121,8 +121,8 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:301 templates/fruser_add.html.py:76
+-#: templates/fruser_edit.html:102 templates/frusergroup_add.html.py:49
++#: templates/device_settings.html:301 templates/fruser_add.html.py:78
++#: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:49
+ #: templates/frusergroup_edit.html:66 templates/logsetting.html.py:106
+ #: templates/role_add.html:47 templates/role_permission.html.py:38
+ #: templates/role_rename.html:43 templates/system_settings.html.py:162
+@@ -208,14 +208,14 @@ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+ #: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+-#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
++#: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
+ #: templates/role_list.html:126 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "删除"
+ 
+-#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:113
++#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:114
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+@@ -223,7 +223,7 @@ msgid "Group"
+ msgstr "群组"
+ 
+ #: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+-#: templates/fruser_list.html:193 templates/frusergroup_devices.html.py:167
++#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+ #: templates/user_group_members.html:167 templates/user_list.html.py:137
+@@ -274,7 +274,7 @@ msgstr "接受"
+ msgid "Reject"
+ msgstr "拒绝"
+ 
+-#: templates/device_list.html:117 templates/fruser_list.html.py:131
++#: templates/device_list.html:117 templates/fruser_list.html.py:132
+ #: templates/frusergroups_list.html:89 templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "编辑"
+@@ -332,13 +332,21 @@ msgstr "新增设备使用者"
+ msgid "Fruser"
+ msgstr "设备使用者"
+ 
+-#: templates/fruser_add.html:37 templates/fruser_edit.html.py:39
+-#: templates/fruser_list.html:103 templates/fruserlog_list.html.py:96
++#: templates/fruser_add.html:39 templates/fruser_edit.html.py:39
++#: templates/fruser_list.html:104 templates/fruserlog_list.html.py:96
+ msgid "FRUserId"
+ msgstr "工号"
+ 
+-#: templates/fruser_add.html:41 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:108 templates/frusergroup_devices.html.py:102
++#: templates/fruser_add.html:42
++msgid "Input the user ID"
++msgstr "请输入使用者ID"
++
++#: templates/fruser_add.html:42
++msgid "User ID can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgstr "使用者ID只能包含1到16码的英文、数字、'_'、'-'"
++
++#: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
++#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:102
+ #: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:102
+ #: templates/user_group_members.html:102 templates/user_list.html.py:89
+@@ -346,36 +354,70 @@ msgstr "工号"
+ msgid "Name"
+ msgstr "姓名"
+ 
+-#: templates/fruser_add.html:46 templates/fruser_edit.html.py:49
++#: templates/fruser_add.html:49
++msgid "Input your name"
++msgstr "请输入姓名"
++
++#: templates/fruser_add.html:49 templates/user_add.html.py:51
++#: templates/user_update.html:52
++msgid "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
++"'-'"
++msgstr "帐号只能包含25码的中文、英文、数字、'_'、'-'"
++
++#: templates/fruser_add.html:52 templates/fruser_edit.html.py:48
+ msgid "Disable"
+ msgstr "停用"
+ 
+-#: templates/fruser_add.html:53 templates/fruser_edit.html.py:56
++#: templates/fruser_add.html:55 templates/fruser_edit.html.py:51
++msgid "Please input disable causes"
++msgstr "请输入停用原因"
++
++#: templates/fruser_add.html:61 templates/fruser_edit.html.py:57
+ msgid "Gender"
+ msgstr "性别"
+ 
+-#: templates/fruser_add.html:57 templates/fruser_edit.html.py:60
++#: templates/fruser_add.html:65 templates/fruser_edit.html.py:61
+ msgid "Male"
+ msgstr "男"
+ 
+-#: templates/fruser_add.html:58 templates/fruser_edit.html.py:61
++#: templates/fruser_add.html:66 templates/fruser_edit.html.py:62
+ msgid "Female"
+ msgstr "女"
+ 
+-#: templates/fruser_add.html:61 templates/fruser_edit.html.py:64
++#: templates/fruser_add.html:71 templates/fruser_edit.html.py:67
+ msgid "Age"
+ msgstr "年龄"
+ 
++#: templates/fruser_add.html:74 templates/fruser_edit.html.py:70
++msgid "Ex : 25"
++msgstr "例如 : 25"
++
++#: templates/fruser_add.html:74 templates/fruser_edit.html.py:70
++msgid "Please input the number"
++msgstr "请输入号码"
++
++#: templates/fruser_add.html:142
++msgid "Create fruser successfully"
++msgstr "建立设备使用者成功"
++
++#: templates/fruser_add.html:145
++msgid "Fruser exists"
++msgstr "设备使用者存在"
++
++#: templates/fruser_add.html:147
++msgid "Fail to add fruser"
++msgstr "设备使用者新增失败"
++
+ #: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
+ #: templates/fruser_edit.html:25
+ msgid "Fruser Edit"
+ msgstr "修改用户资讯"
+ 
+-#: templates/fruser_edit.html:161
++#: templates/fruser_edit.html:135
+ msgid "Update fruser successfully"
+ msgstr "更新设备使用者成功"
+ 
+-#: templates/fruser_edit.html:164
++#: templates/fruser_edit.html:138
+ msgid "Fail to update fruser"
+ msgstr "更新设备使用者失败"
+ 
+@@ -386,50 +428,58 @@ msgid "FR User List"
+ msgstr "设备使用者管理"
+ 
+ #: templates/fruser_list.html:33
++msgid "Create FR User"
++msgstr "建立设备使用者"
++
++#: templates/fruser_list.html:34
+ msgid "Import"
+ msgstr "汇入"
+ 
+-#: templates/fruser_list.html:34 templates/fruserlog_list.html.py:41
++#: templates/fruser_list.html:35 templates/fruserlog_list.html.py:41
+ #: templates/systemlog_list.html:40
+ msgid "Export"
+ msgstr "汇出"
+ 
+-#: templates/fruser_list.html:50
++#: templates/fruser_list.html:51
+ msgid "Import Fruser"
+ msgstr "汇入设备使用者"
+ 
+-#: templates/fruser_list.html:60
++#: templates/fruser_list.html:61
+ msgid "Close"
+ msgstr "关闭"
+ 
+-#: templates/fruser_list.html:61
++#: templates/fruser_list.html:62
+ msgid "Upload"
+ msgstr "上传"
+ 
+-#: templates/fruser_list.html:118 templates/role_list.html.py:108
++#: templates/fruser_list.html:119 templates/role_list.html.py:108
+ msgid "Create Date"
+ msgstr "建立时间"
+ 
+-#: templates/fruser_list.html:123
++#: templates/fruser_list.html:124
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
+-#: templates/fruser_list.html:177
++#: templates/fruser_list.html:179
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正确"
+ 
+-#: templates/fruser_list.html:179
++#: templates/fruser_list.html:181
+ msgid "Please wait for uploading!"
+ msgstr "请等待上传！"
+ 
+-#: templates/fruser_list.html:181
++#: templates/fruser_list.html:183
+ msgid "Fail to import fruser!"
+ msgstr "汇入设备使用者失败"
+ 
+-#: templates/fruser_list.html:209
++#: templates/fruser_list.html:211
+ msgid "Fail to delete fruser"
+ msgstr "删除设备使用者失败"
+ 
++#: templates/fruser_list.html:221
++msgid "Duplicate export!"
++msgstr "重复汇出"
++
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+@@ -622,8 +672,7 @@ msgid "Forgotten your password ?"
+ msgstr "忘记您的密码？"
+ 
+ #: templates/registration/forget_password.html:24
+-msgid ""
+-"Enter your email address below, and we'll email instructions for setting a "
++msgid "Enter your email address below, and we'll email instructions for setting a "
+ "new one."
+ msgstr "在下面输入您的电子信箱，我们将透过电子邮件通知重设密码说明"
+ 
+@@ -653,15 +702,13 @@ msgstr "密码更新成功"
+ 
+ #: templates/registration/password_reset_email.html:2
+ #, python-format
+-msgid ""
+-"You're receiving this email because you requested a password reset for your "
++msgid "You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+ msgstr "您收到这封邮件是因为您要求在 %(site_name)s 网站上重新设定新的密码 "
+ 
+ #: templates/registration/password_reset_email.html:4
+ #, python-format
+-msgid ""
+-"Please reset your password in %(expired)s minutes, go to the following page "
++msgid "Please reset your password in %(expired)s minutes, go to the following page "
+ "and choose a new password:"
+ msgstr "请在 %(expired)s 分钟内变更密码，点选下列网址重新设定新密码"
+ 
+@@ -684,8 +731,7 @@ msgid "Password reset confirmation"
+ msgstr "密码重置确认"
+ 
+ #: templates/registration/reset_password.html:25
+-msgid ""
+-"Please enter your new password twice so we can verify you typed it in "
++msgid "Please enter your new password twice so we can verify you typed it in "
+ "correctly."
+ msgstr "请输入两次新密码，以便我们确认您输入是否一致"
+ 
+@@ -920,11 +966,9 @@ msgstr "若期限内超过笔数限制，最多可以纪录到1.5倍的笔数限
+ 
+ #: templates/system_settings.html:189
+ #, python-format
+-msgid ""
+-"Over 150%% amount, system will keep latest logs, and remove the other older "
++msgid "Over 150%% amount, system will keep latest logs, and remove the other older "
+ "logs."
+-msgstr ""
+-"若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
++msgstr "若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
+ 
+ #: templates/system_settings.html:192
+ msgid "Save user photo image"
+@@ -951,8 +995,7 @@ msgid "Must select correct monthly day!"
+ msgstr "必须选择正确的月份日期！"
+ 
+ #: templates/system_settings.html:299
+-msgid ""
+-"The backup may not be processed monthly, if you choose monthly date from 29 "
++msgid "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "选择每月 29~31 日，可能无法每月进行自动备份，您确定要继续吗?"
+ 
+@@ -1022,12 +1065,6 @@ msgstr "帐号只能包含1到16码的英文、数字、'_'、'-'"
+ msgid "Please input your name"
+ msgstr "请输入姓名"
+ 
+-#: templates/user_add.html:51 templates/user_update.html.py:52
+-msgid ""
+-"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
+-"'-'"
+-msgstr "帐号只能包含25码的中文、英文、数字、'_'、'-'"
+-
+ #: templates/user_add.html:57 templates/user_update.html.py:58
+ msgid "E-Mail"
+ msgstr "电子信箱"
+@@ -1169,9 +1206,3 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失败"
+-
+-#~ msgid "Admin is cannot be deleted"
+-#~ msgstr "不能删除管理者"
+-
+-#~ msgid "Does not have permission"
+-#~ msgstr "没有权限"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index f9c45394440a5d7df6fcf13b8791ccc46212a502..e04bad1ecd40f32f3f84c08f5a221c124ab1458c 100644
+GIT binary patch
+delta 6246
+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
+b=Hj}&!Mg2_L{<FF-GQ!6+Xh2vjU)dDa~tm4
+
+delta 5707
+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
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 6a8f3e7..9ec1e0c 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 11:48+0800\n"
++"POT-Creation-Date: 2016-09-23 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -71,7 +71,7 @@ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+ #: templates/dashboard.html:152 templates/dashboard.html.py:170
+-#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:72
++#: templates/fruser_list.html:100 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:89
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+@@ -110,8 +110,8 @@ msgid "Device"
+ msgstr "設備"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:300 templates/fruser_add.html.py:75
+-#: templates/fruser_edit.html:101 templates/frusergroup_add.html.py:48
++#: templates/device_settings.html:300 templates/fruser_add.html.py:77
++#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:48
+ #: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
+ #: templates/role_permission.html:37 templates/role_rename.html.py:42
+ #: templates/user_add.html:95 templates/user_group_add.html.py:48
+@@ -121,8 +121,8 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:301 templates/fruser_add.html.py:76
+-#: templates/fruser_edit.html:102 templates/frusergroup_add.html.py:49
++#: templates/device_settings.html:301 templates/fruser_add.html.py:78
++#: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:49
+ #: templates/frusergroup_edit.html:66 templates/logsetting.html.py:106
+ #: templates/role_add.html:47 templates/role_permission.html.py:38
+ #: templates/role_rename.html:43 templates/system_settings.html.py:162
+@@ -208,14 +208,14 @@ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+ #: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+-#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
++#: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
+ #: templates/role_list.html:126 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "刪除"
+ 
+-#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:113
++#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:114
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+@@ -223,7 +223,7 @@ msgid "Group"
+ msgstr "群組"
+ 
+ #: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+-#: templates/fruser_list.html:193 templates/frusergroup_devices.html.py:167
++#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+ #: templates/user_group_members.html:167 templates/user_list.html.py:137
+@@ -274,7 +274,7 @@ msgstr "接受"
+ msgid "Reject"
+ msgstr "拒絕"
+ 
+-#: templates/device_list.html:117 templates/fruser_list.html.py:131
++#: templates/device_list.html:117 templates/fruser_list.html.py:132
+ #: templates/frusergroups_list.html:89 templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "編輯"
+@@ -332,13 +332,21 @@ msgstr "新增設備使用者"
+ msgid "Fruser"
+ msgstr "設備使用者"
+ 
+-#: templates/fruser_add.html:37 templates/fruser_edit.html.py:39
+-#: templates/fruser_list.html:103 templates/fruserlog_list.html.py:96
++#: templates/fruser_add.html:39 templates/fruser_edit.html.py:39
++#: templates/fruser_list.html:104 templates/fruserlog_list.html.py:96
+ msgid "FRUserId"
+ msgstr "工號"
+ 
+-#: templates/fruser_add.html:41 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:108 templates/frusergroup_devices.html.py:102
++#: templates/fruser_add.html:42
++msgid "Input the user ID"
++msgstr "請輸入使用者ID"
++
++#: templates/fruser_add.html:42
++msgid "User ID can only contain 1 to 16 bit of English or Number or '_' or '-'"
++msgstr "使用者ID只能包含1到16碼的英文、數字、'_'、'-'"
++
++#: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
++#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:102
+ #: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:102
+ #: templates/user_group_members.html:102 templates/user_list.html.py:89
+@@ -346,36 +354,70 @@ msgstr "工號"
+ msgid "Name"
+ msgstr "姓名"
+ 
+-#: templates/fruser_add.html:46 templates/fruser_edit.html.py:49
++#: templates/fruser_add.html:49
++msgid "Input your name"
++msgstr "請輸入姓名"
++
++#: templates/fruser_add.html:49 templates/user_add.html.py:51
++#: templates/user_update.html:52
++msgid "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
++"'-'"
++msgstr "帳號只能包含25碼的中文、英文、數字、'_'、'-'"
++
++#: templates/fruser_add.html:52 templates/fruser_edit.html.py:48
+ msgid "Disable"
+ msgstr "停用"
+ 
+-#: templates/fruser_add.html:53 templates/fruser_edit.html.py:56
++#: templates/fruser_add.html:55 templates/fruser_edit.html.py:51
++msgid "Please input disable causes"
++msgstr "請輸入停用原因"
++
++#: templates/fruser_add.html:61 templates/fruser_edit.html.py:57
+ msgid "Gender"
+ msgstr "性別"
+ 
+-#: templates/fruser_add.html:57 templates/fruser_edit.html.py:60
++#: templates/fruser_add.html:65 templates/fruser_edit.html.py:61
+ msgid "Male"
+ msgstr "男"
+ 
+-#: templates/fruser_add.html:58 templates/fruser_edit.html.py:61
++#: templates/fruser_add.html:66 templates/fruser_edit.html.py:62
+ msgid "Female"
+ msgstr "女"
+ 
+-#: templates/fruser_add.html:61 templates/fruser_edit.html.py:64
++#: templates/fruser_add.html:71 templates/fruser_edit.html.py:67
+ msgid "Age"
+ msgstr "年齡"
+ 
++#: templates/fruser_add.html:74 templates/fruser_edit.html.py:70
++msgid "Ex : 25"
++msgstr "例如 : 25"
++
++#: templates/fruser_add.html:74 templates/fruser_edit.html.py:70
++msgid "Please input the number"
++msgstr "請輸入號碼"
++
++#: templates/fruser_add.html:142
++msgid "Create fruser successfully"
++msgstr "建立設備使用者成功"
++
++#: templates/fruser_add.html:145
++msgid "Fruser exists"
++msgstr "設備使用者存在"
++
++#: templates/fruser_add.html:147
++msgid "Fail to add fruser"
++msgstr "設備使用者新增失敗"
++
+ #: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
+ #: templates/fruser_edit.html:25
+ msgid "Fruser Edit"
+ msgstr "修改用戶資訊"
+ 
+-#: templates/fruser_edit.html:161
++#: templates/fruser_edit.html:135
+ msgid "Update fruser successfully"
+ msgstr "更新設備使用者成功"
+ 
+-#: templates/fruser_edit.html:164
++#: templates/fruser_edit.html:138
+ msgid "Fail to update fruser"
+ msgstr "更新設備使用者失敗"
+ 
+@@ -386,50 +428,58 @@ msgid "FR User List"
+ msgstr "設備使用者管理"
+ 
+ #: templates/fruser_list.html:33
++msgid "Create FR User"
++msgstr "建立設備使用者"
++
++#: templates/fruser_list.html:34
+ msgid "Import"
+ msgstr "匯入"
+ 
+-#: templates/fruser_list.html:34 templates/fruserlog_list.html.py:41
++#: templates/fruser_list.html:35 templates/fruserlog_list.html.py:41
+ #: templates/systemlog_list.html:40
+ msgid "Export"
+ msgstr "匯出"
+ 
+-#: templates/fruser_list.html:50
++#: templates/fruser_list.html:51
+ msgid "Import Fruser"
+ msgstr "匯入設備使用者"
+ 
+-#: templates/fruser_list.html:60
++#: templates/fruser_list.html:61
+ msgid "Close"
+ msgstr "關閉"
+ 
+-#: templates/fruser_list.html:61
++#: templates/fruser_list.html:62
+ msgid "Upload"
+ msgstr "上傳"
+ 
+-#: templates/fruser_list.html:118 templates/role_list.html.py:108
++#: templates/fruser_list.html:119 templates/role_list.html.py:108
+ msgid "Create Date"
+ msgstr "建立時間"
+ 
+-#: templates/fruser_list.html:123
++#: templates/fruser_list.html:124
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
+-#: templates/fruser_list.html:177
++#: templates/fruser_list.html:179
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正確"
+ 
+-#: templates/fruser_list.html:179
++#: templates/fruser_list.html:181
+ msgid "Please wait for uploading!"
+ msgstr "請等待上傳！"
+ 
+-#: templates/fruser_list.html:181
++#: templates/fruser_list.html:183
+ msgid "Fail to import fruser!"
+ msgstr "匯入設備使用者失敗"
+ 
+-#: templates/fruser_list.html:209
++#: templates/fruser_list.html:211
+ msgid "Fail to delete fruser"
+ msgstr "刪除設備使用者失敗"
+ 
++#: templates/fruser_list.html:221
++msgid "Duplicate export!"
++msgstr "重複匯出"
++
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+@@ -622,8 +672,7 @@ msgid "Forgotten your password ?"
+ msgstr "忘記您的密碼？"
+ 
+ #: templates/registration/forget_password.html:24
+-msgid ""
+-"Enter your email address below, and we'll email instructions for setting a "
++msgid "Enter your email address below, and we'll email instructions for setting a "
+ "new one."
+ msgstr "在下面輸入您的電子信箱，我們將透過電子郵件通知重設密碼說明"
+ 
+@@ -653,15 +702,13 @@ msgstr "密碼更新成功"
+ 
+ #: templates/registration/password_reset_email.html:2
+ #, python-format
+-msgid ""
+-"You're receiving this email because you requested a password reset for your "
++msgid "You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+ msgstr "您收到這封郵件是因為您要求在 %(site_name)s 網站上重新設定新的密碼 "
+ 
+ #: templates/registration/password_reset_email.html:4
+ #, python-format
+-msgid ""
+-"Please reset your password in %(expired)s minutes, go to the following page "
++msgid "Please reset your password in %(expired)s minutes, go to the following page "
+ "and choose a new password:"
+ msgstr "請在 %(expired)s 分鐘內變更密碼，點選下列網址重新設定新密碼"
+ 
+@@ -684,8 +731,7 @@ msgid "Password reset confirmation"
+ msgstr "密碼重置確認"
+ 
+ #: templates/registration/reset_password.html:25
+-msgid ""
+-"Please enter your new password twice so we can verify you typed it in "
++msgid "Please enter your new password twice so we can verify you typed it in "
+ "correctly."
+ msgstr "請輸入兩次新密碼，以便我們確認您輸入是否一致"
+ 
+@@ -920,11 +966,9 @@ msgstr "若期限內超過筆數限制，最多可以紀錄到1.5倍的筆數限
+ 
+ #: templates/system_settings.html:189
+ #, python-format
+-msgid ""
+-"Over 150%% amount, system will keep latest logs, and remove the other older "
++msgid "Over 150%% amount, system will keep latest logs, and remove the other older "
+ "logs."
+-msgstr ""
+-"若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
++msgstr "若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
+ 
+ #: templates/system_settings.html:192
+ msgid "Save user photo image"
+@@ -951,8 +995,7 @@ msgid "Must select correct monthly day!"
+ msgstr "必須選擇正確的月份日期！"
+ 
+ #: templates/system_settings.html:299
+-msgid ""
+-"The backup may not be processed monthly, if you choose monthly date from 29 "
++msgid "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "選擇每月 29~31 日，可能無法每月進行自動備份，您確定要繼續嗎?"
+ 
+@@ -1022,12 +1065,6 @@ msgstr "帳號只能包含1到16碼的英文、數字、'_'、'-'"
+ msgid "Please input your name"
+ msgstr "請輸入姓名"
+ 
+-#: templates/user_add.html:51 templates/user_update.html.py:52
+-msgid ""
+-"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
+-"'-'"
+-msgstr "帳號只能包含25碼的中文、英文、數字、'_'、'-'"
+-
+ #: templates/user_add.html:57 templates/user_update.html.py:58
+ msgid "E-Mail"
+ msgstr "電子信箱"
+@@ -1169,9 +1206,3 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失敗"
+-
+-#~ msgid "Admin is cannot be deleted"
+-#~ msgstr "不能刪除管理者"
+-
+-#~ msgid "Does not have permission"
+-#~ msgstr "沒有權限"
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 745d65e..2be3ca1 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -66,7 +66,7 @@
+                                             {% trans "Password" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="password" class="form-control" placeholder="{% trans "Please input your password" %}" title="{% trans "Please input your password" %}" name="Password" oninput="validityPwd()" AutoComplete="Off"required>
++                                            <input type="password" class="form-control" placeholder="{% trans "Please input your password" %}" title="{% trans "Please input your password" %}" name="Password" oninput="validityPwd()" AutoComplete="Off" required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+-- 
+1.9.1
+

@@ -1,0 +1,34 @@
+From 96616cd7adefe7dc7793a6a59d9c880465787f7c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 18 Oct 2016 14:15:24 +0800
+Subject: [PATCH 323/443] Modify check method of connection check api.
+
+---
+ api/connection.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index b804789..1e9dbe4 100755
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -15,13 +15,13 @@ def check(request):
+         try:
+             client_ip = request.META['REMOTE_ADDR']
+             from api.models import Devices
+-            try:
+-                devices = Devices.objects.get(IP = client_ip)
++            devices = Devices.objects.filter(IP = client_ip)
++            if devices.exists():
+                 states = {'Proposed' : 0, 'Approved' : 1, 'Online' : 1, 'Offline' : 1, 'Setting' : 2, 'Getting': 3}
+-                Devices.objects.filter(IP = client_ip).update(UpdateDate = datetime.now())
++                devices.update(UpdateDate = datetime.now())
+ 
+                 return JsonResponse({'Result' : states[devices.State]})
+-            except:
++            else:
+                 Devices.objects.create(Name = 'Default' + client_ip, IP = client_ip)
+                 return JsonResponse({'Result' : 0})
+         except Exception as e:
+-- 
+1.9.1
+

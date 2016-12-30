@@ -1,0 +1,34 @@
+From ee69f40c5dafaf620a9b560a6ea8b188d24ae1a1 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 14 Dec 2016 10:52:20 +0800
+Subject: [PATCH 416/443] Fix bug - Export frusers cannot include Chinese.
+
+---
+ frusers/views.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index edfcdbc..d5ca28d 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -123,7 +123,7 @@ def import_fruser(request):
+             except:
+                 raise Exception(2)
+ 
+-        with open(csvdir, 'r') as csvfile:
++        with open(csvdir, 'r', encoding='utf-8') as csvfile:
+             for row in csv.DictReader(csvfile):
+                 fail = False
+                 fruser, result = Frusers.objects.get_or_create(FRUserId = row['FRUserId'])
+@@ -203,7 +203,7 @@ def export_fruser(request):
+         picdir = os.path.join(mediadir, 'fruserpic')
+ 
+         if not os.path.exists(csvdir):
+-            with open(csvdir, 'w') as csvfile:
++            with open(csvdir, 'w', encoding='utf-8') as csvfile:
+                 header = ['FRUserId', 'Name', 'Group', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
+                 writer = csv.writer(csvfile)
+                 writer.writerow(header)
+-- 
+1.9.1
+

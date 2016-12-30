@@ -1,0 +1,63 @@
+From 153ab952eef7a467e7a92c420c3b9faf0c4ef585 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 25 Jul 2016 16:13:08 +0800
+Subject: [PATCH 199/443] Modify get Timezone from local
+
+Modify get Timezone function from local system.
+---
+ api/utility.py | 41 ++++++-----------------------------------
+ 1 file changed, 6 insertions(+), 35 deletions(-)
+
+diff --git a/api/utility.py b/api/utility.py
+index d5ccdf9..66f55b0 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -76,39 +76,10 @@ def md5(str):
+     pwd = md5(str.encode('utf-8'))
+     return pwd.hexdigest()
+ 
+-def get_localtimezone(_root='/'):
+-    # Debian/Ubuntu distribution has a specific configuration files in '/etc/timezone'
++def get_localtimezone():
++    # linux use timedatectl to get system time info
+     # that contain the timezone name.
+-    tzpath = os.path.join(_root, 'etc/timezone')
+-    if os.path.exists(tzpath):
+-        with open(tzpath, 'rb') as tzfile:
+-            data = tzfile.read()
+-            etctz = data.strip().decode()
+-            return etctz
+-
+-    # Fedora/Redhat/CentOS distribution has a ZONE setting in '/etc/sysconfig/clock',
+-    # OpenSUSE distribution has a TIMEZONE setting in '/etc/sysconfig/clock' and
+-    # Gentoo distribution has a TIMEZONE setting in '/etc/conf.d/clock'
+-    # We look through these files for a timezone:
+-    zone_re = re.compile('\s*ZONE\s*=\s*\"')
+-    timezone_re = re.compile('\s*TIMEZONE\s*=\s*\"')
+-    end_re = re.compile('\"')
+-
+-    for filename in ('etc/sysconfig/clock', 'etc/conf.d/clock'):
+-        tzpath = os.path.join(_root, filename)
+-        if not os.path.exists(tzpath):
+-            continue
+-        with open(tzpath, 'rt') as tzfile:
+-            data = tzfile.readlines()
+-
+-        for line in data:
+-            # Look for the ZONE= setting.
+-            match = zone_re.match(line)
+-            if match is None:
+-                # No ZONE= setting. Look for the TIMEZONE= setting.
+-                match = timezone_re.match(line)
+-            if match is not None:
+-                # Some setting existed
+-                line = line[match.end():]
+-                etctz = line[:end_re.search(line).start()]
+-                return etctz
++    timezone = os.popen('timedatectl | grep Time | grep -i zone').readlines()[0]
++    timezone = timezone[timezone.find(':') + 1:].lstrip()
++    timezone = timezone[:timezone.find(' ')]
++    return timezone
+-- 
+1.9.1
+

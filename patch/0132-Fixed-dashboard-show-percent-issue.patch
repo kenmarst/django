@@ -1,0 +1,35 @@
+From 9f372ff7b3704ead36af164b2749a5ecf7e26ce0 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 16:34:47 +0800
+Subject: [PATCH 132/443] Fixed dashboard show percent issue.
+
+---
+ dashboard/views.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index eba7119..a51eb51 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -6,6 +6,7 @@ from api.utility import get_localtimezone
+ from api.models import Config, Systemlogs, Frusers, Devices
+ from login.views import check_login
+ import psutil, json
++from decimal import Decimal
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ permission = 'permission_system'
+@@ -71,8 +72,8 @@ def dashboard_views(request):
+         Config.objects.create(Name = 'LogLimit', Value = '200000')
+         syslog_limit = 200000
+ 
+-    frusers_percent = frusers_total_count / frusers_limit
+-    syslog_percent = syslogs_total_count / int(syslog_limit)
++    frusers_percent = Decimal(frusers_total_count) / Decimal(frusers_limit / 100)
++    syslog_percent = Decimal(syslogs_total_count) / Decimal(int(syslog_limit) / 100)
+ 
+     device_total_count = Devices.objects.count()
+     device_proposed_count = Devices.objects.filter(State='Proposed').count()
+-- 
+1.9.1
+

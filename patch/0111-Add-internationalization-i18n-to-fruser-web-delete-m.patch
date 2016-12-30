@@ -1,0 +1,1247 @@
+From dce0ebcecce41d73b599f1704f578a460fe85f8c Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Mon, 30 May 2016 11:34:19 +0800
+Subject: [PATCH 111/443] Add internationalization (i18n) to fruser web &
+ delete messages for other web.
+
+---
+ api/face.py                                  |   2 -
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/device_frusergroups.html           |   2 +-
+ templates/device_list.html                   |   2 +-
+ templates/fruser_edit.html                   |  25 ++--
+ templates/fruser_list.html                   |  35 ++---
+ templates/frusergroup_devices.html           |   2 +-
+ templates/frusergroup_member.html            |   2 +-
+ templates/frusergroups_list.html             |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 8951 -> 9736 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 193 +++++++++++++++++++--------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 8945 -> 9736 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 193 +++++++++++++++++++--------
+ templates/role_list.html                     |   2 +-
+ templates/user_group_devices.html            |   2 +-
+ templates/user_group_list.html               |   2 +-
+ templates/user_group_members.html            |   2 +-
+ templates/user_list.html                     |   2 +-
+ 21 files changed, 321 insertions(+), 151 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index f6547b7..479bc58 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -1,5 +1,3 @@
+-#-*-coding:utf-8-*-
+-
+ import json, requests
+ from collections import ChainMap
+ from django.http import HttpResponse, JsonResponse
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 1fb8ec0d67ef4811fab999f46f80c45459bf7a7e..fab9c65d1f7dcf233f08ade1cbab245509b0e03c 100644
+GIT binary patch
+delta 19
+acmZo-X=0i1lEc_Q!O+mk$ZX?BK}G;N_yx%T
+
+delta 19
+acmZo-X=0i1lEcVc!O+~w(0JoVK}G;OR0Yuh
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 9ff4e99..4c93898 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 17:31+0800\n"
++"POT-Creation-Date: 2016-05-30 11:26+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 55d422dfcc5c343861d4e3746f09af960f24a42a..a0d8463df24eb2561ca9b404312eadeb83704bba 100644
+GIT binary patch
+delta 19
+acmZo-X=0i1lEc_Q!O+mk$Y|q7K}G;N<ORh5
+
+delta 19
+acmZo-X=0i1lEcVc!O+~w*kI#FK}G;OQ3cQd
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 3801349..0249d98 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 17:30+0800\n"
++"POT-Creation-Date: 2016-05-30 11:22+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 95e1d92..5021acc 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -129,7 +129,7 @@
+             }
+ 
+             function delete_group(GroupOId, Name) {
+-                var ret = confirm('Confirm to delete ' + Name + ' from this device?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this device" %} ?');
+ 
+                 if (ret) {
+                     $.ajax({
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 381cbe6..d009c74 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -150,7 +150,7 @@
+             }
+ 
+             function delete_device(OId, Name) {
+-                var ret = confirm('Confirm to delete ' +Name+ ' Device?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' {% trans "Device" %} ?');
+ 
+                 if (ret) {
+                     $.ajax({
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index 99bb5f4..c0ad201 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -1,11 +1,12 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ <html>
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Fruser Edit</title>
++        <title>{% trans "Fruser Edit" %}</title>
+     </head>
+ 
+     <body>
+@@ -14,14 +15,14 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li>Fruser Edit</li>
++                    <li>{% trans "Fruser Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Fruser Edit</small></h1>
++                    <h1 class="page-header"><small>{% trans "Fruser Edit" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,38 +30,38 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Fruser</p>
++                            <p>{% trans "Fruser" %}</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">FRUserId :</label>
++                                        <label class="col-md-2 control-label">{% trans "FRUserId" %} :</label>
+                                         <label class="col-md-1 control-label">
+                                             <p class="text-left">{{obj.FRUserId}}</p>
+                                         </label>
+-                                        <label class="col-md-2 control-label">Name :</label>
++                                        <label class="col-md-2 control-label">{% trans "Name" %} :</label>
+                                         <label class="col-md-1 control-label">
+                                             <p class="text-left">{{obj.Name}}</p>
+                                         </label>
+ 
+                                         <label class="col-md-2 control-label checkbox">
+-                                            <input type="checkbox" name="State">Disable
++                                            <input type="checkbox" name="State">{% trans "Disable" %}
+                                         </label>
+                                         <div class="col-md-3">
+                                             <input type="text" class="form-control" value="{{obj.DisableCauses}}" placeholder="Please input Disable Causes" name="DisableCauses">
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">Gender :</label>
++                                        <label class="col-md-2 control-label">{% trans "Gender" %} :</label>
+                                         <div class="col-md-2">
+                                             <select class="form-control" name="Gender">
+                                                 <option value=""></option>
+-                                                <option value="Male">Male</option>
+-                                                <option value="Female">Female</option>
++                                                <option value="Male">{% trans "Male" %}</option>
++                                                <option value="Female">{% trans "Female" %}</option>
+                                             </select>
+                                         </div>
+-                                        <label class="col-md-1 control-label">Age :</label>
++                                        <label class="col-md-1 control-label">{% trans "Age" %} :</label>
+                                         <div class="col-md-2">
+                                             <input type="text" class="form-control" value="{{obj.Age}}" placeholder="Ex : 25" name="Age">
+                                         </div>
+@@ -96,7 +97,7 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-11">
+-                                <button class="btn btn-default pull-right" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default pull-right" onclick="onSaveClick()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 7c8bc0a..a9659c9 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Fruser List</title>
++        <title>{% trans "Fruser List" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,13 +15,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Fruser List</li>
++                    <li class="active">{% trans "Fruser List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Fruser List</small></h1>
++                    <h1 class="page-header"><small>{% trans "Fruser List" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -29,8 +30,8 @@
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+                             <div id="ImExport">
+-                                <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal">Import</button>
+-                                <button class="btn btn-default" onclick="location.href='/export_fruser'">Export</button>
++                                <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal">{% trans "Import" %}</button>
++                                <button class="btn btn-default" onclick="location.href='/export_fruser'">{% trans "Export" %}</button>
+                             </div>
+                             <table id="FruserList"></table>
+                         </div>
+@@ -46,7 +47,7 @@
+                         <button class="close" data-dismiss="modal">
+                             <span aria-hidden="true">&times;</span>
+                         </button>
+-                        <h4 class="modal-title">Import Fruser</h4>
++                        <h4 class="modal-title">{% trans "Import Fruser" %}</h4>
+                     </div>
+                     <div class="modal-body">
+                         <form id="ImportForm" class="form-horizontal" enctype="multipart/form-data" >{% csrf_token %}
+@@ -56,8 +57,8 @@
+                         </form>
+                     </div>
+                     <div class="modal-footer">
+-                        <button class="btn btn-default" data-dismiss="modal">Close</button>
+-                        <button class="btn btn-default" onclick="ImportFruser()">Upload</button>
++                        <button class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
++                        <button class="btn btn-default" onclick="ImportFruser()">{% trans "Upload" %}</button>
+                     </div>
+                 </div>
+             </div>
+@@ -76,40 +77,40 @@
+                 columns: [
+                     {
+                         field: 'Index',
+-                        title: 'No',
++                        title: '{% trans "No." %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'FRUserId',
+-                        title: 'FRUserId',
++                        title: '{% trans "FRUserId" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Name',
++                        title: '{% trans "Name" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'Group',
+-                        title: 'Group',
++                        title: '{% trans "Group" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'CreateDate',
+-                        title: 'Create Date',
++                        title: '{% trans "Create Date" %}',
+                         sortable: true
+                     },
+                     {
+                         field: 'UpdateDate',
+-                        title: 'Recently used Date',
++                        title: '{% trans "Recently used Date" %}',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">Edit</button> \
+-                                    <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+@@ -163,7 +164,7 @@
+             }
+ 
+             function delete_fruser(OId, Name) {
+-                var ret = confirm('Confirm to delete ' +Name+ '?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' ?');
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 100e95f..57546c8 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -132,7 +132,7 @@
+             }
+ 
+             function delete_device(DeviceOId, Name) {
+-                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 632d076..b2e5c4c 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -132,7 +132,7 @@
+             }
+ 
+             function delete_user(FRUserOId, Name) {
+-                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index a6556d5..a293d97 100644
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -95,7 +95,7 @@
+             }
+ 
+             function delete_device(OId, Name) {
+-                var ret = confirm('Confirm to delete ' +Name+ ' group?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' {% trans "group" %} ?');
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 1b6e8186521684323545cb9f9e2d163e8f33c3ea..5aba0b81744930456c5e678c7ea1f75481de1465 100644
+GIT binary patch
+delta 4482
+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
+SPRBJ~tZY1AZ20#-I_H0A_+#4u
+
+delta 3705
+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
+U@&xWR9vK!GkUGfYKa@7|Ka?Izs{jB1
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 48fdd33..aba3d81 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 17:31+0800\n"
++"POT-Creation-Date: 2016-05-30 11:26+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -66,28 +66,28 @@ msgstr "待审数"
+ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+-#: templates/dashboard.html:144 templates/dashboard.html.py:162
+-#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+-#: templates/role_list.html:72 templates/systemlog_list.html.py:68
+-#: templates/user_list.html:68
++#: templates/dashboard.html:143 templates/dashboard.html.py:161
++#: templates/fruser_list.html:80 templates/frusergroups_list.html.py:54
++#: templates/fruserlog_list.html:81 templates/role_list.html.py:72
++#: templates/systemlog_list.html:68 templates/user_list.html.py:68
+ msgid "No."
+ msgstr "编号"
+ 
+-#: templates/dashboard.html:148 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:65
++#: templates/dashboard.html:147 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:64
+ #: templates/fruserlog_list.html:93
+ msgid "Device Name"
+ msgstr "设备名称"
+ 
+-#: templates/dashboard.html:152 templates/dashboard.html.py:174
++#: templates/dashboard.html:151 templates/dashboard.html.py:173
+ msgid "Latest Update Time"
+ msgstr "最后更新时间"
+ 
+-#: templates/dashboard.html:166
++#: templates/dashboard.html:165
+ msgid "User ID"
+ msgstr "工号"
+ 
+-#: templates/dashboard.html:170
++#: templates/dashboard.html:169
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -100,7 +100,7 @@ msgid "Device add"
+ msgstr "新增设备"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/frusergroup_devices.html:108
++#: templates/device_list.html:153 templates/frusergroup_devices.html.py:108
+ #: templates/user_group_devices.html:108
+ msgid "Device"
+ msgstr "设备"
+@@ -116,12 +116,13 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:174 templates/frusergroup_add.html.py:49
+-#: templates/frusergroup_edit.html:66 templates/logsetting.html.py:85
+-#: templates/role_add.html:47 templates/role_permission.html.py:38
+-#: templates/role_rename.html:43 templates/user_add.html.py:97
+-#: templates/user_group_add.html:49 templates/user_group_edit.html.py:66
+-#: templates/user_setting.html:119 templates/user_update.html.py:94
++#: templates/device_settings.html:174 templates/fruser_edit.html.py:100
++#: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
++#: templates/logsetting.html:85 templates/role_add.html.py:47
++#: templates/role_permission.html:38 templates/role_rename.html.py:43
++#: templates/user_add.html:97 templates/user_group_add.html.py:49
++#: templates/user_group_edit.html:66 templates/user_setting.html.py:119
++#: templates/user_update.html:94
+ msgid "Save"
+ msgstr "储存"
+ 
+@@ -168,24 +169,37 @@ msgstr "搜寻群组"
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:80
++#: templates/device_frusergroups.html:79
+ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/device_frusergroups.html:87 templates/device_list.html.py:99
+-#: templates/frusergroups_list.html:72 templates/role_list.html.py:105
+-#: templates/user_group_devices.html:89 templates/user_group_list.html:72
+-#: templates/user_group_members.html:89 templates/user_list.html.py:101
++#: templates/device_frusergroups.html:86 templates/device_list.html.py:98
++#: templates/fruser_list.html:113 templates/frusergroups_list.html.py:72
++#: templates/role_list.html:105 templates/user_group_devices.html.py:89
++#: templates/user_group_list.html:71 templates/user_group_members.html:89
++#: templates/user_list.html.py:101
+ msgid "Delete"
+ msgstr "删除"
+ 
+-#: templates/device_frusergroups.html:108 templates/frusergroup_add.html:31
+-#: templates/frusergroup_edit.html.py:48 templates/frusergroups_list.html:59
+-#: templates/user_group_add.html.py:31 templates/user_group_edit.html:48
+-#: templates/user_group_list.html.py:59
++#: templates/device_frusergroups.html:105 templates/fruser_list.html.py:95
++#: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
++#: templates/frusergroups_list.html:59 templates/user_group_add.html.py:31
++#: templates/user_group_edit.html:48 templates/user_group_list.html.py:58
+ msgid "Group"
+ msgstr "群组"
+ 
++#: templates/device_frusergroups.html:132 templates/device_list.html.py:153
++#: templates/fruser_list.html:167 templates/frusergroup_devices.html.py:135
++#: templates/frusergroup_member.html:135 templates/frusergroups_list.html:98
++#: templates/user_group_devices.html:135 templates/user_group_list.html:98
++#: templates/user_group_members.html:135 templates/user_list.html.py:125
++msgid "Confirm to delete"
++msgstr "您是否确认要删除"
++
++#: templates/device_frusergroups.html:132
++msgid "from this device"
++msgstr "设备"
++
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+@@ -199,28 +213,28 @@ msgstr "设备管理"
+ msgid "Create new device"
+ msgstr "建立新设备"
+ 
+-#: templates/device_list.html:70
++#: templates/device_list.html:69
+ msgid "Status"
+ msgstr "状态"
+ 
+-#: templates/device_list.html:83
++#: templates/device_list.html:82
+ msgid "Sync time"
+ msgstr "同步时间"
+ 
+-#: templates/device_list.html:91
++#: templates/device_list.html:90
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:92
++#: templates/device_list.html:91
+ msgid "Reject"
+ msgstr "拒绝"
+ 
+-#: templates/device_list.html:97 templates/frusergroups_list.html.py:71
+-#: templates/user_group_list.html:71
++#: templates/device_list.html:96 templates/fruser_list.html.py:112
++#: templates/frusergroups_list.html:71 templates/user_group_list.html.py:70
+ msgid "Edit"
+ msgstr "编辑"
+ 
+-#: templates/device_list.html:98 templates/menu.html.py:39
++#: templates/device_list.html:97 templates/menu.html.py:39
+ #: templates/system_settings.html:10 templates/system_settings.html.py:19
+ #: templates/system_settings.html:25
+ msgid "Settings"
+@@ -247,6 +261,83 @@ msgstr "简体中文"
+ msgid "zh-tw"
+ msgstr "繁体中文"
+ 
++#: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
++#: templates/fruser_edit.html:25
++msgid "Fruser Edit"
++msgstr "修改用户资讯"
++
++#: templates/fruser_edit.html:33
++msgid "Fruser"
++msgstr "设备使用者"
++
++#: templates/fruser_edit.html:39 templates/fruser_list.html.py:85
++#: templates/fruserlog_list.html:85
++msgid "FRUserId"
++msgstr "工号"
++
++#: templates/fruser_edit.html:43 templates/fruser_list.html.py:90
++#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
++#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
++#: templates/user_group_devices.html.py:82
++#: templates/user_group_members.html:82 templates/user_list.html.py:79
++#: templates/user_setting.html:54 templates/user_update.html.py:47
++msgid "Name"
++msgstr "姓名"
++
++#: templates/fruser_edit.html:49
++msgid "Disable"
++msgstr "停用"
++
++#: templates/fruser_edit.html:56
++msgid "Gender"
++msgstr "性别"
++
++#: templates/fruser_edit.html:60
++msgid "Male"
++msgstr "男"
++
++#: templates/fruser_edit.html:61
++msgid "Female"
++msgstr "女"
++
++#: templates/fruser_edit.html:64
++msgid "Age"
++msgstr "年龄"
++
++#: templates/fruser_list.html:10 templates/fruser_list.html.py:18
++#: templates/fruser_list.html:24
++msgid "Fruser List"
++msgstr "设备使用者清单"
++
++#: templates/fruser_list.html:33
++msgid "Import"
++msgstr "汇入"
++
++#: templates/fruser_list.html:34 templates/fruserlog_list.html.py:41
++#: templates/systemlog_list.html:40
++msgid "Export"
++msgstr "汇出"
++
++#: templates/fruser_list.html:50
++msgid "Import Fruser"
++msgstr "汇入设备使用者"
++
++#: templates/fruser_list.html:60
++msgid "Close"
++msgstr "关闭"
++
++#: templates/fruser_list.html:61
++msgid "Upload"
++msgstr "上传"
++
++#: templates/fruser_list.html:100 templates/role_list.html.py:92
++msgid "Create Date"
++msgstr "建立时间"
++
++#: templates/fruser_list.html:105
++msgid "Recently used Date"
++msgstr "最后使用时间"
++
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+@@ -290,13 +381,11 @@ msgstr "新增设备"
+ msgid "Search Device"
+ msgstr "搜寻设备"
+ 
+-#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
+-#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
+-#: templates/user_group_devices.html.py:82
+-#: templates/user_group_members.html:82 templates/user_list.html.py:79
+-#: templates/user_setting.html:54 templates/user_update.html.py:47
+-msgid "Name"
+-msgstr "姓名"
++#: templates/frusergroup_devices.html:135
++#: templates/frusergroup_member.html:135 templates/user_group_devices.html:135
++#: templates/user_group_list.html:98 templates/user_group_members.html:135
++msgid "from this group"
++msgstr "群组"
+ 
+ #: templates/frusergroup_member.html:10
+ msgid "FR User Group Member"
+@@ -327,23 +416,19 @@ msgstr "设备使用者群组管理"
+ msgid "Create new group"
+ msgstr "建立新群组"
+ 
+-#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:64
++#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:63
+ msgid "Users"
+ msgstr "使用者"
+ 
++#: templates/frusergroups_list.html:98
++msgid "group"
++msgstr "群组"
++
+ #: templates/fruserlog_list.html:10 templates/fruserlog_list.html.py:25
+ #: templates/fruserlog_list.html:31 templates/menu.html.py:56
+ msgid "FRUser Log List"
+ msgstr "设备使用者登入纪录"
+ 
+-#: templates/fruserlog_list.html:41 templates/systemlog_list.html.py:40
+-msgid "Export"
+-msgstr "汇出"
+-
+-#: templates/fruserlog_list.html:85
+-msgid "FRUserId"
+-msgstr "工号"
+-
+ #: templates/fruserlog_list.html:100 templates/user_list.html.py:87
+ msgid "CreateDate"
+ msgstr "建立时间"
+@@ -502,10 +587,6 @@ msgstr "角色权限"
+ msgid "Category"
+ msgstr "类别"
+ 
+-#: templates/role_list.html:92
+-msgid "Create Date"
+-msgstr "建立时间"
+-
+ #: templates/role_list.html:97
+ msgid "Update Date"
+ msgstr "更新时间"
+@@ -514,6 +595,10 @@ msgstr "更新时间"
+ msgid "Rename"
+ msgstr "重新命名"
+ 
++#: templates/role_list.html:129
++msgid "Confirm to delete this Role"
++msgstr "您是否确认要删除这个角色"
++
+ #: templates/role_permission.html:10 templates/role_permission.html.py:19
+ #: templates/role_permission.html:25
+ msgid "Permission Settings"
+@@ -717,7 +802,7 @@ msgstr "设备管理"
+ msgid "User Group Edit"
+ msgstr "使用者群组修改"
+ 
+-#: templates/user_group_list.html:54
++#: templates/user_group_list.html:53
+ msgid "No"
+ msgstr "编号"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 491d50acb5dbc1e01d87fe582b51ed8a2f703614..a71f312f9cc0089b845049c910ca165298540f05 100644
+GIT binary patch
+delta 4432
+zcmZ|R3vg7`9mnyrA%O@15`qRofJF&ZKuka+B@{3cF~}Q=MMN6N27-a4$$~)D4S`@1
+ziPCI{1Sqt~ON2mKLIDSvv6Mb6BU7iv85wj+HYARUBDPcPNWZ`ApK<C;&*ZnCbIyI7
+zbI-kZH(zE~P6=G;5xvDxnn(&c7vtQQSlERRN?Ld4I$}C@!VK(y6R;aj#I88o+PSv9
+z81JIrkJ0!dCg6IE#VyEC0k@M%JRN(?Ce)7Su@8QLad;CoCl5PQbzRNA*n{>1sN*Ie
+ze{L2ZopCX0A}h?*s0%2^j*Ra%wpX01K^;(s8gLhCz(eLq^PG7RHId7x<36?ie<6Ra
+z1GBjYd!kluC~Civs1+TD(Twl1sjw7oGS0>ssDbyO4mgTB;4RcrzhhoR{@fKldg2$T
+zm5AX(_ToeRLs1tr0d@RTYtP4kPOy}Uu4FCh-c+Lo3}SEGhFY@Y)_)Q;!L#PO)_)0g
+zAy-fnZ#J)^o`GAa<8GtQ-zAat*Nl23IyVNrsCzXZ*~j_tZd{F;z$>VwtVNw@8*1YF
+zPy?JmUBFwm{hWCbwE~w>=V?Rj|5+mIuLEw_4&PuD?O4`LJ9a_s*d29cJ#i)`qmC=I
+z?JH3eUTgg|sE4;6`{FU=)b1kAz-G+HQ2{Pb2kt;E$r03&pRo2t)GfM%dYIZ!6H-I{
+zF{l+wG6$emWGHHdGEoChLS4{&)bR_kKL+xsFd4T2Ik#&--I61yB|C#U(VtNR{vCA-
+zT2U+T1?q(VMqR+SsDWaVA``m{)t`u(NHXet!;xns;KoqV>ynL{`CQZl@~!R1WZD~$
+zbGu!r0ZyO>K5gx@s0sZJHNam`58(%>30y_({|V}g>pCXr{r{GV29EC)(Tlp$G}M)5
+zp_X{EIR`bsGpGTVS-TYVj08{<tiWYhg@f@X>U=5OUp-?3F<$TgU@DqG2I>TlBY$oh
+zADZz})Rinpt-xy3z^|hA-)io}2_C*TP*)sg+2p6@SEyTh3pHLRp3s0QNmR7sVAKx7
+zt(|G@ENf3U=UV>)a~X1R?l~NYo2|ded<Qkod*(;x^**e>Hr%$3?)(C20{v0_!>m0P
+zwWK+yiB2`=*!KCT{g+yMwOL`-n!C(H=BX6cUjv@Ej`vZo<Hx9hzOwc$+uoIzS^deV
+z;|Ac9INbU-nl)w}YGT`wYjkg#e?UEiR|8ad{@e}Q(79jabsU6x9W%|Ds1qzf9k|}w
+zwWtX-qE@I0b=)ayzlWN@`=|@MYTN&bIxY~$w}2{%s4Ge~2V4I`W~P~i8XyO!;X><g
+zL=Dhn{?YnBH2-1!ZKw(T2bpld#d#wG$D4i4A*k<x(WooSMolya^*YWlpF;KLna`Rf
+z<{B(?&XrmFGt}`nF|Pgnw+&qeM6RHRnTlGG49vo8oQ0LP{X^8ipQBdfYt;T-?v2<B
+zwIZpg{W4HjKHj!ZmjODSwvGbS0jp3atU_J+F4PHLM{b)tXxsmU+W#Zez&Fg>sDa|{
+zi}a_Uj=$ebGe=`U8^%%TfZ3=M<)HfKq6S!C{l(@Bs3okn?RDmU^E9#;?gH}Sxa-&f
+z<M?vWdE-&-q=EMS_n|`r4>dDv$86L<Q&3kl*S6=QR;U#9R#c%Tx)(LTN!xzb+JCd{
+zmr>`rZtdFxS$_@CBQ-Lk6r4}ni~3P|9(BSRv(DUZ?l#{*P3Wk#&!f(J0d--Qtlezw
+z&&_WFR6OjUqNVypdoA)$Ln(D`rTek<jmI3a)Y@-ii0CcR4~%}4bag6gNj`a*M3cvf
+z$^`N#DI>omf!TbhJWC4OYy5!V0g^`^B)=j0C5s|ENhLW%9wBRp%FzgJpD9L?bTWdB
+zBX^2cRwYs2Wt*wIMt)5Sg6VOIf!C@1ki?R?<W=%8d4s${wvz2+DA8l4CqQKo(ap<J
+zgYt9)=fkmNAbEfkkp!ZWOE!`ps6iR7ucTrsx|>7PLzx(%{qwNZn@oLqXOfxLo{AY{
+z2GPr{@(_8B>>{hkETZx}d7{1c-A7LyRblOFb2aw2`cJWe93e5}AkoXTm`o?N<mW{1
+z1OEuPg+yfwDJS{{Sx4?6Drv;uUW<JEi1FPh@+7Gu{I}p%kSRo^R|NMHb0tn9_13OI
+zJ^PEuCQ?FFI+Hl^k{Xn3vYsp_FOvI-O5ia*yrhxLAwMH^<QP#IMs|~VME_7tBflaW
+zh{}Bt+%p&?`>lP41yoY+G|VM9nT*z5?`EB2@CB=jr^q(ak?bYMgTL=OF=~k~*s0sF
+z=)$5>UogGfpdtAMCCk13B5$6r(C7ELM~hbcZ;#i%w4l^GtEkWyn%yna6P>$=T6OnD
+zo*3Wq+(KXQllcCrkCm(}^_92?-t4>r|DF1jf>OVm<Xe&FD+$IXJeat=xTwVMa@z4m
+z_79FqXo%vR?<O>R;urf?_zTx~IbEK2Vy@p8I+XZuR7`PUQEp!7<GaUs2IZF&F<nh5
+z&$p^zvCn<iv81GEWwC4j4E9Yr96K`2o1Q*q#E8&elTtk~;Zw)k&IG^iHKb$PYdhNN
+ztAhP{r;IH>(6aSNc=Nt%yHB?stZCi1E?jxAtznOA`9B-l${NCDFSqWmZLK;M%IH1b
+z(=ohm$F;fxp;gIeJW+c?!Ss|q<693L4wpAHpE=8h*0KuMe73Qr?i7ud$`h@jms$^0
+zyYKDNa<U>^-{@M(_J=F?2A@btO9^i}60X?mB7AS};M$bN4%g~_8yejAf+t}|S@`Wu
+tk-=IT%G>ILp&R|?Ma7(~4wr{QIRj>T65FTauD!kITGIw2xb@z7{{=S%K6?NF
+
+delta 3694
+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
+Mq_G~~iR6O+0K*JOxc~qF
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index a9054f3..3701c5e 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 17:30+0800\n"
++"POT-Creation-Date: 2016-05-30 11:22+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -66,28 +66,28 @@ msgstr "待審數"
+ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+-#: templates/dashboard.html:144 templates/dashboard.html.py:162
+-#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+-#: templates/role_list.html:72 templates/systemlog_list.html.py:68
+-#: templates/user_list.html:68
++#: templates/dashboard.html:143 templates/dashboard.html.py:161
++#: templates/fruser_list.html:80 templates/frusergroups_list.html.py:54
++#: templates/fruserlog_list.html:81 templates/role_list.html.py:72
++#: templates/systemlog_list.html:68 templates/user_list.html.py:68
+ msgid "No."
+ msgstr "編號"
+ 
+-#: templates/dashboard.html:148 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:65
++#: templates/dashboard.html:147 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:64
+ #: templates/fruserlog_list.html:93
+ msgid "Device Name"
+ msgstr "設備名稱"
+ 
+-#: templates/dashboard.html:152 templates/dashboard.html.py:174
++#: templates/dashboard.html:151 templates/dashboard.html.py:173
+ msgid "Latest Update Time"
+ msgstr "最後更新時間"
+ 
+-#: templates/dashboard.html:166
++#: templates/dashboard.html:165
+ msgid "User ID"
+ msgstr "工號"
+ 
+-#: templates/dashboard.html:170
++#: templates/dashboard.html:169
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -100,7 +100,7 @@ msgid "Device add"
+ msgstr "新增設備"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/frusergroup_devices.html:108
++#: templates/device_list.html:153 templates/frusergroup_devices.html.py:108
+ #: templates/user_group_devices.html:108
+ msgid "Device"
+ msgstr "設備"
+@@ -116,12 +116,13 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:174 templates/frusergroup_add.html.py:49
+-#: templates/frusergroup_edit.html:66 templates/logsetting.html.py:85
+-#: templates/role_add.html:47 templates/role_permission.html.py:38
+-#: templates/role_rename.html:43 templates/user_add.html.py:97
+-#: templates/user_group_add.html:49 templates/user_group_edit.html.py:66
+-#: templates/user_setting.html:119 templates/user_update.html.py:94
++#: templates/device_settings.html:174 templates/fruser_edit.html.py:100
++#: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
++#: templates/logsetting.html:85 templates/role_add.html.py:47
++#: templates/role_permission.html:38 templates/role_rename.html.py:43
++#: templates/user_add.html:97 templates/user_group_add.html.py:49
++#: templates/user_group_edit.html:66 templates/user_setting.html.py:119
++#: templates/user_update.html:94
+ msgid "Save"
+ msgstr "儲存"
+ 
+@@ -168,24 +169,37 @@ msgstr "搜尋群組"
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:80
++#: templates/device_frusergroups.html:79
+ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/device_frusergroups.html:87 templates/device_list.html.py:99
+-#: templates/frusergroups_list.html:72 templates/role_list.html.py:105
+-#: templates/user_group_devices.html:89 templates/user_group_list.html:72
+-#: templates/user_group_members.html:89 templates/user_list.html.py:101
++#: templates/device_frusergroups.html:86 templates/device_list.html.py:98
++#: templates/fruser_list.html:113 templates/frusergroups_list.html.py:72
++#: templates/role_list.html:105 templates/user_group_devices.html.py:89
++#: templates/user_group_list.html:71 templates/user_group_members.html:89
++#: templates/user_list.html.py:101
+ msgid "Delete"
+ msgstr "刪除"
+ 
+-#: templates/device_frusergroups.html:108 templates/frusergroup_add.html:31
+-#: templates/frusergroup_edit.html.py:48 templates/frusergroups_list.html:59
+-#: templates/user_group_add.html.py:31 templates/user_group_edit.html:48
+-#: templates/user_group_list.html.py:59
++#: templates/device_frusergroups.html:105 templates/fruser_list.html.py:95
++#: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
++#: templates/frusergroups_list.html:59 templates/user_group_add.html.py:31
++#: templates/user_group_edit.html:48 templates/user_group_list.html.py:58
+ msgid "Group"
+ msgstr "群組"
+ 
++#: templates/device_frusergroups.html:132 templates/device_list.html.py:153
++#: templates/fruser_list.html:167 templates/frusergroup_devices.html.py:135
++#: templates/frusergroup_member.html:135 templates/frusergroups_list.html:98
++#: templates/user_group_devices.html:135 templates/user_group_list.html:98
++#: templates/user_group_members.html:135 templates/user_list.html.py:125
++msgid "Confirm to delete"
++msgstr "您是否確認要刪除"
++
++#: templates/device_frusergroups.html:132
++msgid "from this device"
++msgstr "設備"
++
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+@@ -199,28 +213,28 @@ msgstr "設備管理"
+ msgid "Create new device"
+ msgstr "建立新設備"
+ 
+-#: templates/device_list.html:70
++#: templates/device_list.html:69
+ msgid "Status"
+ msgstr "狀態"
+ 
+-#: templates/device_list.html:83
++#: templates/device_list.html:82
+ msgid "Sync time"
+ msgstr "同步時間"
+ 
+-#: templates/device_list.html:91
++#: templates/device_list.html:90
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:92
++#: templates/device_list.html:91
+ msgid "Reject"
+ msgstr "拒絕"
+ 
+-#: templates/device_list.html:97 templates/frusergroups_list.html.py:71
+-#: templates/user_group_list.html:71
++#: templates/device_list.html:96 templates/fruser_list.html.py:112
++#: templates/frusergroups_list.html:71 templates/user_group_list.html.py:70
+ msgid "Edit"
+ msgstr "編輯"
+ 
+-#: templates/device_list.html:98 templates/menu.html.py:39
++#: templates/device_list.html:97 templates/menu.html.py:39
+ #: templates/system_settings.html:10 templates/system_settings.html.py:19
+ #: templates/system_settings.html:25
+ msgid "Settings"
+@@ -247,6 +261,83 @@ msgstr "簡體中文"
+ msgid "zh-tw"
+ msgstr "繁體中文"
+ 
++#: templates/fruser_edit.html:9 templates/fruser_edit.html.py:18
++#: templates/fruser_edit.html:25
++msgid "Fruser Edit"
++msgstr "修改用戶資訊"
++
++#: templates/fruser_edit.html:33
++msgid "Fruser"
++msgstr "設備使用者"
++
++#: templates/fruser_edit.html:39 templates/fruser_list.html.py:85
++#: templates/fruserlog_list.html:85
++msgid "FRUserId"
++msgstr "工號"
++
++#: templates/fruser_edit.html:43 templates/fruser_list.html.py:90
++#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
++#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
++#: templates/user_group_devices.html.py:82
++#: templates/user_group_members.html:82 templates/user_list.html.py:79
++#: templates/user_setting.html:54 templates/user_update.html.py:47
++msgid "Name"
++msgstr "姓名"
++
++#: templates/fruser_edit.html:49
++msgid "Disable"
++msgstr "停用"
++
++#: templates/fruser_edit.html:56
++msgid "Gender"
++msgstr "性別"
++
++#: templates/fruser_edit.html:60
++msgid "Male"
++msgstr "男"
++
++#: templates/fruser_edit.html:61
++msgid "Female"
++msgstr "女"
++
++#: templates/fruser_edit.html:64
++msgid "Age"
++msgstr "年齡"
++
++#: templates/fruser_list.html:10 templates/fruser_list.html.py:18
++#: templates/fruser_list.html:24
++msgid "Fruser List"
++msgstr "設備使用者清單"
++
++#: templates/fruser_list.html:33
++msgid "Import"
++msgstr "匯入"
++
++#: templates/fruser_list.html:34 templates/fruserlog_list.html.py:41
++#: templates/systemlog_list.html:40
++msgid "Export"
++msgstr "匯出"
++
++#: templates/fruser_list.html:50
++msgid "Import Fruser"
++msgstr "匯入設備使用者"
++
++#: templates/fruser_list.html:60
++msgid "Close"
++msgstr "關閉"
++
++#: templates/fruser_list.html:61
++msgid "Upload"
++msgstr "上傳"
++
++#: templates/fruser_list.html:100 templates/role_list.html.py:92
++msgid "Create Date"
++msgstr "建立時間"
++
++#: templates/fruser_list.html:105
++msgid "Recently used Date"
++msgstr "最後使用時間"
++
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+@@ -290,13 +381,11 @@ msgstr "新增設備"
+ msgid "Search Device"
+ msgstr "搜尋設備"
+ 
+-#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
+-#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
+-#: templates/user_group_devices.html.py:82
+-#: templates/user_group_members.html:82 templates/user_list.html.py:79
+-#: templates/user_setting.html:54 templates/user_update.html.py:47
+-msgid "Name"
+-msgstr "姓名"
++#: templates/frusergroup_devices.html:135
++#: templates/frusergroup_member.html:135 templates/user_group_devices.html:135
++#: templates/user_group_list.html:98 templates/user_group_members.html:135
++msgid "from this group"
++msgstr "群組"
+ 
+ #: templates/frusergroup_member.html:10
+ msgid "FR User Group Member"
+@@ -327,23 +416,19 @@ msgstr "設備使用者群組管理"
+ msgid "Create new group"
+ msgstr "建立新群組"
+ 
+-#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:64
++#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:63
+ msgid "Users"
+ msgstr "使用者"
+ 
++#: templates/frusergroups_list.html:98
++msgid "group"
++msgstr "群組"
++
+ #: templates/fruserlog_list.html:10 templates/fruserlog_list.html.py:25
+ #: templates/fruserlog_list.html:31 templates/menu.html.py:56
+ msgid "FRUser Log List"
+ msgstr "設備使用者登入紀錄"
+ 
+-#: templates/fruserlog_list.html:41 templates/systemlog_list.html.py:40
+-msgid "Export"
+-msgstr "匯出"
+-
+-#: templates/fruserlog_list.html:85
+-msgid "FRUserId"
+-msgstr "工號"
+-
+ #: templates/fruserlog_list.html:100 templates/user_list.html.py:87
+ msgid "CreateDate"
+ msgstr "建立時間"
+@@ -502,10 +587,6 @@ msgstr "角色權限"
+ msgid "Category"
+ msgstr "類別"
+ 
+-#: templates/role_list.html:92
+-msgid "Create Date"
+-msgstr "建立時間"
+-
+ #: templates/role_list.html:97
+ msgid "Update Date"
+ msgstr "更新時間"
+@@ -514,6 +595,10 @@ msgstr "更新時間"
+ msgid "Rename"
+ msgstr "重新命名"
+ 
++#: templates/role_list.html:129
++msgid "Confirm to delete this Role"
++msgstr "您是否確認要刪除這個角色"
++
+ #: templates/role_permission.html:10 templates/role_permission.html.py:19
+ #: templates/role_permission.html:25
+ msgid "Permission Settings"
+@@ -717,7 +802,7 @@ msgstr "設備管理"
+ msgid "User Group Edit"
+ msgstr "使用者群組修改"
+ 
+-#: templates/user_group_list.html:54
++#: templates/user_group_list.html:53
+ msgid "No"
+ msgstr "編號"
+ 
+diff --git a/templates/role_list.html b/templates/role_list.html
+index 577cb2c..d2deb49 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -126,7 +126,7 @@
+             }
+ 
+             function role_delete(OId) {
+-                var ret = confirm('Confirm to delete this Role?');
++                var ret = confirm('{% trans "Confirm to delete this Role" %} ?');
+                 console.log(ret);
+                 if (ret) {
+                     $.ajax({
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index 33e6cb8..5ad6442 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -132,7 +132,7 @@
+             }
+ 
+             function delete_device(DeviceOId, Name) {
+-                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index 703378e..7666c04 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -95,7 +95,7 @@
+             }
+ 
+             function delete_device(OId, Name) {
+-                var ret = confirm('Confirm to delete ' +Name+ ' group?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' {% trans "from this group" %} ?');
+ 
+                 if (ret) {
+                     $.ajax({
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index a72f8da..2495792 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -132,7 +132,7 @@
+             }
+ 
+             function delete_user(UserOId, Name) {
+-                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
++                var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+ 
+                 if (ret) {
+                     $.ajax({
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 746f259..4abb3e8 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -122,7 +122,7 @@
+         }
+ 
+         function delete_user(OId, Account) {
+-            var ret = confirm('Confirm to delete ');
++            var ret = confirm('{% trans "Confirm to delete" %} ? ');
+             //console.log(ret);
+             //console.log(OId);
+             if(ret)
+-- 
+1.9.1
+

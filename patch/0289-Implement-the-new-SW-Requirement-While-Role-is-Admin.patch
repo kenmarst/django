@@ -1,0 +1,47 @@
+From b0de865f972ebc7ab1ca21da0e5cb5343ff8cdcf Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Wed, 21 Sep 2016 15:18:59 +0800
+Subject: [PATCH 289/443] Implement the new SW Requirement: While Role is
+ 'Admin(default)' or 'Users(default)', system should not support 'Rename' and
+ 'Delete' function buttons
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Implement the new SW Requirement in Page 101 in BR06_SystemDesignSpecification_1.0.33_20160909.pdf
+     Desciption:
+         需求規格. While Role is 'Admin(default)' or 'Users(default)', system should not supprt 'Rename' and 'Delete' function buttons.
+---
+ templates/role_list.html | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/templates/role_list.html b/templates/role_list.html
+index 237b766..f37edeb 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -115,11 +115,17 @@
+                     },
+                     {
+                         formatter: function(value, row) {
+-                            return ' \
+-                         <div align="center"> \
+-                            <button class="btn btn-default" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">{% trans "Rename" %}</button> \
+-                            <button class="btn btn-default" onclick=role_delete("' + row.OId + '")>{% trans "Delete" %}</button> \
+-                         </div>';
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
++                            if ((row.Name == 'Admin(default)') || (row.Name == 'Users(default)'))
++                                return '';
++                            else
++                            {
++                                return ' \
++                                    <div align="center"> \
++                                    <button class="btn btn-default" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">{% trans "Rename" %}</button> \
++                                    <button class="btn btn-default" onclick=role_delete("' + row.OId + '")>{% trans "Delete" %}</button> \
++                                    </div>';
++                            }
+                         }
+                     }
+                 ],
+-- 
+1.9.1
+

@@ -1,0 +1,43 @@
+From 6f267c3806e470cd002d104c519cf1b8c9bebff0 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 30 Nov 2016 19:24:07 +0800
+Subject: [PATCH 381/443] Modify and add database. Add 'Version' of device
+ column. Add and modify version of config value.
+
+---
+ api/models.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/api/models.py b/api/models.py
+index 6e7b6db..e7d5d4d 100755
+--- a/api/models.py
++++ b/api/models.py
+@@ -25,7 +25,8 @@ class Config(models.Model):
+         ('PicFaceSave', 'PicFaceSave'),
+         ('LogSettingSeparator', 'LogSettingSeparator'),
+         ('LogSettingField', 'LogSettingField'),
+-        ('NewVersion', 'NewVersion'),
++        ('NewServerVersion', 'NewServerVersion'),
++        ('NewDeviceVersion', 'NewDeviceVersion'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', choices = config_name, unique = True, max_length = 32)
+@@ -111,6 +112,7 @@ class Devices(models.Model):
+         ('Getting', 'Getting'),
+         ('Online', 'Online'),
+         ('Offline', 'Offline'),
++        ('Upgrade', 'Upgrade'),
+     )
+     devices_type = (
+         ('Register', 'Register'),
+@@ -219,6 +221,7 @@ class Devices(models.Model):
+     State = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
+     MAC = models.CharField(db_column = 'MAC', default = '', max_length = 32, blank = True, null = True)
+     IP = models.GenericIPAddressField(db_column = 'IP', default = '', max_length = 32, blank = True, null = True)
++    Version = models.CharField(db_column = 'Version', default = 'v1.0.0.9', max_length = 32, blank = True)
+     Type = models.CharField(db_column = 'Type', choices = devices_type, default = 'Register', max_length = 16, blank = True)
+     Model = models.CharField(db_column = 'Model', choices = devices_model, default = 'FR', max_length = 10, blank = True)
+     WelcomeR0Action = models.CharField(db_column = 'WelcomeR0Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
+-- 
+1.9.1
+

@@ -1,0 +1,61 @@
+From 2f029bb7d227e3d233d0f997a027ab2c5cf864b8 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 11 Aug 2016 15:45:19 +0800
+Subject: [PATCH 229/443] Modify face_check api : check face by identify image
+
+---
+ api/recognition.py | 29 ++++++++++++++++++++++++++++-
+ 1 file changed, 28 insertions(+), 1 deletion(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 2bb6f5e..2136097 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -133,6 +133,8 @@ def face_identify(request):
+                                     if device.DeviceOId == ip_device:
+                                         Fruserlogs.objects.create(FRUserOId = fruser.OId, FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face identify pass')
+                                         return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
++                        else:
++                            raise Exception('There is no person')
+                     raise Exception('There is no permission device')
+                 else:
+                     raise Exception('Request TCIT error')
+@@ -166,9 +168,34 @@ def face_check(request):
+                         data = {'img_id' : res_upload['img_id']}
+                     )
+                     face_id = res_face_detect['faces'][0]['face_id']
+-                    return JsonResponse(result_success)
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request TCIT error'})))
++
++                # TCIT : identify person and face in group
++                for group in TCIT_API('/face/query/group_list')['groups']:
++                    res_group_identify = TCIT_API(
++                        '/face/group/identify',
++                        data = {'group_id' : group, 'face_id' : face_id}
++                    )
++
++                    if res_group_identify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                        # sort persons and get max similarity
++                        person = sorted(
++                            res_group_identify['persons'],
++                            key = itemgetter('similarity'),
++                        )[len(res_group_identify['persons'])-1]
++                        if person['similarity'] >= settings.CONFIDENCE[ip_devices.FaceBioScore]:
++                            person_id = person['person_id']
++                        else:
++                            raise Exception("Similarity is too low")
++                    else:
++                        raise Exception('Request TCIT error')
++                    if person_id:
++                        print(person_id)
++                        fruser = Frusers.objects.get(PersonId = person_id)
++                        return JsonResponse(result_pass)
++                    else:
++                        raise Exception('There is no person')
+             else:
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+         except Exception as e:
+-- 
+1.9.1
+

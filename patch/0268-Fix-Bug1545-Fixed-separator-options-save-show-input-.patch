@@ -1,0 +1,31 @@
+From 8010f2e6fcda3d44ef5fe9f0a88bfc5944186eca Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 8 Sep 2016 14:57:16 +0800
+Subject: [PATCH 268/443] Fix Bug1545: Fixed separator options save show "input
+ error" in Log setting.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+BZ ID：1545
+BR06 Server - Log Setting - Separator Options新增欄位後按下儲存,再移除欄位,會出現input error.
+---
+ templates/logsetting.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index d6f2d66..95cfa4b 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -125,7 +125,7 @@
+             var csrftoken = getCookie('csrftoken');
+             var symbol1 = $('input[name=optradio]').filter(":checked").val()
+             var symbol2 = $('input[name=customsymbol]').val()
+-            var s = $("#select2").val();
++            var s = $("#select2 option").val();
+             symbol = symbol1;
+             if ((symbol1 == 5 && (symbol2 == "") || (symbol2.length > 1)) || (symbol1 == undefined) || s == null) {
+                 alert("input error");
+-- 
+1.9.1
+

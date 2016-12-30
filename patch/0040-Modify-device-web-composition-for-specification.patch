@@ -1,0 +1,207 @@
+From 94cc5c91ff5f5952445c27699f10ea53bc24121c Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Tue, 17 May 2016 20:30:33 +0800
+Subject: [PATCH 040/443] Modify device web composition for specification
+
+Modify device composition
+  -  device_add
+  -  device_edit
+  -  device_settings
+
+Bug fix - input blank device name at device_edit error.
+---
+ devices/views.py               | 16 +++++++++---
+ templates/device_add.html      | 30 +++++++----------------
+ templates/device_edit.html     | 55 ++++++++++++++++++++++++------------------
+ templates/device_settings.html |  4 +--
+ 4 files changed, 54 insertions(+), 51 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index e4645ae..9d0590e 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -32,8 +32,7 @@ def device_edit_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+-        device = Devices.objects.get(OId = request.GET['OId']).as_json()
+-        return render(request, 'device_edit.html', {'active': 'device_edit', 'obj': device})
++        return render(request, 'device_edit.html', {'active': 'device_edit', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+@@ -41,8 +40,7 @@ def device_settings_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+-        device = Devices.objects.get(OId = request.GET['OId']).as_json()
+-        return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': device})
++        return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+@@ -52,8 +50,18 @@ def device_frusergroups_view(request):
+     try:
+         obj = Frusergroupdevices.objects.filter(DeviceOId = Devices.objects.get(OId = request.GET['OId']))
+         devicegroups = [res.GroupOId.as_json() for res in obj]
++        index = 0
++        for x in devicegroups:
++            x['Index'] = index+1
++            index += 1
++
+         obj_all = Frusergroups.objects.all()
+         groups = [res_all.as_json() for res_all in obj_all if res_all not in [res.GroupOId for res in obj]]
++        index = 0
++        for x in groups:
++            x['Index'] = index+1
++            index += 1
++
+         return render(request, 'device_frusergroups.html', {'active': 'device_settings', 'devicegroups': devicegroups, 'groups': groups, 'DeviceOId': request.GET['OId']})
+     except:
+         return render(request, 'registration/not_found.html')
+diff --git a/templates/device_add.html b/templates/device_add.html
+index d21a819..8183f4b 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -34,39 +34,27 @@
+                             <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label" for="form_control_1">Device Name
+-                                            <span class="required">*</span>
++                                        <label class="col-md-3 control-label" for="form_control_1">
++                                            <span style="color: red;">*</span> Device Name
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <div class="input-icon">
+-                                                <input type="text" class="form-control" placeholder="" name="Name">
+-                                                <div class="form-control-focus"> </div>
+-                                                <i class="fa fa-envelope"></i>
+-                                            </div>
++                                            <input type="text" class="form-control" placeholder="Please input Device Name" name="Name" required="required">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label" for="form_control_1">MAC-Address
+-                                            <span class="required">*</span>
++                                        <label class="col-md-3 control-label" for="form_control_1">
++                                            <span style="color: red;">*</span> MAC-Address
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <div class="input-icon">
+-                                                <input type="text" class="form-control" placeholder="" name="MAC">
+-                                                <div class="form-control-focus"> </div>
+-                                                <i class="fa fa-envelope"></i>
+-                                            </div>
++                                            <input type="text" class="form-control" placeholder="Please input MAC-Address" name="MAC" required="required">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label" for="form_control_1">IP
+-                                            <span class="required">*</span>
++                                        <label class="col-md-3 control-label" for="form_control_1">
++                                            <span style="color: red;">*</span> IP
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <div class="input-icon">
+-                                                <input type="text" class="form-control" placeholder="" name="IP">
+-                                                <div class="form-control-focus"> </div>
+-                                                <i class="fa fa-envelope"></i>
+-                                            </div>
++                                            <input type="text" class="form-control" placeholder="Please input IP" name="IP" required="required">
+                                         </div>
+                                     </div>
+                                 </div>
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 3638ee2..b77b695 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -47,10 +47,13 @@
+                             <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Device Name :</label>
+-                                        <div class="col-md-3 input-icon">
+-                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="" name="Name">
++                                        <label class="col-md-3 control-label" for="form_control_1">
++                                            <span style="color: red;">*</span> Device Name :
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Device Name" name="Name" required="required">
+                                         </div>
++
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">MAC-Address :</label>
+@@ -185,28 +188,32 @@
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+-            $.ajax({
+-                type: 'post',
+-                traditional: true,
+-                url: '/change_device_name/',
+-                async: true,
+-                dataType: 'json',
+-                data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
+-                    'OId': {{obj|safe}}.OId,
+-                    'Name': Name
+-                },
+-                success: function(data) {
+-                    if (data.CODE == "0") {
+-                        alert("Change device name successfully");
+-                        location.reload();
+-                    } else {
+-                        alert("Fail to change device name");
++            if (Name) {
++                $.ajax({
++                    type: 'post',
++                    traditional: true,
++                    url: '/change_device_name/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'OId': {{obj|safe}}.OId,
++                        'Name': Name
++                    },
++                    success: function(data) {
++                        if (data.CODE == "0") {
++                            alert("Change device name successfully");
++                            location.reload();
++                        } else {
++                            alert("Fail to change device name");
++                        }
++                    },
++                    error: function(data) {
+                     }
+-                },
+-                error: function(data) {
+-                }
+-            });
++                });
++            } else {
++                alert("Please input Device name");
++            }
+         }
+ 
+         $(document).ready(function() {
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index a44c843..2cd6f6c 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -73,8 +73,8 @@
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">NTP Server :</label>
+-                                        <div class="col-md-3 input-icon">
+-                                            <input type="text" class="form-control" value="{{obj.NTP}}" placeholder="" name="NTP">
++                                        <div class="col-md-3">
++                                            <input type="text" class="form-control" value="{{obj.NTP}}" placeholder="time.stdtime.gov.tw" name="NTP">
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-- 
+1.9.1
+

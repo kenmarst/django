@@ -1,0 +1,28 @@
+From 19a48b6666c7e4e9acedc33151490a19dd9c2509 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 5 Dec 2016 15:53:09 +0800
+Subject: [PATCH 398/443] Device upadte check: Add header "Content-Length" on
+ response.
+
+---
+ downloads/views.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/downloads/views.py b/downloads/views.py
+index d7bb999..58ae303 100644
+--- a/downloads/views.py
++++ b/downloads/views.py
+@@ -14,8 +14,9 @@ def device_update(request):
+         print(device_update_file)
+ 
+         upgrade_file = open(device_update_file, 'rb')
+-        response = HttpResponse(upgrade_file)
++        response = HttpResponse(upgrade_file, content_type = 'application/octet-stream')
+         response['Content-Disposition'] = 'attachment; filename=%s' % (data['Device']['file'])
++        response['Content-Length'] = os.path.getsize(device_update_file)
+         return response
+ 
+     except Exception as e:
+-- 
+1.9.1
+

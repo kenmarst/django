@@ -1,0 +1,84 @@
+From b7f83b123c41b21068b4a88abef2574f1f64dc37 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 28 Jul 2016 14:13:55 +0800
+Subject: [PATCH 209/443] Update Model Device in API
+
+Change BioScore to FaceBioScore.
+Add Device Timeout in connection API.
+---
+ api/connection.py  | 14 +++++++++++---
+ api/recognition.py |  4 ++--
+ 2 files changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 9087155..c9ed2a8 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -49,11 +49,13 @@ def get(request):
+                 'AccessDeniedR0Pulse' : devices.AccessDeniedR0Pulse,
+                 'AccessDeniedR1Action' : devices.AccessDeniedR1Action,
+                 'AccessDeniedR1Pulse' : devices.AccessDeniedR1Pulse,
++                'Timeout' : devices.Timeout,
+                 'ScreenSaver' : devices.ScreenSaver,
+                 'NTP' : devices.NTP,
+                 'Timezone' : devices.Timezone,
+                 'Audio' : devices.Audio,
+-                'BioScore' : devices.BioScore,
++                'FaceBioScore' : devices.FaceBioScore,
++                'FingerBioScore' : devices.FingerBioScore,
+                 'Language' : devices.Language
+             })))
+         except Exception as e:
+@@ -67,7 +69,11 @@ def set(request):
+         try:
+             client_ip = request.META['REMOTE_ADDR']
+             req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'Model', 'WelcomeR0Action', 'WelcomeR0Pulse', 'WelcomeR1Action', 'WelcomeR1Pulse', 'AccessDeniedR0Action', 'AccessDeniedR0Pulse', 'AccessDeniedR1Action', 'AccessDeniedR1Pulse', 'ScreenSaver', 'NTP', 'Timezone', 'Audio', 'BioScore', 'Language'}
++            req_key = {
++                'Model', 'WelcomeR0Action', 'WelcomeR0Pulse', 'WelcomeR1Action', 'WelcomeR1Pulse',
++                'AccessDeniedR0Action', 'AccessDeniedR0Pulse', 'AccessDeniedR1Action', 'AccessDeniedR1Pulse',
++                'Timeout', 'ScreenSaver', 'NTP', 'Timezone', 'Audio', 'FaceBioScore', 'FingerBioScore', 'Language'
++            }
+             if all(k in req for k in req_key):
+                 from api.models import Devices
+                 Devices.objects.filter(IP = client_ip).update(
+@@ -81,11 +87,13 @@ def set(request):
+                     AccessDeniedR0Pulse = req['AccessDeniedR0Pulse'],
+                     AccessDeniedR1Action = req['AccessDeniedR1Action'],
+                     AccessDeniedR1Pulse = req['AccessDeniedR1Pulse'],
++                    Timeout = req['Timeout'],
+                     ScreenSaver = req['ScreenSaver'],
+                     NTP = req['NTP'],
+                     Timezone = req['Timezone'],
+                     Audio = req['Audio'],
+-                    BioScore = req['BioScore'],
++                    FaceBioScore = req['FaceBioScore'],
++                    FingerBioScore = req['FingerBioScore'],
+                     Language = req['Language'],
+                     UpdateDate = datetime.now()
+                 )
+diff --git a/api/recognition.py b/api/recognition.py
+index 7c9881f..757f4eb 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -58,7 +58,7 @@ def face_verify(request):
+                             print(res_face_verify)#
+                             if res_face_verify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                                 #print(res_face_verify['confidence'])#
+-                                if res_face_verify['confidence'] > settings.CONFIDENCE[ip_device.BioScore]:
++                                if res_face_verify['confidence'] > settings.CONFIDENCE[ip_device.FaceBioScore]:
+                                     face_save(request, '')
+                                     for i in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+                                         #print(i.GroupOId.OId)
+@@ -118,7 +118,7 @@ def face_identify(request):
+                                 res_group_identify['persons'],
+                                 key = itemgetter('similarity'),
+                             )[len(res_group_identify['persons'])-1]
+-                            if person['similarity'] >= settings.CONFIDENCE[ip_device.BioScore]:
++                            if person['similarity'] >= settings.CONFIDENCE[ip_device.FaceBioScore]:
+                                 person_id = person['person_id']
+                             else:
+                                 raise Exception("Similarity is too low")
+-- 
+1.9.1
+

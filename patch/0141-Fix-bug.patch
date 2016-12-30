@@ -1,0 +1,85 @@
+From bb2c021ddae590b01546ddc29a630fee636d28ab Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 20 Jun 2016 15:46:15 +0800
+Subject: [PATCH 141/443] Fix bug
+
+Bug Fix - JsonResponse error
+---
+ api/face.py |  4 ++--
+ api/user.py | 10 +++++-----
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index aa84121..d079885 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -117,7 +117,7 @@ def add(request):
+                         )
+ 
+             # return
+-            return JsonResponse(dict(result_success))
++            return JsonResponse(result_success)
+         except Exception as error:
+             print(str(error))
+             logContent = str(error)
+@@ -156,7 +156,7 @@ def delete(request):
+                     )
+                     if res['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         logContent = 'Face Delete Successfully'
+-                        return JsonResponse({'Message' :logContent})
++                        return JsonResponse({'Result' : logContent})
+                     else:
+                         logContent = 'Face remove error'
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+diff --git a/api/user.py b/api/user.py
+index 522e8a2..01719d1 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -26,7 +26,7 @@ def add(request):
+                         Frusers.objects.get(FRUserId = req['FRUserId'])
+                         logContent = "Frusers Fail to create: This Frusers already exists"
+                         print(logContent)
+-                        return JsonResponse(dict(logContent))
++                        return JsonResponse({'Result' :logContent})
+                     except ObjectDoesNotExist:
+                         print("Creating new account now.")
+                         Frusers.objects.create(
+@@ -43,7 +43,7 @@ def add(request):
+                                 GroupOId = Frusergroups.objects.get(OId = i['OId'])
+                             )
+                         logContent = "Frusers Create Successfully"
+-                        return JsonResponse(dict(result_success))
++                        return JsonResponse(result_success)
+                 else:
+                     logContent = 'Need accept'
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+@@ -100,7 +100,7 @@ def update(request):
+                             if not Frusergroupmember.objects.filter(FRUserOId = fruser).filter(GroupOId = group).exists():
+                                     Frusergroupmember.objects.create(FRUserOId = fruser, GroupOId = group)
+                     logContent = "FRUser Update Successfully"
+-                    return JsonResponse(dict(result_success))
++                    return JsonResponse(result_success)
+                 else:
+                     logContent = 'Need accept'
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+@@ -162,7 +162,7 @@ def delete(request):
+                 res_delete = delete_fruser(request.POST.get('FRUserId'))
+                 logContent = res_delete['Message']
+                 if logContent == 'success':
+-                    return JsonResponse(dict(result_success))
++                    return JsonResponse(result_success)
+                 else:
+                     return JsonResponse(res_delete)
+             # from device
+@@ -173,7 +173,7 @@ def delete(request):
+                     res_delete = delete_fruser(req['FRUserId'])
+                     logContent = res_delete['Message']
+                     if logContent == 'success':
+-                        return JsonResponse(dict(result_success))
++                        return JsonResponse(result_success)
+                     else:
+                         return JsonResponse(res_delete)
+                 else:
+-- 
+1.9.1
+

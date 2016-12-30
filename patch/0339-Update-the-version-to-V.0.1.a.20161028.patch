@@ -1,0 +1,34 @@
+From df84a419ea9b7ca0e9d863a8cbbdeaa7548dd598 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Fri, 28 Oct 2016 17:25:02 +0800
+Subject: [PATCH 339/443] Update the version to V.0.1.a.20161028
+
+---
+ br06/settings.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 5aba459..c99a35c 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
+ import os
+ from api.utility import get_localtimezone
+ 
+-VERSION = 'V.0.2.a.20161014'
++VERSION = 'V.0.2.a.20161028'
+ print(VERSION)
+ 
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+@@ -196,7 +196,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+ SESSION_COOKIE_AGE = 600 # sec
+ 
+ # 4G
+-EN_4G = 0 # Enable 4Gapi in UserAdd
++EN_4G = 0 # Enable 4G api in UserAdd
+ SE_4G = 1 # 4G return status: success
+ LO_4G = 'http://4g.shuttle.com/daily/LoginApi/face'
+ RE_4G = 'http://4g.shuttle.com/daily/importApi/UserFaceLoginRecord/add'
+-- 
+1.9.1
+

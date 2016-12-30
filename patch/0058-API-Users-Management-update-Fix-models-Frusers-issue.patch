@@ -1,0 +1,76 @@
+From a89bc9526bee7131c1125502c2a26a681d395b71 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 20 May 2016 17:06:10 +0800
+Subject: [PATCH 058/443] API Users Management update && Fix models Frusers
+ issue
+
+API Users Management update :
+    Add request : FlipPage
+    Add response : CurrentPage, TotalPage
+
+Fix issue : The function as_json in class Frusers has wrong name
+"FRUserID".
+---
+ api/models.py |  2 +-
+ api/user.py   | 22 +++++++++++++---------
+ 2 files changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index a77da71..2cfb621 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -323,7 +323,7 @@ class Frusers(models.Model):
+         return dict(
+             Index = 0,
+             OId = self.OId,
+-            FRUserID = self.FRUserId,
++            FRUserId = self.FRUserId,
+             Name = self.Name,
+             Gender = self.Gender,
+             Age = self.Age,
+diff --git a/api/user.py b/api/user.py
+index d12f95d..f77deb9 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -143,17 +143,21 @@ def list(request):
+             if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+                 frusers = Frusers.objects.filter(State = "Enable")
+                 #print('Field : ', request.POST['Field'], 'Keyword : ',request.POST['Keyword'])
++                number = 0
+                 frusers_field = []
+-                # query field in fruser
+-                for obj in frusers:
+-                    if obj.as_json()[request.POST['Field']] == request.POST['Keyword']:
+-                        frusers_field.append(obj.as_json())
+-
++                FlipPage = ( int( request.POST['FlipPage'] ) - 1 ) * 5
++                # query Keyword of Field in fruser
++                for k in frusers :
++                    if k.as_json()[ request.POST['Field'] ] == request.POST['Keyword']:
++                        number = number + 1
++                        frusers_field.append(k.as_json())
+                 if frusers_field:
+                     return JsonResponse(dict(ChainMap(result_success, {
+-                        'Number':len(frusers_field),
+-                        'Users': [{
+-                            'FRUserId':i['FRUserId'],
++                        'Numbers' : number,
++                        'CurrentPage' : int ( request.POST['FlipPage'] ),
++                        'TotalPage' : int ( number / 5  ) + 1,
++                        'Users' : [{
++                            'FRUserId' : i['FRUserId'],
+                             'Name' : i['Name'],
+                             'Gender' : i['Gender'],
+                             'Age' : i['Age'],
+@@ -163,7 +167,7 @@ def list(request):
+                                 'Oid' : j.GroupOId.OId,
+                                 'Name' : j.GroupOId.Name
+                             } for j in Frusergroupmember.objects.filter(FRUserOId = i['OId'])]
+-                        } for i in frusers_field]
++                        } for i in frusers_field[ FlipPage : FlipPage + 5]] # ex:[ 0 : 5 ] => 5 frusers / 1 page
+                     })))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Frusers matching query does not exist.'})))
+-- 
+1.9.1
+

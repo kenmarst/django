@@ -1,0 +1,45 @@
+From 72662a11f1f11f4378de16bdbfd4a2b7efb71320 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Tue, 17 May 2016 11:06:44 +0800
+Subject: [PATCH 036/443] modify logsetting.html looking to meet whole project
+
+---
+ templates/logsetting.html | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 4cf6dcf..1a8d727 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -64,7 +64,7 @@
+                                      <table>
+                                      <tr>
+                                      <td>
+-                                     <select id="select1" multiple="multiple" style="width:200px;">
++                                       <select multiple class="form-control" id="select1" style="width:200px;">
+                                         <option value="OId">OId</option>
+                                         <option value="FRUserId">FRUserId</option>
+                                         <option value="FRUserName">FRUserName</option>
+@@ -75,13 +75,13 @@
+                                      </select>
+                                      </td>
+                                      <td>
+-                                         <button id="add">>|</button><br />
+-                                         <!--button id="add_all">>></button><br /-->
+-                                         <!--button id="remove_all"><<</button><br /-->
+-                                         <button id="remove">|<</button>
+-                                     </td>
++                                        <div class="col-lg-12">
++                                            <button id="add" class="btn green pull-right"  value=""> >> </button><br>
++                                            <button id="remove" class="btn green pull-right"  value=""> << </button>
++                                        <div>
++                                    </td>
+                                       <td>
+-                                        <select id="select2" multiple="multiple" style="width:200px;"></select>
++                                        <select multiple class="form-control" id="select2" style="width:200px;"></select>
+                                       </td>
+                                      </tr>
+                                      </table>
+-- 
+1.9.1
+

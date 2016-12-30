@@ -1,0 +1,438 @@
+From b1fe5567cdb906f34f871fffb277cd043a3778ea Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 23 Sep 2016 17:51:56 +0800
+Subject: [PATCH 295/443] Fix face can be added unlimited of api.
+
+Bug fix - face can be added unlimited of api, when picture save is not
+checked in system setting.
+---
+ api/face.py                                  |  18 ++++++++------
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 16372 -> 16401 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  35 ++++++++++++++++++---------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 16372 -> 16401 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  35 ++++++++++++++++++---------
+ templates/system_settings.html               |   4 +--
+ 10 files changed, 60 insertions(+), 36 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 158b205..c78aa74 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -130,17 +130,19 @@ def add(request):
+                         'wb+'
+                     ).write(request.FILES.get('image', '').file.getvalue())
+ 
+-                    #Fruser update
+-                    if not fruser.Face1:
++                    #update fruser picture directory
++                    if not fruser.FaceID1:
+                         fruser.Face1 = FaceDir
+-                        fruser.FaceID1 = face_id
+-                        fruser.UpdateDate = datetime.now()
+-                        fruser.save()
+                     else:
+                         fruser.Face2 = FaceDir
+-                        fruser.FaceID2 = face_id
+-                        fruser.UpdateDate = datetime.now()
+-                        fruser.save()
++
++                #update fruser face id
++                if not fruser.FaceID1:
++                    fruser.FaceID1 = face_id
++                else:
++                    fruser.FaceID2 = face_id
++                fruser.save()
++
+ 
+             # return
+             return JsonResponse(result_success)
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 056a59f65e197489f3a3aa200f3093849cb1ccab..22e23183a045be2a198c9eff8edf6b6c0ed73836 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc`u4#B$?DK}G;6q6HuT
+
+delta 15
+WcmZo-X=0i1mc`V{#CYRJK}G;6bOjgy
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 4e3f0ec..bbf630d 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 15:43+0800\n"
++"POT-Creation-Date: 2016-09-23 17:49+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 056a59f65e197489f3a3aa200f3093849cb1ccab..b05ff56c83f95533608db796206036482e42d084 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc`u4#A4$|K}G;6odq8N
+
+delta 15
+WcmZo-X=0i1mc`V{#CYRJK}G;6bOjgy
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 4e3f0ec..43ed5f8 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 15:43+0800\n"
++"POT-Creation-Date: 2016-09-23 17:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index ab6042bd6920e2be2765dfe09b57e85dc0731536..ccf346560418f1d5887d33a60bde0725b5d8bcc4 100644
+GIT binary patch
+delta 2885
+zcmXZedrVe!9LMqBF+?zwn->(7hY&QyQn7#s6%6t+rxuW|OpE0;FH11nta)6Tw^-9X
+zYc0gm;hdvH=@}VXOG9Pdw3^H{brl<wrq#@8wVAy?o$p_--}n2weSg1mo&z`iT^qe4
+z6J!11&bg9o=Q43I_QS2%2kS8b8}VK|ipki9y|4r0@G{0=H^$<xcn{vdc)VqKm*ZS2
+zaWB+*={e4Ky=jafk%Z$h5lc}8R9IYvgNfJR0IbCtY`_d0I3n0EA5}<^#U-c$%TOE6
+z!Vo@*T5tUb-?=mzZ<0_UO&E)<sD(~oUp$RE`FT`<-R3RJ$BqncBn_w0A3~jcnOTi0
+z;1!I+Z5HqHY4jwq#}W;wt2>N?Fp6XGYkVI6MfP;d?+-TIg*}MhM%`dNs=!02bw5F^
+z(}p_GWz<1CQ8(#dr!kdA%qZuE;7knRGSq<WsH@tGad;f{PMkt*@U3|POFT9}-Qcj?
+zz-%le&b4?6CJ?Ve3iaLkpy76)Ce~pB?z6bb;ucIH|Cz-dIE=UxHP0IpJjysT6E!}J
+z>Ys%PSZP*a8vDD|G=|f$)jHlcTd_a+GpH-Qgz0$A;<yKbe407ZEI`ehj@odc<yTnz
+zGU^d;!*up{wKQ~+gQ!Z|&9kTlI#304T71L2YbHDxj2mR;n0crhD6zQ0eAe=-(AR*C
+zG_-NVI_gjxA2N?wf4jwJaUT5_EuY65s`+8mTRz3&S(r#%iMqK(=0@yGTtAlkA4uap
+z>u5uLfPO$-;Z3vmxL|=0YT`tTXQDP<iW<M#;?1aoy>7l^HlqqTW$};WxPMLjlZ3tl
+z@#6#ULoHB*I>BtzxP_Kqi&|)_#SN(WAEL&cv;Hp2dwIcngHh{^v3QbCLlYiDEw}{r
+za=dE!Ef&|KChoQT5lkUIWAXQ>oA}+lg?fZ{P~&<}2;!lraidIsoHYtig%sm#d;<I7
+ze$>XTr~*GnEzpHp_?mgw@+l7m{ew{bA=LalvlMl}3Zy{a%?lcCk+}x@Fkk~}U@h{E
+zayyZ4i#vw=0$msCXPf$PP*?$~uu7ba^D!Rl%>CBiWVZY-&;MgfwBbr7d|`2Zez4$V
+z)IyJ<u5^y&pGKYRISgYB>cmavN!0lB=1-`Cf5S&GwSXJf?|&{0y*w+Gz}L*(W;1G|
+zc8f1qeBHcb`96GS%Ndu2T4x=qpjz`?)D3-L{jKP$!gDm_CFB?9uAn9k=2)6A235cW
+z)VMP9adRPR{0dCN4HmzJDx?whC{Li)JB9k-eHrHYt8vu^#uo(}WSF_AjSDTFfm&d$
+zxxidxu0U;6jVg4V<u{=U++q1WW@8ceuV;JI2Anj{n?IxeGx`Vh*Kx>1HpfEL$#$YP
+zJb)^!(c)%Q;Vq~_PNUZO4%6`_YJQSGDHxE0S|ATqP#Cp9ne|tqCRCvocnNi)2x{H|
+z)LVZDHSU__dyv$)c+`4BEY3yk;}_FVg)>kmnTuNBDb&yH1)Pt&F$r&@HjFC{Of(0W
+zL(So+bw*n}1-0RH)PCj2->*{l3=LKI2I}S6hnjfI{023#8@2Hts0D7DF(r|!N#)+@
+z$fV>9@2|*$<O<J4nv*~EE=AU)9QHaQnW@FznMhUYaj!i(wBJR~bJ4&1&q<7Vv1V~~
+zWLoyHq^ad0wL{g5moBeaOR^$6D_Waf*E1$RJfSc;YII9t!Y`XYy0YnDcl2P_mfFZy
+M;jCznq8l;)0g4zzHUIzs
+
+delta 2890
+zcmXZddrZ}39LMqJka98f0D_l5MG{CsMbS(y!oalEP$yGLWrG@(79&HkV(Z78YZ2b^
+zwDJO_WevMb<ph<cwMka$GMBFM(q`>gD^i!0vfAwZ>G%EX^?aYp_xn80@Ao_B#g@RI
+z-oBz}Z;W%UG}F0cticpqjf1fb<8d3_if>^ec3}+mVl1A(0eA+Z@hskg7cmYa)_(<u
+z690|LHz><_ZV-)OS<WTkSPbG+)CS5dUVyg|*WfU0#zx$NIzV)`UoZ=`kqH)0Mr|-3
+zRj>%t@g7vZ<=LKdBWSFnLmTP9XzWBK+KWT*ebmX1pf-5Mj9C9)7(;)|9nQ_gAnN2*
+zW-V$1k6|pXvAD&fF_4b+*0BY3b+6(`d>!-fV_bp1BemT9<Nbmy7)AU%>IU0T8*E4A
+zeHWFd3w59qsDqwD-K2M(#vB^gFbxYP_*Ybgn(!3rsy1OPzKwb(!l(kDnn$rTKmpVZ
+z4$k#W#+k&a7B9kh;$_H2J-6I%xTjGITQMFtTijvsZcL(ozs0>cn)noI-Br}1yly5;
+z^yiO9jTd1&mYWN31od4tjd2V#*}x976ZJK8qptKgrs6q^ubVNG{PE#tHfr4rRKW`C
+zUt;kJ)FWPlsnmDPG<1?zP&@5051|tDqBd~K;)~{G^B*&IvOhn?%s}1PWQ)tp`PRP-
+zJxyq!p~7ozpcPfP-P~j2Jr*CrD#njle+F-;){jTM<#`qtVUV~Sb#s+w0}df>%j5os
+z)7WkUU8o<TuTWR`li6?M!72X298|&rRN=*_`PCLTq7L?qxxw6tS{JtX<P`2-3xA|T
+zFV77#ajKtS0_p_CsCgCE{}3uslf_$5>)%ApJ8a{pt^X<}(I1!Z=SxGyxgHHIC_yD$
+zgnBtvTK{T`+fW<XWc{z95_DVq1?nb#Fe9i(*oT_eZ*lxIf8I#bOSeWgY9o_y9?r&O
+z4512lqBi&;s?cdv;&bL@>kmx#$750BLDc#Tb1Le9Wyl6SH^*<dO0xzBGoc<eu^IVo
+zavt*A;`Sh4o;!{DY@_b<H<pdsSUJwZdod1M&5(_En7jX%=l_m%bm8MH_{id{8Ggcv
+zs6^9HS31l3??atzAr|0+s1tXX`%v?bm|vqdd;!Za>Mm|v-~Zh-^ztlK2d*+-Fn6K~
+z^;mq=;`3&o_5X_tnU}=xt@6~NHq>lxMBUIX8}CF<J3LH79!I`3_Z@0s9LLgvG}H!e
+zN6pJOOU(+@{3SR7>n(l`wUKS8N4Xc3FO2%ZJ5a#$*M#rsP=YI{0#Sv&K~&*1i*r#4
+zW}2nuTyq|(&>~cx2dw{LRQ`JFZ!tF%a{qd^+ik*b^8@o3j%EA;>fiAuF2=MX|74A*
+zf~}~HZLs(y)W)}>Hqwd8(~YV4E$ZOcJev?#>?at8+R!Lef^1ZR8K?!bQ3;lyPSk`d
+z+=_bZH>2jAwEhTcULPvoO^bs}Rvj;ch6?1OPBIgfpcwVJRpL^778CF+s^D+tA7;Pl
+zO8oH{RGuLgk3$vALDid%{BM=JG8)?9O4Q4<4z;ku45Jo)i7NaJD#2Ov=aSH`2@3-*
+zRGc^_a6VL>SQ)qx+MoDI;PcSRq`iU9LSu)PFj_nGVBlzYRPwn%;7qtbWqvSJkvS@~
+zJ~J`7wy7?Cbz|L==}$b`u&N<_d4268b>SVE?E?o)FPN4eF3jl;hJu9&Ns+akk@vPn
+X4j#C)>y2N!*IjyfTX=NgwE_PD{TD?6
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 29bbaa7..3fce0e9 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 15:43+0800\n"
++"POT-Creation-Date: 2016-09-23 17:49+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -360,7 +360,8 @@ msgstr "请输入姓名"
+ 
+ #: templates/fruser_add.html:49 templates/user_add.html.py:51
+ #: templates/user_update.html:52
+-msgid "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
++msgid ""
++"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
+ "'-'"
+ msgstr "帐号只能包含25码的中文、英文、数字、'_'、'-'"
+ 
+@@ -672,7 +673,8 @@ msgid "Forgotten your password ?"
+ msgstr "忘记您的密码？"
+ 
+ #: templates/registration/forget_password.html:24
+-msgid "Enter your email address below, and we'll email instructions for setting a "
++msgid ""
++"Enter your email address below, and we'll email instructions for setting a "
+ "new one."
+ msgstr "在下面输入您的电子信箱，我们将透过电子邮件通知重设密码说明"
+ 
+@@ -702,13 +704,15 @@ msgstr "密码更新成功"
+ 
+ #: templates/registration/password_reset_email.html:2
+ #, python-format
+-msgid "You're receiving this email because you requested a password reset for your "
++msgid ""
++"You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+ msgstr "您收到这封邮件是因为您要求在 %(site_name)s 网站上重新设定新的密码 "
+ 
+ #: templates/registration/password_reset_email.html:4
+ #, python-format
+-msgid "Please reset your password in %(expired)s minutes, go to the following page "
++msgid ""
++"Please reset your password in %(expired)s minutes, go to the following page "
+ "and choose a new password:"
+ msgstr "请在 %(expired)s 分钟内变更密码，点选下列网址重新设定新密码"
+ 
+@@ -731,7 +735,8 @@ msgid "Password reset confirmation"
+ msgstr "密码重置确认"
+ 
+ #: templates/registration/reset_password.html:25
+-msgid "Please enter your new password twice so we can verify you typed it in "
++msgid ""
++"Please enter your new password twice so we can verify you typed it in "
+ "correctly."
+ msgstr "请输入两次新密码，以便我们确认您输入是否一致"
+ 
+@@ -966,16 +971,18 @@ msgstr "若期限内超过笔数限制，最多可以纪录到1.5倍的笔数限
+ 
+ #: templates/system_settings.html:189
+ #, python-format
+-msgid "Over 150%% amount, system will keep latest logs, and remove the other older "
++msgid ""
++"Over 150%% amount, system will keep latest logs, and remove the other older "
+ "logs."
+-msgstr "若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
++msgstr ""
++"若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
+ 
+ #: templates/system_settings.html:192
+-msgid "Save user photo image"
+-msgstr "储存建档资料"
++msgid "Save FR user register photo image"
++msgstr "储存脸部注册成功照片"
+ 
+ #: templates/system_settings.html:195
+-msgid "Save FR recognition photo image"
++msgid "Save FR user recognition photo image"
+ msgstr "储存脸部辨识成功照片"
+ 
+ #: templates/system_settings.html:249
+@@ -995,7 +1002,8 @@ msgid "Must select correct monthly day!"
+ msgstr "必须选择正确的月份日期！"
+ 
+ #: templates/system_settings.html:299
+-msgid "The backup may not be processed monthly, if you choose monthly date from 29 "
++msgid ""
++"The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "选择每月 29~31 日，可能无法每月进行自动备份，您确定要继续吗?"
+ 
+@@ -1206,3 +1214,6 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失败"
++
++#~ msgid "Save user photo image"
++#~ msgstr "储存建档资料"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index e04bad1ecd40f32f3f84c08f5a221c124ab1458c..23aba2c66f3a05587f41fb6f90d9cc9689355c05 100644
+GIT binary patch
+delta 2885
+zcmXZedrVhl9LMqJ7$O+TRYgJlk%FdJDi-)d1;f0|sRe{9(_)F2yez?Nv*vMG;)ONY
+zZ>@z`I-PTrC^2$qEe(}*(`qu;#8qsV8dfu>)n@kobiRMRp6~a$eV^x?-+^0x?Pl-j
+zlxTmXbFMJcxeTnp6s*R6SdVeofcN7uOvE<qgB=)ymoW;jU^M=U_u);9#oLy5S<WRB
+z_d%_fmgRicm&Pa(2{;ksu?ST_iN)nOgm@he#2T!^{Wu&4jS4o*MHP~7aUrU}8K@2C
+zVF;f_t+#QM?_4U4w@IjwMvTT*)Iuk*Kb}FI`~s@LE9Py>M~@C}Bo$}TA3~jcg;|Lz
+z;5CfFZ5G%1G<uWRV~PE!t2=^&u^GqXH~1p{i|pxEJ{W9Ri@k{7McrUMs=&jjbw5R|
+z(}p_GWz<2tP&et{pfQt1)EMW|aV~~%1!}-{)K%@p7(9V`Cr+a__|CkDg&rHAZg5z3
+zU?xr`&bD|N#u2YU3iaK_py76)Ce~pb?z6bj;ucII|GC8-IE=UpHP0ItJjxg|12sO3
+z>Ys;kSZbDID*L;&G)B@<Z5<z)tvG=ES=5zwVjA{X9P?0+Pc=uId8m1_Q5!C?{3?rI
+zMLpten8yCDhK5dZ2vupjc@DKe2daQBi*K6u%(#bxaf8h)GY548g%+2X&s%;C`WmpA
+zhBl5^M;&V8!{%}8Z@2gyE~NjG<#TvLH9w4c%comB595hTQ8%~L+>HH+>&J8dgJ^tU
+z9c`!&(2uAqyk+*C5G)WvO`Kx!T-3(PQRCNI{08b^JI(jZCR8D(E&gc&_pgb6lF)Y`
+zc4FWIs0H#-Czy{Kx5V=6Q43XDydO3HW7N3w*57S;FDF=U2x`4?7EkqQXu=by1(%^-
+zj@K=})#7^8#J!e3ib=$0E&c&@6Th3cQIGI0YFyt*K|B;SZj9+qutpxLkOG{KPhkok
+zKyBQLD)0-`0^O*Ed(3;5PkJQiAB^e`q2}k9MW_RoAO-qvVbE|(&2`w10h>?*Ymjf0
+z+l72v+;QX==(<rq+vG=s!tzjsmEts9gt1s>9<csKv*mwz{-0Q)4OcVaON(=Jg9WFd
+z7J3|Yr3)<oEb3%0U>K`VCvG%Pp~hb@e?}Gj8$O1~dEB^u|7A4v@~l<@-!yldO{k69
+zExu^+4fC$$`|+JEX50wWIvY?0)tK+2Zs;THZ$)1fo~I!@kzbs<hMG8pV`;)TQ~{Gv
+z<7SvonoCgQS79n{viKcTAq}WUc@nkWY19Yrt1!=Bjq5frHb2;4xS5UGc(TQFPz#iq
+zi_N9xD%3`ms6sbbehaF=9hTo?Hso{vdbY=Gz$x>B`3velqkm9;9n+_<IZj5MY!_<7
+zgQ&t9EN(&--hwLR3~HV4F%55_<|p`5g8^Bn1#(aYg;5L4u>MligmTmZub@s8LCrge
+zdg~9P#`Rdf7fFqaMXi@^aW-lnzkr4+oP#<^8ES!NP(Qbqa1rjt1iXXVFs2|d-W+HS
+zHAkY>8Ef%$)P}QB`xPU9zlz**G*sbRsF!CSYT|M8ThzoWsEz+XEpW$-DvVrDDE7`o
+zrX~*e{)#M4Eb&~VDe*I}GqNt}h}RLxNG|ZsM#_^<c<s$YQ!aU)YyNw{g7~PHt12oZ
+zvoePz%q$M69jdHYzOrgP$&$<w%{7^Iy`yr&lk%F!jBSaJyIQ^d+Ll9C51r`Vx+C&+
+Mctmrr{F_n#0f!<)5dZ)H
+
+delta 2890
+zcmXZddrZ}39LMqJka98P0OBoBkpxol29n7|7?`#i>R@W2Zc?MtVq_>*Z2ees72z$9
+zD^V$H)X-`wC#W>7O|w#$xpWn3o3&%DOkGsUYP0vJ-}kTA^L;Mg@AEvr-|w84n*)D(
+z`--ByG0wTtOy^Q?IS$1&I2c<o9^3F%d>fOn3uEvo#^OmFfM+opd+`>$h;bOP{;N2I
+z_-|CcL0QgogJ=xPaxM|aVi0pt8z{4Q0p3Qu9EV{OHsBW20iv`0f?24IOt5$gYJ+*G
+zf<>5)_n`8v$o8BYL1P^q+DJP_V<#%nUQEFEQ71ow+Td9;V*P(%4E-^8I5!uAsFN=?
+zYfu|_3}bPv#myd#fpo05jxDIGdksh8n>ZCe#+CRxQp?>x-Y?jUQN%BzZm<=#!JVkQ
+z@1pW_p$>Esb<oqOoAl1pm_wrv)39KIe?^N?6P`j{)h3L^J*amgj4JS{c??Sf6hPhJ
+z;2hr+oJpK&@j{FzUW#ngb1VFYdm6Q{1><qE#qAb%U^4ytEk25)iBF@}T|+&}>t^C4
+zfBtyXcoD{9xw!yGP~R=1F^+*o8`xoXqP~W1)RmsVR6J+#bu(tNKR(>dMy;EHDp+Ct
+z)fTTrJ>s>PN`2QvLnnC^wbLH+5Guh@)CNvle9^pO{$s{Y@#haUGf+1+#o{t^zV$Cf
+zPZR2CsPJ<((1I$w)7)+2Jr*Cr#f%@f{tVtwtsjqi%cojgghAqR)Xi0y^_W21I+gn$
+zPGh?bbfJETzCvB$PiDW32dDW9C!!J-pb9TS&0l751L|PUm>bMpsC8kBPfg?gweUwe
+z^zz&=lXCq86Hq58M$N0R{)bSB8ZF*}TK^Vm-eDU*WBu1Knf|yuKVKRu&hcnyK?y41
+zLe$H#%KFz>+=|-BChLD4m7v?=FHkq}gBd|R!po?6{T9bh_vei?y>x42qc$=b=izKj
+z!4Rr&Cu)Nqq6(csB|c|fvHn25KOT!352Ds*n7OC}mLVJT+#J8*s?6m$m<e^LiA~6F
+zlk<?@7PlMu^4uBJXB%~=zp-r8#>#OP-ivYAVuozI-R$^Zp8q@6(S?t*;3JE(X7~vw
+zp%P6;UFj_AzYle?N-V$!Q73LU_o3z=F~3G__yU$;)Lq=TzW=*v=;c|W4qR=%WbQ&0
+z>aqBk#plh-*8eY7GB26mTji-mZK%oIh`OOSY`haa?eH)Sc>?*;+;^yjaU4qv(oh??
+z9W^h{EHx`o^Q&<L)>-^KY9no^N4Xc3FO2%ZJ5a#$*M#rsP=c$d0#Sv&K~&*1i*ry3
+zW}2nuTyq|(&_Yz62dw{LRQ@{aZ#Fj+a{qd^+igOJ`GI*H$1;8a_3wBS7hzhFf3gNt
+z!4}lUHdwqBwefAJjdY^&bYm)hi#m9pXA|Oz{RG2M8yba5kc~<(1GQi_DnT{sM2)Dz
+zEvUDCGiu%`>yM!3T}I`*X>pLrs^ewQP=OrONoJxF6r(=3DqMokVj}jU3jSvPVfLG@
+z#2=4A<w>x39ID_%RK0xUf2-V;(a;W8p<bSKsD<rj7`5<ARN-$>33|<+OG3XURt8+C
+zIB87ad}vuxRp3Twf6^y`&qJ${_Xa)-jU7_LXw8s=fn(uODdz%#v*G@s^Mj#^%u%8B
+znMo-%jkW1(8fu?Rf8x>l)%EEs>S`XT4e!X@IdDLJ!SuXv;l%D>C|H=799h>Dd2d_f
+W;DJkfw*C@+;nFK@;n9VC1O5a3-9-oh
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 9ec1e0c..592a431 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-23 15:43+0800\n"
++"POT-Creation-Date: 2016-09-23 17:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -360,7 +360,8 @@ msgstr "請輸入姓名"
+ 
+ #: templates/fruser_add.html:49 templates/user_add.html.py:51
+ #: templates/user_update.html:52
+-msgid "Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
++msgid ""
++"Name can only contain 1 to 25 bit of Chinese or English or Number or '_' or "
+ "'-'"
+ msgstr "帳號只能包含25碼的中文、英文、數字、'_'、'-'"
+ 
+@@ -672,7 +673,8 @@ msgid "Forgotten your password ?"
+ msgstr "忘記您的密碼？"
+ 
+ #: templates/registration/forget_password.html:24
+-msgid "Enter your email address below, and we'll email instructions for setting a "
++msgid ""
++"Enter your email address below, and we'll email instructions for setting a "
+ "new one."
+ msgstr "在下面輸入您的電子信箱，我們將透過電子郵件通知重設密碼說明"
+ 
+@@ -702,13 +704,15 @@ msgstr "密碼更新成功"
+ 
+ #: templates/registration/password_reset_email.html:2
+ #, python-format
+-msgid "You're receiving this email because you requested a password reset for your "
++msgid ""
++"You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+ msgstr "您收到這封郵件是因為您要求在 %(site_name)s 網站上重新設定新的密碼 "
+ 
+ #: templates/registration/password_reset_email.html:4
+ #, python-format
+-msgid "Please reset your password in %(expired)s minutes, go to the following page "
++msgid ""
++"Please reset your password in %(expired)s minutes, go to the following page "
+ "and choose a new password:"
+ msgstr "請在 %(expired)s 分鐘內變更密碼，點選下列網址重新設定新密碼"
+ 
+@@ -731,7 +735,8 @@ msgid "Password reset confirmation"
+ msgstr "密碼重置確認"
+ 
+ #: templates/registration/reset_password.html:25
+-msgid "Please enter your new password twice so we can verify you typed it in "
++msgid ""
++"Please enter your new password twice so we can verify you typed it in "
+ "correctly."
+ msgstr "請輸入兩次新密碼，以便我們確認您輸入是否一致"
+ 
+@@ -966,16 +971,18 @@ msgstr "若期限內超過筆數限制，最多可以紀錄到1.5倍的筆數限
+ 
+ #: templates/system_settings.html:189
+ #, python-format
+-msgid "Over 150%% amount, system will keep latest logs, and remove the other older "
++msgid ""
++"Over 150%% amount, system will keep latest logs, and remove the other older "
+ "logs."
+-msgstr "若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
++msgstr ""
++"若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
+ 
+ #: templates/system_settings.html:192
+-msgid "Save user photo image"
+-msgstr "儲存建檔資料"
++msgid "Save FR user register photo image"
++msgstr "儲存臉部註冊成功照片"
+ 
+ #: templates/system_settings.html:195
+-msgid "Save FR recognition photo image"
++msgid "Save FR user recognition photo image"
+ msgstr "儲存臉部辨識成功照片"
+ 
+ #: templates/system_settings.html:249
+@@ -995,7 +1002,8 @@ msgid "Must select correct monthly day!"
+ msgstr "必須選擇正確的月份日期！"
+ 
+ #: templates/system_settings.html:299
+-msgid "The backup may not be processed monthly, if you choose monthly date from 29 "
++msgid ""
++"The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "選擇每月 29~31 日，可能無法每月進行自動備份，您確定要繼續嗎?"
+ 
+@@ -1206,3 +1214,6 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失敗"
++
++#~ msgid "Save user photo image"
++#~ msgstr "儲存建檔資料"
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 6046a8e..f117cc7 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -189,10 +189,10 @@
+                                     * {% trans "Over 150% amount, system will keep latest logs, and remove the other older logs." %}</p>
+                                 </div>
+                                 <div class="form-group">
+-                                    <input type="checkbox" id="PicCreateSave" name="PicCreateSave">{% trans "Save user photo image" %}
++                                    <input type="checkbox" id="PicCreateSave" name="PicCreateSave">{% trans "Save FR user register photo image" %}
+                                 </div>
+                                 <div class="form-group">
+-                                    <input type="checkbox" id="PicFaceSave" name="PicFaceSave">{% trans "Save FR recognition photo image" %}
++                                    <input type="checkbox" id="PicFaceSave" name="PicFaceSave">{% trans "Save FR user recognition photo image" %}
+                                 </div>
+                                 <div class="col-md-12"><br></div>
+                                 <div class="form-actions form-group">
+-- 
+1.9.1
+

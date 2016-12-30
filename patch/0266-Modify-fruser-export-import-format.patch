@@ -1,0 +1,89 @@
+From e3bd93af4ee4ab08055d939f9b6a5119e3a30f2c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 8 Sep 2016 12:45:29 +0800
+Subject: [PATCH 266/443] Modify fruser export/import format
+
+Modify fruser export/import format to zip.
+---
+ frusers/views.py | 36 ++++++++++++++++++++++--------------
+ 1 file changed, 22 insertions(+), 14 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 6531ecb..dd597fe 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -7,7 +7,7 @@ from datetime import datetime
+ from login.views import check_login
+ from django.conf import settings
+ from django.db.models import Q
+-import csv, tarfile, os, sys, json, requests
++import csv, zipfile, tempfile, os, sys, json, requests
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_fruserlist'
+@@ -90,17 +90,17 @@ def import_fruser(request):
+ 
+         mediadir = settings.MEDIA_DIR
+         csvdir = os.path.join(mediadir, 'frusers.csv')
+-        tarfile_dir = os.path.join(mediadir, request.FILES['file'].name)
+-        with open(tarfile_dir, 'wb+') as destination:
++        zipfile_dir = os.path.join(mediadir, request.FILES['file'].name)
++        with open(zipfile_dir, 'wb+') as destination:
+             for chunk in request.FILES['file'].chunks():
+                 destination.write(chunk)
+ 
+-        if not tarfile.is_tarfile(tarfile_dir):
++        if not zipfile.is_zipfile(zipfile_dir):
+             raise Exception(2)
+ 
+-        with tarfile.open(tarfile_dir, 'r:gz') as tar:
+-            if all(k in tar.getnames() for k in {'frusers.csv', 'fruserpic'}):
+-                tar.extractall(mediadir)
++        with zipfile.ZipFile(zipfile_dir) as zipFile:
++            if all(k in zipFile.namelist() for k in {'frusers.csv', 'fruserpic/'}):
++                zipFile.extractall(mediadir)
+             else:
+                 raise Exception(2)
+ 
+@@ -138,7 +138,7 @@ def import_fruser(request):
+ 
+     except Exception as e:
+         try:
+-            os.remove(tarfile_dir)
++            os.remove(zipfile_dir)
+             os.remove(csvdir)
+         finally:
+             try:
+@@ -163,15 +163,23 @@ def export_fruser(request):
+             writer.writerow(header)
+             writer.writerows([[res.as_json()[column] for column in header] for res in Frusers.objects.all()])
+ 
+-        response = HttpResponse(content_type = 'application/x-gzip')
+-        response['Content-Disposition'] = 'attachment; filename=fruser-%s.tar.gz' % (
++        temp = tempfile.TemporaryFile()
++        with zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as archive:
++            root = ''
++            for dirname, subdirs, files in os.walk(picdir):
++                root = os.path.join(root, os.path.split(dirname)[-1])
++                archive.write(dirname, root)
++                for filename in files:
++                    archive.write(os.path.join(dirname, filename), os.path.join(root, filename))
++            archive.write(csvdir, os.path.split(csvdir)[-1])
++
++        frusers_zip = open(temp.name, 'rb')
++        temp.seek(0)
++        response = HttpResponse(frusers_zip, content_type = 'application/zip')
++        response['Content-Disposition'] = 'attachment; filename=fruser-%s.zip' % (
+             datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+         )
+ 
+-        with tarfile.open(fileobj = response, mode = 'w:gz') as tar:
+-            tar.add(csvdir, arcname = os.path.split(csvdir)[-1])
+-            tar.add(picdir, arcname = os.path.split(picdir)[-1])
+-
+         raise Exception('res_code[0]')
+ 
+     except Exception as e:
+-- 
+1.9.1
+

@@ -1,0 +1,1182 @@
+From 0a7e617d5976d1cf97c97278c07a454670e5bb2c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Fri, 27 May 2016 20:57:46 +0800
+Subject: [PATCH 109/443] Complete fruser web & Modify device web state
+
+Add fruser web function:
+  -  Export fruser
+  -  Import fruser
+Modify fruser web delete function.
+Modify device web state.
+---
+ api/face.py                        |  86 ++++++-----
+ api/models.py                      |   9 +-
+ br06/settings.py                   |  11 +-
+ br06/urls.py                       |  18 ++-
+ devices/views.py                   |  12 +-
+ frusers/views.py                   | 175 ++++++++++++++++++----
+ templates/device_edit.html         |  15 --
+ templates/device_frusergroups.html |   7 +-
+ templates/device_list.html         |  11 +-
+ templates/device_settings.html     |   9 +-
+ templates/fruser_edit.html         | 173 ++++++++++++++++++++++
+ templates/fruser_list.html         | 296 ++++++++++++++++++++++---------------
+ templates/user_group_list.html     |   5 +-
+ templates/user_group_members.html  |   1 +
+ 14 files changed, 594 insertions(+), 234 deletions(-)
+ create mode 100644 templates/fruser_edit.html
+
+diff --git a/api/face.py b/api/face.py
+index 419ac6b..f6547b7 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -1,3 +1,5 @@
++#-*-coding:utf-8-*-
++
+ import json, requests
+ from collections import ChainMap
+ from django.http import HttpResponse, JsonResponse
+@@ -16,8 +18,11 @@ true = '1'
+ @csrf_exempt
+ def add(request):
+     if request.method == 'POST':
+-        if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+-            logContent = 'Device ip accept'
++        if request.META['REMOTE_ADDR'] == '127.0.0.1':
++            logContent = 'Local IP access'
++            Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++        elif Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++            logContent = 'Device IP accept'
+             Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+         else :
+             logContent = 'Need accept'
+@@ -59,57 +64,58 @@ def add(request):
+                 if res_personid['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     print('person_id', res_personid['person_id'])
+                     personId = res_personid['person_id']
++                    Frusers.objects.filter(OId = fruser.OId).update(
++                        PersonId = personId,
++                        UpdateDate = datetime.now()
++                    )
+                 else:
+                     logContent = "/faec/person/create/" + TCIT_res_state[res_personid['state']]
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+                 personId = fruser.PersonId
+-            res_face_personadd = TCIT_API(
++                res_face_personadd = TCIT_API(
+                     '/face/person/update/add/',
+                     data = {'person_id' : personId, 'face_id': face_id}
+-            )
+-            if not res_face_personadd['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                Frusers.objects.filter(OId = fruser.OId).update(
+-                    PersonId = personId,
+-                    UpdateDate = datetime.now()
+                 )
+-                logContent = "/face/person/update/add/" + TCIT_res_state[res_face_personadd['state']]
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+-
+-            print("res_face_personadd",res_face_personadd)
++                if not res_face_personadd['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                    logContent = "/face/person/update/add/" + TCIT_res_state[res_face_personadd['state']]
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #4 get img from device and save
+-            if Config.objects.get(Name = 'PicFaceSave').Value == true:
+-                open(
+-                    settings.PIC_DIR +
+-                    request.POST.get('FRUserId') +
+-                    '_' +
+-                    datetime.now().strftime("%Y%m%d%H%M%S") +
+-                    '.jpg',
+-                    'wb+'
+-                ).write(request.FILES['image'].file.getvalue())
++            if request.META['REMOTE_ADDR'] == '127.0.0.1':
++                if fruser.Face1 == settings.PIC_DIR + request.FILES['image'].name:
++                    Frusers.objects.filter(OId = fruser.OId).update(FaceID1 = face_id, UpdateDate = datetime.now())
++                if fruser.Face2 == settings.PIC_DIR + request.FILES['image'].name:
++                    Frusers.objects.filter(OId = fruser.OId).update(FaceID2 = face_id, UpdateDate = datetime.now())
++            else:
++                if Config.objects.get(Name = 'PicFaceSave').Value == true:
++                    open(
++                        settings.PIC_DIR +
++                        request.POST.get('FRUserId') +
++                        '_' +
++                        datetime.now().strftime("%Y%m%d%H%M%S") +
++                        '.jpg',
++                        'wb+'
++                    ).write(request.FILES['image'].file.getvalue())
+ 
+-                #Fruser update
+-                if not fruser.Face1:
+-                    Frusers.objects.filter(OId = fruser.OId).update(
+-                        PersonId = personId,
+-                        Face1 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+-                                '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
+-                        FaceID1 = face_id,
+-                        UpdateDate = datetime.now()
+-                    )
+-                else:
+-                    Frusers.objects.filter(OId = fruser.OId).update(
+-                        PersonId = personId,
+-                        Face2 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+-                                '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
+-                        FaceID2 = face_id,
+-                        UpdateDate = datetime.now()
+-                    )
++                    #Fruser update
++                    if not fruser.Face1:
++                        Frusers.objects.filter(OId = fruser.OId).update(
++                                Face1 = settings.PIC_DIR + request.POST.get('FRUserId') + \
++                                        '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                                FaceID1 = face_id,
++                                UpdateDate = datetime.now()
++                        )
++                    else:
++                        Frusers.objects.filter(OId = fruser.OId).update(
++                                Face2 = settings.PIC_DIR + request.POST.get('FRUserId') + \
++                                        '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                                FaceID2 = face_id,
++                                UpdateDate = datetime.now()
++                        )
+ 
+             # return
+-            logContent = "Face Enroll Add Successfully"
+-            return JsonResponse(dict({'Message' : logContent}))
++            return JsonResponse(dict(result_success))
+         except Exception as error:
+             print(str(error))
+             logContent = str(error)
+diff --git a/api/models.py b/api/models.py
+index 045136f..5b88160 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -1,6 +1,7 @@
+ from __future__ import unicode_literals
+ 
+ from django.db import models
++from django.utils import timezone
+ import uuid
+ 
+ class Config(models.Model):
+@@ -65,6 +66,7 @@ class Role(models.Model):
+             UpdateDate=self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+         )
+ 
++
+ class Acl(models.Model):
+     acl_acl = (
+             ('Enable', 'Enable'),
+@@ -208,7 +210,8 @@ class Devices(models.Model):
+             BioScore = self.BioScore,
+             Language = self.Language,
+             CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+-            UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++            UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S"),
++            TimeGap = (timezone.now() - self.UpdateDate).total_seconds()
+         )
+ 
+ 
+@@ -307,10 +310,10 @@ class Frusers(models.Model):
+             ('Disable', 'Disable'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    FRUserId = models.CharField(db_column = 'FRUserId', max_length = 16)
++    FRUserId = models.CharField(db_column = 'FRUserId', unique = True, max_length = 16)
+     Name = models.CharField(db_column = 'Name', default = '', max_length = 32, blank = True, null = True)
+     Gender = models.CharField(db_column = 'Gender', choices = frusers_gender, max_length = 8, blank = True)
+-    Age = models.IntegerField(db_column = 'Age', default = '', blank = True, null = True)
++    Age = models.IntegerField(db_column = 'Age', blank = True, null = True)
+     PersonId = models.CharField(db_column = 'PersonId', default = '', max_length = 32, blank = True, null = True)
+     Face1 = models.CharField(db_column = 'Face1', default = '', max_length = 256, blank = True, null = True)
+     Face2 = models.CharField(db_column = 'Face2', default = '', max_length = 256, blank = True, null = True)
+diff --git a/br06/settings.py b/br06/settings.py
+index 154285e..17a39ae 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -21,7 +21,7 @@ PROJECT_DIR = os.path.dirname(__file__)
+ # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
+ 
+ # SECURITY WARNING: keep the secret key used in production secret!
+-SECRET_KEY = '6LcOCx4TAAAAAPE6AF6FY3ZNe-v8ze6fp-PDBvch'
++SECRET_KEY = '6Ld2iB4TAAAAAKp3g39ywvKRTmGONuqYch_vqte8'
+ 
+ # SECURITY WARNING: don't run with debug turned on in production!
+ DEBUG = True
+@@ -128,9 +128,9 @@ LOCALE_PATHS = (
+ _ = lambda s: s
+ 
+ LANGUAGES = (
+-   ('en-us', _('English')),
+-   ('zh-TW', _('繁體中文')),
+-   ('zh-CN', _('筒体中文')),
++    ('en-us', _('English')),
++    ('zh-TW', _('繁體中文')),
++    ('zh-CN', _('筒体中文')),
+ )
+ 
+ LANGUAGE_CODE = 'en-us'
+@@ -152,13 +152,12 @@ NORECAPTCHA_SECRET_KEY = os.environ.get('NORECAPTCHA_SECRET_KEY', '')
+ STATIC_URL = '/static/'
+ PIC_DIR = 'fruserpic/'
+ STATICFILES_DIRS = [
+-    'static',
++    os.path.join(BASE_DIR, "static"),
+     'static/js',
+     'static/styles',
+     'static/css',
+     'static/img/',
+     'logsetting/',
+-    PIC_DIR,
+ ]
+ 
+ TCIT_IP = 'localhost:8800'
+diff --git a/br06/urls.py b/br06/urls.py
+index aa251ee..7fef659 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -17,7 +17,7 @@ from django.conf.urls import url, include
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_setting, user_list_view, user_add_view, user_update_view, add_user, update_user, delete_user
+-from frusers.views import fruser_list_view
++from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser
+ from systemlogs.views import systemlog_list_view, systemlog_export
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export
+ from logsetting.views import logsetting
+@@ -28,13 +28,13 @@ from usergroups.views import user_group_list_view, user_group_add_view, user_gro
+ from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, add_frusergroup_device, delete_frusergroup_device
+ from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView, login_i18n, home_view, empty_view
++from django.conf import settings
+ 
+ 
+ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^admin/', admin.site.urls),
+     url(r'^user_setting/?$', user_setting),
+-    url(r'^fruser_list/?$', fruser_list_view),
+     url(r'^systemlog_list/?$', systemlog_list_view),
+     url(r'^systemlog_export/?$',systemlog_export),
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+@@ -88,6 +88,7 @@ urlpatterns += [
+     url(r'^add_user_group_device/?$', add_user_group_device),
+     url(r'^delete_user_group_device/?$', delete_user_group_device),
+ ]
++
+ urlpatterns += [
+     url(r'^device_list/?$', device_list_view),
+     url(r'^device_add/?$', device_add_view),
+@@ -119,6 +120,15 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
++    url(r'^fruser_list/?$', fruser_list_view),
++    url(r'^fruser_edit/?$', fruser_edit_view),
++    url(r'^import_fruser/?$', import_fruser),
++    url(r'^export_fruser/?$', export_fruser),
++    url(r'^update_fruser/?$', update_fruser),
++    url(r'^delete_fruser/?$', delete_fruser),
++]
++
++urlpatterns += [
+     url(r'^api/user/add/?$', user.add),
+     url(r'^api/user/update/?$', user.update),
+     url(r'^api/user/delete/?$', user.delete),
+@@ -148,3 +158,7 @@ urlpatterns += [
+     url(r'^api/connection/get/?$', connection.get),
+     url(r'^api/connection/set/?$', connection.set),
+ ]
++
++urlpatterns += [
++    url(r'^fruserpic/(?P<path>.*)', 'django.views.static.serve', {'document_root': settings.PIC_DIR}),
++]
+diff --git a/devices/views.py b/devices/views.py
+index 92ad9cc..9b1e17d 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -16,8 +16,8 @@ def device_list_view(request):
+         obj = Devices.objects.all()
+         devices = [res.as_json() for res in obj]
+         index = 0
+-        for x in devices:
+-            x['Index'] = index+1
++        for device in devices:
++            device['Index'] = index + 1
+             index += 1
+         return render(request, 'device_list.html', {'active': 'device_list', 'obj': devices})
+     except:
+@@ -62,15 +62,15 @@ def device_frusergroups_view(request):
+         obj = Frusergroupdevices.objects.filter(DeviceOId = Devices.objects.get(OId = request.GET['OId']))
+         devicegroups = [res.GroupOId.as_json() for res in obj]
+         index = 0
+-        for x in devicegroups:
+-            x['Index'] = index+1
++        for group in devicegroups:
++            group['Index'] = index + 1
+             index += 1
+ 
+         obj_all = Frusergroups.objects.all()
+         groups = [res_all.as_json() for res_all in obj_all if res_all not in [res.GroupOId for res in obj]]
+         index = 0
+-        for x in groups:
+-            x['Index'] = index+1
++        for group in groups:
++            group['Index'] = index + 1
+             index += 1
+ 
+         return render(request, 'device_frusergroups.html', {'active': 'device_frusergroups', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json, 'devicegroups': devicegroups, 'groups': groups})
+diff --git a/frusers/views.py b/frusers/views.py
+index b3be105..b9bc727 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -1,33 +1,156 @@
+ from django.shortcuts import render
+-from django.http import HttpResponseRedirect
+-from django.http import JsonResponse
+-from django.http import HttpResponse
+-from django.core.exceptions import ObjectDoesNotExist
+-from api.models import Users,Frusers,Systemlogs
+-from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
+-import json
+-import urllib
+-
+-# Create your views here.
++
++from collections import ChainMap
++from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
++from api.models import Frusers, Frusergroupmember
++from datetime import datetime
++import csv, tarfile, os, json, requests
++
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ 
+-def get_FRUlist():
++def fruser_list_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
+     try:
+-        obj = Frusers.objects.filter(State="Enable")
+-        result = [res.as_json() for res in obj]
+-    except Exception as error:
+-        return json.dumps({"Result" : "Fail ","Code":"9999","Message":error})
+-    return result;
++        obj = Frusers.objects.all()
++        frusers = [res.as_json() for res in obj]
++        index = 0
++        for fruser in frusers:
++            fruser['Age'] = fruser['Age'] or ''
++            fruser['Index'] = index + 1
++            index += 1
++            groups = Frusergroupmember.objects.filter(FRUserOId = Frusers.objects.get(OId = fruser['OId']))
++            fruser['Group'] = ', '.join(group.GroupOId.Name for group in groups) if groups else 'Default'
+ 
+-def fruser_list_view(request):
++        return render(request, 'fruser_list.html', {'active': 'fruser_list', 'obj': frusers})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def fruser_edit_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        fruser = Frusers.objects.get(OId = request.GET['OId']).as_json()
++        fruser['Age'] = fruser['Age'] or ''
++        return render(request, 'fruser_edit.html', {'active': 'fruser_edit', 'obj': fruser})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def import_fruser(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        tmpfile_dir = request.FILES['file'].name
++        with open(tmpfile_dir, 'wb+') as destination:
++            for chunk in request.FILES['file'].chunks():
++                destination.write(chunk)
++
++        if not tarfile.is_tarfile(tmpfile_dir):
++            raise Exception('res_code[2]')
++
++        with tarfile.open(tmpfile_dir, 'r:gz') as tar:
++            if all(k in tar.getnames() for k in {'frusers.csv', 'fruserpic'}):
++                tar.extractall()
++            else:
++                raise Exception('res_code[2]')
++
++        with open('frusers.csv', 'r') as csvfile:
++            for row in csv.DictReader(csvfile):
++                try:
++                    Frusers.objects.get(FRUserId = row['FRUserId'])
++                except:
++                    Frusers.objects.create(
++                        FRUserId = row['FRUserId'],
++                        Name = row['Name'],
++                        Gender = row['Gender'],
++                        Age = row['Age'],
++                        Face1 = row['Face1'],
++                        Face2 = row['Face2'],
++                        RFIDCard = row['RFIDCard'],
++                        State = row['State'],
++                        DisableCauses = row['DisableCauses'],
++                    )
++                    for Face in [row['Face1'], row['Face2']]:
++                        if Face:
++                            with open(Face, 'rb') as image:
++                                res = json.loads(requests.post(
++                                    'http://127.0.0.1:' + request.META['SERVER_PORT'] + '/api/face/add',
++                                    files = {'image' : (
++                                        os.path.basename(image.name),
++                                        image,
++                                        'image/jpeg'
++                                    )},
++                                    data = {'FRUserId': row['FRUserId']}
++                                ).text)
++                                if res['Result'] != 'Success':
++                                    raise
++        raise Exception('res_code[0]')
++
++    except Exception as e:
++        try:
++            os.remove(tmpfile_dir)
++            os.remove('frusers.csv')
++        finally:
++            if e.__str__() == 'res_code[0]':
++                return JsonResponse(res_code[0])
++            elif e.__str__() == 'res_code[2]':
++                return JsonResponse(res_code[2])
++            else:
++                return JsonResponse(res_code[1])
++
++def export_fruser(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        with open('frusers.csv', 'w') as csvfile:
++            header = ['FRUserId', 'Name', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
++            writer = csv.writer(csvfile)
++            writer.writerow(header)
++            writer.writerows([[res.as_json()[column] for column in header] for res in Frusers.objects.all()])
++
++        response = HttpResponse(content_type = 'application/x-gzip')
++        response['Content-Disposition'] = 'attachment; filename=fruser-%s.tar.gz' % (
++            datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
++        )
++
++        with tarfile.open(fileobj = response, mode = 'w:gz') as tar:
++            tar.add('frusers.csv')
++            tar.add('fruserpic')
++
++        raise Exception('res_code[0]')
++
++    except Exception as e:
++        try:
++            os.remove('frusers.csv')
++        finally:
++            if e.__str__() == 'res_code[0]':
++                return response
++            else:
++                return JsonResponse(res_code[1])
++
++def update_fruser(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Frusers.objects.filter(OId = request.POST['OId']).update(
++            Gender = request.POST['Gender'],
++            Age = request.POST['Age'] or 0,
++            DisableCauses = request.POST['DisableCauses']
++        )
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_fruser(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    # obj = Frusers.objects.filter(State="Enable")
+-    # result = [res.as_json() for res in obj]
+-    result = get_FRUlist()
+-    
+-    index = 0
+-    for x in result:
+-        x['Index'] = index+1
+-        index += 1
+-    return render(request, 'fruser_list.html', {'active': "fruser_list", 'obj': result})
++    try:
++        res = json.loads(requests.post(
++            'http://127.0.0.1:' + request.META['SERVER_PORT'] + '/api/user/delete',
++            data = {'FRUserId': Frusers.objects.get(OId = request.POST['OId']).FRUserId}
++        ).text)
++        if res['Result'] != 'Success':
++            raise
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 438b4d1..b994110 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -246,21 +246,6 @@
+                 alert("Please input device name");
+             }
+         }
+-
+-        $(document).ready(function() {
+-            $('input[name="Welcome"][value=' + {{obj|safe}}.Welcome + ']').prop('checked',true);
+-            $('input[name="AccessDenied"][value=' + {{obj|safe}}.AccessDenied + ']').prop('checked',true);
+-            $('select[name="ScreenSaver"]').val({{obj|safe}}.ScreenSaver);
+-            $('select[name="Timezone"]').val({{obj|safe}}.Timezone);
+-            if ({{obj|safe}}.Audio == 'Enable') {
+-                $('input[name="Audio"]').prop('checked',true);
+-            } else {
+-                $('input[name="Audio"]').prop('checked',false);
+-            }
+-            $('select[name="BioScore"]').val({{obj|safe}}.BioScore);
+-            $('select[name="Language"]').val({{obj|safe}}.Language);
+-        });
+-
+         </script>
+     </body>
+ 
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 3669f70..95e1d92 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -65,7 +65,6 @@
+         <script>
+             var $GroupList = $('#GroupList');
+             var $GroupAdd = $('#GroupAdd');
+-            var devicegroups = {{devicegroups|safe}};
+ 
+             $GroupList.bootstrapTable({
+                 search: true,
+@@ -89,11 +88,9 @@
+                         }
+                     }
+                 ],
+-                data: devicegroups
++                data: {{devicegroups|safe}}
+             });
+ 
+-            var groups = {{groups|safe}};
+-
+             $GroupAdd.bootstrapTable({
+                 search: true,
+                 pageSize: 10,
+@@ -109,7 +106,7 @@
+                         sortable: true
+                     }
+                 ],
+-                data: groups
++                data: {{groups|safe}}
+             });
+ 
+ 
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 218ca95..381cbe6 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -40,7 +40,6 @@
+ 
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+-            var dataSet = {{obj|safe}};
+             $('#DeviceList').bootstrapTable({
+                 search: true,
+                 pagination: true,
+@@ -68,11 +67,11 @@
+                     {
+                         field: 'State',
+                         title: '{% trans "Status" %}',
+-                        formatter: function(value) {
+-                            if (value == 'Offline') {
+-                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:red"></i>';
+-                            } else if (value == 'Proposed') {
++                        formatter: function(value, row) {
++                            if (value == 'Proposed') {
+                                 return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:gray"></i>';
++                            } else if (row.TimeGap > 30) {
++                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:red"></i>';
+                             } else {
+                                 return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:green"></i>';
+                             }
+@@ -102,7 +101,7 @@
+                         }
+                     }
+                 ],
+-                data: dataSet
++                data: {{obj|safe}}
+             });
+ 
+             //For getting CSRF token
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 337563c..ba474c8 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -248,19 +248,18 @@
+         }
+ 
+         $(document).ready(function() {
+-            $('input[name="Welcome"][value=' + {{obj|safe}}.Welcome + ']').prop('checked',true);
+-            $('input[name="AccessDenied"][value=' + {{obj|safe}}.AccessDenied + ']').prop('checked',true);
++            $('input[name="Welcome"][value=' + {{obj|safe}}.Welcome + ']').prop('checked', true);
++            $('input[name="AccessDenied"][value=' + {{obj|safe}}.AccessDenied + ']').prop('checked', true);
+             $('select[name="ScreenSaver"]').val({{obj|safe}}.ScreenSaver);
+             $('select[name="Timezone"]').val({{obj|safe}}.Timezone);
+             if ({{obj|safe}}.Audio == 'Enable') {
+-                $('input[name="Audio"]').prop('checked',true);
++                $('input[name="Audio"]').prop('checked', true);
+             } else {
+-                $('input[name="Audio"]').prop('checked',false);
++                $('input[name="Audio"]').prop('checked', false);
+             }
+             $('select[name="BioScore"]').val({{obj|safe}}.BioScore);
+             $('select[name="Language"]').val({{obj|safe}}.Language);
+         });
+-
+         </script>
+     </body>
+ 
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+new file mode 100644
+index 0000000..99bb5f4
+--- /dev/null
++++ b/templates/fruser_edit.html
+@@ -0,0 +1,173 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Fruser Edit</title>
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/fruser_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li>Fruser Edit</li>
++                    <li class="active">{{obj.Name}}</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>Fruser Edit</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>Fruser</p>
++                        </div>
++                        <div class="panel-body">
++                            <form class="form-horizontal">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group">
++                                        <label class="col-md-2 control-label">FRUserId :</label>
++                                        <label class="col-md-1 control-label">
++                                            <p class="text-left">{{obj.FRUserId}}</p>
++                                        </label>
++                                        <label class="col-md-2 control-label">Name :</label>
++                                        <label class="col-md-1 control-label">
++                                            <p class="text-left">{{obj.Name}}</p>
++                                        </label>
++
++                                        <label class="col-md-2 control-label checkbox">
++                                            <input type="checkbox" name="State">Disable
++                                        </label>
++                                        <div class="col-md-3">
++                                            <input type="text" class="form-control" value="{{obj.DisableCauses}}" placeholder="Please input Disable Causes" name="DisableCauses">
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-2 control-label">Gender :</label>
++                                        <div class="col-md-2">
++                                            <select class="form-control" name="Gender">
++                                                <option value=""></option>
++                                                <option value="Male">Male</option>
++                                                <option value="Female">Female</option>
++                                            </select>
++                                        </div>
++                                        <label class="col-md-1 control-label">Age :</label>
++                                        <div class="col-md-2">
++                                            <input type="text" class="form-control" value="{{obj.Age}}" placeholder="Ex : 25" name="Age">
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-2 control-label">Card ID :</label>
++                                        <label class="col-md-3 control-label">
++                                            <p class="text-left">{{obj.RFIDCard}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-2 control-label">Face ID1 :</label>
++                                        <label class="col-md-3 control-label">
++                                            <p class="text-left">{{obj.FaceID1}}</p>
++                                        </label>
++                                        <label class="col-md-2 control-label">Face ID2 :</label>
++                                        <label class="col-md-3 control-label">
++                                            <p class="text-left">{{obj.FaceID2}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <div class="col-md-6">
++                                            {% if obj.Face1 %}
++                                                <img class="img-responsive" src="{{obj.Face1}}">
++                                            {% endif %}
++                                        </div>
++                                        <div class="col-md-6">
++                                            {% if obj.Face2 %}
++                                                <img class="img-responsive" src="{{obj.Face2}}">
++                                            {% endif %}
++                                        </div>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-11">
++                                <button class="btn btn-default pull-right" onclick="onSaveClick()">Save</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++        <script>
++        $('input[name="State"]').change(function() {
++            $('input[name="DisableCauses"]').prop('disabled', !this.checked);
++        });
++
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function onSaveClick(){
++            var Gender = $('select[name=Gender]').val();
++            var Age = $('input[name=Age]').val();
++            var DisableCauses = $('input[name=DisableCauses]').val();
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/update_fruser/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': {{obj|safe}}.OId,
++                    'Gender': Gender,
++                    'Age': Age,
++                    'DisableCauses': DisableCauses
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("Update fruser successfully");
++                        location.href = '/fruser_list';
++                    } else {
++                        alert("Fail to update fruser");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
++
++        $(document).ready(function() {
++            if ({{obj|safe}}.State == 'Enable') {
++                $('input[name="State"]').prop('checked', false);
++                $('input[name="DisableCauses"]').prop('disabled', true);
++            } else {
++                $('input[name="State"]').prop('checked', true);
++                $('input[name="DisableCauses"]').prop('disabled', false);
++            }
++            $('select[name="Gender"]').val({{obj|safe}}.Gender);
++        });
++        </script>
++    </body>
++
++</html>
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index f00fab2..7c8bc0a 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -3,130 +3,190 @@
+ {% load static %}
+ 
+ <html>
+-<head>
+-<meta charset="utf-8">
+-<meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>FRUser List</title>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Fruser List</title>
++    </head>
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/fruser_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Fruser List</li>
++                </ol>
++            </div><!--/.row-->
+ 
+-<!--[if lt IE 9]>
+-<script src="js/html5shiv.js"></script>
+-<script src="js/respond.min.js"></script>
+-<![endif]-->
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>Fruser List</small></h1>
++                </div>
++            </div><!--/.row-->
+ 
+-</head>l
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <div id="ImExport">
++                                <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal">Import</button>
++                                <button class="btn btn-default" onclick="location.href='/export_fruser'">Export</button>
++                            </div>
++                            <table id="FruserList"></table>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">FRUser List</li>
+-			</ol>
+-		</div><!--/.row-->
+-		
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">FRUser List</h1>
+-			</div>
+-			<div class="col-lg-12">
+-				<button class="btn green pull-right"  value="">Create new account</button>
+-			<div>
+-		</div><!--/.row-->
++        <div id="ImportModal" class="modal fade col-lg-12" role="dialog">
++            <div class="modal-dialog">
++                <div class="modal-content">
++                    <div class="modal-header">
++                        <button class="close" data-dismiss="modal">
++                            <span aria-hidden="true">&times;</span>
++                        </button>
++                        <h4 class="modal-title">Import Fruser</h4>
++                    </div>
++                    <div class="modal-body">
++                        <form id="ImportForm" class="form-horizontal" enctype="multipart/form-data" >{% csrf_token %}
++                            <div class="form-body">
++                                <input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">
++                            </div>
++                        </form>
++                    </div>
++                    <div class="modal-footer">
++                        <button class="btn btn-default" data-dismiss="modal">Close</button>
++                        <button class="btn btn-default" onclick="ImportFruser()">Upload</button>
++                    </div>
++                </div>
++            </div>
++        </div>
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<!-- <div class="panel-heading">Advanced Table</div> -->
+-					<div class="panel-body">
+-						<!-- data-url="{%static "data1.json"%}" -->
+-						<table id="userList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
+-						    <thead>
+-						    <tr>
+-<!-- 						        <th data-field="id" data-sortable="true">Item ID</th>
+-						        <th data-field="name"  data-sortable="true">Item Name</th>
+-						        <th data-field="price" data-sortable="true">Item Price</th> -->
+-						    </tr>
+-						    </thead>
+-						</table>
+-						<!-- kimi test 
+-						{% for story in obj %}
+-							<h2>
+-							  <p>{{story.Account}}</p>
+-							  <p>{{story.Name}}</p>
+-							  <p>{{story.Email}}</p>
+-							  <p>{{story.OId}}</p>
+-							  <p>{{story.RoleId}}</p>
+-							</h2>
+-						{% endfor %}
+-						 -->
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->	
+-	</div><!--/.main-->
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            $('#FruserList').bootstrapTable({
++                search: true,
++                pagination: true,
++                toolbar: '#ImExport',
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'Index',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        field: 'Index',
++                        title: 'No',
++                        sortable: true
++                    },
++                    {
++                        field: 'FRUserId',
++                        title: 'FRUserId',
++                        sortable: true
++                    },
++                    {
++                        field: 'Name',
++                        title: 'Name',
++                        sortable: true
++                    },
++                    {
++                        field: 'Group',
++                        title: 'Group',
++                        sortable: true
++                    },
++                    {
++                        field: 'CreateDate',
++                        title: 'Create Date',
++                        sortable: true
++                    },
++                    {
++                        field: 'UpdateDate',
++                        title: 'Recently used Date',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            return ' \
++                                <div align="center"> \
++                                    <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">Edit</button> \
++                                    <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                </div>';
++                        }
++                    }
++                ],
++                data: {{obj|safe}}
++            });
+ 
+-	<script src="{% static "chart.min.js" %}"></script>
+-	<script src="{% static "chart-data.js" %}"></script>
+-	<script src="{% static "easypiechart.js" %}"></script>
+-	<script src="{% static "easypiechart-data.js" %}"></script>
+-	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+-	<script src="{% static "bootstrap-table.js" %}"></script>
+-	<script>
+-		// var dataSet = {{test|safe}};
+-		var index
+-		var dataSet = {{obj|safe}};
+-		console.log(dataSet);
+-		$('#userList').bootstrapTable({
+-			columns: [{
+-				field: 'Index',
+-				title: 'No.',
+-				sortable: true,
+-			},
+-			{
+-				field: 'FRUserID',
+-				title: 'FRUserID',
+-				sortable: true
+-			},
+-			{
+-				field: 'Name',
+-				title: 'Name',
+-				sortable: true
+-			},
+-			{
+-				field: 'CreateDate',
+-				title: 'CreateDate',
+-				sortable: true
+-			},
+-			{
+-				field: 'UpdateDate',
+-				title: 'UpdateDate',
+-				sortable: true
+-			},
+-			{
+-				field: 'OId',
+-				title: '',
+-				formatter: function(value, row, index) {
+-					return '<button class="btn green"  value="' + value + '">Delete</button>';
+-				}
+-			}],
+-			data: dataSet
+-		});
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
+ 
+-		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+-				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+-			}); 
+-			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+-		}(window.jQuery);
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
+ 
+-		$(window).on('resize', function () {
+-		  if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
+-		})
+-		$(window).on('resize', function () {
+-		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+-		})
+-	</script>	
+-</body>
++            function ImportFruser() {
++                var data = new FormData($('#ImportForm')[0]);
++                data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+ 
++                $.ajax({
++                    type: 'post',
++                    traditional: true,
++                    url: '/import_fruser/',
++                    async: true,
++                    cache: false,
++                    data: data,
++                    processData: false,
++                    contentType: false,
++                    success: function(data) {
++                        if (data.CODE == "0") {
++                            location.reload();
++                        } else if (data.CODE == "2") {
++                            alert("The file format is not correct");
++                        } else {
++                            alert("Fail to import fruser");
++                        }
++                    },
++                    error: function(data) {
++                    }
++                });
++            }
++
++            function delete_fruser(OId, Name) {
++                var ret = confirm('Confirm to delete ' +Name+ '?');
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/delete_fruser/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'OId': OId
++                        },
++                        success: function(data) {
++                            if (data.CODE == "0") {
++                                location.reload();
++                            } else {
++                                alert("Fail to delete fruser");
++                            }
++                        },
++                        error: function(data) {
++                        }
++                    });
++                }
++            }
++        </script>
++    </body>
+ </html>
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index 70284bd..703378e 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -39,7 +39,6 @@
+ 
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+-            var dataSet = {{obj|safe}};
+             $('#GroupList').bootstrapTable({
+                 search: true,
+                 pagination: true,
+@@ -74,12 +73,13 @@
+                         }
+                     }
+                 ],
+-                data: dataSet
++                data: {{obj|safe}}
+             });
+ 
+             //For getting CSRF token
+             function getCookie(name) {
+                 var cookieValue = null;
++
+                 if (document.cookie && document.cookie != '') {
+                     var cookies = document.cookie.split(';');
+                     for (var i = 0; i < cookies.length; i++) {
+@@ -96,6 +96,7 @@
+ 
+             function delete_device(OId, Name) {
+                 var ret = confirm('Confirm to delete ' +Name+ ' group?');
++
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index bef8717..a72f8da 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -133,6 +133,7 @@
+ 
+             function delete_user(UserOId, Name) {
+                 var ret = confirm('Confirm to delete ' + Name + ' from this group?');
++
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+-- 
+1.9.1
+

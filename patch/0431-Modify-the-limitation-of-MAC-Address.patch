@@ -1,0 +1,312 @@
+From c06d7713eb69b1577c41ffc80cfb8b3b5611c4b5 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 21 Dec 2016 00:13:54 +0800
+Subject: [PATCH 431/443] Modify the limitation of MAC-Address.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 378 -> 378 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 378 -> 378 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/device_add.html                    |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 21637 -> 21631 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |   8 ++++----
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 21637 -> 21637 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |   8 ++++----
+ 9 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 76017aaea36d22bfce7a02a1bfc79549715e8d08..a0cbee7ef095817d34bb49b9d5fc834724d6213a 100755
+GIT binary patch
+delta 17
+Zcmeyx^owc21a?CO0|P4qvx(Cm0{}X#27CYj
+
+delta 17
+Zcmeyx^owc21a<=jBO@zQlZn$G0{}YF27&+p
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 9f61c67..c8f0fc5 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 22:54+0800\n"
++"POT-Creation-Date: 2016-12-21 00:06+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 76017aaea36d22bfce7a02a1bfc79549715e8d08..a0cbee7ef095817d34bb49b9d5fc834724d6213a 100755
+GIT binary patch
+delta 17
+Zcmeyx^owc21a?CO0|P4qvx(Cm0{}X#27CYj
+
+delta 17
+Zcmeyx^owc21a<=jBO@zQlZn$G0{}YF27&+p
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 98ef66d..cf074f2 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 22:54+0800\n"
++"POT-Creation-Date: 2016-12-21 00:06+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/device_add.html b/templates/device_add.html
+index 1ae5970..51c6c41 100755
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -47,7 +47,7 @@
+                                             <span style="color: red;">*</span> MAC-Address
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device MAC-Address" %}" title="{% trans "Please input the device MAC-Address" %}" name="MAC" pattern="(([a-fA-F0-9]{2})(-[a-fA-F0-9]{2}){5})?" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Please input the correct device MAC-Address format! Only Hexadecimal and '-' are allowed." %}`)">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device MAC-Address" %}" title="{% trans "Please input the device MAC-Address" %}" name="MAC" pattern="[A-Za-z0-9-:]{0,32}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The device MAC-Address can only contain 0 to 32 bit of Eglish or Number or '-' or ':'" %}`)">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 7faa1d0f2b3be2d45a4336a1a2375fea1cedd812..b186423424bbf8c87c3191af7c5e6a9cf1a2d0b5 100755
+GIT binary patch
+delta 4832
+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
+
+delta 4873
+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
+Wy?QC5H6BnF?4BqJsj4nI68vA8ky?=e
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 6c303ae..d0b406a 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 22:54+0800\n"
++"POT-Creation-Date: 2016-12-21 00:06+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -221,9 +221,9 @@ msgstr "请输入MAC地址"
+ 
+ #: templates/device_add.html:50
+ msgid ""
+-"Please input the correct device MAC-Address format! Only Hexadecimal and '-' "
+-"are allowed."
+-msgstr "请输入正确的设备MAC-Address格式！使用16进位与'-'"
++"The device MAC-Address can only contain 0 to 32 bit of Eglish or Number or "
++"'-' or ':'"
++msgstr "MAC-Address只能包含0到25码的英文、数字、'-'、':'"
+ 
+ #: templates/device_add.html:58
+ msgid "Please input the device IP"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 912f267508b99b2717bd2f1d53913a14f697bc82..2bb5652d78351c4469599d6d5addd4f179e0ff3c 100755
+GIT binary patch
+delta 4250
+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
+RpMtzg-`SuMeqVho^1rjy1bF}e
+
+delta 4267
+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
+b<nk|@E`7NCtCyBBPq#63Va<CgkA(df?YRzD
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 7c88c31..4e8039f 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 22:54+0800\n"
++"POT-Creation-Date: 2016-12-21 00:06+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -221,9 +221,9 @@ msgstr "請輸入設備MAC位址"
+ 
+ #: templates/device_add.html:50
+ msgid ""
+-"Please input the correct device MAC-Address format! Only Hexadecimal and '-' "
+-"are allowed."
+-msgstr "請輸入正確的MAC-Address格式！使用16進位與'-'"
++"The device MAC-Address can only contain 0 to 32 bit of Eglish or Number or "
++"'-' or ':'"
++msgstr "MAC-Address只能包含0到32碼的英文、數字、'-'、':'"
+ 
+ #: templates/device_add.html:58
+ msgid "Please input the device IP"
+-- 
+1.9.1
+

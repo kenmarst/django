@@ -1,0 +1,48 @@
+From cb678c4c2e21e6c6166a0a213ba6664b15888a8d Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 2 Dec 2016 19:10:42 +0800
+Subject: [PATCH 394/443] Add default Configs: NewServerVersion,
+ NewDeviceVersion.
+
+---
+ systemsettings/views.py | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index e469c7b..74f4b77 100755
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -201,6 +201,30 @@ except:
+ else:
+     print('default PicFaceSave exist.')
+ 
++# NewServerVersion
++try:
++    Config.objects.get(Name = 'NewServerVersion').Name
++except:
++    try:
++        Config.objects.create(Name = 'NewServerVersion', Value = '')
++        print('create default NewServerVersion')
++    except:
++        print('can\'t create default NewServerVersion')
++else:
++    print('default NewServerVersion exist.')
++
++# NewDeviceVersion
++try:
++    Config.objects.get(Name = 'NewDeviceVersion').Name
++except:
++    try:
++        Config.objects.create(Name = 'NewDeviceVersion', Value = '')
++        print('create default NewDeviceVersion')
++    except:
++        print('can\'t create default NewDeviceVersion')
++else:
++    print('default NewDeviceVersion exist.')
++
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}, {"CODE": "4"}, {"CODE": "5"}]
+ permission = 'permission_system'
+ 
+-- 
+1.9.1
+

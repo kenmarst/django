@@ -1,0 +1,1059 @@
+From 728fff81cd06a430c09ba7f25913ca109a6c2ab8 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Thu, 29 Sep 2016 17:43:44 +0800
+Subject: [PATCH 298/443] =?UTF-8?q?Fix=20Bug=5F1531=20BR06=20Server?=
+ =?UTF-8?q?=E5=B7=B2=E7=B6=93=E9=80=A3=E7=B7=9A=E7=9A=84Device=20IP,=20?=
+ =?UTF-8?q?=E9=82=84=E5=8F=AF=E9=87=8D=E6=96=B0Create?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+附加相關功能：
+1.Device name 不可重複
+2.Device MAC Address 不可重複
+3.Device Name 可為空字串或只能包含0到25碼的中文、英文、數字、'_'、'-'"
+4.Device MAC 可為空字串或只能包含0到32碼的英文、數字、'-'"
+5.檢查Device IP是否為正確IP格式
+---
+ api/models.py                                |   2 +-
+ devices/views.py                             |  67 +++++++++++++++---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   8 +--
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   8 +--
+ templates/device_add.html                    |  45 ++++++-------
+ templates/device_edit.html                   |  70 +++++++++----------
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 16597 -> 17493 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  96 +++++++++++++++++---------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 16597 -> 17477 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  97 ++++++++++++++++++---------
+ templates/user_add.html                      |   2 +-
+ 13 files changed, 249 insertions(+), 146 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 0cb2606..5564bf5 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -214,7 +214,7 @@ class Devices(models.Model):
+         ('zh-tw', 'zh-tw'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
++    Name = models.CharField(db_column = 'Name', default = '', max_length = 32, blank = True, null = True)
+     State = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
+     MAC = models.CharField(db_column = 'MAC', default = '', max_length = 32, blank = True, null = True)
+     IP = models.GenericIPAddressField(db_column = 'IP', default = '', max_length = 32, blank = True, null = True)
+diff --git a/devices/views.py b/devices/views.py
+index 1688b8b..11390ad 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -8,7 +8,7 @@ from login.views import check_login, check_login_redirect
+ from django.db.models import Q
+ import json
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}, {"CODE": "4"}]
+ permission = 'permission_device'
+ 
+ def device_list_view(request):
+@@ -129,9 +129,51 @@ def add_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
+-        return JsonResponse(res_code[0])
+-    except:
++        devices_name = Devices.objects.filter(Name = request.POST['Name'])
++        devices_mac = Devices.objects.filter(MAC = request.POST['MAC'])
++        devices_ip = Devices.objects.filter(IP = request.POST['IP'])
++        devices_name_count = devices_name.count()
++        devices_mac_count = devices_mac.count()
++        devices_ip_count = devices_ip.count()
++        MAC = request.POST['MAC']
++        Name = request.POST['Name']
++        if devices_name_count > 0:
++            if Name == "" :
++                if devices_mac_count == 0 and devices_ip_count == 0:
++                    Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
++                    return JsonResponse(res_code[0])
++                elif devices_mac_count > 0 and devices_ip_count == 0:
++                    if MAC == "" :
++                        Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
++                        return JsonResponse(res_code[0])
++                    else:
++                        return JsonResponse(res_code[3])
++                elif devices_mac_count > 0 and devices_ip_count >= 0:
++                    if MAC == "" :
++                        return JsonResponse(res_code[4])
++                    else:
++                        return JsonResponse(res_code[3])
++                elif devices_mac_count == 0 and devices_ip_count > 0:
++                    return JsonResponse(res_code[4])
++            else:
++                return JsonResponse(res_code[2])
++        elif devices_mac_count > 0:
++            if MAC == "" :
++                if devices_ip_count == 0:
++                    Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
++                    return JsonResponse(res_code[0])
++                else:
++                    return JsonResponse(res_code[4])
++            else:
++                return JsonResponse(res_code[3])
++
++        elif devices_ip_count > 0:
++            return JsonResponse(res_code[4])
++        else:
++            Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
++            return JsonResponse(res_code[0])
++    except Exception as error:
++        print(error)
+         return JsonResponse(res_code[1])
+ 
+ def accept_device(request):
+@@ -152,12 +194,17 @@ def change_device_name(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        Devices.objects.filter(OId = request.POST['OId']).update(
+-            Name = request.POST['Name'],
+-            State = 'Setting',
+-            UpdateDate = datetime.now()
+-        )
+-        return JsonResponse(res_code[0])
++        devices_name = Devices.objects.filter(Name = request.POST['Name'])
++        devices_name_count = devices_name.count()
++        if devices_name_count > 0:
++            if request.POST['Name'] == "" :
++                Devices.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'], State = 'Setting', UpdateDate = datetime.now())
++                return JsonResponse(res_code[0])
++            else:
++                return JsonResponse(res_code[2])
++        else:
++            Devices.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'], State = 'Setting', UpdateDate = datetime.now())
++            return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+ 
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 454b3074037c902c9de3b3ca74abecf7a7890958..2da51deef8a304063bfa42c05baedf637ed3f2ae 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc`7<&}idFK}G;6Wd#)g
+
+delta 15
+WcmZo-X=0i1mc_)%#BAe7K}G;6dj%Q*
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 2fb8c5a..44a9341 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 14:46+0800\n"
++"POT-Creation-Date: 2016-09-29 16:12+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:143
++#: br06/settings.py:144
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:145
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:146
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 454b3074037c902c9de3b3ca74abecf7a7890958..2da51deef8a304063bfa42c05baedf637ed3f2ae 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc`7<&}idFK}G;6Wd#)g
+
+delta 15
+WcmZo-X=0i1mc_)%#BAe7K}G;6dj%Q*
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 2fb8c5a..44a9341 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 14:46+0800\n"
++"POT-Creation-Date: 2016-09-29 16:12+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:143
++#: br06/settings.py:144
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:145
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:146
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/templates/device_add.html b/templates/device_add.html
+index 2dac392..6cd1e9e 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -32,14 +32,14 @@
+                             <p>{% trans "Device" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <span style="color: red;">*</span> {% trans "Device Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input Device Name" name="Name" required="required">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device name" %}" name="Name" pattern="[\u4e00-\u9fa5\w-]{0,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -47,7 +47,7 @@
+                                             <span style="color: red;">*</span> MAC-Address
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input MAC-Address" name="MAC" required="required">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device MAC-Address" %}" name="MAC" pattern="[a-zA-Z0-9-]{0,32}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The MAC-Address can only contain 0 to 32 bit of English or Number or '-'" %}`)">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -55,17 +55,15 @@
+                                             <span style="color: red;">*</span> IP
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input IP" name="IP" required="required">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device IP" %}" name="IP" pattern="(25[0-5]|2[0-4]\d|1\d\d|\d{1,2})(\.(25[0-5]|2[0-4]\d|1\d\d|\d{1,2})){3}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Please input the correct device IP format!\nOnly numbers and '.' are allowed." %}`)" required>
+                                         </div>
+                                     </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                      <button type="button" class="btn btn-default" onclick="location.href = '/device_list/'">{% trans "Back" %}</button>
++                                      <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -97,10 +95,7 @@
+             var MAC = $('input[name=MAC]').val();
+             var IP = $('input[name=IP]').val();
+ 
+-            if(!Name || !MAC || !IP){
+-                alert("{% trans "please enter correct information" %}");
+-                return
+-            }
++
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+@@ -115,23 +110,25 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("{% trans "Device add successfully" %}");
++                        alert("{% trans "The device is added successfully" %}");
+                         location.href = '/device_list/';
+-                    } else {
+-                        alert("{% trans "Fail to add device" %}");
++                    } else if (data.CODE == "1") {
++                        alert("{% trans "Fail to add the device" %}");
++                    }
++                    else if (data.CODE == "2") {
++                        alert("{% trans "The device name is duplicated!" %}");
++                    }
++                    else if (data.CODE == "3") {
++                        alert("{% trans "The device MAC-Address is duplicated!" %}");
++                    }
++                    else {
++                        alert("{% trans "The device IP address is duplicated!" %}");
+                     }
+                 },
+                 error: function(data) {
+                 }
+             });
+         }
+-
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 2d2eb96..982e2bb 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -46,14 +46,14 @@
+                             <p>{% trans "Device" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">
+                                             <span style="color: red;">*</span> {% trans "Device Name" %} :
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Device Name" name="Name" required="required">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="{% trans "Please input the device name" %}" name="Name" pattern="[\u4e00-\u9fa5\w-]{0,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)">
+                                         </div>
+ 
+                                     </div>
+@@ -69,14 +69,12 @@
+                                             <p class="text-left">{{obj.IP}}</p>
+                                         </label>
+                                     </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                      <button type="button" class="btn btn-default" onclick="location.href = '/device_list/'">{% trans "Back" %}</button>
++                                      <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="location.href='/device_list'">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -214,41 +212,33 @@
+ 
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+-
+-            if (Name) {
+-                $.ajax({
+-                    type: 'post',
+-                    traditional: true,
+-                    url: '/change_device_name/',
+-                    async: true,
+-                    dataType: 'json',
+-                    data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
+-                        'OId': {{obj|safe}}.OId,
+-                        'Name': Name
+-                    },
+-                    success: function(data) {
+-                        if (data.CODE == "0") {
+-                            alert("{% trans "Change device name successfully" %}");
+-                            location.reload();
+-                        } else {
+-                            alert("{% trans "Fail to change device name" %}");
+-                        }
+-                    },
+-                    error: function(data) {
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/change_device_name/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': {{obj|safe}}.OId,
++                    'Name': Name
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("{% trans "The device name is changed successfully" %}");
++                        location.reload();
++                    } else if (data.CODE == "1") {
++                        alert("{% trans "Fail to change the device name" %}");
+                     }
+-                });
+-            } else {
+-                alert("{% trans "Please input device name" %}");
+-            }
++                    else if (data.CODE == "2") {
++                        alert("{% trans "The device name is duplicated!" %}");
++                    }
++                },
++                error: function(data) {
++                }
++            });
+         }
+ 
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+         </script>
+     </body>
+ 
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index bbb27bfd0cfcb0e0fb1e55a948b31364bf0a5772..f4556cf433e00b6746f88681ed17dcb9a93ded4f 100644
+GIT binary patch
+delta 6892
+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
+
+delta 6118
+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
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 51e78df..0408cee 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 14:46+0800\n"
++"POT-Creation-Date: 2016-09-29 16:12+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -109,7 +109,31 @@ msgstr "新增设备"
+ msgid "Device"
+ msgstr "设备"
+ 
+-#: templates/device_add.html:65 templates/device_edit.html.py:76
++#: templates/device_add.html:42 templates/device_edit.html.py:56
++msgid "Please input the device name"
++msgstr "请输入设备名称"
++
++#: templates/device_add.html:42 templates/device_edit.html.py:56
++msgid "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'"
++msgstr "名称只能包含0到25码的中文、英文、数字、'_'、'-'"
++
++#: templates/device_add.html:50
++msgid "Please input the device MAC-Address"
++msgstr "请输入MAC地址"
++
++#: templates/device_add.html:50
++msgid "The MAC-Address can only contain 0 to 32 bit of English or Number or '-'"
++msgstr "使用者ID只能包含0到32码的英文、数字、'-'"
++
++#: templates/device_add.html:58
++msgid "Please input the device IP"
++msgstr "请输入设备IP"
++
++#: templates/device_add.html:58
++msgid "Please input the correct device IP format!\\nOnly numbers and '.' are allowed."
++msgstr "请输入正确的设备IP格式！\\n只能包含0到32码的英文、数字、'.'"
++
++#: templates/device_add.html:62 templates/device_edit.html.py:73
+ #: templates/device_settings.html:300 templates/fruser_add.html.py:77
+ #: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:45
+ #: templates/frusergroup_edit.html:62 templates/role_add.html.py:50
+@@ -120,7 +144,7 @@ msgstr "设备"
+ msgid "Back"
+ msgstr "返回"
+ 
+-#: templates/device_add.html:66 templates/device_edit.html.py:77
++#: templates/device_add.html:63 templates/device_edit.html.py:74
+ #: templates/device_settings.html:301 templates/fruser_add.html.py:78
+ #: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:46
+ #: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
+@@ -132,19 +156,26 @@ msgstr "返回"
+ msgid "Save"
+ msgstr "储存"
+ 
+-#: templates/device_add.html:101
+-msgid "please enter correct information"
+-msgstr "请输入正确的讯息"
+-
+-#: templates/device_add.html:118
+-msgid "Device add successfully"
++#: templates/device_add.html:113
++msgid "The device is added successfully"
+ msgstr "设备新增成功"
+ 
+-#: templates/device_add.html:121 templates/frusergroup_devices.html.py:216
+-#: templates/user_group_devices.html:216
+-msgid "Fail to add device"
++#: templates/device_add.html:116
++msgid "Fail to add the device"
+ msgstr "新增设备失败"
+ 
++#: templates/device_add.html:119 templates/device_edit.html.py:234
++msgid "The device name is duplicated!"
++msgstr "设备名称已重复！"
++
++#: templates/device_add.html:122
++msgid "The device MAC-Address is duplicated!"
++msgstr "设备MAC地址已重复！"
++
++#: templates/device_add.html:125
++msgid "The device IP address is duplicated!"
++msgstr  "设备IP地址已重复！"
++
+ #: templates/device_edit.html:8 templates/device_edit.html.py:18
+ #: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
+ #: templates/device_frusergroups.html:18 templates/device_frusergroups.html:25
+@@ -154,7 +185,7 @@ msgstr "设备修改"
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+ #: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
+ #: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++#: templates/user_group_edit.html.py:32 templates/user_group_members.html:33
+ msgid "Imformation"
+ msgstr "一般"
+ 
+@@ -162,26 +193,22 @@ msgstr "一般"
+ msgid "FRUser Group List"
+ msgstr "FR群组管理"
+ 
+-#: templates/device_edit.html:89
++#: templates/device_edit.html:87
+ msgid "Device parameter"
+ msgstr "设备参数"
+ 
+-#: templates/device_edit.html:187
++#: templates/device_edit.html:185
+ msgid "Parameter Settings"
+ msgstr "设定参数"
+ 
+-#: templates/device_edit.html:232
+-msgid "Change device name successfully"
++#: templates/device_edit.html:228
++msgid "The device name is changed successfully"
+ msgstr "设备名称变更成功"
+ 
+-#: templates/device_edit.html:235
+-msgid "Fail to change device name"
++#: templates/device_edit.html:231
++msgid "Fail to change the device name"
+ msgstr "设备名称变更失败"
+ 
+-#: templates/device_edit.html:242
+-msgid "Please input device name"
+-msgstr "请输入设备名称"
+-
+ #: templates/device_frusergroups.html:45
+ msgid "Group list"
+ msgstr "群组管理"
+@@ -245,8 +272,8 @@ msgstr "新增群组失败"
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:44 templates/role_permission.html:80
+-#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+-#: templates/user_group_members.html:39
++#: templates/user_group_devices.html.py:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html.py:39
+ msgid "Device List"
+ msgstr "设备管理"
+ 
+@@ -518,7 +545,7 @@ msgstr "FR使用者群组修改"
+ 
+ #: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+-#: templates/user_group_edit.html:35 templates/user_group_members.html:36
++#: templates/user_group_edit.html.py:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成员管理"
+ 
+@@ -534,17 +561,21 @@ msgstr "新增设备"
+ msgid "Search Device"
+ msgstr "搜寻设备"
+ 
+-#: templates/frusergroup_devices.html:167
+-#: templates/frusergroup_member.html:167 templates/user_group_devices.html:167
+-#: templates/user_group_list.html:116 templates/user_group_members.html:167
++#: templates/frusergroup_devices.html:167 templates/frusergroup_member.html:167
++#: templates/user_group_devices.html:167 templates/user_group_list.html:116
++#: templates/user_group_members.html:167
+ msgid "from this group"
+ msgstr "群组"
+ 
+-#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
++#: templates/frusergroup_devices.html:216 templates/user_group_devices.html:216
++msgid "Fail to add device"
++msgstr "新增设备失败"
++
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html.py:109
+ msgid "Change group name successfully"
+ msgstr "群组名称变更成功"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html.py:112
+ msgid "Fail to change group name"
+ msgstr "变更群组名称失败"
+ 
+@@ -1221,3 +1252,6 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失败"
++
++#~ msgid "please enter correct information"
++#~ msgstr "请输入正确的讯息"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 023e2b734347b1312fa1edfe419ffdf686602330..0742e5a39edd365f35575b8a03707a19011e9aaa 100644
+GIT binary patch
+delta 6859
+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
+
+delta 6109
+zcmYk=4}4Gc9>?+T{%W?_m>3Q7XGt-C8nK17NMaRJ>)yzp8BJzvNF_h|BUHQeLq)Zu
+zx~P@>C=3-QxstBGHzkx=f2mvkMcvo?cRq7FkKVuM_xnBPe81oGJ?H%PQ{}9XeKSIQ
+zhwFteaBOu#oJ+!|E_1Gk@`ZS{I=8lgbCI|XYvBhNhTE|Y?!;I;Wc6=t|5=Qp{Q`z#
+zWJBlbVl-ZXO)$YZpX)|J17{;+yD``dORy>WZT~8ap#CXpZu`tCRL5sf9Y-ZP7lSDn
+zjh#>v?SXNajg4_gu<mni3Wa(!%tCdv7&SmS@}JwpM{PWSx}sy|52%$mjq32cd3hsm
+z#X6YRq0aAtnpj`d#O{=g??za|IP*c&OlP7_T!>tpTVngyp(a>~tghRSy7C`Uw<wC)
+z=)Ah93ra%W!c^3)=!{y)boAv=$fTed%}1U1GOD9DP$vdZ_jtXz9o6xEtdG^G6})K1
+zGaI$HL|t)L)cL)wo`X7n*cIG=U1>25y7!M@6MPai)8%+MzJ<Ett*C+anboL{ez*Ox
+zJV?yJHANP~bwjOO4)U<M`%E9IUw;zouflQ~G~@T}fW2llYKbpcJ%QP&-Wt_m533Kf
+zdI74xhfyo%M@?iA>RDNB?Q2mh{l1TamVO6niT2w8-=OZ%_oxGZ#^6M(p1`Z26>5q)
+zza?tG_NackU^@0ft&k73((|wtE<ruazHJn=q`Ofw{~9&ZbEs$FB5HsL-br;(7kSWK
+zbJPUVQMaxq>bRTDL8yB_4AoyDw!{hM0!-8Uzm7sOJAOhfRU8#{+y>P_Du!YPs-qsL
+z{aL6L>VpF?8#R$K)c$2=IqCveq4rmzo{3#}6XUxo3OqlqU32f@>x;U#qftxu5Vppr
+z@pfE;IzF<6w-PN-^$ar?^$?aIcgvNcR_smG1y-VN<yY94@!e?(qp&XPqla(`s)MId
+zGhc?fw-u-kHe3A*)C9lAuJ{|O<J4B(3iL+pzXf%#2b-f%w{krCbkC+!&<vkKJp-?y
+zR-gjI@KX%OJ;;CVARjD(yNH@_vlQ>4OGDkVEL6X@p(b!Q>RBp8-GWINj?+?De_h$5
+zG-#kXsF{|c+Mh#Bqzu(z0E4d$>ib{^>Pilwp8D^teh#&QQCE5^(hB=g&p>v$C$I#|
+zuVnq3QE1K$&cPe79WFqfumv@-xU0MwC!p$ys4GcAO)LeIu_J2Wfv6QNL``@mM&dlw
+zl|P62qx7PWf|lq_)Rk;9cUk*ktVR1N)XJPSL)&-*$KYkOCtAHZMo@2O^=nZR?umMK
+zZp02a1jnGSlmZv&&Y=csezo_ywLvX$Thzq5qdLw;b(Dj;l0vMF#i)nxVY~_FBVU^C
+z5GLbU+u!IKZ-qJ_6Zg4(6!g#xLJct79F3VF41ij?x7vEHF*l&j+k%?lZu1E0_){2z
+zXRIF1eN{ag^;RVY>)iiqDDWlcx}r|ZMcuo5%==L%%(eYXQ5~%?-$Nb06?q}tm)0Jd
+z>Kzw{daII96YYfhzQ|Ht@BclvW1Kn7EJdC85^BKJ*8ZW@KSSNy!>A6Ap)TYP)P*!@
+z@7W4<{xzrxbhY};=+llntYL&%WKK0_qgG&{)t8&^TKg7rKWgA_t$qsCe;7}kjK|=_
+ztlp{v_dk~%9c{;Kb1p{H{;buPVjT4qs4HD>?#DXRe?fhxhjjGzH$r_ebw;h=E#@%W
+zKN)r2GaXrfb-08E&1|C`xYg>Pqptj@`Kwv0lXqTY)c!80f%>AJg`wsYtVeww>H=Ox
+z9k<%rclao10$*CgIaCKR*Lnx0p!R2=+H<iUjz@L)sMY<bj$cO|zXA1Z9JKZ?to{q?
+zywle1i{y{6I!r=!&>poCz0LlpdzXVcZkW|eZ2xrg39}T{&jP#^-@y8K9yM@WXK#Yd
+zka2u2gMvEFGVkzqxO>eaYoCnjV7B=@>I#>mCRlE+H$TEy+V`T4JBED6xhmwl$i;Wj
+zS3UPXgM!}M0@Tu#qE=u9M&UbFuP`^8ADg>zEXN(Ndavue^ZTLBABdXZU~4ZxUC4M$
+z*ZV)6f>xly+=V*fsQD9Wg1=)HCU^Cog*?2R`c(57bD6ox+-rV^8rXI7j7Oh3NTx6l
+zyP)c`Q4=aNSD{v<()RB}P4Jj`5_tpN1=M-%(!Jv|Q3Lit9iMBCG$*99{yJeA4T(4p
+zRbPRc$VSw?+k=|G0n|6#Ve=yDxTFkkfKFyl)WH3%J{Wa=fjQp1KZEtxj%hS#pvO@&
+zooxp!L`~>LYhP(@MBUpRwtugA!aR@qg%o?e_gAnzvN*0k>OyDYoml3hpes0yJus%b
+zcZK~>^)VQH%25+7xB6<-6|O~1cspvqeRu_)LG_zJC)(czb$%Dr#Ji);_w}&@a#1IY
+zM0M~W>dF_QPF!yLS6Y3W?f(ST(GjbkLJbhs(;GMzbpef0{WnFuerb5O-v6N#;%TTr
+z4YbqTV}5QPHLFn_owRyHrZ->=>Pj16Dz-#jz(CZJ=cCS>X3obbz5gpHXyDbT4l2y;
+z$nOugn@k|uZX~_PI#t+0IDmP$zmxaL5%Mb0_Bp8zmb{OK@D2GFndvpTCm27t>6?o0
+zk4syBN@Fh7`1NDum3V`d^}BBv`HUPTuaE`gO0t~{CM$@>sKrEo#xF=8qU~1_9RCpt
+zZPdcXcZ~avWRiPGHaSmfwkZ^}j5})@a1&W?^<?uke9_AP#Sh3J@(<FK{6hGl<kLR_
+zFKus9+Df9BZDV|woFx3!bt6g5*1!t<5p&PhG@^b#t|6ZgKdISPQwX)n2}~lL$cMWA
+zhba6`z9!mUCd<fwNX@o{!pBz8+o9(rV0G~f$s*|_pKKvt5^b-O3Zl0plndL7dd{@{
+zruFYi>Z)d&p5Do1F8P+cO|+GfyNF&dZ3$!{DI%BAv9<?1+<0>U&LFu&|BFv=Le2I#
+z1z&SMuBvIl(PTeqONNrOMB6zsk?bI`bTkLACx?i(mpp=>yZEd_YIEF2*ox#3Z9kDh
+z(w9uq{lA(*2l4{BlRQmsCby9@q&>NbXuF>*4VL&#htHELvdG%*z(@vNW%VIgK;9wm
+zk#P21KyCjHezN|DDf}&1;hTyBdRX~h<li3dpCsPe=9vfZDKeI9CIgAK)*kLjY(`?}
+zPg@50p7bLnL|X*=eq?-?7p(G|&3q20Te%eLk!W%|`GM3Ye7(DJvYc!q7s&{st(g2t
+zPLporQPP`e8%3rDOWr@@eD_&pHr68Z$sRJCyg{@*NDh)u$thBsX#2y%9XG{SWEu%0
+zcauvSS9>d!%1aH-wa}b9)9|o0uEl6uvT@e7*nG@vVjjbAvXQj3HnGpjDL6}Ie|E#l
+zh9mPQ7v$w9j~iZ?pIkC2FE78OWYnawV*^o%4MXFHj~w~e#s>n4jfaQ&=O)#U{>y3p
+z`AOFYP9|-LsQv%0{4caf4NPo#Ak06%byZ+in<HTfc}2y=`FRtQ3&xEqDlQy8v7l(2
+ze?q$ie_^{9!qd{zx&&fV{UQGB%tnEi+oy!aR4rV2{FRrgX3af5r!26k<C0K+aau$F
+znzTg!thBa)PtuM?_){|)_}@xz5a^Y$I4tt`+CcU5W&S@hJNpOpEDHECr-a2-l`lQ<
+V%K8(F9;;q9r)tLA{vU6=>winIn0x>L
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index de603b3..ab68280 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 14:46+0800\n"
++"POT-Creation-Date: 2016-09-29 16:12+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -109,7 +109,32 @@ msgstr "新增設備"
+ msgid "Device"
+ msgstr "設備"
+ 
+-#: templates/device_add.html:65 templates/device_edit.html.py:76
++#: templates/device_add.html:42 templates/device_edit.html.py:56
++msgid "Please input the device name"
++msgstr "請輸入設備名稱"
++
++#: templates/device_add.html:42 templates/device_edit.html.py:56
++msgid "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'"
++msgstr "名稱只能包含0到25碼的中文、英文、數字、'_'、'-'"
++
++#: templates/device_add.html:50
++msgid "Please input the device MAC-Address"
++msgstr "請輸入設備MAC位址"
++
++#: templates/device_add.html:50
++
++msgid "The MAC-Address can only contain 0 to 32 bit of English or Number or '-'"
++msgstr "MAC位址只能包含0到32碼的英文、數字、'-'"
++
++#: templates/device_add.html:58
++msgid "Please input the device IP"
++msgstr "請輸入設備IP"
++
++#: templates/device_add.html:58
++msgid "Please input the correct device IP format!\\nOnly numbers and '.' are allowed."
++msgstr "請輸入正確的IP格式！只能包含英文、數字、'.'"
++
++#: templates/device_add.html:62 templates/device_edit.html.py:73
+ #: templates/device_settings.html:300 templates/fruser_add.html.py:77
+ #: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:45
+ #: templates/frusergroup_edit.html:62 templates/role_add.html.py:50
+@@ -120,7 +145,7 @@ msgstr "設備"
+ msgid "Back"
+ msgstr "返回"
+ 
+-#: templates/device_add.html:66 templates/device_edit.html.py:77
++#: templates/device_add.html:63 templates/device_edit.html.py:74
+ #: templates/device_settings.html:301 templates/fruser_add.html.py:78
+ #: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:46
+ #: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
+@@ -132,19 +157,26 @@ msgstr "返回"
+ msgid "Save"
+ msgstr "儲存"
+ 
+-#: templates/device_add.html:101
+-msgid "please enter correct information"
+-msgstr "請輸入正確的訊息"
+-
+-#: templates/device_add.html:118
+-msgid "Device add successfully"
++#: templates/device_add.html:113
++msgid "The device is added successfully"
+ msgstr "設備新增成功"
+ 
+-#: templates/device_add.html:121 templates/frusergroup_devices.html.py:216
+-#: templates/user_group_devices.html:216
+-msgid "Fail to add device"
++#: templates/device_add.html:116
++msgid "Fail to add the device"
+ msgstr "新增設備失敗"
+ 
++#: templates/device_add.html:119 templates/device_edit.html.py:234
++msgid "The device name is duplicated!"
++msgstr "設備名稱已重複！"
++
++#: templates/device_add.html:122
++msgid "The device MAC-Address is duplicated!"
++msgstr "設備MAC位址已重複！"
++
++#: templates/device_add.html:125
++msgid "The device IP address is duplicated!"
++msgstr "設備IP位址已重複！"
++
+ #: templates/device_edit.html:8 templates/device_edit.html.py:18
+ #: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
+ #: templates/device_frusergroups.html:18 templates/device_frusergroups.html:25
+@@ -154,7 +186,7 @@ msgstr "設備修改"
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+ #: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
+ #: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++#: templates/user_group_edit.html.py:32 templates/user_group_members.html:33
+ msgid "Imformation"
+ msgstr "一般"
+ 
+@@ -162,26 +194,22 @@ msgstr "一般"
+ msgid "FRUser Group List"
+ msgstr "FR群組管理"
+ 
+-#: templates/device_edit.html:89
++#: templates/device_edit.html:87
+ msgid "Device parameter"
+ msgstr "設備參數"
+ 
+-#: templates/device_edit.html:187
++#: templates/device_edit.html:185
+ msgid "Parameter Settings"
+ msgstr "設定參數"
+ 
+-#: templates/device_edit.html:232
+-msgid "Change device name successfully"
++#: templates/device_edit.html:228
++msgid "The device name is changed successfully"
+ msgstr "設備名稱變更成功"
+ 
+-#: templates/device_edit.html:235
+-msgid "Fail to change device name"
++#: templates/device_edit.html:231
++msgid "Fail to change the device name"
+ msgstr "設備名稱變更失敗"
+ 
+-#: templates/device_edit.html:242
+-msgid "Please input device name"
+-msgstr "請輸入設備名稱"
+-
+ #: templates/device_frusergroups.html:45
+ msgid "Group list"
+ msgstr "群組管理"
+@@ -245,8 +273,8 @@ msgstr "新增群組失敗"
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:44 templates/role_permission.html:80
+-#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+-#: templates/user_group_members.html:39
++#: templates/user_group_devices.html.py:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html.py:39
+ msgid "Device List"
+ msgstr "設備管理"
+ 
+@@ -518,7 +546,7 @@ msgstr "FR使用者群組修改"
+ 
+ #: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+-#: templates/user_group_edit.html:35 templates/user_group_members.html:36
++#: templates/user_group_edit.html.py:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成員管理"
+ 
+@@ -534,17 +562,21 @@ msgstr "新增設備"
+ msgid "Search Device"
+ msgstr "搜尋設備"
+ 
+-#: templates/frusergroup_devices.html:167
+-#: templates/frusergroup_member.html:167 templates/user_group_devices.html:167
+-#: templates/user_group_list.html:116 templates/user_group_members.html:167
++#: templates/frusergroup_devices.html:167 templates/frusergroup_member.html:167
++#: templates/user_group_devices.html:167 templates/user_group_list.html:116
++#: templates/user_group_members.html:167
+ msgid "from this group"
+ msgstr "群組"
+ 
+-#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
++#: templates/frusergroup_devices.html:216 templates/user_group_devices.html:216
++msgid "Fail to add device"
++msgstr "新增設備失敗"
++
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html.py:109
+ msgid "Change group name successfully"
+ msgstr "群組名稱變更成功"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html.py:112
+ msgid "Fail to change group name"
+ msgstr "變更群組名稱失敗"
+ 
+@@ -1221,3 +1253,6 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失敗"
++
++#~ msgid "please enter correct information"
++#~ msgstr "請輸入正確的訊息"
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 57ed9ca..378b389 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -93,7 +93,7 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                         <button type="button" class="btn btn-default" onclick="location.href = '/user_list/'">{% trans "Back" %}</button>
+-                                        <button id="SaveButton" type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+-- 
+1.9.1
+

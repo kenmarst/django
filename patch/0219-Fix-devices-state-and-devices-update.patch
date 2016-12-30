@@ -1,0 +1,86 @@
+From 3e1f7374a6ecb54eeacfd1fa3927b71f85afa220 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 3 Aug 2016 15:21:11 +0800
+Subject: [PATCH 219/443] Fix devices state and devices update.
+
+if state is proposed can't use set and get api.
+if device set keyword is wrong or null, set the value to original value.
+---
+ api/connection.py | 47 +++++++++++++++++++++++++----------------------
+ 1 file changed, 25 insertions(+), 22 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index c9ed2a8..861a851 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -36,6 +36,8 @@ def get(request):
+             client_ip = request.META['REMOTE_ADDR']
+             from api.models import Devices
+             devices = Devices.objects.get(IP = client_ip)
++            if devices.State == 'Proposed':
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+             devices.State = 'Approved'
+             devices.save()
+ 
+@@ -68,6 +70,10 @@ def set(request):
+     if request.method == 'POST':
+         try:
+             client_ip = request.META['REMOTE_ADDR']
++            from api.models import Devices
++            devices = Devices.objects.get(IP = client_ip)
++            if devices.State == 'Proposed':
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {
+                 'Model', 'WelcomeR0Action', 'WelcomeR0Pulse', 'WelcomeR1Action', 'WelcomeR1Pulse',
+@@ -75,28 +81,25 @@ def set(request):
+                 'Timeout', 'ScreenSaver', 'NTP', 'Timezone', 'Audio', 'FaceBioScore', 'FingerBioScore', 'Language'
+             }
+             if all(k in req for k in req_key):
+-                from api.models import Devices
+-                Devices.objects.filter(IP = client_ip).update(
+-                    State = 'Getting',
+-                    Model = req['Model'],
+-                    WelcomeR0Action = req['WelcomeR0Action'],
+-                    WelcomeR0Pulse = req['WelcomeR0Pulse'],
+-                    WelcomeR1Action = req['WelcomeR1Action'],
+-                    WelcomeR1Pulse = req['WelcomeR1Pulse'],
+-                    AccessDeniedR0Action = req['AccessDeniedR0Action'],
+-                    AccessDeniedR0Pulse = req['AccessDeniedR0Pulse'],
+-                    AccessDeniedR1Action = req['AccessDeniedR1Action'],
+-                    AccessDeniedR1Pulse = req['AccessDeniedR1Pulse'],
+-                    Timeout = req['Timeout'],
+-                    ScreenSaver = req['ScreenSaver'],
+-                    NTP = req['NTP'],
+-                    Timezone = req['Timezone'],
+-                    Audio = req['Audio'],
+-                    FaceBioScore = req['FaceBioScore'],
+-                    FingerBioScore = req['FingerBioScore'],
+-                    Language = req['Language'],
+-                    UpdateDate = datetime.now()
+-                )
++                devices.State = 'Getting'
++                devices.Model = req['Model'] or devices.Model
++                devices.WelcomeR0Action = req['WelcomeR0Action'] or devices.WelcomeR0Action
++                devices.WelcomeR0Pulse = req['WelcomeR0Pulse'] or devices.WelcomeR0Pulse
++                devices.WelcomeR1Action = req['WelcomeR1Action'] or devices.WelcomeR1Action
++                devices.WelcomeR1Pulse = req['WelcomeR1Pulse'] or devices.WelcomeR1Pulse
++                devices.AccessDeniedR0Action = req['AccessDeniedR0Action'] or devices.AccessDeniedR0Action
++                devices.AccessDeniedR0Pulse = req['AccessDeniedR0Pulse'] or devices.AccessDeniedR0Pulse
++                devices.AccessDeniedR1Action = req['AccessDeniedR1Action'] or devices.AccessDeniedR1Action
++                devices.AccessDeniedR1Pulse = req['AccessDeniedR1Pulse'] or devices.AccessDeniedR1Pulse
++                devices.Timeout = req['Timeout'] or devices.Timeout
++                devices.ScreenSaver = req['ScreenSaver'] or devices.ScreenSaver
++                devices.NTP = req['NTP'] or devices.NTP
++                devices.Timezone = req['Timezone'] or devices.Timezone
++                devices.Audio = req['Audio'] or devices.Audio
++                devices.FaceBioScore = req['FaceBioScore'] or devices.FaceBioScore
++                devices.FingerBioScore = req['FingerBioScore'] or devices.FingerBioScore
++                devices.Language = req['Language'] or devices.Language
++                devices.save()
+ 
+                 return JsonResponse(result_success)
+             else:
+-- 
+1.9.1
+

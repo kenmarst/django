@@ -1,0 +1,136 @@
+From d06a2fe99a7f72c4337717a759e2fd43eb51a9d1 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Mon, 30 May 2016 12:07:33 +0800
+Subject: [PATCH 112/443] Modify role permission create function and set
+ session expire time.
+
+---
+ br06/settings.py |  5 +++++
+ login/views.py   | 19 +++++++------------
+ role/views.py    | 21 ++++++---------------
+ 3 files changed, 18 insertions(+), 27 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 280f6a4..41b227e 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -30,6 +30,8 @@ DEBUG = True
+ ADMIN_MAIL = 'admin@tw.shuttle.com'
+ ADMIN_PASSWORD = '5f4dcc3b5aa765d61d8327deb882cf99'
+ 
++PERMISSION = {'permission_system', 'permission_device', 'permission_fruserlist', 'permission_frusergroup', 'permission_log'}
++
+ ALLOWED_HOSTS = []
+ 
+ 
+@@ -171,3 +173,6 @@ EMAIL_USE_TLS = True
+ EMAIL_TIMEOUT = 120
+ 
+ DEFAULT_FROM_EMAIL = 'fr_serivce@tw.shuttle.com'
++
++SESSION_EXPIRE_AT_BROWSER_CLOSE = True
++SESSION_COOKIE_AGE = 86400 # sec
+diff --git a/login/views.py b/login/views.py
+index e9c2f1b..d9cae1a 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -6,7 +6,7 @@ from django import forms
+ from nocaptcha_recaptcha.fields import NoReCaptchaField
+ from api.utility import md5
+ from urllib.request import urlopen
+-from br06.settings import DEFAULT_FROM_EMAIL, SECRET_KEY
++from br06.settings import *
+ from .apps import br06_token_generator, encrypt, decrypt
+ from django.core.mail import send_mail
+ from django.views.generic import *
+@@ -32,7 +32,7 @@ def check_user(request):
+             request.session['OId'] = str(obj.OId)
+             return json.dumps(res_code[0])
+         except:
+-            print("mail and passsword are not match")
++            print("mail or passsword are not match")
+             return json.dumps(res_code[2])
+     else:
+         print("reCAPTCHA validation failed")
+@@ -68,11 +68,8 @@ def change_passwd(request):
+ 
+ def setSessionPermission(request):
+     try:
+-        request.session['permission_system'] = Acl.objects.get(FunctionName = 'permission_system', RoleOId = Users.objects.get(Email = request.session['Email']).RoleOId).ACL
+-        request.session['permission_device'] = Acl.objects.get(FunctionName = 'permission_device', RoleOId = Users.objects.get(Email = request.session['Email']).RoleOId).ACL
+-        request.session['permission_fruserlist'] = Acl.objects.get(FunctionName = 'permission_fruserlist', RoleOId = Users.objects.get(Email = request.session['Email']).RoleOId).ACL
+-        request.session['permission_frusergroup'] = Acl.objects.get(FunctionName = 'permission_frusergroup', RoleOId = Users.objects.get(Email = request.session['Email']).RoleOId).ACL
+-        request.session['permission_log'] = Acl.objects.get(FunctionName = 'permission_log', RoleOId = Users.objects.get(Email = request.session['Email']).RoleOId).ACL
++        for x in PERMISSION:
++            request.session[x] = Acl.objects.get(FunctionName = x, RoleOId = Users.objects.get(Email = request.session['Email']).RoleOId).ACL
+     except Exception as e:
+         print('session permission error', e)
+ 
+@@ -82,15 +79,13 @@ def login(request):
+         check_result = json.loads(check_user(request))
+         if check_result["CODE"] == "0":
+             logContent= request.session['Name']+' login success.'
+-            Systemlogs.objects.create(Category="User", LogContent = logContent)
++            Systemlogs.objects.create(Category = "User", LogContent = logContent)
+             setSessionPermission(request)
+             return HttpResponseRedirect("/home")
+         elif check_result["CODE"] == "1":
+-            return render(request, 'login.html', {'Result':"Fail",'Code': "9998","Message":"reCAPTCHA validation failed"})
++            return render(request, 'login.html', {'Result':"Fail",'Code': "9998","Message":"reCAPTCHA validation failed."})
+         elif check_result["CODE"] == "2":
+-            # TODO: Need store this log fail to DB?
+-            return render(request, 'login.html', {'Result':"Fail",'Code': "9999","Message":"Wrong password or account"})
+-    request.session.set_test_cookie()
++            return render(request, 'login.html', {'Result':"Fail",'Code': "9999","Message":"Wrong password or account."})
+     return render(request, 'login.html', {'CODE': ""})
+ 
+ 
+diff --git a/role/views.py b/role/views.py
+index a5ba3a0..ed6f0db 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -12,11 +12,8 @@ try:
+ except:
+     try:
+         Role.objects.create(Name = 'Admin(default)', Sort = '1', Category = 'System')
+-        Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-        Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-        Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-        Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-        Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++        for x in PERMISSION:
++            Acl.objects.create(FunctionName = x, RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+         print('create default role: admin')
+     except:
+         print('can\'t create default role: admin')
+@@ -28,11 +25,8 @@ try:
+ except:
+     try:
+         Role.objects.create(Name = 'Users(default)', Sort = '2', Category = 'System')
+-        Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++        for x in PERMISSION:
++            Acl.objects.create(FunctionName = x, RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+         print('create default role: users')
+     except:
+         print('can\'t create default role: users')
+@@ -142,11 +136,8 @@ def add_role(request):
+         return HttpResponseRedirect("/")
+     try:
+         Role.objects.create(Name = request.POST['Name'], Sort = request.POST['Sort'], Category = request.POST['Category'])
+-        Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
++        for x in PERMISSION:
++            Acl.objects.create(FunctionName = x, RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+-- 
+1.9.1
+

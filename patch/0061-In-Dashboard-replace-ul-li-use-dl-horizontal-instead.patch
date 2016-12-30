@@ -1,0 +1,110 @@
+From 6770395d230fabe486eaaf73abc070606f3a10fe Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Mon, 23 May 2016 10:08:51 +0800
+Subject: [PATCH 061/443] In Dashboard, replace <ul><li>,  use dl-horizontal
+ instead.
+
+---
+ templates/dashboard.html | 76 +++++++++++++++++++++++++-----------------------
+ 1 file changed, 39 insertions(+), 37 deletions(-)
+
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index e1b8a3e..9bd8c09 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -29,11 +29,6 @@
+ 			<div class="col-lg-12">
+ 				<h1 class="page-header">Dashboard</h1>
+ 			</div>
+-
+-<!--        <div class="col-lg-12">                                                      -->
+-<!--            <button class="btn green pull-left"  value="">Create new account</button>-->
+-<!--        </div>                                                                       -->
+-
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+@@ -42,41 +37,48 @@
+ 					<div class="panel-heading">System Info</div>
+ 					<div class="panel-body">
+ 						<!-- data-url="{%static "data1.json"%}" -->
+-                        <ul>
+-                            <li> System Uptime: {{uptime_days}} days, {{uptime_hms}}</li>
+-                            <li> Disk Usage: {{disk_used}} / {{ disk_total }} ({{disk_stat.percent}}%) </li>
+-                            <li> Memory Usage: {{used_mem}} / {{total_mem}} ({{mem_stat.percent}}%)</li>
+-                            <li> FR User Created Count: {{frusers_total_count}} / {{frusers_limit}}</li>
+-                            <li> System Log Count: {{Syslogs_total_count}} / {{syslog_limit}}</li>
+-                            <li> System Time:  {{now}} ({{tz}})</li>
+-                        </ul>
+-
+-<!--					<table border="1" id="userList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">               -->
+-<!--					    <thead>                                                                                                                                                                                                                                                   -->
+-<!--					    <tr>                                                                                                                                                                                                                                                      -->
+-<!--					        <th data-field="id" data-sortable="true">Item ID</th>                                                                                                                                                                                                 -->
+-<!--					        <th data-field="name"  data-sortable="true">Item Name</th>                                                                                                                                                                                            -->
+-<!--					        <th data-field="price" data-sortable="true">Item Price</th>                                                                                                                                                                                           -->
+-<!--					    </tr>                                                                                                                                                                                                                                                     -->
+-<!--                        <tr>                                                                                                                                                                                                                                       -->
+-<!--					        <th data-field="id" data-sortable="true">Item ID2</th>                                                                                                                                                                                                -->
+-<!--					        <th data-field="name"  data-sortable="true">Item Name2</th>                                                                                                                                                                                           -->
+-<!--					        <th data-field="price" data-sortable="true">Item Price2</th>                                                                                                                                                                                          -->
+-<!--					    </tr>                                                                                                                                                                                                                                                     -->
+-<!--					    </thead>                                                                                                                                                                                                                                                  -->
+-<!--                        {% for food in foods %}                          -->
+-<!--                        <ul>                                             -->
+-<!--                            <li> food's name:{{ food.name }} </li>       -->
+-<!--                            <li> food's price:{{ food.price }} </li>     -->
+-<!--                            <li> food's comment: {{ food.comment }} </li>-->
+-<!--                            <li> is spicy {{ food.is_spicy }} </li>      -->
+-<!--                        </ul>                                            -->
+-<!--                        {% endfor %}                                     -->
+-<!--					</table>               -->
++                        <dl class="dl-horizontal">
++                            <dt>System Uptime</dt>
++                            <dd>{{uptime_days}} days, {{uptime_hms}}</dd>
++                            <dt>Disk Usage</dt>
++                            <dd>{{disk_used}} / {{ disk_total }} ({{disk_stat.percent}}%)</dd>
++                            <dt>Memory Usage</dt>
++                            <dd>{{used_mem}} / {{total_mem}} ({{mem_stat.percent}}%)</dd>
++                            <dt>FR User Count</dt>
++                            <dd>{{frusers_total_count}} / {{frusers_limit}}</dd>
++                            <dt>System Log Count</dt>
++                            <dd>{{Syslogs_total_count}} / {{syslog_limit}}</dd>
++                            <dt>System Current Time</dt>
++                            <dd>{{now}} ({{tz}})</dd>
++                        </dl>
++                        <div class="row">
++                            <div class="col-md-6 col-lg-6" style="background-color:lavender;">
++                                .col-sm-4
++                                {% for food in foods %}
++                                <ul>
++                                    <li> food's name:{{ food.name }} </li>
++                                    <li> food's price:{{ food.price }} </li>
++                                    <li> food's comment: {{ food.comment }} </li>
++                                    <li> is spicy {{ food.is_spicy }} </li>
++                                </ul>
++                                {% endfor %}
++                            </div>
++                            <div class="col-md-6 col-lg-6" style="background-color:lavenderblush;">
++                                .col-sm-4
++                                {% for food in foods %}
++                                <ul>
++                                    <li> food's name:{{ food.name }} </li>
++                                    <li> food's price:{{ food.price }} </li>
++                                    <li> food's comment: {{ food.comment }} </li>
++                                    <li> is spicy {{ food.is_spicy }} </li>
++                                </ul>
++                                {% endfor %}
++                            </div>
++                        </div>
+ 					</div>
+ 				</div>
+ 			</div>
+-		</div><!--/.row-->	
++		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+ 	<script src="{% static "chart.min.js" %}"></script>
+-- 
+1.9.1
+

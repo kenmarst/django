@@ -1,0 +1,30 @@
+From 1f3d012fd5cb0229099013bd414162b9bdaff67c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 18 Aug 2016 17:58:32 +0800
+Subject: [PATCH 231/443] Close debug mode
+
+Close debug mode for release.
+---
+ br06/settings.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index b192f9b..298fc68 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -28,10 +28,10 @@ MEDIA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'media')
+ SECRET_KEY = '6LcOCx4TAAAAAPE6AF6FY3ZNe-v8ze6fp-PDBvch'
+ 
+ # SECURITY WARNING: don't run with debug turned on in production!
+-DEBUG = True
++DEBUG = False
+ 
+ # Set to False when DEBUG=False, but default do not set
+-#TEMPLATE_DEBUG = False
++TEMPLATE_DEBUG = False
+ 
+ # Default admin login email & password
+ ADMIN_MAIL = 'admin@tw.shuttle.com'
+-- 
+1.9.1
+

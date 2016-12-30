@@ -1,0 +1,164 @@
+From 6946d8775ea7a6b569130bea80bc734673fd8fb5 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 6 Dec 2016 14:00:24 +0800
+Subject: [PATCH 400/443] Modify default set of config file.
+
+---
+ br06/settings.py | 53 +++++++++++++++++++++++++++++++++++++----------------
+ config.ini       | 44 +++++++++++++++++++++++++-------------------
+ 2 files changed, 62 insertions(+), 35 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index ff127ca..23ce0fa 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -1,5 +1,6 @@
+ import os
+ from api.utility import get_localtimezone
++from configparser import ConfigParser
+ 
+ VERSION = 'V.0.2.a.20161125'
+ 
+@@ -8,6 +9,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ PROJECT_DIR = os.path.dirname(__file__)
+ MEDIA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'media')
+ 
++# Read the config
++CONFIG_PATH = os.path.join(BASE_DIR, 'config.ini')
++configs = [
++    CONFIG_PATH,
++]
++parser = ConfigParser()
++parser.read(configs)
++
+ # SECURITY WARNING: keep the secret key used in production secret!
+ SECRET_KEY = '6LcOCx4TAAAAAPE6AF6FY3ZNe-v8ze6fp-PDBvch'
+ 
+@@ -68,6 +77,7 @@ PERMISSION_USER = {'permission_device', 'permission_fruserlist', 'permission_fru
+ ALLOWED_HOSTS = [
+     'localhost',
+     '127.0.0.1',
++    parser.get('Server', 'IP') if parser.has_option('Server', 'IP') else '',
+ ]
+ 
+ # Application definition
+@@ -196,16 +206,27 @@ LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ 
+ TCIT_IP = 'localhost:8800'
+ 
+-CONFIDENCE = {'Low': 700, 'Medium': 750, 'High': 800}
+-FINGER_LEVEL = {'Low': 1500, 'Medium': 2000, 'High': 2500}
+-EMAIL_HOST = 'webmail.tw.shuttle.com'
+-EMAIL_HOST_USER = 'fr_serivce'
+-EMAIL_HOST_PASSWORD = 'Pa0000'
+-EMAIL_PORT = 25
+-EMAIL_USE_TLS = True
+-EMAIL_TIMEOUT = 120
++# Recognition score
++CONFIDENCE = {
++    'Low': parser.getint('Face_score', 'Low') if parser.has_option('Face_score', 'Low') else 700,
++    'Medium': parser.getint('Face_score', 'Medium') if parser.has_option('Face_score', 'Medium') else 750,
++    'High': parser.getint('Face_score', 'High') if parser.has_option('Face_score', 'High') else 800
++}
++FINGER_LEVEL = {
++    'Low': parser.getint('Fingerprint_score', 'Low') if parser.has_option('Fingerprint_score', 'Low') else 1500,
++    'Medium': parser.getint('Fingerprint_score', 'Medium') if parser.has_option('Fingerprint_score', 'Medium') else 2000,
++    'High': parser.getint('Fingerprint_score', 'High') if parser.has_option('Fingerprint_score', 'High') else 2500
++}
++
++# Email
++EMAIL_HOST = parser.get('Email', 'EMAIL_HOST') if parser.has_option('Email', 'EMAIL_HOST') else 'webmail.tw.shuttle.com'
++EMAIL_HOST_USER = parser.get('Email', 'EMAIL_HOST_USER') if parser.has_option('Email', 'EMAIL_HOST_USER') else 'fr_serivce'
++EMAIL_HOST_PASSWORD = parser.get('Email', 'EMAIL_HOST_PASSWORD') if parser.has_option('Email', 'EMAIL_HOST_PASSWORD') else 'Pa0000'
++EMAIL_PORT = parser.getint('Email', 'EMAIL_PORT') if parser.has_option('Email', 'EMAIL_PORT') else 25
++EMAIL_USE_TLS = parser.getboolean('Email', 'EMAIL_USE_TLS') if parser.has_option('Email', 'EMAIL_USE_TLS') else True
++EMAIL_TIMEOUT = parser.getint('Email', 'EMAIL_TIMEOUT') if parser.has_option('Email', 'EMAIL_TIMEOUT') else 120
+ 
+-DEFAULT_FROM_EMAIL = 'fr_serivce@tw.shuttle.com'
++DEFAULT_FROM_EMAIL = parser.get('Email', 'EMAIL') if parser.has_option('Email', 'EMAIL') else 'fr_serivce@tw.shuttle.com'
+ 
+ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+ SESSION_COOKIE_AGE = 600 # sec
+@@ -228,10 +249,10 @@ CRONJOBS = [
+ 
+ # FTP server: check the new version for br06 server update
+ UPDATE_DIR = os.path.join(MEDIA_DIR, 'update')
+-FTP_PATH = ''
+-FTP_FILE_NAME = 'update.json'
+-FTP_HOST = 'ftp.tw.shuttle.com'
+-FTP_PORT = 21
+-FTP_USER = 'client.br06@swdesign'
+-FTP_PW = 'download'
+-FTP_DEBUG_LEVEL = 0
++FTP_PATH = parser.get('FTP', 'FTP_PATH') if parser.has_option('FTP', 'FTP_PATH') else ''
++FTP_FILE_NAME = parser.get('FTP', 'FTP_FILE_NAME') if parser.has_option('FTP', 'FTP_FILE_NAME') else 'update.json'
++FTP_HOST = parser.get('FTP', 'FTP_HOST') if parser.has_option('FTP', 'FTP_HOST') else 'ftp.tw.shuttle.com'
++FTP_PORT = parser.getint('FTP', 'FTP_PORT') if parser.has_option('FTP', 'FTP_PORT') else 21
++FTP_USER = parser.get('FTP', 'FTP_USER') if parser.has_option('FTP', 'FTP_USER') else ''
++FTP_PW = parser.get('FTP', 'FTP_PW') if parser.has_option('FTP', 'FTP_PW') else ''
++FTP_DEBUG_LEVEL = parser.getint('FTP', 'FTP_DEBUG_LEVEL') if parser.has_option('FTP', 'FTP_DEBUG_LEVEL') else 0
+diff --git a/config.ini b/config.ini
+index a1644bd..4f22782 100755
+--- a/config.ini
++++ b/config.ini
+@@ -1,32 +1,38 @@
+ [Server]
+-IP = '127.0.0.1'
++IP =
+ 
+ [Email]
+-EAMIL = 'fr_serivce@tw.shuttle.com'
+-EMAIL_HOST = 'webmail.tw.shuttle.com'
+-EMAIL_HOST_USER = 'fr_serivce'
+-EMAIL_HOST_PASSWORD = 'Pa0000'
++EAMIL = fr_serivce@tw.shuttle.com
++EMAIL_HOST = webmail.tw.shuttle.com
++EMAIL_HOST_USER = fr_serivce
++EMAIL_HOST_PASSWORD = Pa0000
+ EMAIL_PORT = 25
+ EMAIL_USE_TLS = True
+ EMAIL_TIMEOUT = 120
+ 
+ [4G]
+-EN_4G = 0 # Enable 4G api in UserAdd
+-SE_4G = 1 # 4G return status: success
+-LO_4G = 'http://4g.shuttle.com/daily/LoginApi/face'
+-RE_4G = 'http://4g.shuttle.com/daily/importApi/UserFaceLoginRecord/add'
+-QE_4G = 'http://4g.shuttle.com/daily/loginApi/faceQuery'
+-KEY_4G = "#Qut0yV84VRfVVaet%"
++EN_4G = 0
++SE_4G = 1
++LO_4G = http://4g.shuttle.com/daily/LoginApi/face
++RE_4G = http://4g.shuttle.com/daily/importApi/UserFaceLoginRecord/add
++QE_4G = http://4g.shuttle.com/daily/loginApi/faceQuery
++KEY_4G = #Qut0yV84VRfVVaet%
+ 
+ [FTP]
+-FTP_PATH = ''
+-FTP_FILE_NAME = 'update.json'
+-FTP_HOST = 'ftp.tw.shuttle.com'
++FTP_PATH =
++FTP_FILE_NAME = update.json
++FTP_HOST = ftp.tw.shuttle.com
+ FTP_PORT = 21
+-FTP_USER = 'client.br06@swdesign'
+-FTP_PW = 'download'
++FTP_USER =
++FTP_PW =
+ FTP_DEBUG_LEVEL = 0
+ 
+-[Recognition]
+-CONFIDENCE = {'Low': 700, 'Medium': 750, 'High': 800}
+-FINGER_LEVEL = {'Low': 1500, 'Medium': 2000, 'High': 2500}
++[Face_score]
++Low = 700
++Medium = 750
++High = 800
++
++[Fingerprint_score]
++Low = 1500
++Medium = 2000
++High = 2500
+-- 
+1.9.1
+

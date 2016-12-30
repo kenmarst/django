@@ -1,0 +1,1622 @@
+From 067d59661548871dad0a67e036b519939b3fc916 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Tue, 17 May 2016 14:31:00 +0800
+Subject: [PATCH 037/443] Complete the device web function
+
+Comlete the device function of web.
+---
+ api/models.py                                  |  96 ++++++----
+ br06/urls.py                                   |  12 +-
+ devices/views.py                               | 104 +++++++++--
+ logsetting/__pycache__/__init__.cpython-34.pyc | Bin 135 -> 0 bytes
+ logsetting/__pycache__/views.cpython-34.pyc    | Bin 1358 -> 0 bytes
+ templates/device_add.html                      | 236 ++++++++++++------------
+ templates/device_edit.html                     | 232 ++++++++++++++++++++++++
+ templates/device_frusergroups.html             | 227 +++++++++++++++++++++++
+ templates/device_list.html                     | 148 +++++++++------
+ templates/device_settings.html                 | 242 +++++++++++++++++++++++++
+ templates/menu.html                            |   2 +-
+ 11 files changed, 1073 insertions(+), 226 deletions(-)
+ delete mode 100644 logsetting/__pycache__/__init__.cpython-34.pyc
+ delete mode 100644 logsetting/__pycache__/views.cpython-34.pyc
+ create mode 100644 templates/device_edit.html
+ create mode 100644 templates/device_frusergroups.html
+ create mode 100644 templates/device_settings.html
+
+diff --git a/api/models.py b/api/models.py
+index d5f7f34..765d993 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -82,19 +82,23 @@ class Devices(models.Model):
+             ('Offline', 'Offline'),
+     )
+     devices_welcome = (
++            ('', ''),
+             ('Do0', 'None'),
+             ('Do1', 'Pulse 3 Sec'),
+     )
+     devices_accessdenied = (
++            ('', ''),
+             ('Do0', 'On'),
+             ('Do1', 'Off'),
+     )
+     devices_screensaver = (
++            ('', ''),
+             ('5', '5 Minutes'),
+             ('30', '30 Minutes'),
+             ('60', '60 Minutes'),
+     )
+     devices_timezone = (
++            ('', ''),
+             ('UTC-12', 'UTC-12'),
+             ('UTC-11', 'UTC-11'),
+             ('UTC-10', 'UTC-10'),
+@@ -124,15 +128,18 @@ class Devices(models.Model):
+             ('UTC+14', 'UTC+14'),
+     )
+     devices_audio = (
++            ('', ''),
+             ('Enable', 'Enable'),
+             ('Disable', 'Disable'),
+     )
+     devices_bioscore = (
++            ('', ''),
+             ('Low', 'Low'),
+             ('Medium', 'Medium'),
+             ('High', 'High'),
+     )
+     devices_language = (
++            ('', ''),
+             ('en', 'en'),
+             ('zh-cn', 'zh-cn'),
+             ('zh-tw', 'zh-tw'),
+@@ -140,16 +147,16 @@ class Devices(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+     State = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
+-    MAC = models.CharField(db_column = 'MAC', max_length = 32, blank = True, null = True)
+-    IP = models.GenericIPAddressField(db_column = 'IP', max_length = 32, blank = True, null = True)
+-    Welcome = models.CharField(db_column = 'Welcome', choices = devices_welcome, max_length = 8, blank = True, null = True)
+-    AccessDenied = models.CharField(db_column = 'AccessDenied', choices = devices_accessdenied, max_length = 8, blank = True, null = True)
+-    ScreenSaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, max_length = 8, blank = True, null = True)
+-    NTP = models.CharField(db_column = 'NTP', max_length = 256, blank = True, null = True)
+-    Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, max_length = 8, blank = True, null = True)
+-    Audio = models.CharField(db_column = 'Audio', choices = devices_audio, max_length = 8, blank = True, null = True)
+-    BioScore = models.CharField(db_column = 'BioScore', choices = devices_bioscore, max_length = 8, blank = True, null = True)
+-    Language = models.CharField(db_column = 'Language', choices = devices_language, max_length = 8, blank = True, null = True)
++    MAC = models.CharField(db_column = 'MAC', default = '', max_length = 32, blank = True, null = True)
++    IP = models.GenericIPAddressField(db_column = 'IP', default = '', max_length = 32, blank = True, null = True)
++    Welcome = models.CharField(db_column = 'Welcome', choices = devices_welcome, max_length = 8, blank = True)
++    AccessDenied = models.CharField(db_column = 'AccessDenied', choices = devices_accessdenied, max_length = 8, blank = True)
++    ScreenSaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, max_length = 8, blank = True)
++    NTP = models.CharField(db_column = 'NTP', default = '', max_length = 256, blank = True, null = True)
++    Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, max_length = 8, blank = True)
++    Audio = models.CharField(db_column = 'Audio', choices = devices_audio, max_length = 8, blank = True)
++    BioScore = models.CharField(db_column = 'BioScore', choices = devices_bioscore, max_length = 8, blank = True)
++    Language = models.CharField(db_column = 'Language', choices = devices_language, max_length = 8, blank = True)
+     CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+     UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+@@ -167,18 +174,19 @@ class Devices(models.Model):
+             State = self.State,
+             MAC = self.MAC,
+             IP = self.IP,
+-            #Welcome = self.Welcome,
+-            #AccessDenied = self.AccessDenied,
+-            #ScreenSaver = self.ScreenSaver,
+-            #NTP = self.NTP,
+-            #Timezone = self.Timezone,
+-            #Audio = self.Audio,
+-            #BioScore = self.BioScore,
+-            #Language = self.Language,
++            Welcome = self.Welcome,
++            AccessDenied = self.AccessDenied,
++            ScreenSaver = self.ScreenSaver,
++            NTP = self.NTP,
++            Timezone = self.Timezone,
++            Audio = self.Audio,
++            BioScore = self.BioScore,
++            Language = self.Language,
+             CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+             UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+         )
+ 
++
+ class Users(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Account = models.CharField(db_column = 'Account', unique = True, max_length = 255)
+@@ -198,15 +206,16 @@ class Users(models.Model):
+     def as_json(self):
+         return dict(
+             Index = 0,
+-            OId=self.OId,
+-            Account=self.Account,
+-            Password=self.Password,
+-            Name=self.Name,
+-            RoleOId=self.RoleOId.Name,
+-            CreateDate=self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+-            UpdateDate=self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++            OId = self.OId,
++            Account = self.Account,
++            Password = self.Password,
++            Name = self.Name,
++            RoleOId = self.RoleOId.Name,
++            CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
++            UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+         )
+ 
++
+ class Usergroups(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+@@ -303,6 +312,7 @@ class Frusers(models.Model):
+             UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+         )
+ 
++
+ class Frusergroups(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+@@ -315,6 +325,15 @@ class Frusergroups(models.Model):
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+ 
++    def as_json(self):
++        return dict(
++            Index = 0,
++            OId = self.OId,
++            Name = self.Name,
++            CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
++            UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++        )
++
+ 
+ class Frusergroupmember(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+@@ -354,20 +373,20 @@ class Fruserlogs(models.Model):
+     class Meta:
+         db_table = 'fruserlogs'
+ 
++    def __str__(self):
++        return '%s %s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
++
+     def as_json(self):
+         return dict(
+             Index = 0,
+-            OId=self.OId,
+-            FRUserId=self.FRUserOId.FRUserId if self.FRUserOId else "",
+-            FRUserName=self.FRUserOId.Name if self.FRUserOId else "",
+-            DeviceOId=self.DeviceOId.Name,
+-            LogContent=self.LogContent,
+-            LogDateTime=self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
++            OId = self.OId,
++            FRUserId = self.FRUserOId.FRUserId if self.FRUserOId else "",
++            FRUserName = self.FRUserOId.Name if self.FRUserOId else "",
++            DeviceOId = self.DeviceOId.Name,
++            LogContent = self.LogContent,
++            LogDateTime = self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
+         )
+ 
+-    def __str__(self):
+-        return '%s %s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
+-
+ 
+ class Systemlogs(models.Model):
+     systemlogs_category = (
+@@ -390,9 +409,8 @@ class Systemlogs(models.Model):
+     def as_json(self):
+         return dict(
+             Index = 0,
+-            OId=self.OId,
+-            Category=self.Category,
+-            LogContent=self.LogContent,
+-            LogDateTime=self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
++            OId = self.OId,
++            Category = self.Category,
++            LogContent = self.LogContent,
++            LogDateTime = self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
+         )
+-
+diff --git a/br06/urls.py b/br06/urls.py
+index 7bcfa83..c700995 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -18,10 +18,10 @@ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_list_view, user_setting, login, logout, change_passwd, password_reset_confirm, ResetPasswordRequestView
+ from frusers.views import fruser_list_view
+-from systemlogs.views import systemlog_list_view,systemlog_export
+-from fruserlogs.views import fruserlog_list_view,fruserlog_export
++from systemlogs.views import systemlog_list_view, systemlog_export
++from fruserlogs.views import fruserlog_list_view, fruserlog_export
+ from logsetting.views import logsetting
+-from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, add_device, delete_device
++from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, add_frusergroupdevice, delete_frusergroupdevice, delete_device
+ 
+ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+@@ -42,7 +42,13 @@ urlpatterns += [
+     url(r'^device_add/?$', device_add_view),
+     url(r'^device_edit/?$', device_edit_view),
+     url(r'^device_settings/?$', device_settings_view),
++    url(r'^device_frusergroups/?$', device_frusergroups_view),
+     url(r'^add_device/?$', add_device),
++    url(r'^accept_device/?$', accept_device),
++    url(r'^change_device_name/?$', change_device_name),
++    url(r'^settings_device/?$', settings_device),
++    url(r'^add_frusergroupdevice/?$', add_frusergroupdevice),
++    url(r'^delete_frusergroupdevice/?$', delete_frusergroupdevice),
+     url(r'^delete_device/?$', delete_device),
+ ]
+ 
+diff --git a/devices/views.py b/devices/views.py
+index 1a8e1ff..89c364e 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -1,21 +1,24 @@
+ from django.shortcuts import render
+ 
+-# Create your views here.
++from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+-from api.models import Devices
++from api.models import Devices, Frusergroups, Frusergroupdevices
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ 
+ def device_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    obj = Devices.objects.all()
+-    devices = [res.as_json() for res in obj]
+-    index = 0
+-    for x in devices:
+-        x['Index'] = index+1
+-        index += 1
+-    return render(request, 'device_list.html', {'active': "device_list", 'obj': devices})
++    try:
++        obj = Devices.objects.all()
++        devices = [res.as_json() for res in obj]
++        index = 0
++        for x in devices:
++            x['Index'] = index+1
++            index += 1
++        return render(request, 'device_list.html', {'active': 'device_list', 'obj': devices})
++    except:
++        return HttpResponseRedirect("/")
+ 
+ def device_add_view(request):
+     if not 'OId' in request.session:
+@@ -25,12 +28,32 @@ def device_add_view(request):
+ def device_edit_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    return render(request, 'device_edit.html')
++    try:
++        device = Devices.objects.get(OId = request.GET['OId']).as_json()
++        return render(request, 'device_edit.html', {'active': 'device_edit', 'obj': device})
++    except:
++        return HttpResponseRedirect("/")
+ 
+ def device_settings_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    return render(request, 'device_settings.html')
++    try:
++        device = Devices.objects.get(OId = request.GET['OId']).as_json()
++        return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': device})
++    except:
++        return HttpResponseRedirect("/")
++
++def device_frusergroups_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        obj = Frusergroupdevices.objects.filter(DeviceOId = Devices.objects.get(OId = request.GET['OId']))
++        devicegroups = [res.GroupOId.as_json() for res in obj]
++        obj_all = Frusergroups.objects.all()
++        groups = [res_all.as_json() for res_all in obj_all if res_all not in [res.GroupOId for res in obj]]
++        return render(request, 'device_frusergroups.html', {'active': 'device_settings', 'devicegroups': devicegroups, 'groups': groups, 'DeviceOId': request.GET['OId']})
++    except:
++        return HttpResponseRedirect("/")
+ 
+ def add_device(request):
+     if not 'OId' in request.session:
+@@ -41,6 +64,65 @@ def add_device(request):
+     except:
+         return JsonResponse(res_code[1])
+ 
++def accept_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Devices.objects.filter(OId = request.POST['OId']).update(State = 'Approved')
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def change_device_name(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Devices.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'])
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def settings_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Devices.objects.filter(OId = request.POST['OId']).update(
++            Welcome = request.POST['Welcome'],
++            AccessDenied = request.POST['AccessDenied'],
++            ScreenSaver = request.POST['ScreenSaver'],
++            NTP = request.POST['NTP'],
++            Timezone = request.POST['Timezone'],
++            Audio = request.POST['Audio'],
++            BioScore = request.POST['BioScore'],
++            Language = request.POST['Language'],
++        )
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def add_frusergroupdevice(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOIds = [Frusergroups.objects.get(OId = GroupOId) for GroupOId in request.POST.getlist('GroupOIds')]
++        DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
++        for GroupOId in GroupOIds:
++            Frusergroupdevices.objects.create(GroupOId = GroupOId, DeviceOId = DeviceOId)
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_frusergroupdevice(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
++        DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
++        Frusergroupdevices.objects.filter(GroupOId = GroupOId, DeviceOId = DeviceOId).delete()
++        return JsonResponse(dict(ChainMap(res_code[0], GroupOId.as_json())))
++    except:
++        return JsonResponse(res_code[1])
++
+ def delete_device(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+diff --git a/logsetting/__pycache__/__init__.cpython-34.pyc b/logsetting/__pycache__/__init__.cpython-34.pyc
+deleted file mode 100644
+index f9045b5994514df15d2f35418b16ca74c5901303..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 135
+zcmaFI!^`z}mT5Qx5IhDEFu(|8H~?`m3y?@*U<lS^^jpbL1QJFNzfANq@^e%5vr>zT
+zQ}qjq^0QKtOZ1b949p-zPJViEYDr0EUb=pKd}dx|NqoFsLFFwDo80`A(wtN~kZHw0
+G%m4sZ@gQjc
+
+diff --git a/logsetting/__pycache__/views.cpython-34.pyc b/logsetting/__pycache__/views.cpython-34.pyc
+deleted file mode 100644
+index 020a6831cab339c6e72fd7a16065c1d91a606dc4..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 1358
+zcmYjROK&4Z5dL}|evF;i35lIZIUtJzUM)5pSkMX~P#z)(5)=omG-$PQ+?{xwd3d`!
+zFJqs=pV>dckLW9>T=)SwQ9Tp08Be$CtFEf9`l@^Wt*-<xK79RV+XMc=v&SL%2O8>c
+znmD}-F_18X49sE&v4g}#=oZ+`v4_wru$N;Wp<iGhaS2HoVY$F1#1$k}gjFN~!l2NW
+z5!aB^5!MS_LA-)w72#@utB4y28+k?~HxV|M@*2XmrM!-C9XtT9;V&Tk1iXqtxBfu2
+zpvz22ij)gU(#B6(PfvuJW~mY<f=5z}H0kR<t1MmWEq-oCc>VZnLY8}(P)C{Gzm1gc
+zIwm-fS4zk@yHF+=+$k**E0cX~q~!TKaVwIk4PQ}0>nOcYM<Zr)qNnsUcIjVjk(L;r
+z0~6q~47m->Ea&$O1FLnwU0gblj9KVn;(^oa<KDrd@Fb-VURo;2rHwg5o49B%T-<VK
+zS`47enCFqnb?@!3Sa_JbmO5R*+_PJ@c^z%CA++7*6|}!0e**t|@)c}d0`fZdT!meK
+ze{J74HdG^5=qhx8Ne#S-ZN5fPsYleB4a%7<e9V1J>NWuF$WlPBSOWMaA}XCKY2nqq
+zOKsdbGVbvqe`I~*{dPP!HB}|1Lpju$G%%&}NW@&tYJdFMQFqB%7I$7hvd+xuyp)#f
+znb)}<#xu9`y7OT1BYQb>7H=PXyVkVrdg@JYLPx-`8&eVKDC5+vng9Fg!581o8rG_4
+zU~jCG*m%3gd;7EcvmHC#RZ~_%sVGaOOQB6E5qg|)xnhBPA+#ye6w|>mz8t0(!nm<W
+zjjOaYUN#k}46J2yaQfrv;qJlVFZ+Xcdxs|j<KM_g3u!NCw`9svyuT6@q*N4ZJU-Mz
+z!<1o>@y?@Ie1QC%Y#+bskF!MdCzO=vPi1D$Z~shw`Kp*c*3`d_#Et4r?@aJf*`N?=
+zhbFKF3utVzO=p$uu+LbFt+BxQlr>%Xg4VkmrpYH%QPxxAOzP2<R(ZCj_M{%uoy$p)
+z^woj1%$wHJ+9;EvCvHb#s);%!?X@t$a2oZJjEh*wvURCg?aq@+kuDeHYR`b`*}EpI
+z)?~TkC`-=^J}X3z&`~0cukWTp8F!?vjc0qEXP<NRZ0g!DmG5Ztt5|$*4~%Nj)MU$F
+ME0?xdoz=bn0OFoc_y7O^
+
+diff --git a/templates/device_add.html b/templates/device_add.html
+index f92a39c..51cec38 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -4,137 +4,137 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>User List</title>
++        <title>Device Add</title>
+ 
+-    </head>l
++    </head>
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">Device add</li>
+-			</ol>
+-		</div><!--/.row-->
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Device add</li>
++                </ol>
++            </div><!--/.row-->
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">Device add</h1>
+-			</div>
+-		</div><!--/.row-->
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>Device add</small></h1>
++                </div>
++            </div><!--/.row-->
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<div class="panel-body">
+-						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+-                            <div class="form-body">
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Device Name
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                    	<div class="input-icon">
+-                                        	<input type="text" class="form-control" placeholder="" name="name">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>Device</p>
++                        </div>
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label" for="form_control_1">Device Name
++                                            <span class="required">*</span>
++                                        </label>
++                                        <div class="col-md-6">
++                                            <div class="input-icon">
++                                                <input type="text" class="form-control" placeholder="" name="Name">
++                                                <div class="form-control-focus"> </div>
++                                                <i class="fa fa-envelope"></i>
++                                            </div>
+                                         </div>
+                                     </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">MAC-Address
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                        <div class="input-icon">
+-                                            <input type="text" class="form-control" placeholder="" name="mac">
+-                                            <div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label" for="form_control_1">MAC-Address
++                                            <span class="required">*</span>
++                                        </label>
++                                        <div class="col-md-6">
++                                            <div class="input-icon">
++                                                <input type="text" class="form-control" placeholder="" name="MAC">
++                                                <div class="form-control-focus"> </div>
++                                                <i class="fa fa-envelope"></i>
++                                            </div>
+                                         </div>
+                                     </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">IP
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                        <div class="input-icon">
+-                                            <input type="text" class="form-control" placeholder="" name="ip">
+-                                            <div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label" for="form_control_1">IP
++                                            <span class="required">*</span>
++                                        </label>
++                                        <div class="col-md-6">
++                                            <div class="input-icon">
++                                                <input type="text" class="form-control" placeholder="" name="IP">
++                                                <div class="form-control-focus"> </div>
++                                                <i class="fa fa-envelope"></i>
++                                            </div>
+                                         </div>
+                                     </div>
+                                 </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-3 pull-right">
++                                <button class="btn btn-default" onclick="history.back()">Back</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
+                             </div>
+-                            <div class="form-actions">
+-                                <div class="row">
+-                                    <div class="col-md-offset-3 col-md-9">
+-                                        <a onclick="history.back()" type="reset" class="btn default">Back</a>
+-                                        <a onclick="onSaveClick()" type="" class="btn green">Save</a>
+-                                    </div>
+-                                </div>
+-                            </div>
+-                        </form>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->
+-	</div><!--/.main-->
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
+ 
+-	{% load static %}
+-	<script>
+-	//For getting CSRF token
+-	function getCookie(name) {
+-		var cookieValue = null;
+-		if (document.cookie && document.cookie != '') {
+-			var cookies = document.cookie.split(';');
+-			for (var i = 0; i < cookies.length; i++) {
+-				var cookie = jQuery.trim(cookies[i]);
+-				// Does this cookie string begin with the name we want?
+-				if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-					break;
+-				}
+-			}
+-		}
+-		return cookieValue;
+-	}
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
+ 
+-	function onSaveClick(){
+-		var name = $('input[name=name]').val();
+-		var mac = $('input[name=mac]').val();
+-		var ip = $('input[name=ip]').val();
+-		if(!name || !mac || !ip){
+-			alert("please enter correct information");
+-			return
+-		}
+-		$.ajax({
+-			type: 'post',
+-			url: '/add_device/',
+-			async: true,
+-			dataType: 'json',
+-			data: {
+-				csrfmiddlewaretoken : getCookie('csrftoken'),
+-				'Name': name,
+-				'MAC': mac,
+-				'IP': ip,
+-			},
+-			success: function(data) {
+-				console.log("CODE = ",data.CODE);
+-				if (data.CODE == "0") {
+-					alert("Device add successfully");
+-					location.href = '/device_list/';
+-				} else {
+-					alert("Fail to add device");
+-				}
+-			},
+-			error: function(data) {
+-				console.log('why nunu');
+-			}
+-		});
+-	}
+-	</script>
+-</body>
++        function onSaveClick(){
++            var Name = $('input[name=Name]').val();
++            var MAC = $('input[name=MAC]').val();
++            var IP = $('input[name=IP]').val();
++            if(!Name || !MAC || !IP){
++                alert("please enter correct information");
++                return
++            }
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/add_device/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'Name': Name,
++                    'MAC': MAC,
++                    'IP': IP,
++                },
++                success: function(data) {
++                    console.log("CODE = ",data.CODE);
++                    if (data.CODE == "0") {
++                        alert("Device add successfully");
++                        location.href = '/device_list/';
++                    } else {
++                        alert("Fail to add device");
++                    }
++                },
++                error: function(data) {
++                    console.log('why nunu');
++                }
++            });
++        }
++        </script>
++    </body>
+ 
+ </html>
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+new file mode 100644
+index 0000000..fd64ce5
+--- /dev/null
++++ b/templates/device_edit.html
+@@ -0,0 +1,232 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Device Edit</title>
++
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Device edit</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>Device Edit</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <ul class="nav nav-tabs navbar-nav">
++                        <li class="active">
++                            <a href="/device_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                        </li>
++                        <li>
++                            <a href="/device_frusergroups?OId={{obj.OId}}" class="input-lg">FRUser Group List</a>
++                        </li>
++                    </ul>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>Device</p>
++                        </div>
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Device Name :</label>
++                                        <div class="col-md-3 input-icon">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="" name="Name">
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">MAC-Address :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.MAC}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">IP :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.IP}}</p>
++                                        </label>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-3 pull-right">
++                                <button class="btn btn-default" onclick="history.back()">Back</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>Device parameter</p>
++                        </div>
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Event :</label>
++                                        <div class="col-md-9">
++                                            <div class="form-group">
++                                                <label class="col-md-3 control-label">Welcome :</label>
++                                                <label class="col-md-6 control-label">
++                                                    <p class="text-left">
++                                                        {% if obj.Welcome == 'Do0' %}
++                                                            None
++                                                        {% endif %}
++                                                        {% if obj.Welcome == 'Do1' %}
++                                                            Pulse 3 sec
++                                                        {% endif %}
++                                                    </p>
++                                                </label>
++                                            </div>
++                                            <div class="form-group">
++                                                <label class="col-md-3 control-label">Access Denied :</label>
++                                                <label class="col-md-6 control-label">
++                                                    <p class="text-left">
++                                                        {% if obj.AccessDenied == 'Do0' %}
++                                                            On
++                                                        {% endif %}
++                                                        {% if obj.AccessDenied == 'Do1' %}
++                                                            Off
++                                                        {% endif %}
++                                                    </p>
++                                                </label>
++                                            </div>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Screen saver :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">window will close after ({{obj.ScreenSaver}}) minutes</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">NTP Server :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.NTP}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Timezone :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.Timezone}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Audio :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.Audio}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Bio score :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.BioScore}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Multi-language :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.Language}}</p>
++                                            <p class="text-left" name="testtt"></p>
++                                        </label>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-3 pull-right">
++                                <button class="btn btn-default" onclick="location.href='/device_settings?OId={{obj.OId}}'">Settings</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function onSaveClick(){
++            var Name = $('input[name=Name]').val();
++            console.log(Name);
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/change_device_name/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': {{obj|safe}}.OId,
++                    'Name': Name
++                },
++                success: function(data) {
++                    console.log("CODE = ",data.CODE);
++                    if (data.CODE == "0") {
++                        alert("Change device name successfully");
++                        location.reload();
++                    } else {
++                        alert("Fail to change device name");
++                    }
++                },
++                error: function(data) {
++                    console.log('why nunu');
++                }
++            });
++        }
++
++        $(document).ready(function() {
++            $('input[name="Welcome"][value=' + {{obj|safe}}.Welcome + ']').prop('checked',true);
++            $('input[name="AccessDenied"][value=' + {{obj|safe}}.AccessDenied + ']').prop('checked',true);
++            $('select[name="ScreenSaver"]').val({{obj|safe}}.ScreenSaver);
++            $('select[name="Timezone"]').val({{obj|safe}}.Timezone);
++            if ({{obj|safe}}.Audio == 'Enable') {
++                $('input[name="Audio"]').prop('checked',true);
++            } else {
++                $('input[name="Audio"]').prop('checked',false);
++            }
++            $('select[name="BioScore"]').val({{obj|safe}}.BioScore);
++            $('select[name="Language"]').val({{obj|safe}}.Language);
++        });
++
++        </script>
++    </body>
++
++</html>
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+new file mode 100644
+index 0000000..8038dcb
+--- /dev/null
++++ b/templates/device_frusergroups.html
+@@ -0,0 +1,227 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Device List</title>
++    </head>
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">User List</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>Device Edit</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <ul class="nav nav-tabs navbar-nav">
++                        <li>
++                            <a href="/device_edit?OId={{DeviceOId}}" class="input-lg">Imformation</a>
++                        </li>
++                        <li class="active">
++                            <a href="/device_frusergroups?OId={{DeviceOId}}" class="input-lg">FRUser Group List</a>
++                        </li>
++                    </ul>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="col-md-8 panel panel-default">
++                        <div class="panel-heading"><p>Group list</p></div>
++                        <div class="panel-body">
++                            <table id="GroupList"></table>
++                        </div>
++                    </div>
++                    <div class="col-md-offset-1 col-md-3 panel panel-default">
++                        <div class="panel-heading"><p>Add New Group</p></div>
++                        <div class="panel-body">
++                            <label>Search Group :</label>
++                            <table id="GroupAdd"></table>
++                            <div class="form-group">
++                                <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        <script src="{% static "chart.min.js" %}"></script>
++        <script src="{% static "chart-data.js" %}"></script>
++        <script src="{% static "easypiechart.js" %}"></script>
++        <script src="{% static "easypiechart-data.js" %}"></script>
++        <script src="{% static "bootstrap-datepicker.js" %}"></script>
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var $GroupAdd = $('#GroupAdd');
++            var $GroupList = $('#GroupList');
++
++            var devicegroups = {{devicegroups|safe}};
++            console.log(devicegroups);
++            $GroupList.bootstrapTable({
++                search: true,
++                pagination: true,
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'Name',
++                sortOrder: 'desc',
++                columns: [
++                    {
++                        field: 'Name',
++                        title: 'FRUser Group',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            return ' \
++                                <div class="row" align="center"> \
++                                    <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                </div>';
++                        }
++                    }
++                ],
++                data: devicegroups
++            });
++
++            var groups = {{groups|safe}};
++            console.log(groups);
++            $GroupAdd.bootstrapTable({
++                search: true,
++                pageSize: 10,
++                sortName: 'Name',
++                columns: [
++                    {
++                        field: 'State',
++                        checkbox: true
++                    },
++                    {
++                        field: 'Name',
++                        title: 'Group',
++                        sortable: true
++                    }
++                ],
++                data: groups
++            });
++
++
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
++
++            function delete_group(GroupOId, Name) {
++                var ret = confirm('Confirm to delete ' + Name + ' from this device?');
++                console.log(ret);
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/delete_frusergroupdevice/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'DeviceOId': '{{DeviceOId|safe}}',
++                            'GroupOId': GroupOId
++                        },
++                        success: function(data) {
++                            console.log("CODE = ",data.CODE);
++                            if (data.CODE == "0") {
++                                $GroupAdd.bootstrapTable('append', data);
++                                $GroupList.bootstrapTable('remove', {
++                                    field: 'OId',
++                                    values: [data.OId]
++                                });
++                            } else {
++                                alert("Fail to delete group");
++                            }
++                        },
++                        error: function(data) {
++                            console.log('why nunu');
++                        }
++                    });
++                }
++            }
++
++            function onAddClick() {
++                var GroupOIds = $.map(
++                    $GroupAdd.bootstrapTable('getSelections'),
++                    function (row) {return row.OId}
++                );
++
++                console.log(GroupOIds);
++
++                $.ajax({
++                    type: 'post',
++                    traditional: true,
++                    url: '/add_frusergroupdevice/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'DeviceOId': '{{DeviceOId|safe}}',
++                        'GroupOIds': GroupOIds
++                    },
++                    success: function(data) {
++                        console.log("CODE = ",data.CODE);
++                        if (data.CODE == "0") {
++                            $GroupList.bootstrapTable('append', $.map(
++                                $GroupAdd.bootstrapTable('getSelections'),
++                                function (row) {return row}
++                            ));
++                            $GroupAdd.bootstrapTable('remove', {
++                                field: 'OId',
++                                values: GroupOIds
++                            });
++                        } else {
++                            alert("Fail to add group");
++                        }
++                    },
++                    error: function(data) {
++                        console.log('why nunu');
++                    }
++                });
++
++            };
++
++            !function ($) {
++                $(document).on("click","ul.nav li.parent > a > span.icon", function(){
++                    $(this).find('em:first').toggleClass("glyphicon-minus");
++                });
++                $(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
++            }(window.jQuery);
++
++            $(window).on('resize', function () {
++              if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
++            })
++            $(window).on('resize', function () {
++              if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
++            })
++        </script>
++    </body>
++</html>
+diff --git a/templates/device_list.html b/templates/device_list.html
+index e99ffae..9552d2d 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -8,7 +8,7 @@
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+         <title>Device List</title>
+         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+-    </head>l
++    </head>
+     <body>
+         {% include 'menu.html' %}
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+@@ -21,19 +21,20 @@
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header">Device List</h1>
++                    <div class="form-group">
++                        <h1 class="page-header"><small>Device List</small></h1>
++                    </div>
++                    <div class="form-group">
++                        <button class="btn btn-default pull-right" onclick="location.href='/device_add/'">Create new device</button>
++                    </div>
+                 </div>
+-                <div class="col-lg-12">
+-                    <button class="btn green pull-right" onclick="location.href='/device_add/'" value="">Create new device</button>
+-                <div>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <table id="UserList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-page-size=10 data-page-list="[10, 25, 50, 100]" data-sort-name="name" data-sort-order="desc">
+-                            </table>
++                            <table id="DeviceList"></table>
+                         </div>
+                     </div>
+                 </div>
+@@ -47,53 +48,68 @@
+         <script src="{% static "bootstrap-datepicker.js" %}"></script>
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+-            var index
+             var dataSet = {{obj|safe}};
+             console.log(dataSet);
+-            $('#UserList').bootstrapTable({
+-                columns: [{
+-                    field: 'MAC',
+-                    title: 'MAC-Address',
+-                    sortable: true
+-                },
+-                {
+-                    field: 'IP',
+-                    title: 'IP',
+-                    sortable: true
+-                },
+-                {
+-                    field: 'Name',
+-                    title: 'Device Name',
+-                    sortable: true
+-                },
+-                {
+-                    field: 'State',
+-                    title: 'Status',
+-                    formatter: function(value) {
+-                        if (value == 'Offline') {
+-                            return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:red"></i>';
+-                        } else if (value == 'Proposed') {
+-                            return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:gray"></i>';
+-                        } else {
+-                            return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:green"></i>';
++            $('#DeviceList').bootstrapTable({
++                search: true,
++                pagination: true,
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'Name',
++                sortOrder: 'desc',
++                columns: [
++                    {
++                        field: 'MAC',
++                        title: 'MAC-Address',
++                        sortable: true
++                    },
++                    {
++                        field: 'IP',
++                        title: 'IP',
++                        sortable: true
++                    },
++                    {
++                        field: 'Name',
++                        title: 'Device Name',
++                        sortable: true
++                    },
++                    {
++                        field: 'State',
++                        title: 'Status',
++                        formatter: function(value) {
++                            if (value == 'Offline') {
++                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:red"></i>';
++                            } else if (value == 'Proposed') {
++                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:gray"></i>';
++                            } else {
++                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:green"></i>';
++                            }
++                        }
++                    },
++                    {
++                        field: 'UpdateDate',
++                        title: 'Sync time',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            if (row.State == 'Proposed') {
++                                return ' \
++                                    <div class="row" align="center"> \
++                                        <button class="btn btn-default" onclick=accept_device("' + row.OId + '","' +row.Name+ '")>Accept</button> \
++                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Reject</button> \
++                                    </div>';
++                            } else {
++                                return ' \
++                                    <div class="row" align="center"> \
++                                        <button class="btn btn-default" onclick="location.href=\'/device_edit?OId=' + row.OId + '\'">Edit</button> \
++                                        <button class="btn btn-default" onclick="location.href=\'/device_settings?OId=' + row.OId + '\'">Settings</button> \
++                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    </div>';
++                            }
+                         }
+                     }
+-                },
+-                {
+-                    field: 'UpdateDate',
+-                    title: 'Sync time',
+-                    sortable: true
+-                },
+-                {
+-                    formatter: function(value, row) {
+-                        return ' \
+-                            <div class="row" align="center"> \
+-                                <button class="btn green" onclick=device_edit("' + row.OId + '")>Edit</button> \
+-                                <button class="btn green" onclick=device_settings("' + row.OId + '")>Settings</button> \
+-                                <button class="btn green" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
+-                            </div>';
+-                    }
+-                }],
++                ],
+                 data: dataSet
+             });
+ 
+@@ -114,10 +130,33 @@
+                 return cookieValue;
+             }
+ 
+-            function device_edit(OId) {
+-            }
+-
+-            function device_settings(OId) {
++            function accept_device(OId, Name) {
++                var ret = confirm('Confirm to accept ' +Name+ ' Device?');
++                console.log(ret);
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/accept_device/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'OId': OId
++                        },
++                        success: function(data) {
++                            console.log("CODE = ",data.CODE);
++                            if (data.CODE == "0") {
++                                location.reload();
++                            } else {
++                                alert("Fail to accept device");
++                            }
++                        },
++                        error: function(data) {
++                            console.log('why nunu');
++                        }
++                    });
++                }
+             }
+ 
+             function delete_device(OId, Name) {
+@@ -126,6 +165,7 @@
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
++                        traditional: true,
+                         url: '/delete_device/',
+                         async: true,
+                         dataType: 'json',
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+new file mode 100644
+index 0000000..b77bbfd
+--- /dev/null
++++ b/templates/device_settings.html
+@@ -0,0 +1,242 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Device Settings</title>
++
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Device settings</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>Device Settings</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>Device parameter setup</p>
++                        </div>
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Event :</label>
++                                        <div class="col-md-9">
++                                            <div class="form-group">
++                                                <label class="col-md-3 control-label">Welcome</label>
++                                                <div class="col-md-6">
++                                                    <label class="col-md-3 radio-inline">
++                                                        <input type="radio" value="Do0" name="Welcome">None
++                                                    </label>
++                                                    <label class="col-md-3 radio-inline">
++                                                        <input type="radio" value="Do1" name="Welcome">Pulse
++                                                    </label>
++                                                </div>
++                                            </div>
++                                            <div class="form-group">
++                                                <label class="col-md-3 control-label">Access Denied</label>
++                                                <div class="col-md-6">
++                                                    <label class="col-md-3 radio-inline">
++                                                        <input type="radio" value="Do0" name="AccessDenied">On
++                                                    </label>
++                                                    <label class="col-md-3 radio-inline">
++                                                        <input type="radio" value="Do1" name="AccessDenied">Off
++                                                    </label>
++                                                </div>
++                                            </div>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Screen saver :</label>
++                                        <div class="col-md-3">
++                                            <select class="form-control" name="ScreenSaver">
++                                                <option value=""></option>
++                                                <option value="5">5 Minutes</option>
++                                                <option value="30">30 Minutes</option>
++                                                <option value="60">60 Minutes</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">NTP Server :</label>
++                                        <div class="col-md-3 input-icon">
++                                            <input type="text" class="form-control" value="{{obj.NTP}}" placeholder="" name="NTP">
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Timezone :</label>
++                                        <div class="col-md-3">
++                                            <select class="form-control" name="Timezone">
++                                                <option value=""></option>
++                                                <option value="UTC-12">(UTC-12)</option>
++                                                <option value="UTC-11">(UTC-11)</option>
++                                                <option value="UTC-10">(UTC-10)</option>
++                                                <option value="UTC-9">(UTC-9)</option>
++                                                <option value="UTC-8">(UTC-8)</option>
++                                                <option value="UTC-7">(UTC-7)</option>
++                                                <option value="UTC-6">(UTC-6)</option>
++                                                <option value="UTC-5">(UTC-5)</option>
++                                                <option value="UTC-4">(UTC-4)</option>
++                                                <option value="UTC-3">(UTC-3)</option>
++                                                <option value="UTC-2">(UTC-2)</option>
++                                                <option value="UTC-1">(UTC-1)</option>
++                                                <option value="UTC+0">(UTC+0)</option>
++                                                <option value="UTC+1">(UTC+1)</option>
++                                                <option value="UTC+2">(UTC+2)</option>
++                                                <option value="UTC+3">(UTC+3)</option>
++                                                <option value="UTC+4">(UTC+4)</option>
++                                                <option value="UTC+5">(UTC+5)</option>
++                                                <option value="UTC+6">(UTC+6)</option>
++                                                <option value="UTC+7">(UTC+7)</option>
++                                                <option value="UTC+8">(UTC+8)</option>
++                                                <option value="UTC+9">(UTC+9)</option>
++                                                <option value="UTC+10">(UTC+10)</option>
++                                                <option value="UTC+11">(UTC+11)</option>
++                                                <option value="UTC+12">(UTC+12)</option>
++                                                <option value="UTC+13">(UTC+13)</option>
++                                                <option value="UTC+14">(UTC+14)</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Audio :</label>
++                                        <div class="checkbox col-md-3">
++                                            <label>
++                                                <input type="checkbox" name="Audio">Enable
++                                            </label>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Bio score :</label>
++                                        <div class="col-md-3">
++                                            <select class="form-control" name="BioScore">
++                                                <option value=""></option>
++                                                <option value="Low">Low</option>
++                                                <option value="Medium">Medium</option>
++                                                <option value="High">High</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Multi-language :</label>
++                                        <div class="col-md-3">
++                                            <select class="form-control" name="Language">
++                                                <option value=""></option>
++                                                <option value="en">en</option>
++                                                <option value="zh-cn">zh-cn</option>
++                                                <option value="zh-tw">zh-tw</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-3 pull-right">
++                                <button class="btn btn-default" onclick="history.back()">Back</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function onSaveClick(){
++            var Welcome = $('input[name=Welcome]').val();
++            var AccessDenied = $('input[name=AccessDenied]').val();
++            var ScreenSaver = $('select[name=ScreenSaver]').val();
++            var NTP = $('input[name=NTP]').val();
++            var Timezone = $('select[name=Timezone]').val();
++            var Audio = $('input[name=Audio]').val();
++            var BioScore = $('select[name=BioScore]').val();
++            var Language = $('select[name=Language]').val();
++
++            if (Audio == true) {
++                Audio = 'Enable';
++            } else {
++                Audio = 'Disable';
++            }
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/settings_device/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': {{obj|safe}}.OId,
++                    'Welcome': Welcome,
++                    'AccessDenied': AccessDenied,
++                    'ScreenSaver': ScreenSaver,
++                    'NTP': NTP,
++                    'Timezone': Timezone,
++                    'Audio': Audio,
++                    'BioScore': BioScore,
++                    'Language': Language
++                },
++                success: function(data) {
++                    console.log("CODE = ",data.CODE);
++                    if (data.CODE == "0") {
++                        alert("Device setting successfully");
++                        location.href = '/device_list/';
++                    } else {
++                        alert("Fail to setting device");
++                    }
++                },
++                error: function(data) {
++                    console.log('why nunu');
++                }
++            });
++        }
++
++        $(document).ready(function() {
++            $('input[name="Welcome"][value=' + {{obj|safe}}.Welcome + ']').prop('checked',true);
++            $('input[name="AccessDenied"][value=' + {{obj|safe}}.AccessDenied + ']').prop('checked',true);
++            $('select[name="ScreenSaver"]').val({{obj|safe}}.ScreenSaver);
++            $('select[name="Timezone"]').val({{obj|safe}}.Timezone);
++            if ({{obj|safe}}.Audio == 'Enable') {
++                $('input[name="Audio"]').prop('checked',true);
++            } else {
++                $('input[name="Audio"]').prop('checked',false);
++            }
++            $('select[name="BioScore"]').val({{obj|safe}}.BioScore);
++            $('select[name="Language"]').val({{obj|safe}}.Language);
++        });
++
++        </script>
++    </body>
++
++</html>
+diff --git a/templates/menu.html b/templates/menu.html
+index 9672b3a..9f4b3ab 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -82,7 +82,7 @@
+ 						</a>
+ 					</li>
+                     <li>
+-						<a class="" href="/logsetting"">
++						<a class="" href="/logsetting">
+ 							<svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg> Log Setting
+ 						</a>
+ 					</li>
+-- 
+1.9.1
+

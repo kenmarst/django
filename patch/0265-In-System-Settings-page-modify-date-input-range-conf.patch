@@ -1,0 +1,26 @@
+From 8797d92bb23e8fc723dc9236e9c10bd12ed155b6 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 8 Sep 2016 10:39:58 +0800
+Subject: [PATCH 265/443] In System Settings page, modify date input range
+ confirm when backup scheduling choose monthly .
+
+---
+ templates/system_settings.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 5a2f6b5..e039945 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -290,7 +290,7 @@
+                 return;
+             }
+ 
+-            if (BackupMonthlyDate > 28) {
++            if (BackupScheduling == 'Monthly' && BackupMonthlyDate > 28) {
+                 var ret = confirm("{% trans "The backup may not be processed monthly, if you choose monthly date from 29 to 31 !\n\nWould you want to continue ?" %}");
+                 if (ret != true) {
+                     return;
+-- 
+1.9.1
+

@@ -1,0 +1,41 @@
+From 7676eb6fa79fa51e4e5decfbf372a4a06a8b6d95 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 30 Dec 2016 12:36:18 +0800
+Subject: [PATCH 443/443] Fix bug: [web]: [device edit]: upgrade
+
+---
+ devices/views.py           | 1 -
+ templates/device_edit.html | 4 ++--
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index 7b61aaf..4f16c09 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -73,7 +73,6 @@ def device_edit_view(request):
+         DeviceVersion = device.Version[1:].split('.')
+ 
+         if device.Version == '' or \
+-           device.State == 'Upgrade' or \
+            not os.path.exists(update_file) or \
+            not new_version_check(DeviceVersion_New, DeviceVersion, 'Device'):
+             Flag = False
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 0c46bf2..9fb373b 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -205,9 +205,9 @@
+                                         <label class="col-md-6 control-label">
+                                             <p class="text-left">{{obj.Version}}
+                                                 {% if upgrade_flag %}
+-                                                    (<em id="device_version" >{% trans "There is a newer version can be upgraded." %}</em>)
++                                                    (<em id="device_version" >{% if obj.State == 'Upgrade' %}{% trans "Upgrading" %}{% else %}{% trans "There is a newer version can be upgraded." %}{% endif %}</em>)
+                                                     <a onclick="update_device(this)">
+-                                                        <em>{% trans "Click here to upgrade" %}</em>
++                                                        <em>{% if obj.State != 'Upgrade' %}{% trans "Click here to upgrade" %}{% endif %}</em>
+                                                     </a>
+                                                 {% endif %}
+                                             </p>
+-- 
+1.9.1
+

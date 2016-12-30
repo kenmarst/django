@@ -1,0 +1,53 @@
+From 7aab114032fd63e2c5c0444b2b6bc5c51632ce2e Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 30 Aug 2016 10:24:14 +0800
+Subject: [PATCH 241/443] Modify finger add API : fixed conditions for "finger
+ already exists".
+
+---
+ api/fingerprint.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index e0a5387..f891899 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -69,9 +69,7 @@ def add(request):
+                 fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+                 FingerDir_1 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register1.bmp'])
+                 FingerDir_2 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register2.bmp'])
+-                FingerPath1 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_1))
+-                FingerPath2 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_2))
+-                if FingerPath1 == True and FingerPath2 == True :
++                if fruser.FingerprintID1 != b'x00' and fruser.FingerprintID2 != b'x00' :
+                     Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger already exists')
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger already exists'})))
+                 else:
+@@ -79,7 +77,7 @@ def add(request):
+                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                     check = s.connect((HOST, PORT))
+                     if (check == None):
+-                        if FingerPath1 == False :
++                        if fruser.FingerprintID1 == b'x00' :
+                             f = open(os.path.join(settings.MEDIA_DIR,FingerDir_1),'wb+')
+                             f.write(request.FILES['image'].file.getvalue())
+                             f.close()
+@@ -95,6 +93,7 @@ def add(request):
+                                 return JsonResponse(result_success)
+                             else:
+                                 os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_1))
++                                fruser.FingerprintID1 = b'x00'
+                                 raise Exception('Finger add fail')
+                         else:
+                             f = open(os.path.join(settings.MEDIA_DIR,FingerDir_2),'wb+')
+@@ -112,6 +111,7 @@ def add(request):
+                                 return JsonResponse(result_success)
+                             else:
+                                 os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_2))
++                                fruser.FingerprintID2 = b'x00'
+                                 raise Exception('Finger add fail')
+                     else:
+                         raise Exception('Need connect finger deamon')
+-- 
+1.9.1
+

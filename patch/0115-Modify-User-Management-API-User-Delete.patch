@@ -1,0 +1,107 @@
+From c15d855ee9b481df15ab9322318d5705eb14a083 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 30 May 2016 16:00:47 +0800
+Subject: [PATCH 115/443] Modify User Management API : User Delete.
+
+Add delete_fruser function:
+    - delete person_id from TCIT.
+    - delete face image.
+Modify API function delete by local or device.
+---
+ api/user.py | 63 ++++++++++++++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 50 insertions(+), 13 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index 7b74764..4762ede 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -4,8 +4,10 @@ from django.http import JsonResponse
+ from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
+ from django.core.exceptions import ObjectDoesNotExist
+-from .utility import TCIT_API
++from .utility import TCIT_API, TCIT_res_state
+ from datetime import datetime
++import os
++from django.conf import settings
+ 
+ result_success = {'Result' : 'Success'}
+ result_fail = {'Result' : 'Fail'}
+@@ -100,27 +102,62 @@ def update(request):
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
++def delete_fruser(id):
++    try:
++        fruser = Frusers.objects.get(FRUserId = id)
++        if fruser:
++            # delete personid from TCIT
++            if fruser.PersonId:
++                res_personid_delete = TCIT_API('/face/person/delete/', data = { 'person_id' : fruser.PersonId })
++                if not res_personid_delete['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                    return dict ( ChainMap (
++                        result_fail,
++                        fail_code999,
++                        {'Message' :  TCIT_res_state[ res_personid_delete['state'] ] }
++                    ))
++            # delet img
++            if fruser.Face1:
++                os.remove(fruser.Face1)
++            if fruser.Face2:
++                os.remove(fruser.Face2)
++            if fruser.Face3:
++                os.remove(fruser.Face3)
++            fruser.delete()
++            return dict( {'Message': 'success'} )# The Message is for logContent
++        else:
++            return dict(ChainMap(result_fail, fail_code999, {'Message' : 'FRUser Delete error'}))
++    except Exception as error:
++        print(str(error))
++        return dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)}))
++
+ @csrf_exempt
+ def delete(request):
+     if request.method == 'POST':
+         try:
+-            req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'FRUserId'}
+-            if all(k in req for k in req_key) and all(req.values()):
+-                if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+-                    fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
+-                    if fruser:
+-                        fruser.delete()
+-                        logContent = "FRUser Delete Successfully"
++            # from server
++            if request.META['REMOTE_ADDR'] == '127.0.0.1':
++                res_delete = delete_fruser( request.POST.get('FRUserId') )
++                logContent = res_delete['Message']
++                if logContent == 'success':
++                    return JsonResponse(dict(result_success))
++                else:
++                    return JsonResponse( res_delete )
++            # from device
++            elif Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                req = json.loads(request.body.decode('utf-8'))
++                req_key = {'FRUserId'}
++                if all(k in req for k in req_key) and all(req.values()):
++                    res_delete = delete_fruser( req['FRUserId'] )
++                    logContent = res_delete['Message']
++                    if logContent == 'success':
+                         return JsonResponse(dict(result_success))
+                     else:
+-                        logContent = "FRUser Delete error"
+-                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++                        return JsonResponse( res_delete )
+                 else:
+-                    logContent = 'Need accept'
++                    logContent = 'Request parameter error'
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                logContent = 'Request parameter error'
++                logContent = 'Need accept'
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         except Exception as error:
+             print(str(error))
+-- 
+1.9.1
+

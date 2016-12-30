@@ -1,0 +1,76 @@
+From 240b40ee498cc5a995c0cdc4e3780b61d850e67a Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 20 Dec 2016 17:47:51 +0800
+Subject: [PATCH 429/443] Fix bug - Fail to setting device.
+
+---
+ devices/views.py | 45 ++++++++++++++++++++++-----------------------
+ 1 file changed, 22 insertions(+), 23 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index a42cce4..7eb1d25 100755
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -156,7 +156,6 @@ def accept_device(request):
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
+             State = 'Getting',
+-            UpdateDate = datetime.now()
+         )
+         return JsonResponse(res_code[0])
+     except:
+@@ -183,29 +182,29 @@ def settings_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        device = Devices.objects.get(OId = request.POST['OId'])
+-        if device.State == 'Upgrade':
++        if Devices.objects.get(OId = request.POST['OId']).State == 'Upgrade':
+             return JsonResponse(res_code[5])
+-        device.State = 'Setting'
+-        device.Type = request.POST['Type'],
+-        device.Model = request.POST['Model'],
+-        device.WelcomeR0Action = request.POST['WelcomeR0Action'],
+-        device.WelcomeR0Pulse = request.POST['WelcomeR0Pulse'],
+-        device.WelcomeR1Action = request.POST['WelcomeR1Action'],
+-        device.WelcomeR1Pulse = request.POST['WelcomeR1Pulse'],
+-        device.AccessDeniedR0Action = request.POST['AccessDeniedR0Action'],
+-        device.AccessDeniedR0Pulse = request.POST['AccessDeniedR0Pulse'],
+-        device.AccessDeniedR1Action = request.POST['AccessDeniedR1Action'],
+-        device.AccessDeniedR1Pulse = request.POST['AccessDeniedR1Pulse'],
+-        device.Timeout = request.POST['Timeout'],
+-        device.ScreenSaver = request.POST['ScreenSaver'],
+-        device.NTP = request.POST['NTP'] or '118.163.81.61',
+-        device.Timezone = request.POST['Timezone'],
+-        device.Audio = request.POST['Audio'],
+-        device.FaceBioScore = request.POST['FaceBioScore'],
+-        device.FingerBioScore = request.POST['FingerBioScore'],
+-        device.Language = request.POST['Language'],
+-        device.save()
++        Devices.objects.filter(OId = request.POST['OId']).update(
++            State = 'Setting',
++            Type = request.POST['Type'],
++            Model = request.POST['Model'],
++            WelcomeR0Action = request.POST['WelcomeR0Action'],
++            WelcomeR0Pulse = request.POST['WelcomeR0Pulse'],
++            WelcomeR1Action = request.POST['WelcomeR1Action'],
++            WelcomeR1Pulse = request.POST['WelcomeR1Pulse'],
++            AccessDeniedR0Action = request.POST['AccessDeniedR0Action'],
++            AccessDeniedR0Pulse = request.POST['AccessDeniedR0Pulse'],
++            AccessDeniedR1Action = request.POST['AccessDeniedR1Action'],
++            AccessDeniedR1Pulse = request.POST['AccessDeniedR1Pulse'],
++            Timeout = request.POST['Timeout'],
++            ScreenSaver = request.POST['ScreenSaver'],
++            NTP = request.POST['NTP'] or '118.163.81.61',
++            Timezone = request.POST['Timezone'],
++            Audio = request.POST['Audio'],
++            FaceBioScore = request.POST['FaceBioScore'],
++            FingerBioScore = request.POST['FingerBioScore'],
++            Language = request.POST['Language'],
++        )
+ 
+         return JsonResponse(res_code[0])
+     except:
+-- 
+1.9.1
+

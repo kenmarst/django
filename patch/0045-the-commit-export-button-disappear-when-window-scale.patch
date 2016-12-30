@@ -1,0 +1,65 @@
+From 609b3d5d6a3b46227b5ecdcac532207406452bb0 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 18 May 2016 18:46:50 +0800
+Subject: [PATCH 045/443] the commit 'export button disappear when window
+ scale-down' would make 'export' button doesn't work , fix it
+
+---
+ templates/fruserlog_list.html | 7 ++-----
+ templates/systemlog_list.html | 8 ++------
+ 2 files changed, 4 insertions(+), 11 deletions(-)
+
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index e43caee..4d8274b 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -31,7 +31,7 @@
+                         <h1 class="page-header"><small>FRUser log List</small></h1>
+                     </div>
+                     <div class="form-group">
+-                        <button class="btn btn-default pull-right" onclick="onExportClick">Export</button>
++                        <button class="btn btn-default pull-right" onclick="location.href='/fruserlog_export/'">Export</button>
+                     </div>
+                 </div>
+             </div><!--/.row-->
+@@ -126,10 +126,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+- 	function onExportClick(){
+-		 //alert("export");
+-                 window.location.href = "/fruserlog_export/"  
+-	}
++ 	
+ 	</script>
+ </body>
+ 
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index a6218eb..08435d2 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -31,7 +31,7 @@
+                         <h1 class="page-header"><small>System log List</small></h1>
+                     </div>
+                     <div class="form-group">
+-                        <button class="btn btn-default pull-right" onclick="onExportClick">Export</button>
++                        <button class="btn btn-default pull-right" onclick="location.href='/systemlog_export/'">Export</button>
+                     </div>
+                 </div>
+             </div><!--/.row-->
+@@ -115,11 +115,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+-                 function onExportClick(){
+-                 //alert("export");
+-                 window.location.href = "/systemlog_export/"  
+-        }
+-
++         
+ 	</script>
+ </body>
+ 
+-- 
+1.9.1
+

@@ -1,0 +1,48 @@
+From 7b69a82857513523ec6afcbfadd8a4c0e688dd2f Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Mon, 23 May 2016 16:10:58 +0800
+Subject: [PATCH 067/443] fix display bug on IE 11
+
+---
+ templates/logsetting.html | 2 +-
+ templates/menu.html       | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 83c24f5..9c1f8f0 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -76,7 +76,7 @@
+                                      </td>
+                                      <td>
+                                         <div class="col-lg-12">
+-                                            <button id="add" class="btn green pull-right"  value=""> >> </button><br>
++                                            <button id="add" class="btn green pull-right"  value=""> >> </button><br><br>
+                                             <button id="remove" class="btn green pull-right"  value=""> << </button>
+                                         <div>
+                                     </td>
+diff --git a/templates/menu.html b/templates/menu.html
+index 965aa6c..0a12769 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -37,7 +37,7 @@
+ 	</form>
+ 	<ul class="nav menu">
+ 		<li class="parent ">
+-			<a href="">
++			<a href="#">
+ 			    <span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System
+ 			</a>
+             <ul class="children collapse" id="sub-item-1">
+@@ -72,7 +72,7 @@
+         <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser List</a></li>
+         <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser Group</a></li>
+         <li class="parent ">
+-		    <a href="">
++		    <a href="#">
+ 			   <span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log
+ 		    </a>
+ 		    <ul class="children collapse" id="sub-item-3">
+-- 
+1.9.1
+

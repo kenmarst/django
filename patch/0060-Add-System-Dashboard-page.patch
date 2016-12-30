@@ -1,0 +1,333 @@
+From 73bf88e0b61385933b05033e992accc5e98100f3 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Fri, 20 May 2016 17:49:10 +0800
+Subject: [PATCH 060/443] Add System Dashboard page.
+
+---
+ br06/urls.py                     |   2 +
+ dashboard/__init__.py            |   0
+ dashboard/admin.py               |   3 +
+ dashboard/apps.py                |   5 ++
+ dashboard/migrations/__init__.py |   0
+ dashboard/models.py              |   3 +
+ dashboard/tests.py               |   3 +
+ dashboard/views.py               |  66 ++++++++++++++++++
+ templates/dashboard.html         | 146 +++++++++++++++++++++++++++++++++++++++
+ templates/menu.html              |   5 ++
+ 10 files changed, 233 insertions(+)
+ create mode 100644 dashboard/__init__.py
+ create mode 100644 dashboard/admin.py
+ create mode 100644 dashboard/apps.py
+ create mode 100644 dashboard/migrations/__init__.py
+ create mode 100644 dashboard/models.py
+ create mode 100644 dashboard/tests.py
+ create mode 100644 dashboard/views.py
+ create mode 100644 templates/dashboard.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index d03f8d1..ecbb347 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -21,6 +21,7 @@ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view, systemlog_export
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export
+ from logsetting.views import logsetting
++from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role
+@@ -37,6 +38,7 @@ urlpatterns = [
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_export/?$',fruserlog_export),
+     url(r'^logsetting/?$',logsetting),
++    url(r'^dashboard/$', dashboard_views),
+ ]
+ 
+ urlpatterns += [
+diff --git a/dashboard/__init__.py b/dashboard/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/dashboard/admin.py b/dashboard/admin.py
+new file mode 100644
+index 0000000..8c38f3f
+--- /dev/null
++++ b/dashboard/admin.py
+@@ -0,0 +1,3 @@
++from django.contrib import admin
++
++# Register your models here.
+diff --git a/dashboard/apps.py b/dashboard/apps.py
+new file mode 100644
+index 0000000..50878e7
+--- /dev/null
++++ b/dashboard/apps.py
+@@ -0,0 +1,5 @@
++from django.apps import AppConfig
++
++
++class DashboardConfig(AppConfig):
++    name = 'dashboard'
+diff --git a/dashboard/migrations/__init__.py b/dashboard/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/dashboard/models.py b/dashboard/models.py
+new file mode 100644
+index 0000000..71a8362
+--- /dev/null
++++ b/dashboard/models.py
+@@ -0,0 +1,3 @@
++from django.db import models
++
++# Create your models here.
+diff --git a/dashboard/tests.py b/dashboard/tests.py
+new file mode 100644
+index 0000000..7ce503c
+--- /dev/null
++++ b/dashboard/tests.py
+@@ -0,0 +1,3 @@
++from django.test import TestCase
++
++# Create your tests here.
+diff --git a/dashboard/views.py b/dashboard/views.py
+new file mode 100644
+index 0000000..1fbd2f0
+--- /dev/null
++++ b/dashboard/views.py
+@@ -0,0 +1,66 @@
++from django.shortcuts import render
++
++# Create your views here.
++
++# Need to pip install the following Python packages
++import psutil
++
++from django.shortcuts import render_to_response
++from django.http import HttpResponseRedirect
++from datetime import timedelta, datetime
++from time import gmtime, strftime
++from api.utility import get_localtimezone
++from api.models import Config, Systemlogs, Frusers
++
++def _bytes2human(n):
++    # http://code.activestate.com/recipes/578019
++    # >>> bytes2human(10000)
++    # '9.8K'
++    # >>> bytes2human(100001221)
++    # '95.4M'
++    symbols = ('KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
++    prefix = {}
++    for i, s in enumerate(symbols):
++        prefix[s] = 1 << (i + 1) * 10
++    for s in reversed(symbols):
++        if n >= prefix[s]:
++            value = float(n) / prefix[s]
++            return '%.1f %s' % (value, s)
++    return "%sB" % n
++
++def dashboard_views(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++
++    food1 = { 'name':'cake', 'price':60, 'comment':'good', 'is_spicy':False }
++    food2 = { 'name':'candy', 'price':100, 'comment':'not bad', 'is_spicy':True }
++    foods = [food1, food2]
++
++    with open('/proc/uptime', 'r') as f:
++        uptime = float(f.readline().split()[0])
++
++    uptime_seconds = int(uptime)
++    uptime_delta = timedelta(seconds = uptime_seconds)
++    uptime_days = uptime_delta.days
++    uptime_hms = strftime('%02H:%02M:%02S', gmtime(uptime_delta.seconds))
++
++    disk_stat = psutil.disk_usage("/")
++    disk_total = _bytes2human(disk_stat.total)
++    disk_used = _bytes2human(disk_stat.used)
++
++    mem_stat = psutil.virtual_memory()
++    total_mem = _bytes2human(mem_stat.total)
++    used_mem = _bytes2human(mem_stat.total - mem_stat.available)
++
++    #utc_now = datetime.utcnow()
++    now = datetime.now()
++    tz = get_localtimezone()
++    #tz_delta = tz.utcoffset(utc_now)
++    #tz_now = utc_now + tz_delta
++
++    frusers_total_count = Frusers.objects.count()
++    Syslogs_total_count = Systemlogs.objects.count()
++    frusers_limit = 10000
++    syslog_limit = Config.objects.get(Name='LogLimit').Value
++
++    return render_to_response('dashboard.html',locals())
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+new file mode 100644
+index 0000000..e1b8a3e
+--- /dev/null
++++ b/templates/dashboard.html
+@@ -0,0 +1,146 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<title>Dashboard</title>
++
++<!--[if lt IE 9]>
++<script src="js/html5shiv.js"></script>
++<script src="js/respond.min.js"></script>
++<![endif]-->
++
++</head>
++
++<body>
++	{% include 'menu.html' %}
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++		<div class="row">
++			<ol class="breadcrumb">
++				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++				<li class="active">Dashboard</li>
++			</ol>
++		</div><!--/.row-->
++		
++		<div class="row">
++			<div class="col-lg-12">
++				<h1 class="page-header">Dashboard</h1>
++			</div>
++
++<!--        <div class="col-lg-12">                                                      -->
++<!--            <button class="btn green pull-left"  value="">Create new account</button>-->
++<!--        </div>                                                                       -->
++
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<div class="panel panel-default">
++					<div class="panel-heading">System Info</div>
++					<div class="panel-body">
++						<!-- data-url="{%static "data1.json"%}" -->
++                        <ul>
++                            <li> System Uptime: {{uptime_days}} days, {{uptime_hms}}</li>
++                            <li> Disk Usage: {{disk_used}} / {{ disk_total }} ({{disk_stat.percent}}%) </li>
++                            <li> Memory Usage: {{used_mem}} / {{total_mem}} ({{mem_stat.percent}}%)</li>
++                            <li> FR User Created Count: {{frusers_total_count}} / {{frusers_limit}}</li>
++                            <li> System Log Count: {{Syslogs_total_count}} / {{syslog_limit}}</li>
++                            <li> System Time:  {{now}} ({{tz}})</li>
++                        </ul>
++
++<!--					<table border="1" id="userList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">               -->
++<!--					    <thead>                                                                                                                                                                                                                                                   -->
++<!--					    <tr>                                                                                                                                                                                                                                                      -->
++<!--					        <th data-field="id" data-sortable="true">Item ID</th>                                                                                                                                                                                                 -->
++<!--					        <th data-field="name"  data-sortable="true">Item Name</th>                                                                                                                                                                                            -->
++<!--					        <th data-field="price" data-sortable="true">Item Price</th>                                                                                                                                                                                           -->
++<!--					    </tr>                                                                                                                                                                                                                                                     -->
++<!--                        <tr>                                                                                                                                                                                                                                       -->
++<!--					        <th data-field="id" data-sortable="true">Item ID2</th>                                                                                                                                                                                                -->
++<!--					        <th data-field="name"  data-sortable="true">Item Name2</th>                                                                                                                                                                                           -->
++<!--					        <th data-field="price" data-sortable="true">Item Price2</th>                                                                                                                                                                                          -->
++<!--					    </tr>                                                                                                                                                                                                                                                     -->
++<!--					    </thead>                                                                                                                                                                                                                                                  -->
++<!--                        {% for food in foods %}                          -->
++<!--                        <ul>                                             -->
++<!--                            <li> food's name:{{ food.name }} </li>       -->
++<!--                            <li> food's price:{{ food.price }} </li>     -->
++<!--                            <li> food's comment: {{ food.comment }} </li>-->
++<!--                            <li> is spicy {{ food.is_spicy }} </li>      -->
++<!--                        </ul>                                            -->
++<!--                        {% endfor %}                                     -->
++<!--					</table>               -->
++					</div>
++				</div>
++			</div>
++		</div><!--/.row-->	
++	</div><!--/.main-->
++
++	<script src="{% static "chart.min.js" %}"></script>
++	<script src="{% static "chart-data.js" %}"></script>
++	<script src="{% static "easypiechart.js" %}"></script>
++	<script src="{% static "easypiechart-data.js" %}"></script>
++	<script src="{% static "bootstrap-datepicker.js" %}"></script>
++	<script src="{% static "bootstrap-table.js" %}"></script>
++	<script>
++		// var dataSet = {{test|safe}};
++		var index
++		var dataSet = {{obj|safe}};
++		console.log(dataSet);
++		$('#userList').bootstrapTable({
++			columns: [{
++				field: 'Index',
++				title: 'No.',
++				sortable: true,
++			},{
++				field: 'Account',
++				title: 'Account',
++				sortable: true
++			}, {
++				field: 'Name',
++				title: 'Name',
++				sortable: true
++			}, {
++				field: 'RoleOId',
++				title: 'Role',
++				sortable: true
++			},{
++				field: 'CreateDate',
++				title: 'CreateDate',
++				sortable: true
++			},
++			{
++				field: 'UpdateDate',
++				title: 'UpdateDate',
++				sortable: true
++			},
++			{
++				field: 'OId',
++				title: '',
++				formatter: function(value, row, index) {
++					return '<button class="btn green"  value="' + value + '">Delete</button>';
++				}
++			}],
++			data: dataSet
++		});
++
++		!function ($) {
++			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
++				$(this).find('em:first').toggleClass("glyphicon-minus");	  
++			}); 
++			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
++		}(window.jQuery);
++
++		$(window).on('resize', function () {
++		  if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
++		})
++		$(window).on('resize', function () {
++		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
++		})
++	</script>	
++</body>
++
++</html>
+diff --git a/templates/menu.html b/templates/menu.html
+index cdd13e7..d57b92d 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -46,6 +46,11 @@
+                   <ul class="children collapse" id="sub-item-1">
+ 			    {%endif %}
+ 					<li>
++						<a class="" href="/dashboard">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Dashboard
++						</a>
++					</li>
++					<li>
+ 						<a class="" href="/user_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> User List
+ 						</a>
+-- 
+1.9.1
+

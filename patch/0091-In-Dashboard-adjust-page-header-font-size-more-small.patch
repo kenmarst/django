@@ -1,0 +1,26 @@
+From 12ca31d211dc131f849b3f2eddfc5e9e13e67ec3 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 25 May 2016 18:48:57 +0800
+Subject: [PATCH 091/443] In Dashboard, adjust page-header font size more
+ smaller.
+
+---
+ templates/dashboard.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 6c4a611..1f6935a 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -21,7 +21,7 @@
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header">Dashboard</h1>
++                    <h1 class="page-header"><small>Dashboard</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+-- 
+1.9.1
+

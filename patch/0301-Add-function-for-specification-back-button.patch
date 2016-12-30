@@ -1,0 +1,2283 @@
+From 4c52f4082e24cd5e9dfa64927fa0be499b19c511 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 30 Sep 2016 16:32:08 +0800
+Subject: [PATCH 301/443] Add function for specification & back button
+
+Add Type function of device web.
+Add back button of web of the button is missing.
+Modify add method of device add function.
+---
+ api/models.py                                |   1 +
+ devices/views.py                             |  56 ++---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   8 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   8 +-
+ templates/device_add.html                    |  24 +-
+ templates/device_edit.html                   | 131 ++++++-----
+ templates/device_frusergroups.html           |   3 +
+ templates/device_list.html                   |   4 -
+ templates/device_settings.html               | 172 ++++++++-------
+ templates/frusergroup_devices.html           |   3 +
+ templates/frusergroup_member.html            |   3 +
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 17493 -> 18937 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 317 ++++++++++++++++++++-------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 17477 -> 18937 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 316 +++++++++++++++++++-------
+ templates/role_permission.html               |   4 +-
+ templates/user_group_devices.html            |   3 +
+ templates/user_group_members.html            |   3 +
+ 20 files changed, 693 insertions(+), 363 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 5564bf5..21760a4 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -254,6 +254,7 @@ class Devices(models.Model):
+             State = self.State,
+             MAC = self.MAC,
+             IP = self.IP,
++            Type = self.Type,
+             Model = self.Model,
+             WelcomeR0Action = self.WelcomeR0Action,
+             WelcomeR0Pulse = self.WelcomeR0Pulse,
+diff --git a/devices/views.py b/devices/views.py
+index 11390ad..0db6794 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -129,49 +129,18 @@ def add_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        devices_name = Devices.objects.filter(Name = request.POST['Name'])
+-        devices_mac = Devices.objects.filter(MAC = request.POST['MAC'])
+-        devices_ip = Devices.objects.filter(IP = request.POST['IP'])
+-        devices_name_count = devices_name.count()
+-        devices_mac_count = devices_mac.count()
+-        devices_ip_count = devices_ip.count()
+-        MAC = request.POST['MAC']
+-        Name = request.POST['Name']
+-        if devices_name_count > 0:
+-            if Name == "" :
+-                if devices_mac_count == 0 and devices_ip_count == 0:
+-                    Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
+-                    return JsonResponse(res_code[0])
+-                elif devices_mac_count > 0 and devices_ip_count == 0:
+-                    if MAC == "" :
+-                        Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
+-                        return JsonResponse(res_code[0])
+-                    else:
+-                        return JsonResponse(res_code[3])
+-                elif devices_mac_count > 0 and devices_ip_count >= 0:
+-                    if MAC == "" :
+-                        return JsonResponse(res_code[4])
+-                    else:
+-                        return JsonResponse(res_code[3])
+-                elif devices_mac_count == 0 and devices_ip_count > 0:
+-                    return JsonResponse(res_code[4])
+-            else:
+-                return JsonResponse(res_code[2])
+-        elif devices_mac_count > 0:
+-            if MAC == "" :
+-                if devices_ip_count == 0:
+-                    Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
+-                    return JsonResponse(res_code[0])
+-                else:
+-                    return JsonResponse(res_code[4])
+-            else:
+-                return JsonResponse(res_code[3])
+-
+-        elif devices_ip_count > 0:
++        Name = request.POST.get('Name', '')
++        MAC = request.POST.get('MAC', '')
++        IP = request.POST.get('IP', '')
++        if Name != '' and Devices.objects.filter(Name = Name).exists():
++            return JsonResponse(res_code[2])
++        if MAC != '' and Devices.objects.filter(MAC = MAC).exists():
++            return JsonResponse(res_code[3])
++        if IP == '' or Devices.objects.filter(IP = IP).exists():
+             return JsonResponse(res_code[4])
+-        else:
+-            Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
+-            return JsonResponse(res_code[0])
++        Devices.objects.create(Name = Name, MAC = MAC, IP = IP)
++
++        return JsonResponse(res_code[0])
+     except Exception as error:
+         print(error)
+         return JsonResponse(res_code[1])
+@@ -215,6 +184,7 @@ def settings_device(request):
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
+             State = 'Setting',
++            Type = request.POST['Type'],
+             Model = request.POST['Model'],
+             WelcomeR0Action = request.POST['WelcomeR0Action'],
+             WelcomeR0Pulse = request.POST['WelcomeR0Pulse'],
+@@ -226,7 +196,7 @@ def settings_device(request):
+             AccessDeniedR1Pulse = request.POST['AccessDeniedR1Pulse'],
+             Timeout = request.POST['Timeout'],
+             ScreenSaver = request.POST['ScreenSaver'],
+-            NTP = request.POST['NTP'],
++            NTP = request.POST['NTP'] or '118.163.81.61',
+             Timezone = request.POST['Timezone'],
+             Audio = request.POST['Audio'],
+             FaceBioScore = request.POST['FaceBioScore'],
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 2da51deef8a304063bfa42c05baedf637ed3f2ae..7e46ba7f34d5a6e343f4ffbf4ec777151e93f5f4 100644
+GIT binary patch
+delta 19
+acmZo-X=0i1lEc_Q!O+ag&}`#JK}G;O8U@V&
+
+delta 19
+acmZo-X=0i1lEcVS!O+ag&}idFK}G;OT?Nqq
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 44a9341..7ed4ff7 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 16:12+0800\n"
++"POT-Creation-Date: 2016-09-30 16:16+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:143
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:144
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:146
++#: br06/settings.py:145
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 2da51deef8a304063bfa42c05baedf637ed3f2ae..7e46ba7f34d5a6e343f4ffbf4ec777151e93f5f4 100644
+GIT binary patch
+delta 19
+acmZo-X=0i1lEc_Q!O+ag&}`#JK}G;O8U@V&
+
+delta 19
+acmZo-X=0i1lEcVS!O+ag&}idFK}G;OT?Nqq
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 44a9341..7ed4ff7 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 16:12+0800\n"
++"POT-Creation-Date: 2016-09-30 16:16+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:143
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:144
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:146
++#: br06/settings.py:145
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/templates/device_add.html b/templates/device_add.html
+index 6cd1e9e..6c58c42 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -39,7 +39,7 @@
+                                             <span style="color: red;">*</span> {% trans "Device Name" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device name" %}" name="Name" pattern="[\u4e00-\u9fa5\w-]{0,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device name" %}" title="{% trans "Please input the device name" %}" name="Name" pattern="[\u4e00-\u9fa5\w-]{0,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -47,7 +47,7 @@
+                                             <span style="color: red;">*</span> MAC-Address
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device MAC-Address" %}" name="MAC" pattern="[a-zA-Z0-9-]{0,32}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The MAC-Address can only contain 0 to 32 bit of English or Number or '-'" %}`)">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device MAC-Address" %}" title="{% trans "Please input the device MAC-Address" %}" name="MAC" pattern="(([a-fA-F0-9]{2})(-[a-fA-F0-9]{2}){5})?" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Please input the correct device MAC-Address format! Only Hexadecimal and '-' are allowed." %}`)">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -55,7 +55,7 @@
+                                             <span style="color: red;">*</span> IP
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device IP" %}" name="IP" pattern="(25[0-5]|2[0-4]\d|1\d\d|\d{1,2})(\.(25[0-5]|2[0-4]\d|1\d\d|\d{1,2})){3}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Please input the correct device IP format!\nOnly numbers and '.' are allowed." %}`)" required>
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input the device IP" %}" title="{% trans "Please input the device IP" %}" name="IP" pattern="(25[0-5]|2[0-4]\d|1\d\d|\d{1,2})(\.(25[0-5]|2[0-4]\d|1\d\d|\d{1,2})){3}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Please input the correct device IP format! Only numbers and '.' are allowed." %}`)" required>
+                                         </div>
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+@@ -92,10 +92,9 @@
+ 
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+-            var MAC = $('input[name=MAC]').val();
++            var MAC = $('input[name=MAC]').val().toUpperCase();
+             var IP = $('input[name=IP]').val();
+ 
+-
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+@@ -112,21 +111,16 @@
+                     if (data.CODE == "0") {
+                         alert("{% trans "The device is added successfully" %}");
+                         location.href = '/device_list/';
+-                    } else if (data.CODE == "1") {
+-                        alert("{% trans "Fail to add the device" %}");
+-                    }
+-                    else if (data.CODE == "2") {
++                    } else if (data.CODE == "2") {
+                         alert("{% trans "The device name is duplicated!" %}");
+-                    }
+-                    else if (data.CODE == "3") {
++                    } else if (data.CODE == "3") {
+                         alert("{% trans "The device MAC-Address is duplicated!" %}");
+-                    }
+-                    else {
++                    } else if (data.CODE == "4") {
+                         alert("{% trans "The device IP address is duplicated!" %}");
++                    } else {
++                        alert("{% trans "Fail to add the device" %}");
+                     }
+                 },
+-                error: function(data) {
+-                }
+             });
+         }
+         </script>
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 982e2bb..62c8a46 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -90,92 +90,106 @@
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Model :</label>
++                                        <label class="col-md-3 control-label">{% trans "Type" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.Model}}</p>
++                                            <p class="text-left">{% trans obj.Type %}</p>
+                                         </label>
+                                     </div>
+-                                    <div class="form-group">
+-                                        <label class="col-md-3 control-label">Event :</label>
+-                                        <div class="col-md-9">
+-                                            <div class="form-group">
+-                                                <label class="col-md-3 control-label">Welcome :</label>
+-                                                <label class="col-md-6 control-label">
+-                                                    <p class="text-left">
+-                                                        {% if obj.WelcomeR0Action == 'Pulse' %}
+-                                                            Relay0(pulse {{obj.WelcomeR0Pulse}} sec)
+-                                                        {% else %}
+-                                                            Relay0({{obj.WelcomeR0Action}})
+-                                                        {% endif%}
+-                                                        ,
+-                                                        {% if obj.WelcomeR1Action == 'Pulse' %}
+-                                                            Relay1(pulse {{obj.WelcomeR1Pulse}} sec)
+-                                                        {% else %}
+-                                                            Relay1({{obj.WelcomeR1Action}})
+-                                                        {% endif%}
+-                                                    </p>
+-                                                </label>
+-                                            </div>
+-                                            <div class="form-group">
+-                                                <label class="col-md-3 control-label">Access Denied :</label>
+-                                                <label class="col-md-6 control-label">
+-                                                    <p class="text-left">
+-                                                        {% if obj.AccessDeniedR0Action == 'Pulse' %}
+-                                                            Relay0(pulse {{obj.AccessDeniedR0Pulse}} sec)
+-                                                        {% else %}
+-                                                            Relay0({{obj.AccessDeniedR0Action}})
+-                                                        {% endif%}
+-                                                        ,
+-                                                        {% if obj.AccessDeniedR1Action == 'Pulse' %}
+-                                                            Relay1(pulse {{obj.AccessDeniedR1Pulse}} sec)
+-                                                        {% else %}
+-                                                            Relay1({{obj.AccessDeniedR1Action}})
+-                                                        {% endif%}
+-                                                    </p>
+-                                                </label>
++                                    {% if obj.Type == 'Recognition' %}
++                                        <div class="form-group">
++                                            <label class="col-md-3 control-label">{% trans "Model" %} :</label>
++                                            <label class="col-md-6 control-label">
++                                                <p class="text-left">{% trans obj.Model %}</p>
++                                            </label>
++                                        </div>
++                                        <div class="form-group">
++                                            <label class="col-md-3 control-label">{% trans "Event" %} :</label>
++                                            <div class="col-md-9">
++                                                <div class="form-group">
++                                                    <label class="col-md-3 control-label">{% trans "Welcome" %} :</label>
++                                                    <label class="col-md-6 control-label">
++                                                        <p class="text-left">
++                                                            {% if obj.WelcomeR0Action == 'Pulse' %}
++                                                                {% trans "Relay" %}0 ({% trans "pulse" %} {{obj.WelcomeR0Pulse}} {% trans "sec" %})
++                                                            {% else %}
++                                                                {% trans "Relay" %}0 ({% trans obj.WelcomeR0Action %})
++                                                            {% endif%}
++                                                            ,
++                                                            {% if obj.WelcomeR1Action == 'Pulse' %}
++                                                                {% trans "Relay" %}1 ({% trans "pulse" %} {{obj.WelcomeR1Pulse}} {% trans "sec" %})
++                                                            {% else %}
++                                                                {% trans "Relay" %}1 ({% trans obj.WelcomeR1Action %})
++                                                            {% endif%}
++                                                        </p>
++                                                    </label>
++                                                </div>
++                                                <div class="form-group">
++                                                    <label class="col-md-3 control-label">{% trans "Access Denied" %} :</label>
++                                                    <label class="col-md-6 control-label">
++                                                        <p class="text-left">
++                                                            {% if obj.AccessDeniedR0Action == 'Pulse' %}
++                                                                {% trans "Relay" %}0 ({% trans "pulse" %} {{obj.AccessDeniedR0Pulse}} {% trans "sec" %})
++                                                            {% else %}
++                                                                {% trans "Relay" %}0 ({% trans obj.AccessDeniedR0Action %})
++                                                            {% endif%}
++                                                            ,
++                                                            {% if obj.AccessDeniedR1Action == 'Pulse' %}
++                                                                {% trans "Relay" %}1 ({% trans "pulse" %} {{obj.AccessDeniedR1Pulse}} {% trans "sec" %})
++                                                            {% else %}
++                                                                {% trans "Relay" %}1 ({% trans obj.AccessDeniedR1Action %})
++                                                            {% endif%}
++                                                        </p>
++                                                    </label>
++                                                </div>
+                                             </div>
+                                         </div>
+-                                    </div>
++                                        <div class="form-group">
++                                            <label class="col-md-3 control-label">{% trans "Time out" %} :</label>
++                                            <label class="col-md-6 control-label">
++                                                <p class="text-left">{{obj.ScreenSaver}} {% trans "Seconds" %}</p>
++                                            </label>
++                                        </div>
++                                    {% endif%}
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Screen saver :</label>
++                                        <label class="col-md-3 control-label">{% trans "Screen saver" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">window will close after ({{obj.ScreenSaver}}) minutes</p>
++                                            <p class="text-left">{{obj.ScreenSaver}} {% trans "minutes" %}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">NTP Server :</label>
++                                        <label class="col-md-3 control-label">{% trans "NTP Server" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.NTP}}</p>
++                                            <p class="text-left">{% trans obj.NTP %}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Timezone :</label>
++                                        <label class="col-md-3 control-label">{% trans "Timezone" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.Timezone}}</p>
++                                            <p class="text-left">{% trans obj.Timezone %}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Audio :</label>
++                                        <label class="col-md-3 control-label">{% trans "Audio" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.Audio}}</p>
++                                            <p class="text-left">{% trans obj.Audio %}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Face Bio score :</label>
++                                        <label class="col-md-3 control-label">{% trans "Face Bio score" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.FaceBioScore}}</p>
++                                            <p class="text-left">{% trans obj.FaceBioScore %}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Finger Bio score :</label>
++                                        <label class="col-md-3 control-label">{% trans "Finger Bio score" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.FingerBioScore}}</p>
++                                            <p class="text-left">{% trans obj.FingerBioScore %}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Multi-language :</label>
++                                        <label class="col-md-3 control-label">{% trans "Multi-language" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.Language}}</p>
++                                            <p class="text-left">{% trans obj.Language %}</p>
+                                             <p class="text-left" name="testtt"></p>
+                                         </label>
+                                     </div>
+@@ -212,6 +226,7 @@
+ 
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
++
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+@@ -229,16 +244,12 @@
+                         location.reload();
+                     } else if (data.CODE == "1") {
+                         alert("{% trans "Fail to change the device name" %}");
+-                    }
+-                    else if (data.CODE == "2") {
++                    } else if (data.CODE == "2") {
+                         alert("{% trans "The device name is duplicated!" %}");
+                     }
+                 },
+-                error: function(data) {
+-                }
+             });
+         }
+-
+         </script>
+     </body>
+ 
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index acc6289..70a25a7 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -46,6 +46,9 @@
+                         <div class="panel-body">
+                             <table id="GroupList"></table>
+                         </div>
++                        <div class="panel-footer">
++                            <button type="button" class="btn btn-default" onclick="location.href='/device_list/'">{% trans "Back" %}</button>
++                        </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Group" %}</p></div>
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 3fcd3d0..718ab96 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -163,8 +163,6 @@
+                                 alert("{% trans "Fail to accept device" %}");
+                             }
+                         },
+-                        error: function(data) {
+-                        }
+                     });
+                 }
+             }
+@@ -190,8 +188,6 @@
+                                 alert("{% trans "Fail to delete device" %}");
+                             }
+                         },
+-                        error: function(data) {
+-                        }
+                     });
+                 }
+             }
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index c51f8d2..92547d3 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -34,130 +34,139 @@
+                             <p>{% trans "Device parameter setup" %}</p>
+                         </div>
+                         <div class="panel-body">
+-                            <form class="form-horizontal">{% csrf_token %}
++                            <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Model :</label>
++                                        <label class="col-md-3 control-label">{% trans "Type" %} :</label>
++                                        <div class="col-md-3">
++                                            <select class="form-control" name="Type">
++                                                <option value="Register">{% trans "Register" %}</option>
++                                                <option value="Recognition">{% trans "Recognition" %}</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">{% trans "Model" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Model">
+-                                                <option value="FR">FR</option>
+-                                                <option value="RFID+FR">RFID+FR</option>
+-                                                <option value="FR+FP">FR+FP</option>
+-                                                <option value="RFID+FR+FP">RFID+FR+FP</option>
++                                                <option value="FR">{% trans "FR" %}</option>
++                                                <option value="RFID+FR">{% trans "RFID+FR" %}</option>
++                                                <option value="FR+FP">{% trans "FR+FP" %}</option>
++                                                <option value="RFID+FR+FP">{% trans "RFID+FR+FP" %}</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Event :</label>
++                                        <label class="col-md-3 control-label">{% trans "Event" %} :</label>
+                                         <div class="col-md-8">
+-                                            <table class="table table-bordered table-condensed" style="background-color:#f1f4f7">
++                                            <table id="event" class="table table-bordered table-condensed" style="background-color:#f1f4f7">
+                                                 <tbody>
+                                                     <tr>
+                                                         <td align="center" style="vertical-align:middle" rowspan="2">
+-                                                            <label class="control-label">Welcome</label>
++                                                            <label class="control-label">{% trans "Welcome" %}</label>
+                                                         </td>
+                                                         <td align="center" style="vertical-align:middle">
+-                                                            <label class="control-label">Relay 0</label>
++                                                            <label class="control-label">{% trans "Relay" %} 0</label>
+                                                         </td>
+                                                         <td align="center" style="vertical-align:middle">
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="None" name="WelcomeR0Action">None
++                                                                <input type="radio" value="None" name="WelcomeR0Action">{% trans "None" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="On" name="WelcomeR0Action">On
++                                                                <input type="radio" value="On" name="WelcomeR0Action">{% trans "On" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Off" name="WelcomeR0Action">Off
++                                                                <input type="radio" value="Off" name="WelcomeR0Action">{% trans "Off" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Pulse" name="WelcomeR0Action">Pulse
++                                                                <input type="radio" value="Pulse" name="WelcomeR0Action">{% trans "Pulse" %}
+                                                             </label>
+                                                             <div class="col-sm-3">
+                                                                 <select class="form-control" name="WelcomeR0Pulse">
+-                                                                    <option value="1">1 Sec</option>
+-                                                                    <option value="3">3 Sec</option>
+-                                                                    <option value="5">5 Sec</option>
++                                                                    <option value="1">1 {% trans "Sec" %}</option>
++                                                                    <option value="3">3 {% trans "Sec" %}</option>
++                                                                    <option value="5">5 {% trans "Sec" %}</option>
+                                                                 </select>
+                                                             </div>
+                                                         </td>
+                                                     </tr>
+                                                     <tr>
+                                                         <td align="center" style="vertical-align:middle">
+-                                                            <label class="control-label">Relay 1</label>
++                                                            <label class="control-label">{% trans "Relay" %} 1</label>
+                                                         </td>
+                                                         <td align="center" style="vertical-align:middle">
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="None" name="WelcomeR1Action">None
++                                                                <input type="radio" value="None" name="WelcomeR1Action">{% trans "None" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="On" name="WelcomeR1Action">On
++                                                                <input type="radio" value="On" name="WelcomeR1Action">{% trans "On" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Off" name="WelcomeR1Action">Off
++                                                                <input type="radio" value="Off" name="WelcomeR1Action">{% trans "Off" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Pulse" name="WelcomeR1Action">Pulse
++                                                                <input type="radio" value="Pulse" name="WelcomeR1Action">{% trans "Pulse" %}
+                                                             </label>
+                                                             <div class="col-sm-3">
+                                                                 <select class="form-control" name="WelcomeR1Pulse">
+-                                                                    <option value="1">1 Sec</option>
+-                                                                    <option value="3">3 Sec</option>
+-                                                                    <option value="5">5 Sec</option>
++                                                                    <option value="1">1 {% trans "Sec" %}</option>
++                                                                    <option value="3">3 {% trans "Sec" %}</option>
++                                                                    <option value="5">5 {% trans "Sec" %}</option>
+                                                                 </select>
+                                                             </div>
+                                                         </td>
+                                                     </tr>
+                                                     <tr>
+                                                         <td align="center" style="vertical-align:middle" rowspan="2">
+-                                                            <label class="control-label">Access Denied</label>
++                                                            <label class="control-label">{% trans "Access Denied" %}</label>
+                                                         </td>
+                                                         <td align="center" style="vertical-align:middle">
+-                                                            <label class="control-label">Relay 0</label>
++                                                            <label class="control-label">{% trans "Relay" %} 0</label>
+                                                         </td>
+                                                         <td align="center" style="vertical-align:middle">
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="None" name="AccessDeniedR0Action">None
++                                                                <input type="radio" value="None" name="AccessDeniedR0Action">{% trans "None" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="On" name="AccessDeniedR0Action">On
++                                                                <input type="radio" value="On" name="AccessDeniedR0Action">{% trans "On" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Off" name="AccessDeniedR0Action">Off
++                                                                <input type="radio" value="Off" name="AccessDeniedR0Action">{% trans "Off" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Pulse" name="AccessDeniedR0Action">Pulse
++                                                                <input type="radio" value="Pulse" name="AccessDeniedR0Action">{% trans "Pulse" %}
+                                                             </label>
+                                                             <div class="col-sm-3">
+                                                                 <select class="form-control" name="AccessDeniedR0Pulse">
+-                                                                    <option value="1">1 Sec</option>
+-                                                                    <option value="3">3 Sec</option>
+-                                                                    <option value="5">5 Sec</option>
++                                                                    <option value="1">1 {% trans "Sec" %}</option>
++                                                                    <option value="3">3 {% trans "Sec" %}</option>
++                                                                    <option value="5">5 {% trans "Sec" %}</option>
+                                                                 </select>
+                                                             </div>
+                                                         </td>
+                                                     </tr>
+                                                     <tr>
+                                                         <td align="center" style="vertical-align:middle">
+-                                                            <label class="control-label">Relay 1</label>
++                                                            <label class="control-label">{% trans "Relay" %} 1</label>
+                                                         </td>
+                                                         <td align="center" style="vertical-align:middle">
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="None" name="AccessDeniedR1Action">None
++                                                                <input type="radio" value="None" name="AccessDeniedR1Action">{% trans "None" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="On" name="AccessDeniedR1Action">On
++                                                                <input type="radio" value="On" name="AccessDeniedR1Action">{% trans "On" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Off" name="AccessDeniedR1Action">Off
++                                                                <input type="radio" value="Off" name="AccessDeniedR1Action">{% trans "Off" %}
+                                                             </label>
+                                                             <label class="col-sm-2 radio-inline">
+-                                                                <input type="radio" value="Pulse" name="AccessDeniedR1Action">Pulse
++                                                                <input type="radio" value="Pulse" name="AccessDeniedR1Action">{% trans "Pulse" %}
+                                                             </label>
+                                                             <div class="col-sm-3">
+                                                                 <select class="form-control" name="AccessDeniedR1Pulse">
+-                                                                    <option value="1">1 Sec</option>
+-                                                                    <option value="3">3 Sec</option>
+-                                                                    <option value="5">5 Sec</option>
++                                                                    <option value="1">1 {% trans "Sec" %}</option>
++                                                                    <option value="3">3 {% trans "Sec" %}</option>
++                                                                    <option value="5">5 {% trans "Sec" %}</option>
+                                                                 </select>
+                                                             </div>
+                                                         </td>
+@@ -168,33 +177,33 @@
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Time out :</label>
++                                        <label class="col-md-3 control-label">{% trans "Time out" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Timeout">
+-                                                <option value="10">10 Seconds</option>
+-                                                <option value="30">30 Seconds</option>
+-                                                <option value="60">60 Seconds</option>
++                                                <option value="10">10 {% trans "Seconds" %}</option>
++                                                <option value="30">30 {% trans "Seconds" %}</option>
++                                                <option value="60">60 {% trans "Seconds" %}</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Screen saver :</label>
++                                        <label class="col-md-3 control-label">{% trans "Screen saver" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="ScreenSaver">
+-                                                <option value="5">5 Minutes</option>
+-                                                <option value="30">30 Minutes</option>
+-                                                <option value="60">60 Minutes</option>
++                                                <option value="5">5 {% trans "Minutes" %}</option>
++                                                <option value="30">30 {% trans "Minutes" %}</option>
++                                                <option value="60">60 {% trans "Minutes" %}</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">NTP Server :</label>
++                                        <label class="col-md-3 control-label">{% trans "NTP Server" %} :</label>
+                                         <div class="col-md-3">
+-                                            <input type="text" class="form-control" value="{{obj.NTP}}" placeholder="118.163.81.61" name="NTP">
++                                            <input type="text" class="form-control" value="{{obj.NTP}}" placeholder="118.163.81.61" title="118.163.81.61" name="NTP" AutoComplete="Off" pattern="((25[0-5]|2[0-4]\d|1\d\d|\d{1,2})(\.(25[0-5]|2[0-4]\d|1\d\d|\d{1,2})){3})?" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "Please input the correct IP address format of NTP server" %}`)">
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Timezone :</label>
++                                        <label class="col-md-3 control-label">{% trans "Timezone" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Timezone">
+                                                 <option value="(UTC-11:00) Midway Island, Samoa">(UTC-11:00) Midway Island, Samoa</option>
+@@ -256,35 +265,35 @@
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Audio :</label>
++                                        <label class="col-md-3 control-label">{% trans "Audio" %} :</label>
+                                         <div class="checkbox col-md-3">
+                                             <label>
+-                                                <input type="checkbox" name="Audio">Enable
++                                                <input type="checkbox" name="Audio">{% trans "Enable" %}
+                                             </label>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Face Bio score :</label>
++                                        <label class="col-md-3 control-label">{% trans "Face Bio score" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="FaceBioScore">
+-                                                <option value="Low">Low</option>
+-                                                <option value="Medium">Medium</option>
+-                                                <option value="High">High</option>
++                                                <option value="Low">{% trans "Low" %}</option>
++                                                <option value="Medium">{% trans "Medium" %}</option>
++                                                <option value="High">{% trans "High" %}</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Finger Bio score :</label>
++                                        <label class="col-md-3 control-label">{% trans "Finger Bio score" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="FingerBioScore">
+-                                                <option value="Low">Low</option>
+-                                                <option value="Medium">Medium</option>
+-                                                <option value="High">High</option>
++                                                <option value="Low">{% trans "Low" %}</option>
++                                                <option value="Medium">{% trans "Medium" %}</option>
++                                                <option value="High">{% trans "High" %}</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Multi-language :</label>
++                                        <label class="col-md-3 control-label">{% trans "Multi-language" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Language">
+                                                 <option value="en">{% trans "en" %}</option>
+@@ -293,14 +302,12 @@
+                                             </select>
+                                         </div>
+                                     </div>
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <button type="button" class="btn btn-default" onclick="location.href='/device_list/'">{% trans "Back" %}</button>
++                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="form-actions">
+-                                <div class="col-md-offset-3 col-md-9">
+-                                    <a class="btn default" onclick="location.href='/device_list'">{% trans "Back" %}</a>
+-                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+-                                </div>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+@@ -309,6 +316,20 @@
+ 
+         {% load static %}
+         <script>
++        function typeSwitch() {
++            if ($('select[name="Type"]').val() == 'Register') {
++                $('#event').find('input, select').prop('disabled', true);
++                $('select[name="Model"], select[name="Timeout"]').prop('disabled', true);
++            } else {
++                $('#event').find('input, select').prop('disabled', false);
++                $('select[name="Model"], select[name="Timeout"]').prop('disabled', false);
++            }
++        }
++
++        $('select[name="Type"]').change(function() {
++            typeSwitch();
++        });
++
+         //For getting CSRF token
+         function getCookie(name) {
+             var cookieValue = null;
+@@ -328,6 +349,7 @@
+         }
+ 
+         function onSaveClick(){
++            var Type = $('select[name=Type]').val();
+             var Model = $('select[name=Model]').val();
+             var WelcomeR0Action = $('input[name=WelcomeR0Action]:checked').val();
+             var WelcomeR0Pulse = $('select[name=WelcomeR0Pulse]').val();
+@@ -361,6 +383,7 @@
+                 data: {
+                     csrfmiddlewaretoken : getCookie('csrftoken'),
+                     'OId': {{obj|safe}}.OId,
++                    'Type': Type,
+                     'Model': Model,
+                     'WelcomeR0Action': WelcomeR0Action,
+                     'WelcomeR0Pulse': WelcomeR0Pulse,
+@@ -392,14 +415,8 @@
+             });
+         }
+ 
+-        $('input').keypress(function(e) {
+-            code = e.keyCode ? e.keyCode : e.which;
+-            if(code == 13) {
+-                e.preventDefault();
+-            }
+-        });
+-
+         $(document).ready(function() {
++            $('select[name="Type"]').val({{obj|safe}}.Type);
+             $('select[name="Model"]').val({{obj|safe}}.Model);
+             $('input[name="WelcomeR0Action"][value=' + {{obj|safe}}.WelcomeR0Action + ']').prop('checked', true);
+             $('select[name="WelcomeR0Pulse"]').val({{obj|safe}}.WelcomeR0Pulse);
+@@ -420,6 +437,7 @@
+             $('select[name="FaceBioScore"]').val({{obj|safe}}.FaceBioScore);
+             $('select[name="FingerBioScore"]').val({{obj|safe}}.FingerBioScore);
+             $('select[name="Language"]').val({{obj|safe}}.Language);
++            typeSwitch();
+         });
+         </script>
+     </body>
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 7e2a71c..39c2562 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -49,6 +49,9 @@
+                         <div class="panel-body">
+                             <table id="DeviceList"></table>
+                         </div>
++                        <div class="panel-footer">
++                            <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
++                        </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Device" %}</p></div>
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 638f4b5..8bb158c 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -49,6 +49,9 @@
+                         <div class="panel-body">
+                             <table id="MemberList"></table>
+                         </div>
++                        <div class="panel-footer">
++                            <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
++                        </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Member" %}</p></div>
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index f4556cf433e00b6746f88681ed17dcb9a93ded4f..fa4f072075e28afc522f287efce67dd0de4b9228 100644
+GIT binary patch
+delta 7971
+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
+YSnpN_w+<|*6+T$ZY^%oYF{sVI0hGzm1^@s6
+
+delta 6460
+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
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 0408cee..5f8b7e0 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 16:12+0800\n"
++"POT-Creation-Date: 2016-09-30 16:16+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -104,8 +104,8 @@ msgid "Device add"
+ msgstr "新增设备"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:173 templates/frusergroup_devices.html.py:141
+-#: templates/user_group_devices.html:141
++#: templates/device_list.html:171 templates/frusergroup_devices.html.py:144
++#: templates/user_group_devices.html:144
+ msgid "Device"
+ msgstr "设备"
+ 
+@@ -114,7 +114,9 @@ msgid "Please input the device name"
+ msgstr "请输入设备名称"
+ 
+ #: templates/device_add.html:42 templates/device_edit.html.py:56
+-msgid "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'"
++msgid ""
++"The device name can only contain 0 to 25 bit of Chinese or English or Number "
++"or '_' or '-'"
+ msgstr "名称只能包含0到25码的中文、英文、数字、'_'、'-'"
+ 
+ #: templates/device_add.html:50
+@@ -122,30 +124,35 @@ msgid "Please input the device MAC-Address"
+ msgstr "请输入MAC地址"
+ 
+ #: templates/device_add.html:50
+-msgid "The MAC-Address can only contain 0 to 32 bit of English or Number or '-'"
+-msgstr "使用者ID只能包含0到32码的英文、数字、'-'"
++msgid ""
++"Please input the correct device MAC-Address format! Only Hexadecimal and '-' "
++"are allowed."
++msgstr "请输入正确的设备MAC-Address格式！使用16进位与'-'"
+ 
+ #: templates/device_add.html:58
+ msgid "Please input the device IP"
+ msgstr "请输入设备IP"
+ 
+ #: templates/device_add.html:58
+-msgid "Please input the correct device IP format!\\nOnly numbers and '.' are allowed."
+-msgstr "请输入正确的设备IP格式！\\n只能包含0到32码的英文、数字、'.'"
++msgid ""
++"Please input the correct device IP format! Only numbers and '.' are allowed."
++msgstr "请输入正确的设备IP格式！使用数字与'.'"
+ 
+ #: templates/device_add.html:62 templates/device_edit.html.py:73
+-#: templates/device_settings.html:300 templates/fruser_add.html.py:77
+-#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:45
+-#: templates/frusergroup_edit.html:62 templates/role_add.html.py:50
+-#: templates/role_permission.html:37 templates/role_rename.html.py:44
+-#: templates/user_add.html:95 templates/user_group_add.html.py:45
+-#: templates/user_group_edit.html:62 templates/user_setting.html.py:118
+-#: templates/user_update.html:96
++#: templates/device_frusergroups.html:50 templates/device_settings.html:306
++#: templates/fruser_add.html.py:77 templates/fruser_edit.html:73
++#: templates/frusergroup_add.html.py:45 templates/frusergroup_devices.html:53
++#: templates/frusergroup_edit.html:62 templates/frusergroup_member.html:53
++#: templates/role_add.html.py:50 templates/role_permission.html:37
++#: templates/role_rename.html.py:44 templates/user_add.html:95
++#: templates/user_group_add.html.py:45 templates/user_group_devices.html:53
++#: templates/user_group_edit.html:62 templates/user_group_members.html:53
++#: templates/user_setting.html.py:118 templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:63 templates/device_edit.html.py:74
+-#: templates/device_settings.html:301 templates/fruser_add.html.py:78
++#: templates/device_settings.html:307 templates/fruser_add.html.py:78
+ #: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:46
+ #: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
+ #: templates/role_add.html:51 templates/role_permission.html.py:38
+@@ -156,25 +163,25 @@ msgstr "返回"
+ msgid "Save"
+ msgstr "储存"
+ 
+-#: templates/device_add.html:113
++#: templates/device_add.html:112
+ msgid "The device is added successfully"
+ msgstr "设备新增成功"
+ 
+-#: templates/device_add.html:116
+-msgid "Fail to add the device"
+-msgstr "新增设备失败"
+-
+-#: templates/device_add.html:119 templates/device_edit.html.py:234
++#: templates/device_add.html:115 templates/device_edit.html.py:248
+ msgid "The device name is duplicated!"
+ msgstr "设备名称已重复！"
+ 
+-#: templates/device_add.html:122
++#: templates/device_add.html:117
+ msgid "The device MAC-Address is duplicated!"
+ msgstr "设备MAC地址已重复！"
+ 
+-#: templates/device_add.html:125
++#: templates/device_add.html:119
+ msgid "The device IP address is duplicated!"
+-msgstr  "设备IP地址已重复！"
++msgstr "设备IP地址已重复！"
++
++#: templates/device_add.html:121
++msgid "Fail to add the device"
++msgstr "新增设备失败"
+ 
+ #: templates/device_edit.html:8 templates/device_edit.html.py:18
+ #: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
+@@ -185,7 +192,7 @@ msgstr "设备修改"
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+ #: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
+ #: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html.py:32 templates/user_group_members.html:33
++#: templates/user_group_edit.html:32 templates/user_group_members.html:33
+ msgid "Imformation"
+ msgstr "一般"
+ 
+@@ -197,15 +204,95 @@ msgstr "FR群组管理"
+ msgid "Device parameter"
+ msgstr "设备参数"
+ 
+-#: templates/device_edit.html:185
++#: templates/device_edit.html:93 templates/device_settings.html.py:40
++msgid "Type"
++msgstr "机种"
++
++#: templates/device_edit.html:100 templates/device_settings.html.py:49
++msgid "Model"
++msgstr "模式"
++
++#: templates/device_edit.html:106 templates/device_settings.html.py:60
++msgid "Event"
++msgstr "事件"
++
++#: templates/device_edit.html:109 templates/device_settings.html.py:66
++msgid "Welcome"
++msgstr "允许进入"
++
++#: templates/device_edit.html:113 templates/device_edit.html.py:115
++#: templates/device_edit.html:119 templates/device_edit.html.py:121
++#: templates/device_edit.html:131 templates/device_edit.html.py:133
++#: templates/device_edit.html:137 templates/device_edit.html.py:139
++#: templates/device_settings.html:69 templates/device_settings.html.py:95
++#: templates/device_settings.html:124 templates/device_settings.html.py:150
++msgid "Relay"
++msgstr "开关"
++
++#: templates/device_edit.html:113 templates/device_edit.html.py:119
++#: templates/device_edit.html:131 templates/device_edit.html.py:137
++msgid "pulse"
++msgstr "延后"
++
++#: templates/device_edit.html:113 templates/device_edit.html.py:119
++#: templates/device_edit.html:131 templates/device_edit.html.py:137
++msgid "sec"
++msgstr "秒"
++
++#: templates/device_edit.html:127 templates/device_settings.html.py:121
++msgid "Access Denied"
++msgstr "权限不足"
++
++#: templates/device_edit.html:147 templates/device_settings.html.py:180
++msgid "Time out"
++msgstr "逾时"
++
++#: templates/device_edit.html:149 templates/device_settings.html.py:183
++#: templates/device_settings.html:184 templates/device_settings.html.py:185
++msgid "Seconds"
++msgstr "秒"
++
++#: templates/device_edit.html:154 templates/device_settings.html.py:190
++msgid "Screen saver"
++msgstr "萤幕保护"
++
++#: templates/device_edit.html:156
++msgid "minutes"
++msgstr "分钟"
++
++#: templates/device_edit.html:160 templates/device_settings.html.py:200
++msgid "NTP Server"
++msgstr "NTP 服务器"
++
++#: templates/device_edit.html:166 templates/device_settings.html.py:206
++msgid "Timezone"
++msgstr "时区"
++
++#: templates/device_edit.html:172 templates/device_settings.html.py:268
++msgid "Audio"
++msgstr "音效"
++
++#: templates/device_edit.html:178 templates/device_settings.html.py:276
++msgid "Face Bio score"
++msgstr "脸部辨识分数"
++
++#: templates/device_edit.html:184 templates/device_settings.html.py:286
++msgid "Finger Bio score"
++msgstr "指纹辨识分数"
++
++#: templates/device_edit.html:190 templates/device_settings.html.py:296
++msgid "Multi-language"
++msgstr "语言"
++
++#: templates/device_edit.html:199
+ msgid "Parameter Settings"
+ msgstr "设定参数"
+ 
+-#: templates/device_edit.html:228
++#: templates/device_edit.html:243
+ msgid "The device name is changed successfully"
+ msgstr "设备名称变更成功"
+ 
+-#: templates/device_edit.html:231
++#: templates/device_edit.html:246
+ msgid "Fail to change the device name"
+ msgstr "设备名称变更失败"
+ 
+@@ -213,57 +300,57 @@ msgstr "设备名称变更失败"
+ msgid "Group list"
+ msgstr "群组管理"
+ 
+-#: templates/device_frusergroups.html:51
++#: templates/device_frusergroups.html:54
+ msgid "Add New Group"
+ msgstr "建立新群组"
+ 
+-#: templates/device_frusergroups.html:53
++#: templates/device_frusergroups.html:56
+ msgid "Search Group"
+ msgstr "搜寻群组"
+ 
+-#: templates/device_frusergroups.html:57 templates/frusergroup_devices.html:60
+-#: templates/frusergroup_member.html:60 templates/user_group_devices.html:60
+-#: templates/user_group_members.html:60
++#: templates/device_frusergroups.html:60 templates/frusergroup_devices.html:63
++#: templates/frusergroup_member.html:63 templates/user_group_devices.html:63
++#: templates/user_group_members.html:63
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:99
++#: templates/device_frusergroups.html:102
+ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/device_frusergroups.html:107 templates/device_list.html.py:119
++#: templates/device_frusergroups.html:110 templates/device_list.html.py:119
+ #: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
+-#: templates/role_list.html:121 templates/user_group_devices.html.py:110
+-#: templates/user_group_list.html:90 templates/user_group_members.html:110
++#: templates/role_list.html:121 templates/user_group_devices.html.py:113
++#: templates/user_group_list.html:90 templates/user_group_members.html:113
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "删除"
+ 
+-#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:114
++#: templates/device_frusergroups.html:141 templates/fruser_list.html.py:114
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+ msgid "Group"
+ msgstr "群组"
+ 
+-#: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+-#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:167
+-#: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+-#: templates/user_group_devices.html:167 templates/user_group_list.html:116
+-#: templates/user_group_members.html:167 templates/user_list.html.py:137
++#: templates/device_frusergroups.html:167 templates/device_list.html.py:171
++#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:170
++#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:115
++#: templates/user_group_devices.html:170 templates/user_group_list.html:116
++#: templates/user_group_members.html:170 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+ msgstr "您是否确认要删除"
+ 
+-#: templates/device_frusergroups.html:164
++#: templates/device_frusergroups.html:167
+ msgid "from this device"
+ msgstr "设备"
+ 
+-#: templates/device_frusergroups.html:183 templates/frusergroups_list.html:131
++#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:131
+ #: templates/user_group_list.html:133
+ msgid "Fail to delete group"
+ msgstr "删除群组失败"
+ 
+-#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:101
++#: templates/device_frusergroups.html:217 templates/frusergroup_add.html:101
+ #: templates/user_group_add.html.py:101
+ msgid "Fail to add group"
+ msgstr "新增群组失败"
+@@ -272,8 +359,8 @@ msgstr "新增群组失败"
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:44 templates/role_permission.html:80
+-#: templates/user_group_devices.html.py:39 templates/user_group_edit.html:38
+-#: templates/user_group_members.html.py:39
++#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html:39
+ msgid "Device List"
+ msgstr "设备管理"
+ 
+@@ -312,8 +399,8 @@ msgstr "设定"
+ msgid "Fail to accept device"
+ msgstr "接受设备失败"
+ 
+-#: templates/device_list.html:190 templates/frusergroup_devices.html.py:185
+-#: templates/user_group_devices.html:185
++#: templates/device_list.html:188 templates/frusergroup_devices.html.py:188
++#: templates/user_group_devices.html:188
+ msgid "Fail to delete device"
+ msgstr "删除设备失败"
+ 
+@@ -326,23 +413,101 @@ msgstr "设备设定"
+ msgid "Device parameter setup"
+ msgstr "建立设备参数"
+ 
+-#: templates/device_settings.html:290
++#: templates/device_settings.html:43
++msgid "Register"
++msgstr "注册机"
++
++#: templates/device_settings.html:44
++msgid "Recognition"
++msgstr "辨识机"
++
++#: templates/device_settings.html:52
++msgid "FR"
++msgstr "人脸辨识"
++
++#: templates/device_settings.html:53
++msgid "RFID+FR"
++msgstr "RFID卡+人脸辨识"
++
++#: templates/device_settings.html:54
++msgid "FR+FP"
++msgstr "人脸辨识+指纹辨识"
++
++#: templates/device_settings.html:55
++msgid "RFID+FR+FP"
++msgstr "RFID卡+人脸辨识+指纹辨识"
++
++#: templates/device_settings.html:73 templates/device_settings.html.py:99
++#: templates/device_settings.html:128 templates/device_settings.html.py:154
++msgid "None"
++msgstr "无效"
++
++#: templates/device_settings.html:76 templates/device_settings.html.py:102
++#: templates/device_settings.html:131 templates/device_settings.html.py:157
++msgid "On"
++msgstr "启用"
++
++#: templates/device_settings.html:79 templates/device_settings.html.py:105
++#: templates/device_settings.html:134 templates/device_settings.html.py:160
++msgid "Off"
++msgstr "关闭"
++
++#: templates/device_settings.html:82 templates/device_settings.html.py:108
++#: templates/device_settings.html:137 templates/device_settings.html.py:163
++msgid "Pulse"
++msgstr "持续"
++
++#: templates/device_settings.html:86 templates/device_settings.html.py:87
++#: templates/device_settings.html:88 templates/device_settings.html.py:112
++#: templates/device_settings.html:113 templates/device_settings.html.py:114
++#: templates/device_settings.html:141 templates/device_settings.html.py:142
++#: templates/device_settings.html:143 templates/device_settings.html.py:167
++#: templates/device_settings.html:168 templates/device_settings.html.py:169
++msgid "Sec"
++msgstr "秒"
++
++#: templates/device_settings.html:193 templates/device_settings.html.py:194
++#: templates/device_settings.html:195
++msgid "Minutes"
++msgstr "分钟"
++
++#: templates/device_settings.html:202
++msgid "Please input the correct IP address format of NTP server"
++msgstr "请输入NTP伺服器的正确IP格式"
++
++#: templates/device_settings.html:271
++msgid "Enable"
++msgstr "启用"
++
++#: templates/device_settings.html:279 templates/device_settings.html.py:289
++msgid "Low"
++msgstr "低"
++
++#: templates/device_settings.html:280 templates/device_settings.html.py:290
++msgid "Medium"
++msgstr "中"
++
++#: templates/device_settings.html:281 templates/device_settings.html.py:291
++msgid "High"
++msgstr "高"
++
++#: templates/device_settings.html:299
+ msgid "en"
+ msgstr "英文"
+ 
+-#: templates/device_settings.html:291
++#: templates/device_settings.html:300
+ msgid "zh-cn"
+ msgstr "简体中文"
+ 
+-#: templates/device_settings.html:292
++#: templates/device_settings.html:301
+ msgid "zh-tw"
+ msgstr "繁体中文"
+ 
+-#: templates/device_settings.html:384
++#: templates/device_settings.html:407
+ msgid "Device setting successfully"
+ msgstr "设备设定成功"
+ 
+-#: templates/device_settings.html:387
++#: templates/device_settings.html:410
+ msgid "Fail to setting device"
+ msgstr "设备设定失败"
+ 
+@@ -370,10 +535,10 @@ msgid ""
+ msgstr "使用者ID只能包含1到16码的英文、数字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:102
+-#: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
+-#: templates/user_add.html.py:48 templates/user_group_devices.html:102
+-#: templates/user_group_members.html:102 templates/user_list.html.py:89
++#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:105
++#: templates/frusergroup_member.html:105 templates/fruserlog_list.html:100
++#: templates/user_add.html.py:48 templates/user_group_devices.html:105
++#: templates/user_group_members.html:105 templates/user_list.html.py:89
+ #: templates/user_setting.html:54 templates/user_update.html.py:49
+ msgid "Name"
+ msgstr "姓名"
+@@ -545,7 +710,7 @@ msgstr "FR使用者群组修改"
+ 
+ #: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+-#: templates/user_group_edit.html.py:35 templates/user_group_members.html:36
++#: templates/user_group_edit.html:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成员管理"
+ 
+@@ -553,29 +718,30 @@ msgstr "成员管理"
+ msgid "Device list"
+ msgstr "设备管理"
+ 
+-#: templates/frusergroup_devices.html:54 templates/user_group_devices.html:54
++#: templates/frusergroup_devices.html:57 templates/user_group_devices.html:57
+ msgid "Add New Device"
+ msgstr "新增设备"
+ 
+-#: templates/frusergroup_devices.html:56 templates/user_group_devices.html:56
++#: templates/frusergroup_devices.html:59 templates/user_group_devices.html:59
+ msgid "Search Device"
+ msgstr "搜寻设备"
+ 
+-#: templates/frusergroup_devices.html:167 templates/frusergroup_member.html:167
+-#: templates/user_group_devices.html:167 templates/user_group_list.html:116
+-#: templates/user_group_members.html:167
++#: templates/frusergroup_devices.html:170
++#: templates/frusergroup_member.html:170 templates/user_group_devices.html:170
++#: templates/user_group_list.html:116 templates/user_group_members.html:170
+ msgid "from this group"
+ msgstr "群组"
+ 
+-#: templates/frusergroup_devices.html:216 templates/user_group_devices.html:216
++#: templates/frusergroup_devices.html:219
++#: templates/user_group_devices.html:219
+ msgid "Fail to add device"
+ msgstr "新增设备失败"
+ 
+-#: templates/frusergroup_edit.html:109 templates/user_group_edit.html.py:109
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
+ msgid "Change group name successfully"
+ msgstr "群组名称变更成功"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html.py:112
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
+ msgid "Fail to change group name"
+ msgstr "变更群组名称失败"
+ 
+@@ -587,24 +753,24 @@ msgstr "FR群组成员管理"
+ msgid "Member list"
+ msgstr "成员管理"
+ 
+-#: templates/frusergroup_member.html:54 templates/user_group_members.html:54
++#: templates/frusergroup_member.html:57 templates/user_group_members.html:57
+ msgid "Add New Member"
+ msgstr "建立新成员"
+ 
+-#: templates/frusergroup_member.html:56 templates/user_group_members.html:56
++#: templates/frusergroup_member.html:59 templates/user_group_members.html:59
+ msgid "Search User"
+ msgstr "搜寻使用者"
+ 
+-#: templates/frusergroup_member.html:141 templates/user_group_members.html:141
++#: templates/frusergroup_member.html:144 templates/user_group_members.html:144
+ msgid "User"
+ msgstr "使用者"
+ 
+-#: templates/frusergroup_member.html:185 templates/user_group_members.html:186
++#: templates/frusergroup_member.html:188 templates/user_group_members.html:189
+ #: templates/user_list.html.py:158
+ msgid "Fail to delete user"
+ msgstr "删除使用者失败"
+ 
+-#: templates/frusergroup_member.html:216 templates/user_group_members.html:217
++#: templates/frusergroup_member.html:219 templates/user_group_members.html:220
+ msgid "Fail to add user"
+ msgstr "使用者新增失败"
+ 
+@@ -1252,6 +1418,3 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失败"
+-
+-#~ msgid "please enter correct information"
+-#~ msgstr "请输入正确的讯息"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 0742e5a39edd365f35575b8a03707a19011e9aaa..29d0c70fb6b59e98a82501ec93319e7417659d04 100644
+GIT binary patch
+delta 7997
+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
+Q)xyUPG24oMTlR19e?Rfz)&Kwi
+
+delta 6462
+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
+Ca|0j%
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index ab68280..5a98e87 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-29 16:12+0800\n"
++"POT-Creation-Date: 2016-09-30 16:16+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -104,8 +104,8 @@ msgid "Device add"
+ msgstr "新增設備"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:173 templates/frusergroup_devices.html.py:141
+-#: templates/user_group_devices.html:141
++#: templates/device_list.html:171 templates/frusergroup_devices.html.py:144
++#: templates/user_group_devices.html:144
+ msgid "Device"
+ msgstr "設備"
+ 
+@@ -114,7 +114,9 @@ msgid "Please input the device name"
+ msgstr "請輸入設備名稱"
+ 
+ #: templates/device_add.html:42 templates/device_edit.html.py:56
+-msgid "The device name can only contain 0 to 25 bit of Chinese or English or Number or '_' or '-'"
++msgid ""
++"The device name can only contain 0 to 25 bit of Chinese or English or Number "
++"or '_' or '-'"
+ msgstr "名稱只能包含0到25碼的中文、英文、數字、'_'、'-'"
+ 
+ #: templates/device_add.html:50
+@@ -122,31 +124,35 @@ msgid "Please input the device MAC-Address"
+ msgstr "請輸入設備MAC位址"
+ 
+ #: templates/device_add.html:50
+-
+-msgid "The MAC-Address can only contain 0 to 32 bit of English or Number or '-'"
+-msgstr "MAC位址只能包含0到32碼的英文、數字、'-'"
++msgid ""
++"Please input the correct device MAC-Address format! Only Hexadecimal and '-' "
++"are allowed."
++msgstr "請輸入正確的MAC-Address格式！使用16進位與'-'"
+ 
+ #: templates/device_add.html:58
+ msgid "Please input the device IP"
+ msgstr "請輸入設備IP"
+ 
+ #: templates/device_add.html:58
+-msgid "Please input the correct device IP format!\\nOnly numbers and '.' are allowed."
+-msgstr "請輸入正確的IP格式！只能包含英文、數字、'.'"
++msgid ""
++"Please input the correct device IP format! Only numbers and '.' are allowed."
++msgstr "請輸入正確的設備IP格式！使用數字與'.'"
+ 
+ #: templates/device_add.html:62 templates/device_edit.html.py:73
+-#: templates/device_settings.html:300 templates/fruser_add.html.py:77
+-#: templates/fruser_edit.html:73 templates/frusergroup_add.html.py:45
+-#: templates/frusergroup_edit.html:62 templates/role_add.html.py:50
+-#: templates/role_permission.html:37 templates/role_rename.html.py:44
+-#: templates/user_add.html:95 templates/user_group_add.html.py:45
+-#: templates/user_group_edit.html:62 templates/user_setting.html.py:118
+-#: templates/user_update.html:96
++#: templates/device_frusergroups.html:50 templates/device_settings.html:306
++#: templates/fruser_add.html.py:77 templates/fruser_edit.html:73
++#: templates/frusergroup_add.html.py:45 templates/frusergroup_devices.html:53
++#: templates/frusergroup_edit.html:62 templates/frusergroup_member.html:53
++#: templates/role_add.html.py:50 templates/role_permission.html:37
++#: templates/role_rename.html.py:44 templates/user_add.html:95
++#: templates/user_group_add.html.py:45 templates/user_group_devices.html:53
++#: templates/user_group_edit.html:62 templates/user_group_members.html:53
++#: templates/user_setting.html.py:118 templates/user_update.html:96
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:63 templates/device_edit.html.py:74
+-#: templates/device_settings.html:301 templates/fruser_add.html.py:78
++#: templates/device_settings.html:307 templates/fruser_add.html.py:78
+ #: templates/fruser_edit.html:74 templates/frusergroup_add.html.py:46
+ #: templates/frusergroup_edit.html:63 templates/logsetting.html.py:106
+ #: templates/role_add.html:51 templates/role_permission.html.py:38
+@@ -157,26 +163,26 @@ msgstr "返回"
+ msgid "Save"
+ msgstr "儲存"
+ 
+-#: templates/device_add.html:113
++#: templates/device_add.html:112
+ msgid "The device is added successfully"
+ msgstr "設備新增成功"
+ 
+-#: templates/device_add.html:116
+-msgid "Fail to add the device"
+-msgstr "新增設備失敗"
+-
+-#: templates/device_add.html:119 templates/device_edit.html.py:234
++#: templates/device_add.html:115 templates/device_edit.html.py:248
+ msgid "The device name is duplicated!"
+ msgstr "設備名稱已重複！"
+ 
+-#: templates/device_add.html:122
++#: templates/device_add.html:117
+ msgid "The device MAC-Address is duplicated!"
+ msgstr "設備MAC位址已重複！"
+ 
+-#: templates/device_add.html:125
++#: templates/device_add.html:119
+ msgid "The device IP address is duplicated!"
+ msgstr "設備IP位址已重複！"
+ 
++#: templates/device_add.html:121
++msgid "Fail to add the device"
++msgstr "新增設備失敗"
++
+ #: templates/device_edit.html:8 templates/device_edit.html.py:18
+ #: templates/device_edit.html:25 templates/device_frusergroups.html.py:10
+ #: templates/device_frusergroups.html:18 templates/device_frusergroups.html:25
+@@ -186,7 +192,7 @@ msgstr "設備修改"
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+ #: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
+ #: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html.py:32 templates/user_group_members.html:33
++#: templates/user_group_edit.html:32 templates/user_group_members.html:33
+ msgid "Imformation"
+ msgstr "一般"
+ 
+@@ -198,15 +204,95 @@ msgstr "FR群組管理"
+ msgid "Device parameter"
+ msgstr "設備參數"
+ 
+-#: templates/device_edit.html:185
++#: templates/device_edit.html:93 templates/device_settings.html.py:40
++msgid "Type"
++msgstr "機種"
++
++#: templates/device_edit.html:100 templates/device_settings.html.py:49
++msgid "Model"
++msgstr "模式"
++
++#: templates/device_edit.html:106 templates/device_settings.html.py:60
++msgid "Event"
++msgstr "事件"
++
++#: templates/device_edit.html:109 templates/device_settings.html.py:66
++msgid "Welcome"
++msgstr "允許進入"
++
++#: templates/device_edit.html:113 templates/device_edit.html.py:115
++#: templates/device_edit.html:119 templates/device_edit.html.py:121
++#: templates/device_edit.html:131 templates/device_edit.html.py:133
++#: templates/device_edit.html:137 templates/device_edit.html.py:139
++#: templates/device_settings.html:69 templates/device_settings.html.py:95
++#: templates/device_settings.html:124 templates/device_settings.html.py:150
++msgid "Relay"
++msgstr "開關"
++
++#: templates/device_edit.html:113 templates/device_edit.html.py:119
++#: templates/device_edit.html:131 templates/device_edit.html.py:137
++msgid "pulse"
++msgstr "延後"
++
++#: templates/device_edit.html:113 templates/device_edit.html.py:119
++#: templates/device_edit.html:131 templates/device_edit.html.py:137
++msgid "sec"
++msgstr "秒"
++
++#: templates/device_edit.html:127 templates/device_settings.html.py:121
++msgid "Access Denied"
++msgstr "權限不足"
++
++#: templates/device_edit.html:147 templates/device_settings.html.py:180
++msgid "Time out"
++msgstr "逾時"
++
++#: templates/device_edit.html:149 templates/device_settings.html.py:183
++#: templates/device_settings.html:184 templates/device_settings.html.py:185
++msgid "Seconds"
++msgstr "秒"
++
++#: templates/device_edit.html:154 templates/device_settings.html.py:190
++msgid "Screen saver"
++msgstr "螢幕保護"
++
++#: templates/device_edit.html:156
++msgid "minutes"
++msgstr "分鐘"
++
++#: templates/device_edit.html:160 templates/device_settings.html.py:200
++msgid "NTP Server"
++msgstr "NTP 伺服器"
++
++#: templates/device_edit.html:166 templates/device_settings.html.py:206
++msgid "Timezone"
++msgstr "時區"
++
++#: templates/device_edit.html:172 templates/device_settings.html.py:268
++msgid "Audio"
++msgstr "音效"
++
++#: templates/device_edit.html:178 templates/device_settings.html.py:276
++msgid "Face Bio score"
++msgstr "臉部辨識分數"
++
++#: templates/device_edit.html:184 templates/device_settings.html.py:286
++msgid "Finger Bio score"
++msgstr "指紋辨識分數"
++
++#: templates/device_edit.html:190 templates/device_settings.html.py:296
++msgid "Multi-language"
++msgstr "語言"
++
++#: templates/device_edit.html:199
+ msgid "Parameter Settings"
+ msgstr "設定參數"
+ 
+-#: templates/device_edit.html:228
++#: templates/device_edit.html:243
+ msgid "The device name is changed successfully"
+ msgstr "設備名稱變更成功"
+ 
+-#: templates/device_edit.html:231
++#: templates/device_edit.html:246
+ msgid "Fail to change the device name"
+ msgstr "設備名稱變更失敗"
+ 
+@@ -214,57 +300,57 @@ msgstr "設備名稱變更失敗"
+ msgid "Group list"
+ msgstr "群組管理"
+ 
+-#: templates/device_frusergroups.html:51
++#: templates/device_frusergroups.html:54
+ msgid "Add New Group"
+ msgstr "建立新群組"
+ 
+-#: templates/device_frusergroups.html:53
++#: templates/device_frusergroups.html:56
+ msgid "Search Group"
+ msgstr "搜尋群組"
+ 
+-#: templates/device_frusergroups.html:57 templates/frusergroup_devices.html:60
+-#: templates/frusergroup_member.html:60 templates/user_group_devices.html:60
+-#: templates/user_group_members.html:60
++#: templates/device_frusergroups.html:60 templates/frusergroup_devices.html:63
++#: templates/frusergroup_member.html:63 templates/user_group_devices.html:63
++#: templates/user_group_members.html:63
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:99
++#: templates/device_frusergroups.html:102
+ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/device_frusergroups.html:107 templates/device_list.html.py:119
++#: templates/device_frusergroups.html:110 templates/device_list.html.py:119
+ #: templates/fruser_list.html:133 templates/frusergroups_list.html.py:90
+-#: templates/role_list.html:121 templates/user_group_devices.html.py:110
+-#: templates/user_group_list.html:90 templates/user_group_members.html:110
++#: templates/role_list.html:121 templates/user_group_devices.html.py:113
++#: templates/user_group_list.html:90 templates/user_group_members.html:113
+ #: templates/user_list.html.py:111
+ msgid "Delete"
+ msgstr "刪除"
+ 
+-#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:114
++#: templates/device_frusergroups.html:141 templates/fruser_list.html.py:114
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+ msgid "Group"
+ msgstr "群組"
+ 
+-#: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+-#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:167
+-#: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+-#: templates/user_group_devices.html:167 templates/user_group_list.html:116
+-#: templates/user_group_members.html:167 templates/user_list.html.py:137
++#: templates/device_frusergroups.html:167 templates/device_list.html.py:171
++#: templates/fruser_list.html:195 templates/frusergroup_devices.html.py:170
++#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:115
++#: templates/user_group_devices.html:170 templates/user_group_list.html:116
++#: templates/user_group_members.html:170 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+ msgstr "您是否確認要刪除"
+ 
+-#: templates/device_frusergroups.html:164
++#: templates/device_frusergroups.html:167
+ msgid "from this device"
+ msgstr "設備"
+ 
+-#: templates/device_frusergroups.html:183 templates/frusergroups_list.html:131
++#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:131
+ #: templates/user_group_list.html:133
+ msgid "Fail to delete group"
+ msgstr "刪除群組失敗"
+ 
+-#: templates/device_frusergroups.html:214 templates/frusergroup_add.html:101
++#: templates/device_frusergroups.html:217 templates/frusergroup_add.html:101
+ #: templates/user_group_add.html.py:101
+ msgid "Fail to add group"
+ msgstr "新增群組失敗"
+@@ -273,8 +359,8 @@ msgstr "新增群組失敗"
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:44 templates/role_permission.html:80
+-#: templates/user_group_devices.html.py:39 templates/user_group_edit.html:38
+-#: templates/user_group_members.html.py:39
++#: templates/user_group_devices.html:39 templates/user_group_edit.html:38
++#: templates/user_group_members.html:39
+ msgid "Device List"
+ msgstr "設備管理"
+ 
+@@ -313,8 +399,8 @@ msgstr "設定"
+ msgid "Fail to accept device"
+ msgstr "接受設備失敗"
+ 
+-#: templates/device_list.html:190 templates/frusergroup_devices.html.py:185
+-#: templates/user_group_devices.html:185
++#: templates/device_list.html:188 templates/frusergroup_devices.html.py:188
++#: templates/user_group_devices.html:188
+ msgid "Fail to delete device"
+ msgstr "刪除設備失敗"
+ 
+@@ -327,23 +413,101 @@ msgstr "設備設定"
+ msgid "Device parameter setup"
+ msgstr "建立設備參數"
+ 
+-#: templates/device_settings.html:290
++#: templates/device_settings.html:43
++msgid "Register"
++msgstr "註冊機"
++
++#: templates/device_settings.html:44
++msgid "Recognition"
++msgstr "辨識機"
++
++#: templates/device_settings.html:52
++msgid "FR"
++msgstr "人臉辨識"
++
++#: templates/device_settings.html:53
++msgid "RFID+FR"
++msgstr "RFID卡+人臉辨識"
++
++#: templates/device_settings.html:54
++msgid "FR+FP"
++msgstr "人臉辨識+指紋辨識"
++
++#: templates/device_settings.html:55
++msgid "RFID+FR+FP"
++msgstr "RFID卡+人臉辨識+指紋辨識"
++
++#: templates/device_settings.html:73 templates/device_settings.html.py:99
++#: templates/device_settings.html:128 templates/device_settings.html.py:154
++msgid "None"
++msgstr "無效"
++
++#: templates/device_settings.html:76 templates/device_settings.html.py:102
++#: templates/device_settings.html:131 templates/device_settings.html.py:157
++msgid "On"
++msgstr "啟用"
++
++#: templates/device_settings.html:79 templates/device_settings.html.py:105
++#: templates/device_settings.html:134 templates/device_settings.html.py:160
++msgid "Off"
++msgstr "關閉"
++
++#: templates/device_settings.html:82 templates/device_settings.html.py:108
++#: templates/device_settings.html:137 templates/device_settings.html.py:163
++msgid "Pulse"
++msgstr "持續"
++
++#: templates/device_settings.html:86 templates/device_settings.html.py:87
++#: templates/device_settings.html:88 templates/device_settings.html.py:112
++#: templates/device_settings.html:113 templates/device_settings.html.py:114
++#: templates/device_settings.html:141 templates/device_settings.html.py:142
++#: templates/device_settings.html:143 templates/device_settings.html.py:167
++#: templates/device_settings.html:168 templates/device_settings.html.py:169
++msgid "Sec"
++msgstr "秒"
++
++#: templates/device_settings.html:193 templates/device_settings.html.py:194
++#: templates/device_settings.html:195
++msgid "Minutes"
++msgstr "分鐘"
++
++#: templates/device_settings.html:202
++msgid "Please input the correct IP address format of NTP server"
++msgstr "請輸入NTP伺服器的正確IP格式"
++
++#: templates/device_settings.html:271
++msgid "Enable"
++msgstr "啟用"
++
++#: templates/device_settings.html:279 templates/device_settings.html.py:289
++msgid "Low"
++msgstr "低"
++
++#: templates/device_settings.html:280 templates/device_settings.html.py:290
++msgid "Medium"
++msgstr "中"
++
++#: templates/device_settings.html:281 templates/device_settings.html.py:291
++msgid "High"
++msgstr "高"
++
++#: templates/device_settings.html:299
+ msgid "en"
+ msgstr "英文"
+ 
+-#: templates/device_settings.html:291
++#: templates/device_settings.html:300
+ msgid "zh-cn"
+ msgstr "簡體中文"
+ 
+-#: templates/device_settings.html:292
++#: templates/device_settings.html:301
+ msgid "zh-tw"
+ msgstr "繁體中文"
+ 
+-#: templates/device_settings.html:384
++#: templates/device_settings.html:407
+ msgid "Device setting successfully"
+ msgstr "設備設定成功"
+ 
+-#: templates/device_settings.html:387
++#: templates/device_settings.html:410
+ msgid "Fail to setting device"
+ msgstr "設備設定失敗"
+ 
+@@ -371,10 +535,10 @@ msgid ""
+ msgstr "使用者ID只能包含1到16碼的英文、數字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:102
+-#: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
+-#: templates/user_add.html.py:48 templates/user_group_devices.html:102
+-#: templates/user_group_members.html:102 templates/user_list.html.py:89
++#: templates/fruser_list.html:109 templates/frusergroup_devices.html.py:105
++#: templates/frusergroup_member.html:105 templates/fruserlog_list.html:100
++#: templates/user_add.html.py:48 templates/user_group_devices.html:105
++#: templates/user_group_members.html:105 templates/user_list.html.py:89
+ #: templates/user_setting.html:54 templates/user_update.html.py:49
+ msgid "Name"
+ msgstr "姓名"
+@@ -546,7 +710,7 @@ msgstr "FR使用者群組修改"
+ 
+ #: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+-#: templates/user_group_edit.html.py:35 templates/user_group_members.html:36
++#: templates/user_group_edit.html:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成員管理"
+ 
+@@ -554,29 +718,30 @@ msgstr "成員管理"
+ msgid "Device list"
+ msgstr "設備管理"
+ 
+-#: templates/frusergroup_devices.html:54 templates/user_group_devices.html:54
++#: templates/frusergroup_devices.html:57 templates/user_group_devices.html:57
+ msgid "Add New Device"
+ msgstr "新增設備"
+ 
+-#: templates/frusergroup_devices.html:56 templates/user_group_devices.html:56
++#: templates/frusergroup_devices.html:59 templates/user_group_devices.html:59
+ msgid "Search Device"
+ msgstr "搜尋設備"
+ 
+-#: templates/frusergroup_devices.html:167 templates/frusergroup_member.html:167
+-#: templates/user_group_devices.html:167 templates/user_group_list.html:116
+-#: templates/user_group_members.html:167
++#: templates/frusergroup_devices.html:170
++#: templates/frusergroup_member.html:170 templates/user_group_devices.html:170
++#: templates/user_group_list.html:116 templates/user_group_members.html:170
+ msgid "from this group"
+ msgstr "群組"
+ 
+-#: templates/frusergroup_devices.html:216 templates/user_group_devices.html:216
++#: templates/frusergroup_devices.html:219
++#: templates/user_group_devices.html:219
+ msgid "Fail to add device"
+ msgstr "新增設備失敗"
+ 
+-#: templates/frusergroup_edit.html:109 templates/user_group_edit.html.py:109
++#: templates/frusergroup_edit.html:109 templates/user_group_edit.html:109
+ msgid "Change group name successfully"
+ msgstr "群組名稱變更成功"
+ 
+-#: templates/frusergroup_edit.html:112 templates/user_group_edit.html.py:112
++#: templates/frusergroup_edit.html:112 templates/user_group_edit.html:112
+ msgid "Fail to change group name"
+ msgstr "變更群組名稱失敗"
+ 
+@@ -588,24 +753,24 @@ msgstr "FR群組成員管理"
+ msgid "Member list"
+ msgstr "成員管理"
+ 
+-#: templates/frusergroup_member.html:54 templates/user_group_members.html:54
++#: templates/frusergroup_member.html:57 templates/user_group_members.html:57
+ msgid "Add New Member"
+ msgstr "建立新成員"
+ 
+-#: templates/frusergroup_member.html:56 templates/user_group_members.html:56
++#: templates/frusergroup_member.html:59 templates/user_group_members.html:59
+ msgid "Search User"
+ msgstr "搜尋使用者"
+ 
+-#: templates/frusergroup_member.html:141 templates/user_group_members.html:141
++#: templates/frusergroup_member.html:144 templates/user_group_members.html:144
+ msgid "User"
+ msgstr "使用者"
+ 
+-#: templates/frusergroup_member.html:185 templates/user_group_members.html:186
++#: templates/frusergroup_member.html:188 templates/user_group_members.html:189
+ #: templates/user_list.html.py:158
+ msgid "Fail to delete user"
+ msgstr "刪除使用者失敗"
+ 
+-#: templates/frusergroup_member.html:216 templates/user_group_members.html:217
++#: templates/frusergroup_member.html:219 templates/user_group_members.html:220
+ msgid "Fail to add user"
+ msgstr "使用者新增失敗"
+ 
+@@ -1253,6 +1418,3 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:172
+ msgid "Fail to update User"
+ msgstr "使用者更新失敗"
+-
+-#~ msgid "please enter correct information"
+-#~ msgstr "請輸入正確的訊息"
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index d9adecd..dbb73bb 100644
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -34,8 +34,8 @@
+                         </div>
+                         <div class="panel-footer">
+                             <div>
+-                              <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
+-                              <a class="btn default" onclick="permission_save()">{% trans "Save" %}</a>
++                                <button type="button" class="btn btn-default" onclick="location.href='/role_list/'">{% trans "Back" %}</button>
++                                <button class="btn btn-default" onclick="permission_save()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index 35eb511..c6020c5 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -49,6 +49,9 @@
+                         <div class="panel-body">
+                             <table id="DeviceList"></table>
+                         </div>
++                        <div class="panel-footer">
++                            <button type="button" class="btn btn-default" onclick="location.href='/user_group_list/'">{% trans "Back" %}</button>
++                        </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Device" %}</p></div>
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index f8f7955..3a160ca 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -49,6 +49,9 @@
+                         <div class="panel-body">
+                             <table id="MemberList"></table>
+                         </div>
++                        <div class="panel-footer">
++                            <button type="button" class="btn btn-default" onclick="location.href='/user_group_list/'">{% trans "Back" %}</button>
++                        </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Member" %}</p></div>
+-- 
+1.9.1
+

@@ -1,0 +1,96 @@
+From ff688df3ca76f282531d319b9a2db0428ca3fece Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 12 Jul 2016 19:08:35 +0800
+Subject: [PATCH 175/443] Fix web search bug
+
+Bug fix - data duplicate when seaching same word of columns.
+---
+ devices/views.py    | 2 +-
+ fruserlogs/views.py | 2 +-
+ frusers/views.py    | 2 +-
+ role/views.py       | 2 +-
+ systemlogs/views.py | 2 +-
+ user/views.py       | 2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index 206a6a2..6f4f8e3 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -37,7 +37,7 @@ def device_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            devices = Devices.objects.filter(Q(MAC__contains = search) | Q(IP__contains = search) | Q(Name__contains = search)).order_by(order)
++            devices = Devices.objects.filter(Q(MAC__contains = search) | Q(IP__contains = search) | Q(Name__contains = search)).distinct().order_by(order)
+         else:
+             devices = Devices.objects.order_by(order)
+         device_count = devices.count()
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index d0a373d..ea2bf6e 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -35,7 +35,7 @@ def fruserlog_data(request):
+     else:
+         order = '-' + request.GET.get('sort', 'LogDateTime')
+     if search:
+-        fruserlogs = Fruserlogs.objects.filter(Q(FRUserId__contains = search) | Q(FRUserName__contains = search) | Q(DeviceName__contains = search)).order_by(order)
++        fruserlogs = Fruserlogs.objects.filter(Q(FRUserId__contains = search) | Q(FRUserName__contains = search) | Q(DeviceName__contains = search)).distinct().order_by(order)
+     else:
+         fruserlogs = Fruserlogs.objects.order_by(order)
+     fruserlog_count = fruserlogs.count()
+diff --git a/frusers/views.py b/frusers/views.py
+index 6b3fa50..c8f7060 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -39,7 +39,7 @@ def fruser_data(request):
+         else:
+             order = '-' + order if order != 'Group' else '-frusergroupmember__GroupOId__Name'
+         if search:
+-            frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).order_by(order)
++            frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).distinct().order_by(order)
+         else:
+             frusers = Frusers.objects.order_by(order)
+         fruser_count = frusers.count()
+diff --git a/role/views.py b/role/views.py
+index d940eeb..6d7bfe7 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -89,7 +89,7 @@ def role_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'CreateDate')
+         if search:
+-            roles = Role.objects.filter(Q(Name__contains = search) | Q(Sort__contains = search) | Q(Category__contains = search)).order_by(order)
++            roles = Role.objects.filter(Q(Name__contains = search) | Q(Sort__contains = search) | Q(Category__contains = search)).distinct().order_by(order)
+         else:
+             roles = Role.objects.order_by(order)
+         role_count = roles.count()
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index a392a0e..469a9e0 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -34,7 +34,7 @@ def systemlog_data(request):
+     else:
+         order = '-' + request.GET.get('sort', 'LogDateTime')
+     if search:
+-        systemlogs = Systemlogs.objects.filter(Q(Category__contains = search) | Q(LogContent__contains = search)).order_by(order)
++        systemlogs = Systemlogs.objects.filter(Q(Category__contains = search) | Q(LogContent__contains = search)).distinct().order_by(order)
+     else:
+         systemlogs = Systemlogs.objects.order_by(order)
+     systemlog_count = systemlogs.count()
+diff --git a/user/views.py b/user/views.py
+index 4ed6c83..e01f13f 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -49,7 +49,7 @@ def user_list_data(request):
+         else:
+             order = '-' + sort.get(request.GET.get('sort'), 'Account')
+         if search:
+-            users = Users.objects.filter(Q(Account__contains = search) | Q(Name__contains = search) | Q(RoleOId__Name__contains = search) | Q(Email__contains = search)).order_by(order)
++            users = Users.objects.filter(Q(Account__contains = search) | Q(Name__contains = search) | Q(RoleOId__Name__contains = search) | Q(Email__contains = search)).distinct().order_by(order)
+         else:
+             users = Users.objects.order_by(order)
+         user_count = users.count()
+-- 
+1.9.1
+

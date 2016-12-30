@@ -1,0 +1,92 @@
+From 2eb21b8b76c730c99d8d86d958d4183aeae38b89 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 29 Dec 2016 16:04:13 +0800
+Subject: [PATCH 440/443] Fix device version check bug.
+
+---
+ api/cron.py    | 24 +++++++++++++++---------
+ api/utility.py | 18 ++++++++++++++++++
+ 2 files changed, 33 insertions(+), 9 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 5469093..7388d82 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -106,33 +106,39 @@ def chk_new_version():
+         # download file
+         FTP_download_file(settings.UPDATE_DIR, settings.FTP_PATH, settings.FTP_FILE_NAME, settings.FTP_HOST,
+                             settings.FTP_PORT, settings.FTP_USER, settings.FTP_PW)
+-        # read file
+         update_file = os.path.join(settings.UPDATE_DIR, settings.FTP_FILE_NAME)
++        if not os.path.exists(update_file):
++            print("update check: [update file] doesn't exists")
++            return
+ 
++        # read file
+         with open(update_file) as data_file:
+             data = json.load(data_file)
+         new_version = data['Server']['Version']
+-        new_version_date = data['Server']['Date']
++        new_version_date = new_version.split('.')[-1]
+         version_date = settings.VERSION.split('.')[-1]
+ 
+         print('update check: [Server VERSION]: [new]: {0} [now]: {1}'.format(new_version_date, version_date))
+ 
+         # check version
+         if new_version_date > version_date:
+-            print('update check: Server has new version to update.')
++            print('update check: [New Server Version]: True.')
+             Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': new_version})
+         else:
+-            print('update check: There is no new server version to update.')
++            print('update check: [New Server Version]: False.')
+             Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': settings.VERSION})
+ 
+         """ Device update check"""
+         # check version
+         device_conf = Config.objects.get(Name = 'NewDeviceVersion')
+-        DeviceVersion_New = ''.join(data['Device']['Version'][1:].split('.')) # get from update file
+-        DeviceVersion = ''.join(device_conf.Value[1:].split('.')) or 0 # from database
+-        print('update check: [Device VERSION]: [new]: {0} [now]: {1}'.format(DeviceVersion_New, DeviceVersion))
+-        if not int(DeviceVersion_New) > int(DeviceVersion):
+-            print('update check: There is no new device version to update.')
++
++        DeviceVersion_New = data['Device']['Version'][1:].split('.') # from update json
++        DeviceVersion = device_conf.Value[1:].split('.') # from Config
++        print('update check: [Device VERSION]: [new]: {0} [now]: {1}'
++            .format(DeviceVersion_New, DeviceVersion))
++
++        from .utility import new_version_check
++        if not new_version_check(DeviceVersion_New, DeviceVersion, 'Device'):
+             return
+ 
+         # download file
+diff --git a/api/utility.py b/api/utility.py
+index cf9a6d7..9e699e4 100755
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -86,3 +86,21 @@ def get_localtimezone():
+     except:
+         timezone = 'UTC'
+     return timezone
++
++def new_version_check(new, now, name):
++    if new == now or len(new) != len(now):
++        print('update check: No New {0} Version.'.format(name))
++        return False
++    for new, now in zip(new, now):
++        print(new, now)
++        if int(new) > int(now):
++            break
++        elif int(new) == int(now):
++            continue
++        else:
++            print('update check: [New {0} Version]: False'.format(name))
++            return False 
++    print('update check: New {0} Version!'.format(name))
++    return True
++
++    
+-- 
+1.9.1
+

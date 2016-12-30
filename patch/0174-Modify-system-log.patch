@@ -1,0 +1,176 @@
+From cf10decb75f2856658ad01e6b13a1d94c97192bf Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 12 Jul 2016 14:52:47 +0800
+Subject: [PATCH 174/443] Modify system log
+
+Modify system log content.
+---
+ api/face.py | 20 ++++++++++----------
+ api/user.py | 16 ++++++++--------
+ 2 files changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index ce78320..5120e81 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -32,7 +32,7 @@ def add(request):
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             except Exception as error:
+                 print(str(error))
+-                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         try:
+             # check FRUserId
+@@ -42,20 +42,20 @@ def add(request):
+             image_id = res_upload.get('img_id', '')
+             #print('image_id : ', image_id)
+             if not res_upload.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                logContent = '{message_head}TCIT[Storage Upload] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_upload.get('state', '')])
++                logContent = '{message_head}TCIT[Storage Upload] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_upload.get('state', '')])
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #2. Through TCIT to recognize face, then get Face Id
+             res_face_detect = TCIT_API("/face/detection/detect/", data = {'img_id' : image_id})
+             if len(res_face_detect.get('faces', '')) != 1:
+-                logContent = '{message_head}TCIT[Face Detection] error'.format(message_head = message_head)
++                logContent = '{message_head}TCIT[Face Detection] Error'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+                 if res_face_detect.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     face_id = res_face_detect.get('faces', '')[0].get('face_id', '')
+                     #print('face_id : ', face_id)
+                 else:
+-                    logContent = '{message_head}TCIT[Face Detection] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_face_detect.get('state', '')])
++                    logContent = '{message_head}TCIT[Face Detection] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_face_detect.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #3. Call TCIT Add Face to Person
+@@ -68,7 +68,7 @@ def add(request):
+                     fruser.UpdateDate = datetime.now()
+                     fruser.save()
+                 else:
+-                    logContent = '{message_head}TCIT[Create Person] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_personid.get('state', '')])
++                    logContent = '{message_head}TCIT[Create Person] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_personid.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+                 person_id = fruser.PersonId
+@@ -77,7 +77,7 @@ def add(request):
+                     data = {'person_id' : person_id, 'face_id': face_id}
+                 )
+                 if not res_face_personadd.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                    logContent = '{message_head}TCIT[Add Face to Person] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_face_personadd.get('state', '')])
++                    logContent = '{message_head}TCIT[Add Face to Person] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_face_personadd.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #4 get img from device and save
+@@ -127,7 +127,7 @@ def add(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -169,10 +169,10 @@ def delete(request):
+                         fruser.FaceID2 = ''
+                         fruser.FaceID3 = ''
+                         fruser.save()
+-                        logContent = '{message_head}Face Delete Successfully'.format(message_head = message_head)
++                        logContent = '{message_head}Delete face successfully'.format(message_head = message_head)
+                         return JsonResponse(result_success)
+                     else:
+-                        logContent = '{message_head}Face remove error'.format(message_head = message_head)
++                        logContent = '{message_head}Delete face error'.format(message_head = message_head)
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                 else:
+                     logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+@@ -190,7 +190,7 @@ def delete(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+diff --git a/api/user.py b/api/user.py
+index e030b74..8561034 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -37,7 +37,7 @@ def add(request):
+                             )))
+                     try:
+                         Frusers.objects.get(FRUserId = req['FRUserId'])
+-                        logContent = '{message_head}Frusers fail to create cause by fruser already exists'.format(message_head = message_head)
++                        logContent = '{message_head}Fruser fail to create cause by FRUser already exists'.format(message_head = message_head)
+                         print(logContent)
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                     except ObjectDoesNotExist:
+@@ -59,7 +59,7 @@ def add(request):
+                             else:
+                                 logContent = '{message_head}Add group error cause by parameter not correct'.format(message_head = message_head)
+                                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+-                        logContent = '{message_head}Frusers create successfully'.format(message_head = message_head)
++                        logContent = '{message_head}Create FRUser successfully'.format(message_head = message_head)
+                         return JsonResponse(result_success)
+                 else:
+                     logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+@@ -77,7 +77,7 @@ def add(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -121,7 +121,7 @@ def update(request):
+                             logContent = '{message_head}Update group error cause by parameter not correct'.format(message_head = message_head)
+                             Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+                     delete_fruser.delete()
+-                    logContent = '{message_head}FRUser update successfully'.format(message_head = message_head)
++                    logContent = '{message_head}Update FRUser successfully'.format(message_head = message_head)
+                     return JsonResponse(result_success)
+                 else:
+                     logContent = '{message_head}Request parameter error'.format(message_head = message_head)
+@@ -139,7 +139,7 @@ def update(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -179,7 +179,7 @@ def delete(request):
+                 res_delete = delete_fruser(request.POST.get('FRUserId'))
+                 logContent = res_delete['Message']
+                 if logContent == 'success':
+-                    logContent = '{message_head}Delete fruser successfully'.format(message_head = message_head)
++                    logContent = '{message_head}Delete FRUser successfully'.format(message_head = message_head)
+                     return JsonResponse(result_success)
+                 else:
+                     logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = logContent)
+@@ -192,7 +192,7 @@ def delete(request):
+                     res_delete = delete_fruser(req['FRUserId'])
+                     logContent = res_delete['Message']
+                     if logContent == 'success':
+-                        logContent = '{message_head}Delete fruser successfully'.format(message_head = message_head)
++                        logContent = '{message_head}Delete FRUser successfully'.format(message_head = message_head)
+                         return JsonResponse(result_success)
+                     else:
+                         logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = logContent)
+@@ -213,7 +213,7 @@ def delete(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                logContent = '{message_head}System log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+-- 
+1.9.1
+

@@ -1,0 +1,34 @@
+From 1febae0528b0091ae553f679df0a3030652b1394 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 15 Nov 2016 14:00:51 +0800
+Subject: [PATCH 357/443] Bug fix - import frusers log not correct.
+
+---
+ frusers/views.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index f024d99..1b51dfe 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -96,6 +96,8 @@ def import_fruser(request):
+         return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
++        import_success = 0
++        import_fail = 0
+         if not 'file' in request.FILES:
+             raise Exception(3)
+ 
+@@ -116,8 +118,6 @@ def import_fruser(request):
+                 raise Exception(2)
+ 
+         with open(csvdir, 'r') as csvfile:
+-            import_success = 0
+-            import_fail = 0
+             for row in csv.DictReader(csvfile):
+                 fail = False
+                 fruser, result = Frusers.objects.get_or_create(FRUserId = row['FRUserId'])
+-- 
+1.9.1
+

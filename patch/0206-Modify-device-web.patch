@@ -1,0 +1,70 @@
+From d4860c5b95088e6c8867d23a52555258feb765c7 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 27 Jul 2016 13:32:08 +0800
+Subject: [PATCH 206/443] Modify device web
+
+Take out score of device web.
+---
+ devices/views.py               |  8 +-------
+ templates/device_settings.html | 12 ++++++------
+ 2 files changed, 7 insertions(+), 13 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index 3739e3f..7850782 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -3,7 +3,6 @@ from django.shortcuts import render
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Frusergroups, Frusergroupdevices
+-from django.conf import settings
+ from datetime import datetime
+ from login.views import check_login
+ from django.db.models import Q
+@@ -76,12 +75,7 @@ def device_settings_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        return render(request, 'device_settings.html', {
+-            'active': 'device_settings',
+-            'obj': Devices.objects.get(OId = request.GET['OId']).as_json(),
+-            'CONFIDENCE': settings.CONFIDENCE,
+-            'FINGER_LEVEL': settings.FINGER_LEVEL
+-        })
++        return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 495362a..e185352 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -267,9 +267,9 @@
+                                         <label class="col-md-3 control-label">Face Bio score :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="FaceBioScore">
+-                                                <option value="Low">Low({{CONFIDENCE.Low}})</option>
+-                                                <option value="Medium">Medium({{CONFIDENCE.Medium}})</option>
+-                                                <option value="High">High({{CONFIDENCE.High}})</option>
++                                                <option value="Low">Low</option>
++                                                <option value="Medium">Medium</option>
++                                                <option value="High">High</option>
+                                             </select>
+                                         </div>
+                                     </div>
+@@ -277,9 +277,9 @@
+                                         <label class="col-md-3 control-label">Finger Bio score :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="FingerBioScore">
+-                                                <option value="Low">Low({{FINGER_LEVEL.Low}})</option>
+-                                                <option value="Medium">Medium({{FINGER_LEVEL.Medium}})</option>
+-                                                <option value="High">High({{FINGER_LEVEL.High}})</option>
++                                                <option value="Low">Low</option>
++                                                <option value="Medium">Medium</option>
++                                                <option value="High">High</option>
+                                             </select>
+                                         </div>
+                                     </div>
+-- 
+1.9.1
+

@@ -1,0 +1,108 @@
+From a6970c2343b538194376aad09f4af0465153e6d7 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Fri, 24 Jun 2016 16:41:49 +0800
+Subject: [PATCH 149/443] Modify api connection for specification
+
+Modify api connection:
+  -  Modify check for update
+  -  Modify get and set for specification
+---
+ api/connection.py | 60 +++++++++++++++++++++++++++++++++++--------------------
+ 1 file changed, 38 insertions(+), 22 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 375a98e..e762b83 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -14,14 +14,16 @@ def check(request):
+     if request.method == 'POST':
+         try:
+             client_ip = request.META['REMOTE_ADDR']
++            print(request.META)
+             from api.models import Devices
+             try:
+                 devices = Devices.objects.get(IP = client_ip)
+                 states = {'Proposed' : 0, 'Approved' : 1, 'Online' : 1, 'Offline' : 1, 'Setting' : 2, 'Getting': 3}
++                Devices.objects.filter(IP = client_ip).update(UpdateDate = datetime.now())
+ 
+                 return JsonResponse({'Result' : states[devices.State]})
+             except:
+-                Devices.objects.create(Name = 'Default' + client_ip, State = 'Proposed', IP = '10.0.3.119')
++                Devices.objects.create(Name = 'Default' + client_ip, IP = client_ip)
+                 return JsonResponse({'Result' : 0})
+         except Exception as e:
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
+@@ -36,15 +38,22 @@ def get(request):
+             from api.models import Devices
+             devices = Devices.objects.get(IP = client_ip)
+ 
+-            return JsonResponse(dict(ChainMap(result_success, { \
+-                'Welcome' : devices.Welcome, \
+-                'AccessDenied' : devices.AccessDenied, \
+-                'ScreenSaver' : devices.ScreenSaver, \
+-                'NTP' : devices.NTP, \
+-                'Timezone' : devices.Timezone, \
+-                'Audio' : devices.Audio, \
+-                'BioScore' : devices.BioScore, \
+-                'Language' : devices.Language \
++            return JsonResponse(dict(ChainMap(result_success, {
++                'Model' : devices.Model,
++                'WelcomeR0Action' : devices.WelcomeR0Action,
++                'WelcomeR0Pulse' : devices.WelcomeR0Pulse,
++                'WelcomeR1Action' : devices.WelcomeR1Action,
++                'WelcomeR1Pulse' : devices.WelcomeR1Pulse,
++                'AccessDeniedR0Action' : devices.AccessDeniedR0Action,
++                'AccessDeniedR0Pulse' : devices.AccessDeniedR0Pulse,
++                'AccessDeniedR1Action' : devices.AccessDeniedR1Action,
++                'AccessDeniedR1Pulse' : devices.AccessDeniedR1Pulse,
++                'ScreenSaver' : devices.ScreenSaver,
++                'NTP' : devices.NTP,
++                'Timezone' : devices.Timezone,
++                'Audio' : devices.Audio,
++                'BioScore' : devices.BioScore,
++                'Language' : devices.Language
+             })))
+         except Exception as e:
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
+@@ -57,19 +66,26 @@ def set(request):
+         try:
+             client_ip = request.META['REMOTE_ADDR']
+             req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'Welcome', 'AccessDenied', 'ScreenSaver', 'NTP', 'Timezone', 'Audio', 'BioScore', 'Language'}
+-            if all(k in req for k in req_key) and all(req.values()):
++            req_key = {'Model', 'WelcomeR0Action', 'WelcomeR0Pulse', 'WelcomeR1Action', 'WelcomeR1Pulse', 'AccessDeniedR0Action', 'AccessDeniedR0Pulse', 'AccessDeniedR1Action', 'AccessDeniedR1Pulse', 'ScreenSaver', 'NTP', 'Timezone', 'Audio', 'BioScore', 'Language'}
++            if all(k in req for k in req_key):
+                 from api.models import Devices
+-                Devices.objects.filter(IP = client_ip).update( \
+-                    Welcome = req['Welcome'], \
+-                    AccessDenied = req['AccessDenied'], \
+-                    ScreenSaver = req['ScreenSaver'], \
+-                    NTP = req['NTP'], \
+-                    Timezone = req['Timezone'], \
+-                    Audio = req['Audio'], \
+-                    BioScore = req['BioScore'], \
+-                    Language = req['Language'], \
+-                    UpdateDate = datetime.now() \
++                Devices.objects.filter(IP = client_ip).update(
++                    Model = req['Model'],
++                    WelcomeR0Action = req['WelcomeR0Action'],
++                    WelcomeR0Pulse = req['WelcomeR0Pulse'],
++                    WelcomeR1Action = req['WelcomeR1Action'],
++                    WelcomeR1Pulse = req['WelcomeR1Pulse'],
++                    AccessDeniedR0Action = req['AccessDeniedR0Action'],
++                    AccessDeniedR0Pulse = req['AccessDeniedR0Pulse'],
++                    AccessDeniedR1Action = req['AccessDeniedR1Action'],
++                    AccessDeniedR1Pulse = req['AccessDeniedR1Pulse'],
++                    ScreenSaver = req['ScreenSaver'],
++                    NTP = req['NTP'],
++                    Timezone = req['Timezone'],
++                    Audio = req['Audio'],
++                    BioScore = req['BioScore'],
++                    Language = req['Language'],
++                    UpdateDate = datetime.now()
+                 )
+ 
+                 return JsonResponse(result_success)
+-- 
+1.9.1
+

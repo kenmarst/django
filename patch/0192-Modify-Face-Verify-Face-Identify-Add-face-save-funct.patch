@@ -1,0 +1,103 @@
+From 51098e48fca621e28dd1f70def14b57dd8b0e73b Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 21 Jul 2016 18:53:48 +0800
+Subject: [PATCH 192/443] Modify Face Verify, Face Identify : Add "face save"
+ function.
+
+Save the face image when face verify or identify successfully.
+---
+ api/recognition.py | 40 +++++++++++++++++++++++++++++++---------
+ 1 file changed, 31 insertions(+), 9 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index bfe5ad5..aa638cd 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -1,11 +1,12 @@
+-import json, requests
++import json, requests, os
+ from collections import ChainMap
+ from django.http import JsonResponse
+ from django.views.decorators.csrf import csrf_exempt
+ from .utility import TCIT_API, sendImg, TCIT_res_state
+-from .models import Devices, Frusers, Systemlogs, Fruserlogs, Frusergroupmember, Frusergroupdevices
++from .models import Devices, Frusers, Systemlogs, Fruserlogs, Frusergroupmember, Frusergroupdevices, Config
+ from django.conf import settings
+ from operator import itemgetter
++from datetime import datetime
+ 
+ result_success = {'Result' : 'Success'}
+ result_pass = {'Result' : 'Pass'}
+@@ -13,6 +14,26 @@ result_fail = {'Result' : 'Fail'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
+ 
++true = 'true'
++
++@csrf_exempt
++def face_save(request, id):
++    if Config.objects.get(Name = 'PicFaceSave').Value == true:
++        FaceDir = ''.join([
++            settings.PIC_DIR_FACE,
++            request.POST.get('FRUserId', id),
++            '_',
++            datetime.now().strftime("%Y%m%d%H%M%S"),
++            '.jpg'
++        ])
++        open(
++            os.path.join(
++                settings.MEDIA_DIR,
++                FaceDir
++                ),
++            'wb+'
++        ).write(request.FILES.get('image', '').file.getvalue())
++
+ @csrf_exempt
+ def face_verify(request):
+     devices_ip = []
+@@ -24,24 +45,25 @@ def face_verify(request):
+                 if fruser.PersonId:
+                     # get img id
+                     res_upload = sendImg(request)
+-                    print(res_upload)#
++                    #print(res_upload)#
+                     if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         img_id = res_upload['img_id']
+                         # get face id
+                         res_face_detect = TCIT_API("/face/detection/detect/", data = {'img_id' : img_id})
+                         if res_face_detect['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                             face_id = res_face_detect['faces'][0]['face_id']
+-                            print('face_id', face_id)#
++                            #print('face_id', face_id)#
+                             # face_id and person_id verify
+                             res_face_verify = TCIT_API("/face/person/verify", data = {'person_id' : fruser.PersonId, 'face_id': face_id})
+                             print(res_face_verify)#
+                             if res_face_verify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                                print(res_face_verify['confidence'])#
++                                #print(res_face_verify['confidence'])#
+                                 if res_face_verify['confidence'] > settings.CONFIDENCE[ip_device.BioScore]:
++                                    face_save(request, '')
+                                     for i in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+-                                        print(i.GroupOId.OId)
++                                        #print(i.GroupOId.OId)
+                                         for j in i.GroupOId.frusergroupdevices_set.filter(GroupOId = i.GroupOId.OId):
+-                                            print(j.DeviceOId.IP)
++                                            #print(j.DeviceOId.IP)
+                                             if ip_device.IP == j.DeviceOId.IP:
+                                                 return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
+                                     raise Exception('No accept device in frusergroup')
+@@ -102,9 +124,9 @@ def face_identify(request):
+                                 raise Exception("Similarity is too low")
+                         else:
+                             raise Exception('Request TCIT error')
+-
+-                    if person_id != None:
++                    if person_id:
+                         fruser = Frusers.objects.get(PersonId = person_id)
++                        face_save(request, fruser.FRUserId)
+ 
+                         for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+                             for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
+-- 
+1.9.1
+

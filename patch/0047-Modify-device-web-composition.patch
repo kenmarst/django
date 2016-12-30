@@ -1,0 +1,66 @@
+From 3d58684f45606f479b441ecfdf03696b856d2939 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 18 May 2016 20:25:45 +0800
+Subject: [PATCH 047/443] Modify device web composition
+
+Modify composition of device web.
+Bug fix - button disappear when resize window.
+---
+ templates/device_frusergroups.html | 6 +++---
+ templates/device_list.html         | 9 +++------
+ 2 files changed, 6 insertions(+), 9 deletions(-)
+
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 95bf91d..f7579b2 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -50,9 +50,9 @@
+                         <div class="panel-body">
+                             <label>Search Group :</label>
+                             <table id="GroupAdd"></table>
+-                            <div class="form-group">
+-                                <button class="btn btn-default" onclick="onAddClick()">Add</button>
+-                            </div>
++                        </div>
++                        <div class="panel-footer">
++                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
+                         </div>
+                     </div>
+                 </div>
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 44c10a7..17bb654 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -21,12 +21,7 @@
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <div class="form-group">
+-                        <h1 class="page-header"><small>Device List</small></h1>
+-                    </div>
+-                    <div class="form-group">
+-                        <button class="btn btn-default pull-right" onclick="location.href='/device_add/'">Create new device</button>
+-                    </div>
++                    <h1 class="page-header"><small>Device List</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -34,6 +29,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
++                            <button id="AddDevice" class="btn btn-default pull-right" onclick="location.href='/device_add/'">Create new device</button>
+                             <table id="DeviceList"></table>
+                         </div>
+                     </div>
+@@ -47,6 +43,7 @@
+             $('#DeviceList').bootstrapTable({
+                 search: true,
+                 pagination: true,
++                toolbar: '#AddDevice',
+                 pageSize: 10,
+                 pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+-- 
+1.9.1
+

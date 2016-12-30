@@ -1,0 +1,433 @@
+From 868bd01c3173d7c9afed869ea03b93323cede031 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 11 May 2016 15:27:12 +0800
+Subject: [PATCH 026/443] Add device web function
+
+-Add device list web function.
+-Add device add web function.
+-Add device delete web function.
+-Fix bug - as_json return None will show error.
+-delete user/view md5 define function and import utility md5.
+---
+ api/models.py              |   2 +-
+ br06/urls.py               |  10 +-
+ devices/views.py           |  37 ++++++-
+ templates/device_list.html | 242 ++++++++++++++++++++++++++++-----------------
+ templates/menu.html        |  18 +---
+ user/views.py              |   8 +-
+ 6 files changed, 199 insertions(+), 118 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 4fd84ff..d5f7f34 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -170,7 +170,7 @@ class Devices(models.Model):
+             #Welcome = self.Welcome,
+             #AccessDenied = self.AccessDenied,
+             #ScreenSaver = self.ScreenSaver,
+-            NTP = self.NTP,
++            #NTP = self.NTP,
+             #Timezone = self.Timezone,
+             #Audio = self.Audio,
+             #BioScore = self.BioScore,
+diff --git a/br06/urls.py b/br06/urls.py
+index 25b21e9..4a7c8d7 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -20,7 +20,7 @@ from user.views import user_list_view, user_setting, login, logout, change_passw
+ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view
+ from fruserlogs.views import fruserlog_list_view
+-from devices.views import device_list_view
++from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, add_device, delete_device
+ 
+ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+@@ -31,7 +31,15 @@ urlpatterns = [
+     url(r'^fruser_list/?$', fruser_list_view),
+     url(r'^systemlog_list/?$', systemlog_list_view),
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
++]
++
++urlpatterns += [
+     url(r'^device_list/?$', device_list_view),
++    url(r'^device_add/?$', device_add_view),
++    url(r'^device_settings/?$', device_edit_view),
++    url(r'^device_settings/?$', device_settings_view),
++    url(r'^add_device/?$', add_device),
++    url(r'^delete_device/?$', delete_device),
+ ]
+ 
+ urlpatterns += [
+diff --git a/devices/views.py b/devices/views.py
+index f2d5f46..1a8e1ff 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -1,9 +1,11 @@
+ from django.shortcuts import render
+ 
+ # Create your views here.
+-from django.http import HttpResponseRedirect
++from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices
+ 
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++
+ def device_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+@@ -14,3 +16,36 @@ def device_list_view(request):
+         x['Index'] = index+1
+         index += 1
+     return render(request, 'device_list.html', {'active': "device_list", 'obj': devices})
++
++def device_add_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    return render(request, 'device_add.html')
++
++def device_edit_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    return render(request, 'device_edit.html')
++
++def device_settings_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    return render(request, 'device_settings.html')
++
++def add_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Devices.objects.get(OId = request.POST['OId']).delete()
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
+diff --git a/templates/device_list.html b/templates/device_list.html
+index cdc1f85..e99ffae 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -3,104 +3,164 @@
+ {% load static %}
+ 
+ <html>
+-<head>
+-<meta charset="utf-8">
+-<meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>Device List</title>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Device List</title>
++        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
++    </head>l
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">User List</li>
++                </ol>
++            </div><!--/.row-->
+ 
+-<!--[if lt IE 9]>
+-<script src="js/html5shiv.js"></script>
+-<script src="js/respond.min.js"></script>
+-<![endif]-->
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header">Device List</h1>
++                </div>
++                <div class="col-lg-12">
++                    <button class="btn green pull-right" onclick="location.href='/device_add/'" value="">Create new device</button>
++                <div>
++            </div><!--/.row-->
+ 
+-</head>l
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <table id="UserList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-page-size=10 data-page-list="[10, 25, 50, 100]" data-sort-name="name" data-sort-order="desc">
++                            </table>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">User List</li>
+-			</ol>
+-		</div><!--/.row-->
++        <script src="{% static "chart.min.js" %}"></script>
++        <script src="{% static "chart-data.js" %}"></script>
++        <script src="{% static "easypiechart.js" %}"></script>
++        <script src="{% static "easypiechart-data.js" %}"></script>
++        <script src="{% static "bootstrap-datepicker.js" %}"></script>
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var index
++            var dataSet = {{obj|safe}};
++            console.log(dataSet);
++            $('#UserList').bootstrapTable({
++                columns: [{
++                    field: 'MAC',
++                    title: 'MAC-Address',
++                    sortable: true
++                },
++                {
++                    field: 'IP',
++                    title: 'IP',
++                    sortable: true
++                },
++                {
++                    field: 'Name',
++                    title: 'Device Name',
++                    sortable: true
++                },
++                {
++                    field: 'State',
++                    title: 'Status',
++                    formatter: function(value) {
++                        if (value == 'Offline') {
++                            return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:red"></i>';
++                        } else if (value == 'Proposed') {
++                            return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:gray"></i>';
++                        } else {
++                            return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:green"></i>';
++                        }
++                    }
++                },
++                {
++                    field: 'UpdateDate',
++                    title: 'Sync time',
++                    sortable: true
++                },
++                {
++                    formatter: function(value, row) {
++                        return ' \
++                            <div class="row" align="center"> \
++                                <button class="btn green" onclick=device_edit("' + row.OId + '")>Edit</button> \
++                                <button class="btn green" onclick=device_settings("' + row.OId + '")>Settings</button> \
++                                <button class="btn green" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                            </div>';
++                    }
++                }],
++                data: dataSet
++            });
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">Device List</h1>
+-			</div>
+-			<div class="col-lg-12">
+-				<button class="btn green pull-right"  value="">Create new device</button>
+-			<div>
+-		</div><!--/.row-->
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<div class="panel-body">
+-						<table id="UserList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
+-						</table>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->
+-	</div><!--/.main-->
++            function device_edit(OId) {
++            }
+ 
+-	<script src="{% static "chart.min.js" %}"></script>
+-	<script src="{% static "chart-data.js" %}"></script>
+-	<script src="{% static "easypiechart.js" %}"></script>
+-	<script src="{% static "easypiechart-data.js" %}"></script>
+-	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+-	<script src="{% static "bootstrap-table.js" %}"></script>
+-	<script>
+-		var index
+-		var dataSet = {{obj|safe}};
+-		console.log(dataSet);
+-		$('#UserList').bootstrapTable({
+-			columns: [{
+-				field: 'MAC',
+-				title: 'MAC-Address',
+-				sortable: true
+-			},
+-            {
+-				field: 'IP',
+-				title: 'IP',
+-				sortable: true
+-			},
+-            {
+-				field: 'Name',
+-				title: 'Device Name',
+-				sortable: true
+-			},
+-			{
+-				field: 'State',
+-				title: 'Status',
+-				sortable: true
+-			},
+-			{
+-				field: 'OId',
+-				title: '',
+-				formatter: function(value, row, index) {
+-					return '<button class="btn green"  value="' + value + '">Delete</button>';
+-				}
+-			}],
+-			data: dataSet
+-		});
++            function device_settings(OId) {
++            }
+ 
+-		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){
+-				$(this).find('em:first').toggleClass("glyphicon-minus");
+-			});
+-			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+-		}(window.jQuery);
++            function delete_device(OId, Name) {
++                var ret = confirm('Confirm to delete ' +Name+ ' Device?');
++                console.log(ret);
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        url: '/delete_device/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'OId': OId
++                        },
++                        success: function(data) {
++                            console.log("CODE = ",data.CODE);
++                            if (data.CODE == "0") {
++                                location.reload();
++                            } else {
++                                alert("Fail to delete device");
++                            }
++                        },
++                        error: function(data) {
++                            console.log('why nunu');
++                        }
++                    });
++                }
++            }
+ 
+-		$(window).on('resize', function () {
+-		  if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
+-		})
+-		$(window).on('resize', function () {
+-		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+-		})
+-	</script>
+-</body>
++            !function ($) {
++                $(document).on("click","ul.nav li.parent > a > span.icon", function(){
++                    $(this).find('em:first').toggleClass("glyphicon-minus");
++                });
++                $(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
++            }(window.jQuery);
+ 
++            $(window).on('resize', function () {
++              if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
++            })
++            $(window).on('resize', function () {
++              if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
++            })
++        </script>
++    </body>
+ </html>
+diff --git a/templates/menu.html b/templates/menu.html
+index 4d7bcc5..913812f 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -63,23 +63,7 @@
+ 					</li>
+ 				</ul>
+ 			</li>
+-        <li class="parent ">
+-				<a href="#">
+-					<span data-toggle="collapse" href="#sub-item-2"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Device
+-				</a>
+-				<ul class="children collapse" id="sub-item-2">
+-					<li>
+-						<a class="" href="/device_list">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Manage
+-						</a>
+-					</li>
+-					<li>
+-						<a class="" href="/device_list">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Config
+-						</a>
+-					</li>
+-                </ul>
+-		</li>
++        <li name="device_list"><a href="/device_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> Device List</a></li>
+         <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser List</a></li>
+         <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser Group</a></li>
+          <li class="parent ">
+diff --git a/user/views.py b/user/views.py
+index e47e6da..3ee6711 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -18,6 +18,7 @@ from django import forms
+ import urllib
+ from urllib.request import urlopen
+ from br06.settings import *
++from api.utility import *
+ 
+ 
+ #Users.objects.create(Account='admin', Password='e10adc3949ba59abbe56e057f20f883e', Name='SU3', Email='kimi_tsai@tw.shuttle.com', RoleOId=uuid.uuid1)
+@@ -52,13 +53,6 @@ def check_user(request):
+         return json.dumps(res_code[1])
+ 
+ 
+-def md5(str):
+-    import hashlib
+-    m = hashlib.md5()
+-    m.update(str.encode('utf-8'))
+-    return m.hexdigest()
+-
+-
+ def change_passwd(request):
+     print("change_passwd")
+     if not 'OId' in request.session:
+-- 
+1.9.1
+

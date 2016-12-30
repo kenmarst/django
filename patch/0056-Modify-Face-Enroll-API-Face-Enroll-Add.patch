@@ -1,0 +1,93 @@
+From 23c84bba909a7e6672d0c7c4a11fa0f16fdef483 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 20 May 2016 14:36:38 +0800
+Subject: [PATCH 056/443] Modify Face Enroll API : Face Enroll Add
+
+Change face static folder to PIC_DIR.
+Add empty folder 'fruserpic'.
+---
+ api/face.py          |  6 +++---
+ br06/settings.py     | 19 ++++++++++---------
+ fruserpic/.gitignore |  4 ++++
+ 3 files changed, 17 insertions(+), 12 deletions(-)
+ create mode 100644 fruserpic/.gitignore
+
+diff --git a/api/face.py b/api/face.py
+index f479b99..4122ee4 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -82,7 +82,7 @@ def add(request):
+             #4 get img from device and save
+             if Config.objects.get(Name = 'PicFaceSave').Value == true:
+                 open(
+-                    settings.STATICFILES_DIRS[4] +
++                    settings.PIC_DIR +
+                     request.POST.get('FRUserId') +
+                     '_' +
+                     datetime.now().strftime("%Y%m%d%H%M%S") +
+@@ -94,14 +94,14 @@ def add(request):
+                 if not fruser.Face1:
+                     Frusers.objects.filter(OId = fruser.OId).update(
+                             PersonId = personId,
+-                            Face1 = settings.STATICFILES_DIRS[4] + request.POST.get('FRUserId') + \
++                            Face1 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+                                     '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
+                             FaceID1 = face_id
+                     )
+                 else:
+                     Frusers.objects.filter(OId = fruser.OId).update(
+                             PersonId = personId,
+-                            Face2 = settings.STATICFILES_DIRS[4] + request.POST.get('FRUserId') + \
++                            Face2 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+                                     '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
+                             FaceID2 = face_id
+                     )
+diff --git a/br06/settings.py b/br06/settings.py
+index 3d84b88..480e8d4 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -128,21 +128,22 @@ USE_TZ = True
+ 
+ NOCAPTCHA = True
+ 
+-NORECAPTCHA_SITE_KEY = os.environ.get('NORECAPTCHA_SITE_KEY', "")
+-NORECAPTCHA_SECRET_KEY = os.environ.get('NORECAPTCHA_SECRET_KEY', "")
++NORECAPTCHA_SITE_KEY = os.environ.get('NORECAPTCHA_SITE_KEY', '')
++NORECAPTCHA_SECRET_KEY = os.environ.get('NORECAPTCHA_SECRET_KEY', '')
+ 
+ # Static files (CSS, JavaScript, Images)
+ # https://docs.djangoproject.com/en/dev/howto/static-files/
+ 
+ STATIC_URL = '/static/'
++PIC_DIR = 'fruserpic/'
+ STATICFILES_DIRS = [
+-    "static",
+-    "static/js",
+-    "static/styles",
+-    "static/css",
+-    "static/img/",
+-    "fruserpic/",
+-    "logsetting/",
++    'static',
++    'static/js',
++    'static/styles',
++    'static/css',
++    'static/img/',
++    'logsetting/',
++    PIC_DIR,
+ ]
+ 
+ TCIT_IP = 'localhost:8800'
+diff --git a/fruserpic/.gitignore b/fruserpic/.gitignore
+new file mode 100644
+index 0000000..5e7d273
+--- /dev/null
++++ b/fruserpic/.gitignore
+@@ -0,0 +1,4 @@
++# Ignore everything in this directory
++*
++# Except this file
++!.gitignore
+-- 
+1.9.1
+

@@ -1,0 +1,67 @@
+From 6b2bf667338d6f09ab2800989cfe37a545818c83 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 09:57:40 +0800
+Subject: [PATCH 159/443] Modify login.css correct directory path.
+
+---
+ templates/registration/forget_password.html         | 2 +-
+ templates/registration/not_found.html               | 2 +-
+ templates/registration/password_reset_complete.html | 2 +-
+ templates/registration/reset_password.html          | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/templates/registration/forget_password.html b/templates/registration/forget_password.html
+index 80dba88..02c9a63 100644
+--- a/templates/registration/forget_password.html
++++ b/templates/registration/forget_password.html
+@@ -40,7 +40,7 @@
+ </div>
+ 
+ <script src="{% static "js/login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "css/login.css" %}">
++<link rel="stylesheet" href="{% static "styles/login.css" %}">
+ 
+ 
+ <script>
+diff --git a/templates/registration/not_found.html b/templates/registration/not_found.html
+index dd5cfe1..9c35c45 100644
+--- a/templates/registration/not_found.html
++++ b/templates/registration/not_found.html
+@@ -26,7 +26,7 @@
+ </div>
+ 
+ <script src="{% static "js/login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "css/login.css" %}">
++<link rel="stylesheet" href="{% static "styles/login.css" %}">
+ 
+ <script>
+ 	var code = '{{Code}}';
+diff --git a/templates/registration/password_reset_complete.html b/templates/registration/password_reset_complete.html
+index 2e3b41b..fd1e383 100644
+--- a/templates/registration/password_reset_complete.html
++++ b/templates/registration/password_reset_complete.html
+@@ -49,7 +49,7 @@
+ </div>
+ 
+ <script src="{% static "js/login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "css/login.css" %}">
++<link rel="stylesheet" href="{% static "styles/login.css" %}">
+ 
+ </html>
+ 
+diff --git a/templates/registration/reset_password.html b/templates/registration/reset_password.html
+index b9b6c86..9ea842c 100644
+--- a/templates/registration/reset_password.html
++++ b/templates/registration/reset_password.html
+@@ -40,7 +40,7 @@
+ </div>
+ 
+ <script src="{% static "js/login.js" %}"></script>
+-<link rel="stylesheet" href="{% static "css/login.css" %}">
++<link rel="stylesheet" href="{% static "styles/login.css" %}">
+ 
+ </html>
+ 
+-- 
+1.9.1
+

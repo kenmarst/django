@@ -1,0 +1,656 @@
+From e7e524c8d7f87f95a3cf0296fa997fa90ba32dc7 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Tue, 24 May 2016 15:31:45 +0800
+Subject: [PATCH 069/443] Add Role Permission page.
+
+---
+ api/models.py                  |  11 ++
+ br06/urls.py                   |  16 +--
+ role/views.py                  |  43 ++++++--
+ templates/role_list.html       | 243 ++++++++++++++++++++++-------------------
+ templates/role_permission.html | 193 ++++++++++++++++++++++++++++++++
+ 5 files changed, 376 insertions(+), 130 deletions(-)
+ create mode 100644 templates/role_permission.html
+
+diff --git a/api/models.py b/api/models.py
+index 2cfb621..fc46a52 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -84,6 +84,17 @@ class Acl(models.Model):
+     def __str__(self):
+         return '%s (%s)' % (self.FunctionName, self.OId)
+ 
++    def as_json(self):
++        return dict(
++            Index = 0,
++            OId = self.OId,
++            FunctionName = self.FunctionName,
++            RoleOId = self.RoleOId,
++            ACL = self.ACL,
++            CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
++            UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++        )
++
+ 
+ class Devices(models.Model):
+     devices_state = (
+diff --git a/br06/urls.py b/br06/urls.py
+index 345e089..9e507ed 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -24,7 +24,7 @@ from logsetting.views import logsetting
+ from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+-from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role
++from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, add_frusergroup_device, delete_frusergroup_device
+ from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView
+ 
+@@ -50,12 +50,14 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
+-    url(r'^user_list/?$', user_list_view),
+-    url(r'^user_add/?$', user_add_view),
+-    url(r'^user_update/?$', user_update_view),
+-    url(r'^add_user/?$', add_user),
+-    url(r'^update_user/?$', update_user),
+-    url(r'^delete_user/?$', delete_user),
++    url(r'^role_list/?$', role_list_view),
++    url(r'^role_add/?$', role_add_view),
++    url(r'^role_rename/?$', role_rename_view),
++    url(r'^role_permission/?$', role_permission_view),
++    url(r'^rename_role/?$', rename_role),
++    url(r'^add_role/?$', add_role),
++    url(r'^delete_role/?$', delete_role),
++    url(r'^permission_save/?$', permission_save),
+ ]
+ 
+ urlpatterns += [
+diff --git a/role/views.py b/role/views.py
+index ef98cfc..6f2e4d0 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Users, Role, Acl
+ from datetime import datetime
+ from br06.settings import *
++from collections import ChainMap
+ 
+ # create default role: admin, users.
+ try:
+@@ -11,7 +12,7 @@ except:
+     print('create default role: admin')
+     Role.objects.create(Name = 'Admin(default)', Sort = '1', Category = 'System')
+     Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++    Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+     Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+     Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+     Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+@@ -24,7 +25,7 @@ except:
+     print('create default role: users')
+     Role.objects.create(Name = 'Users(default)', Sort = '2', Category = 'System')
+     Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-    Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++    Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+     Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+     Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+     Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+@@ -62,7 +63,26 @@ def role_list_view(request):
+         x['Index'] = index+1
+         index += 1
+ 
+-    return render(request, 'role_list.html', {'active': "role_list", 'obj': result})
++    return render(request, 'role_list.html', {'obj': result})
++
++def role_permission_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++
++    #[{'permission_system': 'Enable',
++    #  'role_name': 'Admin(default)',
++    #  'permission_log': 'Enable',
++    #  'permission_frusergroup': 'Enable',
++    #  'permission_fruserlist': 'Enable',
++    #  'OId': '8af9e880-1e5c-11e6-afb5-14dae933f992',
++    #  'permission_device': 'Enable'},
++
++    result = [dict(ChainMap( \
++                 {acl.FunctionName : acl.ACL for acl in Acl.objects.filter(RoleOId = role)}, \
++                 {'role_name' : role.Name, 'OId' : role.OId} \
++                 )) for role in Role.objects.order_by('CreateDate')]
++
++    return render(request, 'role_permission.html', {'result': result})
+ 
+ def role_add_view(request):
+     if not 'OId' in request.session:
+@@ -72,25 +92,29 @@ def role_add_view(request):
+ def role_rename_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    return render(request, 'role_rename.html', {'active': "role_rename", 'obj': {'OId': request.GET['OId']}})
++    return render(request, 'role_rename.html', {'obj': {'OId': request.GET['OId']}})
+ 
+-def role_permission_view(request):
++
++def permission_save(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    return render(request, 'role_permission.html')
++
++    try:
++        Acl.objects.filter(OId = Acl.objects.get(RoleOId = request.POST['OId'], FunctionName = request.POST['field']).OId).update(ACL = request.POST['acl'])
++        return JsonResponse(res_code[1])
++    except:
++        return JsonResponse(res_code[2])
+ 
+ def add_role(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+         Role.objects.create(Name = request.POST['Name'], Sort = request.POST['Sort'], Category = request.POST['Category'])
+-
+         Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+-        Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+         Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+         Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+         Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
+-
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -112,6 +136,7 @@ def delete_role(request):
+     try:
+         if Role.objects.get(OId = request.POST['OId']).Category == 'System':
+             return JsonResponse(res_code[0])
++        Users.objects.filter(RoleOId = request.POST['OId']).update(RoleOId = Role.objects.get(Name = 'Users(default)'))
+         Role.objects.filter(OId = request.POST['OId']).delete()
+         Acl.objects.filter(RoleOId = request.POST['OId']).delete()
+         return JsonResponse(res_code[1])
+diff --git a/templates/role_list.html b/templates/role_list.html
+index f2b3cd5..a486a12 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -3,110 +3,127 @@
+ {% load static %}
+ 
+ <html>
+-<head>
+-<meta charset="utf-8">
+-<meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>Role List</title>
+-</head>
++    <head>
++		<meta charset="utf-8">
++		<meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Role List</title>
++    </head>
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">Role List</li>
+-			</ol>
+-		</div><!--/.row-->
+-		
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">Role List</h1>
+-			</div>
+-			<div class="col-lg-12">
+-                <button class="btn green pull-right" onclick="location.href='/role_add/'" value="">Create new Role</button>
+-			<div>
+-		</div><!--/.row-->
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Role and Permission</li>
++                </ol>
++            </div>
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<div class="panel-body">
+-                        <table id="roleList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="false" data-select-item-l="toolbar1" data-paginati    on="true" data-page-size=10 data-page-list="[10, 25, 50, 100]" data-sort-name="name" data-sort-order="desc">
+-						</table>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->	
+-	</div><!--/.main-->
++            <div id='toolbar'>
++                <button class="btn btn-default" onclick="location.href='/role_add/'" value="">Create new Role</button>
++                <button class="btn btn-default" onclick="location.href='/role_permission/'" value="">Role Permission</button>
++            </div>
+ 
+-	<script src="{% static "chart.min.js" %}"></script>
+-	<script src="{% static "chart-data.js" %}"></script>
+-	<script src="{% static "easypiechart.js" %}"></script>
+-	<script src="{% static "easypiechart-data.js" %}"></script>
+-	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+-	<script src="{% static "bootstrap-table.js" %}"></script>
+-	<script>
+-		var index
+-		var dataSet = {{obj|safe}};
+-		console.log(dataSet);
+-		$('#roleList').bootstrapTable({
+-			columns: [{
+-				field: 'Index',
+-				title: 'No.',
+-				sortable: true,
+-			},{
+-				field: 'Name',
+-				title: 'Role Name',
+-				sortable: true
+-			},{
+-				field: 'Sort',
+-				title: 'Sort',
+-				sortable: true
+-			},{
+-				field: 'Category',
+-				title: 'Category',
+-				sortable: true
+-			},{
+-				field: 'CreateDate',
+-				title: 'Create Date',
+-				sortable: true
+-			},{
+-				field: 'UpdateDate',
+-				title: 'Update Date',
+-				sortable: true
+-			},{
+-                formatter: function(value, row) {
+-                    return ' \
+-                <div class="row" align="center"> \
+-                    <button class="btn green" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">Rename</button> \
+-                    <button class="btn green" onclick=role_delete("' + row.OId + '")>Delete</button> \
+-                </div>';
+-                }
+-			}],
+-			data: dataSet
+-		});
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header">Role List</h1>
++                </div>
++            </div>
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <table id="roleList"></table>
++                        </div>
++                    </div>
++                </div>
++            </div>
++        </div>
++
++        <script src="{% static "chart.min.js" %}"></script>
++        <script src="{% static "chart-data.js" %}"></script>
++        <script src="{% static "easypiechart.js" %}"></script>
++        <script src="{% static "easypiechart-data.js" %}"></script>
++        <script src="{% static "bootstrap-datepicker.js" %}"></script>
++        <script src="{% static "bootstrap-table.js" %}"></script>
++
++        <script>
++            var index
++            var dataSet = {{obj|safe}};
++            console.log(dataSet);
++            $('#roleList').bootstrapTable({
++                search: true,
++                pagination: true,
++                toolbar: '#toolbar',
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'CreateDate',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        field: 'Index',
++                        title: 'No.',
++                        sortable: true,
++                    },
++                    {
++                        field: 'Name',
++                        title: 'Role Name',
++                        sortable: true
++                    },
++                    {
++                        field: 'Sort',
++                        title: 'Sort',
++                        sortable: true
++                    },
++                    {
++                        field: 'Category',
++                        title: 'Category',
++                        sortable: true
++                    },
++                    {
++                        field: 'CreateDate',
++                        title: 'Create Date',
++                        sortable: true
++                    },
++                    {
++                        field: 'UpdateDate',
++                        title: 'Update Date',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            return ' \
++                        <div align="center"> \
++                            <button class="btn btn-default" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">Rename</button> \
++                            <button class="btn btn-default" onclick=role_delete("' + row.OId + '")>Delete</button> \
++                        </div>';
++                        }
++                    }
++                ],
++                data: dataSet
++            });
+ 
+-        function getCookie(name) {
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
+                     }
+                 }
++                return cookieValue;
+             }
+-            return cookieValue;
+-        }
+ 
+-        function role_delete(OId) {
+-            var ret = confirm('Confirm to delete this Role?');
+-            console.log(ret);
+-            if (ret) {
+-                $.ajax({
++            function role_delete(OId) {
++                var ret = confirm('Confirm to delete this Role?');
++                console.log(ret);
++                if (ret) {
++                    $.ajax({
+                         type: 'post',
+                         url: '/delete_role/',
+                         async: true,
+@@ -115,7 +132,6 @@
+                             csrfmiddlewaretoken : getCookie('csrftoken'),
+                             'OId': OId
+                         },
+-
+                         success: function(data) {
+                             console.log("CODE = ",data.CODE);
+                             if (data.CODE == "0") {
+@@ -126,29 +142,28 @@
+                                 alert("Fail to delete role");
+                             }
+                         },
+-
+                         error: function(data) {
+                             console.log('why nunu');
+                         }
+-                    });
++                    })
++                }
+             }
+-        }
+ 
++            !function ($) {
++                $(document).on("click","ul.nav li.parent > a > span.icon", function(){
++                    $(this).find('em:first').toggleClass("glyphicon-minus");
++                });
++                $(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
++            }(window.jQuery);
+ 
+-		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+-				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+-			}); 
+-			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+-		}(window.jQuery);
++            $(window).on('resize', function () {
++              if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
++            })
+ 
+-		$(window).on('resize', function () {
+-		  if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
+-		})
+-		$(window).on('resize', function () {
+-		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+-		})
+-	</script>	
+-</body>
++            $(window).on('resize', function () {
++              if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
++            })
+ 
++        </script>
++    </body>
+ </html>
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+new file mode 100644
+index 0000000..f95a45b
+--- /dev/null
++++ b/templates/role_permission.html
+@@ -0,0 +1,193 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++    <head>
++		<meta charset="utf-8">
++		<meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Permission Settings</title>
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Permission Settings</li>
++                </ol>
++            </div>
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header">Permission Settings</h1>
++                </div>
++            </div>
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <table id="permissionList"></table>
++                        </div>
++                        <div class="panel-footer">
++                            <div>
++                                <a onclick=history.back() type="reset" class="btn default">Back</a>
++                                <a onclick=permission_save() type="" class="btn green">Save</a>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div>
++        </div>
++
++        <script src="{% static "chart.min.js" %}"></script>
++        <script src="{% static "chart-data.js" %}"></script>
++        <script src="{% static "easypiechart.js" %}"></script>
++        <script src="{% static "easypiechart-data.js" %}"></script>
++        <script src="{% static "bootstrap-datepicker.js" %}"></script>
++        <script src="{% static "bootstrap-table.js" %}"></script>
++
++        <script>
++            var dataSet = {{result|safe}};
++            $('#permissionList').bootstrapTable({
++                search: false,
++                sortName: 'Name',
++                columns: [
++                    {
++                        field: 'role_name',
++                        title: 'Account/Permission',
++                        sortable: true
++                    },
++                    {
++                        field: 'permission_system',
++                        title: 'System',
++                        formatter: function(value, row) {
++                            if (value == 'Enable') var good_checked = "checked"
++                            return '<input type="checkbox"  name="checkPermission"  \
++                                    value="' + row.OId + ',' + 'permission_system' + '" \
++                                    '+ good_checked +' disabled >';
++                        }
++                    },
++                    {
++                        field: 'permission_device',
++                        title: 'Device List',
++                        formatter: function(value, row) {
++                            if (value == 'Enable') var good_checked = "checked"
++                            if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
++                                var good_disabled = "disabled"
++                            return '<input type="checkbox"  name="checkPermission"  \
++                                    value="' + row.OId + ',' + 'permission_device' + '" \
++                                    '+ good_checked +' '+ good_disabled +' >';
++                        }
++                    },
++                    {
++                        field: 'permission_fruserlist',
++                        title: 'FR User List',
++                        formatter: function(value, row) {
++                            if (value == 'Enable') var good_checked = "checked"
++                            if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
++                                var good_disabled = "disabled"
++                            return '<input type="checkbox"  name="checkPermission"  \
++                                    value="' + row.OId + ',' + 'permission_fruserlist' + '" \
++                                    '+ good_checked +' '+ good_disabled +' >';
++                        }
++                    },
++                    {
++                        field: 'permission_frusergroup',
++                        title: 'FR User Group',
++                        formatter: function(value, row) {
++                            if (value == 'Enable') var good_checked = "checked"
++                            if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
++                              var good_disabled = "disabled"
++                            return '<input type="checkbox"  name="checkPermission"  \
++                                    value="' + row.OId + ',' + 'permission_frusergroup' + '" \
++                                    '+ good_checked +' '+ good_disabled +' >';
++                        }
++                    },
++                    {
++                        field: 'permission_log',
++                        title: 'Log',
++                        formatter: function(value, row) {
++                            if (value == 'Enable') var good_checked = "checked"
++                            if (row.role_name == "Admin(default)" || row.role_name == "Users(default)")
++                                var good_disabled = "disabled"
++                            return '<input type="checkbox"  name="checkPermission"  \
++                                    value="' + row.OId + ',' + 'permission_log' + '" \
++                                    '+ good_checked +' '+ good_disabled +' >';
++                        }
++                    },
++                ],
++                data: dataSet
++            });
++
++            function permission_save() {
++                $("input[name='checkPermission']").each(function() {
++                    if (this.checked) {
++                        var temp = this.value.split(",")
++                        $.ajax({
++                            type: 'post',
++                            url: '/permission_save/',
++                            async: true,
++                            dataType: 'json',
++                            data: {
++                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                'OId': temp[0],
++                                'field': temp[1],
++                                'acl': 'Enable'
++                            },
++                        })
++                    } else if (!this.checked) {
++                        var temp = this.value.split(",")
++                        $.ajax({
++                            type: 'post',
++                            url: '/permission_save/',
++                            async: true,
++                            dataType: 'json',
++                            data: {
++                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                'OId': temp[0],
++                                'field': temp[1],
++                                'acl': 'Disable'
++                            },
++                        })
++                    }
++                })
++                alert("permission save successfully");
++                location.href = '/role_list/';
++            }
++
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
++
++            !function ($) {
++                $(document).on("click","ul.nav li.parent > a > span.icon", function(){
++                    $(this).find('em:first').toggleClass("glyphicon-minus");
++                });
++                $(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
++            }(window.jQuery);
++
++            $(window).on('resize', function () {
++              if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
++            })
++
++            $(window).on('resize', function () {
++              if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
++            })
++
++        </script>
++    </body>
++</html>
+-- 
+1.9.1
+

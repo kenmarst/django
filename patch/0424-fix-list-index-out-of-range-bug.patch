@@ -1,0 +1,36 @@
+From d51e9c5be2b3dccdab3a991f21307183515e7b0b Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 19 Dec 2016 18:13:24 +0800
+Subject: [PATCH 424/443] fix "list index out of range" bug
+
+---
+ api/recognition.py | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 405867d..9cbf1da 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -154,11 +154,14 @@ def face_identify(request):
+                         )
+ 
+                         if res_group_identify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                            person = res_group_identify['persons'][0]
+-                            logger.debug('face_identify: ' + ' person_id: ' + person['person_id'] + ' person_similarity: ' + str(person['similarity']))
+-                            if person['similarity'] >= person_similarity:
+-                                person_similarity = person['similarity']
+-                                person_id = person['person_id']
++                            try:
++                                person = res_group_identify['persons'][0]
++                                logger.debug('face_identify: ' + ' person_id: ' + person['person_id'] + ' person_similarity: ' + str(person['similarity']))
++                                if person['similarity'] >= person_similarity:
++                                    person_similarity = person['similarity']
++                                    person_id = person['person_id']
++                            except:
++                                raise Exception("Similarity is too low")
+                         else:
+                             raise Exception('Request TCIT error')
+                     if person_id:
+-- 
+1.9.1
+

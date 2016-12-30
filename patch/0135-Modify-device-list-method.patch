@@ -1,0 +1,324 @@
+From fd2e15aea29f8316b51f29bf94287e5cd837b7ec Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 20:05:10 +0800
+Subject: [PATCH 135/443] Modify device list method
+
+Modify device list method for large data load.
+---
+ br06/urls.py                       |  5 +-
+ devices/views.py                   | 99 +++++++++++++++++++++++++++++---------
+ templates/device_frusergroups.html | 45 +++++++++++------
+ templates/device_list.html         | 17 +++++--
+ 4 files changed, 123 insertions(+), 43 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index b661cd6..a6613b6 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -23,7 +23,7 @@ from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_da
+ from logsetting.views import logsetting
+ from systemsettings.views import settings_views
+ from dashboard.views import dashboard_views
+-from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
++from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, frusergroups_list_data, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, frusergroup_member_list_data, frusergroup_member_add_data, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, frusergroup_devices_list_data, frusergroup_devices_add_data, add_frusergroup_device, delete_frusergroup_device
+@@ -99,10 +99,13 @@ urlpatterns += [
+ 
+ urlpatterns += [
+     url(r'^device_list/?$', device_list_view),
++    url(r'^device_list_data/?$', device_list_data),
+     url(r'^device_add/?$', device_add_view),
+     url(r'^device_edit/?$', device_edit_view),
+     url(r'^device_settings/?$', device_settings_view),
+     url(r'^device_frusergroups/?$', device_frusergroups_view),
++    url(r'^device_frusergroups_list_data/?$', device_frusergroups_list_data),
++    url(r'^device_frusergroups_add_data/?$', device_frusergroups_add_data),
+     url(r'^add_device/?$', add_device),
+     url(r'^accept_device/?$', accept_device),
+     url(r'^change_device_name/?$', change_device_name),
+diff --git a/devices/views.py b/devices/views.py
+index e9918ea..4d5b6bf 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Frusergroups, Frusergroupdevices
+ from datetime import datetime
+ from login.views import check_login
++from django.db.models import Q
+ import json
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -17,16 +18,34 @@ def device_list_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Devices.objects.all()
+-        devices = [res.as_json() for res in obj]
+-        index = 0
+-        for device in devices:
+-            device['Index'] = index + 1
+-            index += 1
+-        return render(request, 'device_list.html', {'active': 'device_list', 'obj': devices})
++        return render(request, 'device_list.html', {'active': 'device_list'})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
++def device_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            devices = Devices.objects.filter(Q(MAC__contains = search) | Q(IP__contains = search) | Q(Name__contains = search)).order_by(order)
++        else:
++            devices = Devices.objects.order_by(order)
++        device_count = devices.count()
++        devices = [device.as_json() for device in devices[offset : offset + limit]]
++        return JsonResponse({'total': device_count, 'rows': devices})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
+ def device_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+@@ -67,24 +86,60 @@ def device_frusergroups_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Frusergroupdevices.objects.filter(DeviceOId = Devices.objects.get(OId = request.GET['OId']))
+-        devicegroups = [res.GroupOId.as_json() for res in obj]
+-        index = 0
+-        for group in devicegroups:
+-            group['Index'] = index + 1
+-            index += 1
+-
+-        obj_all = Frusergroups.objects.all()
+-        groups = [res_all.as_json() for res_all in obj_all if res_all not in [res.GroupOId for res in obj]]
+-        index = 0
+-        for group in groups:
+-            group['Index'] = index + 1
+-            index += 1
+-
+-        return render(request, 'device_frusergroups.html', {'active': 'device_frusergroups', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json, 'devicegroups': devicegroups, 'groups': groups})
++        return render(request, 'device_frusergroups.html', {'active': 'device_frusergroups', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
++def device_frusergroups_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            groups = Frusergroups.objects.filter(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            groups = Frusergroups.objects.filter(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).order_by(order)
++        group_count = groups.count()
++        groups = [group.as_json() for group in groups[offset : offset + limit]]
++
++        return JsonResponse({'total': group_count, 'rows': groups})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
++def device_frusergroups_add_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            groups = Frusergroups.objects.exclude(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            groups = Frusergroups.objects.exclude(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).order_by(order)
++        group_count = groups.count()
++        groups = [group.as_json() for group in groups[offset : offset + limit]]
++
++        return JsonResponse({'total': group_count, 'rows': groups})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
+ def add_device(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index f541f5b..7374dc5 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -76,12 +76,23 @@
+             var $GroupAdd = $('#GroupAdd');
+ 
+             $GroupList.bootstrapTable({
++                url: '/device_frusergroups_list_data',
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Name',
+@@ -97,14 +108,26 @@
+                         }
+                     }
+                 ],
+-                data: {{devicegroups|safe}}
+             });
+ 
+             $GroupAdd.bootstrapTable({
++                url: '/device_frusergroups_add_data',
+                 search: true,
++                pagination: true,
+                 pageSize: 10,
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         checkbox: true
+@@ -115,7 +138,6 @@
+                         sortable: true
+                     }
+                 ],
+-                data: {{groups|safe}}
+             });
+ 
+ 
+@@ -154,11 +176,8 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                $GroupAdd.bootstrapTable('append', data);
+-                                $GroupList.bootstrapTable('remove', {
+-                                    field: 'OId',
+-                                    values: [data.OId]
+-                                });
++                                $GroupList.bootstrapTable('refresh');
++                                $GroupAdd.bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete group");
+                             }
+@@ -188,14 +207,8 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            $GroupList.bootstrapTable('append', $.map(
+-                                $GroupAdd.bootstrapTable('getSelections'),
+-                                function (row) {return row}
+-                            ));
+-                            $GroupAdd.bootstrapTable('remove', {
+-                                field: 'OId',
+-                                values: GroupOIds
+-                            });
++                            $GroupList.bootstrapTable('refresh');
++                            $GroupAdd.bootstrapTable('refresh');
+                         } else {
+                             alert("Fail to add group");
+                         }
+diff --git a/templates/device_list.html b/templates/device_list.html
+index ac614bf..a2471b0 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -50,13 +50,23 @@
+         </script>
+         <script>
+             $('#DeviceList').bootstrapTable({
++                url: '/device_list_data',
+                 search: true,
+                 pagination: true,
+                 toolbar: '#AddDevice',
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'MAC',
+@@ -110,7 +120,6 @@
+                         }
+                     }
+                 ],
+-                data: {{obj|safe}}
+             });
+ 
+             //For getting CSRF token
+@@ -147,7 +156,7 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                location.reload();
++                                $('#DeviceList').bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to accept device");
+                             }
+@@ -174,7 +183,7 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                location.reload();
++                                $('#DeviceList').bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete device");
+                             }
+-- 
+1.9.1
+

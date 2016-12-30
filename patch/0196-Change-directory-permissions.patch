@@ -1,0 +1,27 @@
+From 305d0df27c0485fff7b72893f8c0bd6b907bde27 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 22 Jul 2016 17:33:34 +0800
+Subject: [PATCH 196/443] Change directory permissions
+
+Change directory permissions to 777.
+---
+ media/facepic/.gitignore    | 0
+ media/fruserpic/.gitignore  | 0
+ media/logsetting/.gitignore | 0
+ 3 files changed, 0 insertions(+), 0 deletions(-)
+ mode change 100644 => 100755 media/facepic/.gitignore
+ mode change 100644 => 100755 media/fruserpic/.gitignore
+ mode change 100644 => 100755 media/logsetting/.gitignore
+
+diff --git a/media/facepic/.gitignore b/media/facepic/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/media/fruserpic/.gitignore b/media/fruserpic/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/media/logsetting/.gitignore b/media/logsetting/.gitignore
+old mode 100644
+new mode 100755
+-- 
+1.9.1
+

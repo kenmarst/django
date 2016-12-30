@@ -1,0 +1,45 @@
+From 78bff25d0dd3dc25f38cd4a5657feec9ea96304d Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Tue, 24 May 2016 16:03:53 +0800
+Subject: [PATCH 071/443] Fix url error.
+
+---
+ br06/urls.py | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 9e507ed..e7e1315 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -50,14 +50,12 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
+-    url(r'^role_list/?$', role_list_view),
+-    url(r'^role_add/?$', role_add_view),
+-    url(r'^role_rename/?$', role_rename_view),
+-    url(r'^role_permission/?$', role_permission_view),
+-    url(r'^rename_role/?$', rename_role),
+-    url(r'^add_role/?$', add_role),
+-    url(r'^delete_role/?$', delete_role),
+-    url(r'^permission_save/?$', permission_save),
++    url(r'^user_list/?$', user_list_view),
++    url(r'^user_add/?$', user_add_view),
++    url(r'^user_update/?$', user_update_view),
++    url(r'^add_user/?$', add_user),
++    url(r'^update_user/?$', update_user),
++    url(r'^delete_user/?$', delete_user),
+ ]
+ 
+ urlpatterns += [
+@@ -68,6 +66,7 @@ urlpatterns += [
+     url(r'^rename_role/?$', rename_role),
+     url(r'^add_role/?$', add_role),
+     url(r'^delete_role/?$', delete_role),
++    url(r'^permission_save/?$', permission_save),
+ ]
+ 
+ urlpatterns += [
+-- 
+1.9.1
+

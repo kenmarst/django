@@ -1,0 +1,29 @@
+From 11f0435861604c390ba56c3112be19cc04b0e752 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 21 Oct 2016 17:41:10 +0800
+Subject: [PATCH 329/443] Modify 4G server IP to domain name
+
+---
+ br06/settings.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index a0e919d..3fa8ef1 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -194,9 +194,9 @@ SESSION_COOKIE_AGE = 600 # sec
+ # 4G
+ EN_4G = 0 # Enable 4Gapi in UserAdd
+ SE_4G = 1 # 4G return status: success
+-LO_4G = 'http://61.247.173.118/daily/LoginApi/face'
+-RE_4G = 'http://61.247.173.118/daily/importApi/UserFaceLoginRecord/add'
+-QE_4G = 'http://61.247.173.118/daily/loginApi/faceQuery'
++LO_4G = 'http://4g.shuttle.com/daily/LoginApi/face'
++RE_4G = 'http://4g.shuttle.com/daily/importApi/UserFaceLoginRecord/add'
++QE_4G = 'http://4g.shuttle.com/daily/loginApi/faceQuery'
+ 
+ CRONJOBS = [
+     ('*/10 * * * *', 'api.cron.Update_4G_User', '>> ~/4G_user_sync.log 2>&1'),
+-- 
+1.9.1
+

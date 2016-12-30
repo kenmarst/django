@@ -1,0 +1,1416 @@
+From 6b0b7901c78206ea19f6f9bdf31823c50d51982b Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 21 Dec 2016 11:03:29 +0800
+Subject: [PATCH 432/443] Update csfr of web.
+
+---
+ br06/urls.py                       |   3 +-
+ templates/dashboard.html           |  21 +---
+ templates/device_add.html          |  19 +---
+ templates/device_edit.html         |  22 +---
+ templates/device_frusergroups.html |  23 +---
+ templates/device_list.html         |  24 +----
+ templates/device_settings.html     |  20 +---
+ templates/fruser_add.html          |  20 +---
+ templates/fruser_edit.html         |  20 +---
+ templates/frusergroup_add.html     |  20 +---
+ templates/frusergroup_devices.html |  23 +---
+ templates/frusergroup_edit.html    |  20 +---
+ templates/frusergroup_member.html  |  23 +---
+ templates/frusergroups_list.html   |  19 +---
+ templates/logsetting.html          |  17 +--
+ templates/role_add.html            |  17 +--
+ templates/role_list.html           |  17 +--
+ templates/role_permission.html     |  19 +---
+ templates/role_rename.html         |  17 +--
+ templates/system_settings.html     |  24 +----
+ templates/user_add.html            |  19 +---
+ templates/user_group_add.html      |  20 +---
+ templates/user_group_devices.html  |  23 +---
+ templates/user_group_edit.html     |  20 +---
+ templates/user_group_list.html     |  21 +---
+ templates/user_group_members.html  |  23 +---
+ templates/user_list.html           |  19 +---
+ templates/user_setting.html        | 212 -------------------------------------
+ templates/user_update.html         |  19 +---
+ user/views.py                      |  11 --
+ 30 files changed, 40 insertions(+), 735 deletions(-)
+ delete mode 100755 templates/user_setting.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 0ddf644..f7d7ef3 100755
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -16,7 +16,7 @@ Including another URLconf
+ from django.conf.urls import url, include
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection, views, fingerprint
+-from user.views import user_setting, user_list_view, user_list_data, user_add_view, user_update_view, add_user, update_user, delete_user
++from user.views import user_list_view, user_list_data, user_add_view, user_update_view, add_user, update_user, delete_user
+ from frusers.views import fruser_list_view, fruser_add_view, fruser_edit_view, import_fruser, produce_fruser, export_fruser, add_fruser, update_fruser, delete_fruser, fruser_data
+ from systemlogs.views import systemlog_list_view, produce_systemlog, export_systemlog, systemlog_data
+ from fruserlogs.views import fruserlog_list_view, produce_fruserlog, export_fruserlog, fruserlog_data
+@@ -80,7 +80,6 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
+-    url(r'^user_setting/?$', user_setting),
+     url(r'^user_list/?$', user_list_view),
+     url(r'^user_list_data/?$', user_list_data),
+     url(r'^user_add/?$', user_add_view),
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 61dfc1c..58bc10c 100755
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -187,23 +187,6 @@
+             }
+         </script>
+         <script>
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+             function updateTimer(updateCount) {
+                 setTimeout(function() {
+                     if (updateCount--) {
+@@ -244,7 +227,7 @@
+                             async: true,
+                             dataType: 'json',
+                             data: {
+-                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                csrfmiddlewaretoken : '{{csrf_token}}',
+                                 password : ret,
+                             },
+                             success: function(data) {
+@@ -276,7 +259,7 @@
+             function UpdateBr06File() {
+                 if ($('#Br06UpdateFile').val()) {
+                     var data = new FormData($('#Br06UpdateForm')[0]);
+-                    data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
++                    data.append('csrfmiddlewaretoken', '{{csrf_token}}');
+ 
+                     ret = prompt("{% trans "Please enter server password" %}");
+                     if (ret) {
+diff --git a/templates/device_add.html b/templates/device_add.html
+index 51c6c41..2311847 100755
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -72,23 +72,6 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+ 
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+@@ -102,7 +85,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'Name': Name,
+                     'MAC': MAC,
+                     'IP': IP,
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 846d75f..04429d4 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -226,24 +226,6 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+@@ -254,7 +236,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'OId': {{obj|safe}}.OId,
+                     'Name': Name
+                 },
+@@ -285,7 +267,7 @@
+                         async: true,
+                         dataTypde: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'OId': {{obj|safe}}.OId,
+                         },
+                         success: function(data) {
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 9b64c97..41b67b4 100755
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -143,25 +143,6 @@
+                 ],
+             });
+ 
+-
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function delete_group(GroupOId, Name) {
+                 var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this device" %} ?');
+ 
+@@ -173,7 +154,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'DeviceOId': {{obj|safe}}.OId,
+                             'GroupOId': GroupOId
+                         },
+@@ -204,7 +185,7 @@
+                     async: true,
+                     dataType: 'json',
+                     data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        csrfmiddlewaretoken : '{{csrf_token}}',
+                         'DeviceOId': {{obj|safe}}.OId,
+                         'GroupOIds': GroupOIds
+                     },
+diff --git a/templates/device_list.html b/templates/device_list.html
+index de07f34..571da63 100755
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -127,24 +127,6 @@
+                 ],
+             });
+ 
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function accept_device(OId, Name) {
+                 var ret = confirm('Confirm to accept ' +Name+ ' Device?');
+ 
+@@ -156,7 +138,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'OId': OId
+                         },
+                         success: function(data) {
+@@ -181,7 +163,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'OId': OId
+                         },
+                         success: function(data) {
+@@ -206,7 +188,7 @@
+                         async: true,
+                         dataTypde: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken')
++                            csrfmiddlewaretoken : '{{csrf_token}}'
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 6d70ddf..62f2a95 100755
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -358,24 +358,6 @@
+             typeSwitch();
+         });
+ 
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick(){
+             var Type = $('select[name=Type]').val();
+             var Model = $('select[name=Model]').val();
+@@ -409,7 +391,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'OId': {{obj|safe}}.OId,
+                     'Type': Type,
+                     'Model': Model,
+diff --git a/templates/fruser_add.html b/templates/fruser_add.html
+index c503ef5..d5ea891 100755
+--- a/templates/fruser_add.html
++++ b/templates/fruser_add.html
+@@ -93,24 +93,6 @@
+             $('input[name=DisableCauses]').prop('disabled', !this.checked);
+         });
+ 
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick(){
+             var FRUserId = $('input[name=FRUserId]').val();
+             var Name = $('input[name=Name]').val();
+@@ -132,7 +114,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'FRUserId': FRUserId,
+                     'Name': Name,
+                     'Gender': Gender,
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index cf74cf0..668618a 100755
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -141,24 +141,6 @@
+             $('input[name="DisableCauses"]').prop('disabled', !this.checked);
+         });
+ 
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick(){
+             var Gender = $('select[name=Gender]').val();
+             var Age = $('input[name=Age]').val();
+@@ -179,7 +161,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'OId': {{obj|safe}}.OId,
+                     'Gender': Gender,
+                     'Age': Age,
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index 64a3f75..e3b96e6 100755
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -56,24 +56,6 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         var addAnother = false;
+ 
+         function onSaveClick(){
+@@ -86,7 +68,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'Name': Name,
+                 },
+                 success: function(data) {
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index ee8b4b6..82fc524 100755
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -149,25 +149,6 @@
+                 ],
+             });
+ 
+-
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function delete_device(DeviceOId, Name) {
+                 var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+                 if (ret) {
+@@ -178,7 +159,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'GroupOId': {{obj|safe}}.OId,
+                             'DeviceOId': DeviceOId
+                         },
+@@ -209,7 +190,7 @@
+                     async: true,
+                     dataType: 'json',
+                     data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        csrfmiddlewaretoken : '{{csrf_token}}',
+                         'GroupOId': {{obj|safe}}.OId,
+                         'DeviceOIds': DeviceOIds
+                     },
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index f21c75c..2e4004b 100755
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -72,24 +72,6 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+@@ -100,7 +82,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'OId': {{obj|safe}}.OId,
+                     'Name': Name
+                 },
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 1c4e0a6..13a371a 100755
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -146,25 +146,6 @@
+                 ],
+             });
+ 
+-
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function delete_user(FRUserOId, Name) {
+                 var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+                 if (ret) {
+@@ -175,7 +156,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'GroupOId': {{obj|safe}}.OId,
+                             'FRUserOId': FRUserOId
+                         },
+@@ -206,7 +187,7 @@
+                     async: true,
+                     dataType: 'json',
+                     data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        csrfmiddlewaretoken : '{{csrf_token}}',
+                         'GroupOId': {{obj|safe}}.OId,
+                         'UserOIds': UserOIds
+                     },
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index bda5b5b..bd7cb75 100755
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -100,23 +100,6 @@
+                 ],
+             });
+ 
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function delete_device(OId, Name) {
+                 var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' {% trans "group" %} ?');
+                 if (ret) {
+@@ -127,7 +110,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'OId': OId
+                         },
+                         success: function(data) {
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index bc8156b..6880431 100755
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -124,23 +124,8 @@
+             });
+         });
+ 
+-        function getCookie(name) {
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick(){
+-            var csrftoken = getCookie('csrftoken');
++            var csrftoken = '{{csrf_token}}';
+             var symbol1 = $('input[name=optradio]').filter(":checked").val()
+             var symbol2 = $('input[name=customsymbol]').val()
+             $("#select2").children().each(function(){
+diff --git a/templates/role_add.html b/templates/role_add.html
+index dab6982..076c139 100755
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -60,21 +60,6 @@
+         </div>
+ 
+         <script>
+-        function getCookie(name) {
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         var addAnother = false;
+ 
+         function onSaveClick(){
+@@ -88,7 +73,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'Name': name,
+                     'Sort': sort,
+                     'Category': category,
+diff --git a/templates/role_list.html b/templates/role_list.html
+index c21aa9d..d95aa79 100755
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -126,21 +126,6 @@
+                 ],
+             });
+ 
+-            function getCookie(name) {
+-                var cookieValue = null;
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function role_delete(OId) {
+                 var ret = confirm('{% trans "Confirm to delete this Role" %} ?');
+                 if (ret) {
+@@ -150,7 +135,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'OId': OId
+                         },
+                         success: function(data) {
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index 312d6ad..5606023 100755
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -137,7 +137,7 @@
+                             async: true,
+                             dataType: 'json',
+                             data: {
+-                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                csrfmiddlewaretoken : '{{csrf_token}}',
+                                 'OId': temp[0],
+                                 'field': temp[1],
+                                 'acl': 'Enable'
+@@ -151,7 +151,7 @@
+                             async: true,
+                             dataType: 'json',
+                             data: {
+-                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                csrfmiddlewaretoken : '{{csrf_token}}',
+                                 'OId': temp[0],
+                                 'field': temp[1],
+                                 'acl': 'Disable'
+@@ -162,21 +162,6 @@
+                 alert("{% trans "permission save successfully" %}");
+                 location.href = '/role_list/';
+             }
+-
+-            function getCookie(name) {
+-                var cookieValue = null;
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+         </script>
+     </body>
+ </html>
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index e815c59..dda36aa 100755
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -53,21 +53,6 @@
+         </div>
+ 
+         <script>
+-        function getCookie(name) {
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick() {
+             var name = $('input[name=Name]').val();
+             var sort = $('input[name=Sort]').val();
+@@ -78,7 +63,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'OId': {{obj|safe}}.OId,
+                     'Name': name,
+                     'Sort': sort,
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 8caeff4..d7cef99 100755
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -241,24 +241,6 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function OnConnectTestClick(){
+             var BackupRemoteHost = $('input[name=BackupRemoteHost]').val();
+             var BackupRemotePort = $('input[name=BackupRemotePort]').val();
+@@ -275,7 +257,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'BackupRemoteHost': BackupRemoteHost,
+                     'BackupRemotePort': BackupRemotePort,
+                     'BackupRemoteAccount': BackupRemoteAccount,
+@@ -373,7 +355,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'BackupMethod': BackupMethod,
+                     'BackupScheduling': BackupScheduling,
+                     'BackupMonthlyDate': BackupMonthlyDate,
+@@ -435,7 +417,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'LogLimit': LogLimit,
+                     'LogPreservation': LogPreservation,
+                     'PicCreateSave': PicCreateSave,
+diff --git a/templates/user_add.html b/templates/user_add.html
+index e318e8d..8b66323 100755
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -105,23 +105,6 @@
+ 
+         {% load static %}
+         <script>
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function validityPwd() {
+                 var password = $('input[name=Password]');
+                 var psw_confirm = $('input[name=Confirm]');
+@@ -155,7 +138,7 @@
+                     async: true,
+                     dataType: 'json',
+                     data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        csrfmiddlewaretoken : '{{csrf_token}}',
+                         'Account': account,
+                         'Name': name,
+                         'Email': email,
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index 5d8ea30..8f0e359 100755
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -56,24 +56,6 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         var addAnother = false;
+ 
+         function onSaveClick(){
+@@ -86,7 +68,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'Name': Name,
+                 },
+                 success: function(data) {
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index 4fc223c..e421614 100755
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -147,25 +147,6 @@
+                 ],
+             });
+ 
+-
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function delete_device(DeviceOId, Name) {
+                 var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+                 if (ret) {
+@@ -176,7 +157,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'GroupOId': {{obj|safe}}.OId,
+                             'DeviceOId': DeviceOId
+                         },
+@@ -207,7 +188,7 @@
+                     async: true,
+                     dataType: 'json',
+                     data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        csrfmiddlewaretoken : '{{csrf_token}}',
+                         'GroupOId': {{obj|safe}}.OId,
+                         'DeviceOIds': DeviceOIds
+                     },
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index 82095d8..c093824 100755
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -72,24 +72,6 @@
+ 
+         {% load static %}
+         <script>
+-        //For getting CSRF token
+-        function getCookie(name) {
+-
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+ 
+@@ -100,7 +82,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'OId': {{obj|safe}}.OId,
+                     'Name': Name
+                 },
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index 2af13f2..06c45d9 100755
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -93,25 +93,6 @@
+                     }
+                 ],
+             });
+-
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function delete_device(OId, Name) {
+                 var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' {% trans "from this group" %} ?');
+ 
+@@ -123,7 +104,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'OId': OId
+                         },
+                         success: function(data) {
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index 5025792..6545149 100755
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -147,25 +147,6 @@
+                 ],
+             });
+ 
+-
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function delete_user(UserOId, Name) {
+                 var ret = confirm('{% trans "Confirm to delete" %} ' + Name + ' {% trans "from this group" %} ?');
+ 
+@@ -177,7 +158,7 @@
+                         async: true,
+                         dataType: 'json',
+                         data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            csrfmiddlewaretoken : '{{csrf_token}}',
+                             'GroupOId': {{obj|safe}}.OId,
+                             'UserOId': UserOId
+                         },
+@@ -208,7 +189,7 @@
+                     async: true,
+                     dataType: 'json',
+                     data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        csrfmiddlewaretoken : '{{csrf_token}}',
+                         'GroupOId': {{obj|safe}}.OId,
+                         'UserOIds': UserOIds
+                     },
+diff --git a/templates/user_list.html b/templates/user_list.html
+index fddff70..ceed0d3 100755
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -116,23 +116,6 @@
+             ],
+ 		});
+ 
+-        //For getting CSRF token
+-        function getCookie(name) {
+-            var cookieValue = null;
+-            if (document.cookie && document.cookie != '') {
+-                var cookies = document.cookie.split(';');
+-                for (var i = 0; i < cookies.length; i++) {
+-                    var cookie = jQuery.trim(cookies[i]);
+-                    // Does this cookie string begin with the name we want?
+-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                        break;
+-                    }
+-                }
+-            }
+-            return cookieValue;
+-        }
+-
+         function delete_user(OId, Account) {
+             var ret = confirm('{% trans "Confirm to delete" %} ? ');
+             //console.log(ret);
+@@ -144,7 +127,7 @@
+                 async: true,
+                 dataType: 'json',
+                 data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    csrfmiddlewaretoken : '{{csrf_token}}',
+                     'OId': OId,
+                     'Account': Account,
+                 },
+diff --git a/templates/user_setting.html b/templates/user_setting.html
+deleted file mode 100755
+index 54d4783..0000000
+--- a/templates/user_setting.html
++++ /dev/null
+@@ -1,212 +0,0 @@
+-<!DOCTYPE html>
+-{% load i18n %}
+-{% include 'commons_js.html' %}
+-<html>
+-<head>
+-<meta charset="utf-8">
+-<meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>{% trans "User List" %}</title>
+-
+-<!--[if lt IE 9]>
+-<script src="js/html5shiv.js"></script>
+-<script src="js/respond.min.js"></script>
+-<![endif]-->
+-
+-</head>l
+-
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">{% trans "Setting" %}</li>
+-			</ol>
+-		</div><!--/.row-->
+-
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">{% trans "Setting" %}</h1>
+-			</div>
+-		</div><!--/.row-->
+-
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<!-- <div class="panel-heading">Advanced Table</div> -->
+-					<div class="panel-body">
+-						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+-                            <div class="form-body">
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Account" %}
+-                                        <span class="required"> </span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                      <div class="input-icon">
+-                                        	<input readonly type="text" class="form-control" placeholder="" name="Account" value="{{obj.Account}}">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
+-                                        </div>
+-
+-                                    </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Name" %}
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                      <div class="input-icon">
+-                                        	<input type="text" class="form-control" placeholder="" name="name" value="{{obj.Name}}">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
+-                                        </div>
+-                                    </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Email" %}
+-                                        <span class="required"> </span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                      <div class="input-icon">
+-                                        	<input readonly type="text" class="form-control" placeholder="" name="email" value="{{obj.Email}}">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
+-                                        </div>
+-
+-                                    </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Password" %}
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                        <div class="input-icon">
+-                                            <input type="password" class="form-control" placeholder="" name="password">
+-                                            <div class="form-control-focus"> </div>
+-                                            <i class="fa fa-key"></i>
+-                                        </div>
+-                                    </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "New Password" %}
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                      <div class="input-icon">
+-                                            <input type="password" class="form-control" placeholder="Enter new password" name="new_password">
+-                                            <div class="form-control-focus"> </div>
+-                                            <i class="fa fa-user"></i>
+-                                        </div>
+-                                    </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Confirm Password" %}
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                        <div class="input-icon">
+-                                            <input type="password" class="form-control" placeholder="Enter new password again" name="confirm_password">
+-                                            <div class="form-control-focus"> </div>
+-                                            <i class="fa fa-check"></i>
+-                                        </div>
+-                                    </div>
+-                                </div>
+-
+-                            <div class="form-actions">
+-                                <div class="row">
+-                                    <div class="col-md-offset-3 col-md-9">
+-                                        <a type="reset" class="btn default">{% trans "Back" %}</a>
+-                                        <a onClick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
+-                                    </div>
+-                                </div>
+-                            </div>
+-                        </form>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->
+-	</div><!--/.main-->
+-
+-	{% load static %}
+-	<script src="{% static "js/md5.js" %}"></script>
+-	<script>
+-	//For getting CSRF token
+-	function getCookie(name) {
+-		var cookieValue = null;
+-		if (document.cookie && document.cookie != '') {
+-			var cookies = document.cookie.split(';');
+-			for (var i = 0; i < cookies.length; i++) {
+-				var cookie = jQuery.trim(cookies[i]);
+-				// Does this cookie string begin with the name we want?
+-				if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-					break;
+-				}
+-			}
+-		}
+-		return cookieValue;
+-	}
+-
+-	function onSaveClick(){
+-		var csrftoken = getCookie('csrftoken');
+-		var account = $('input[name=email]').val();
+-		var name = $('input[name=name]').val();
+-		var password = $('input[name=password]').val();
+-		var new_password = $('input[name=new_password]').val();
+-		var confirm_password = $('input[name=confirm_password]').val();
+-		console.log(account);
+-		console.log(password)
+-		console.log(new_password)
+-		console.log(confirm_password)
+-		if(name==""){
+-			alert("{% trans "please enter your name" %}");
+-			return
+-		}
+-		if(!password || !new_password || !confirm_password){
+-			alert("{% trans "please enter your password" %}");
+-			return;
+-		}
+-		if(new_password != confirm_password){
+-			alert("{% trans "password not match, please check 'New Password' and 'Confirm Password'" %}");
+-			return;
+-		}
+-		$.ajax({
+-			type: 'post',
+-			url: '/changePW/',
+-			async: true,
+-			dataType: 'json',
+-			data: {
+-				csrfmiddlewaretoken : csrftoken,
+-				'email': account,
+-				'name': name,
+-				'password': password,
+-				'new_password': md5(new_password),
+-				'confirm_password': md5(confirm_password)
+-			},
+-			success: function(data) {
+-				console.log("CODE = ",data.CODE);
+-				if (data.CODE == "0") {
+-					alert("{% trans "Change password successfully" %}");
+-					location.href = '/';
+-				}else if (data.CODE == "2") {
+-					alert("{% trans "Wrong password or account" %}");
+-				}else{
+-					alert("{% trans "Fail to change password" %}");
+-				}
+-			},
+-			error: function(data) {
+-				console.log('why nunu');
+-			}
+-		});
+-	}
+-
+-    $('input').keypress(function(e) {
+-        code = e.keyCode ? e.keyCode : e.which;
+-        if(code == 13) {
+-            e.preventDefault();
+-        }
+-    });
+-	</script>
+-</body>
+-
+-</html>
+diff --git a/templates/user_update.html b/templates/user_update.html
+index f64f23e..7667ebb 100755
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -106,23 +106,6 @@
+ 
+         {% load static %}
+         <script>
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             function validityPwd() {
+                 var password = $('input[name=Password]');
+                 var psw_confirm = $('input[name=Confirm]');
+@@ -155,7 +138,7 @@
+                     async: true,
+                     dataType: 'json',
+                     data: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        csrfmiddlewaretoken : '{{csrf_token}}',
+                         'OId' : '{{obj.OId}}',
+                         'Account' : '{{obj.Account}}',
+                         'Name': name,
+diff --git a/user/views.py b/user/views.py
+index fb47d47..c684171 100755
+--- a/user/views.py
++++ b/user/views.py
+@@ -12,17 +12,6 @@ import json
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}, {"CODE": "4"}]
+ permission = 'permission_system'
+ 
+-def user_setting(request):
+-    login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] != "0":
+-        return check_login_redirect(request, login_request["CODE"])
+-
+-    try:
+-        obj = Users.objects.get(OId=request.session['OId'])
+-        return render(request, 'user_setting.html', {'active': "setting", 'obj': obj})
+-    except:
+-        return render(request, 'user_setting.html', {'active': "setting", 'Email': request.session['Email']})
+-
+ # User List
+ def user_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-- 
+1.9.1
+

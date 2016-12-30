@@ -1,0 +1,129 @@
+From 04c9b50bb28ad46de8405aa95c0ece1096d7be5d Mon Sep 17 00:00:00 2001
+From: Frank <frank_lin@tw.shuttle.com>
+Date: Tue, 27 Dec 2016 15:12:37 +0800
+Subject: [PATCH 437/443] Fix bug - Compatible with Firefox browser.
+
+---
+ templates/dashboard.html       | 20 ++++++++++----------
+ templates/frusergroup_add.html |  2 +-
+ templates/role_rename.html     |  2 +-
+ templates/user_group_add.html  |  2 +-
+ templates/user_group_edit.html |  2 +-
+ 5 files changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 89f9f81..250fba2 100755
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -200,7 +200,7 @@
+                         updateTimer(updateCount);
+                     } else {
+                         alert("{% trans "Upgrade completed" %}");
+-                        location.reload();
++                        location.reload(true);
+                     }
+                 }, 1000);
+             }
+@@ -236,20 +236,20 @@
+                                     updateTimer(31);
+                                 } else if (data.CODE == "2") {
+                                     alert("{% trans "Password incorrect" %}");
+-                                    location.reload();
++                                    location.reload(true);
+                                 } else if (data.CODE == "3") {
+                                     alert("{% trans "The file format is not correct!" %}");
+-                                    location.reload();
++                                    location.reload(true);
+                                 } else if (data.CODE == "4") {
+                                     alert("{% trans "Connect to FTP failed!" %}");
+-                                    location.reload();
++                                    location.reload(true);
+                                 } else {
+                                     alert("{% trans "Fail to upgrade server!" %}");
+-                                    location.reload();
++                                    location.reload(true);
+                                 }
+                             },
+                             error: function(data) {
+-                                location.reload();
++                                location.reload(true);
+                             }
+                         });
+                     }
+@@ -289,17 +289,17 @@
+                                     updateTimer(31);
+                                 } else if (data.CODE == "2") {
+                                     alert("{% trans "Password incorrect" %}");
+-                                    location.reload();
++                                    location.reload(true);
+                                 } else if (data.CODE == "3") {
+                                     alert("{% trans "The file format is not correct!" %}");
+-                                    location.reload();
++                                    location.reload(true);
+                                 } else {
+                                     alert("{% trans "Fail to upgrade server!" %}");
+-                                    location.reload();
++                                    location.reload(true);
+                                 }
+                             },
+                             error: function(data) {
+-                                location.reload();
++                                location.reload(true);
+                             }
+                         });
+                     }
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index e3b96e6..34d5585 100755
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -75,7 +75,7 @@
+                     if (data.CODE == "0") {
+                         alert("{% trans "Group add successfully" %}");
+                         if (addAnother) {
+-                            location.reload();
++                            location.reload(true);
+                         } else {
+                             location.href = '/fruser_group/';
+                         }
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index cc04aff..27f0aa0 100755
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -76,7 +76,7 @@
+                         location.href = '/role_list/';
+                     } else if (data.CODE == "2"){
+                         alert("{% trans "Default role cannot rename" %}")
+-                        location.reload();
++                        location.reload(true);
+                     } else {
+                         alert("{% trans "Fail to rename Role" %}");
+                     }
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index 8f0e359..61a6d33 100755
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -75,7 +75,7 @@
+                     if (data.CODE == "0") {
+                         alert("{% trans "Group add successfully" %}");
+                         if (addAnother) {
+-                            location.reload();
++                            location.reload(true);
+                         } else {
+                             location.href = '/user_group_list/';
+                         }
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index c093824..1b7a435 100755
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -89,7 +89,7 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("{% trans "Change group name successfully" %}");
+-                        location.reload();
++                        location.reload(true);
+                     } else {
+                         alert("{% trans "Fail to change group name" %}");
+                     }
+-- 
+1.9.1
+

@@ -1,0 +1,45 @@
+From c60fe055dd68f736fc698ef57729528596b30b41 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 25 Jul 2016 17:07:26 +0800
+Subject: [PATCH 202/443] Modify API face Identify bug.
+
+---
+ api/recognition.py | 21 +++++++++------------
+ 1 file changed, 9 insertions(+), 12 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index aa638cd..66d0798 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -124,19 +124,16 @@ def face_identify(request):
+                                 raise Exception("Similarity is too low")
+                         else:
+                             raise Exception('Request TCIT error')
+-                    if person_id:
+-                        fruser = Frusers.objects.get(PersonId = person_id)
+-                        face_save(request, fruser.FRUserId)
++                        if person_id:
++                            fruser = Frusers.objects.get(PersonId = person_id)
++                            face_save(request, fruser.FRUserId)
+ 
+-                        for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+-                            for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
+-                                if device.DeviceOId == ip_device:
+-                                    Fruserlogs.objects.create(FRUserOId = fruser.OId, FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face identify pass')
+-                                    return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
+-
+-                        raise Exception('There is no permission device')
+-                    else:
+-                        raise Exception('Person_id not correct')
++                            for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
++                                for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
++                                    if device.DeviceOId == ip_device:
++                                        Fruserlogs.objects.create(FRUserOId = fruser.OId, FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face identify pass')
++                                        return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
++                    raise Exception('There is no permission device')
+                 else:
+                     raise Exception('Request TCIT error')
+             else:
+-- 
+1.9.1
+

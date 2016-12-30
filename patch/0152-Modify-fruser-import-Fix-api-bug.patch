@@ -1,0 +1,155 @@
+From 207639ca46d81b1fb00855f82a53b0d317669ec6 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Mon, 27 Jun 2016 18:44:17 +0800
+Subject: [PATCH 152/443] Modify fruser import & Fix api bug
+
+Modify Fruser import tips of web.
+Bug fix - face add of API syntax error.
+---
+ api/face.py                | 10 +++++-----
+ frusers/views.py           | 20 +++++++++++---------
+ templates/fruser_list.html | 13 +++++++++----
+ 3 files changed, 25 insertions(+), 18 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 6330f22..6762e62 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -62,7 +62,7 @@ def add(request):
+                 if res_personid['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     #print('person_id', res_personid['person_id'])
+                     person_id = res_personid['person_id']
+-                    fruser.PersonId = person_id,
++                    fruser.PersonId = person_id
+                     fruser.UpdateDate = datetime.now()
+                     fruser.save()
+                 else:
+@@ -103,13 +103,13 @@ def add(request):
+ 
+                     #Fruser update
+                     if not fruser.Face1:
+-                        fruser.Face1 = FaceDir,
+-                        fruser.FaceID1 = face_id,
++                        fruser.Face1 = FaceDir
++                        fruser.FaceID1 = face_id
+                         fruser.UpdateDate = datetime.now()
+                         fruser.save()
+                     else:
+-                        fruser.Face2 = FaceDir,
+-                        fruser.FaceID2 = face_id,
++                        fruser.Face2 = FaceDir
++                        fruser.FaceID2 = face_id
+                         fruser.UpdateDate = datetime.now()
+                         fruser.save()
+ 
+diff --git a/frusers/views.py b/frusers/views.py
+index 012a109..1b31e9f 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -9,7 +9,7 @@ from django.conf import settings
+ from django.db.models import Q
+ import csv, tarfile, os, sys, json, requests
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_fruserlist'
+ 
+ def fruser_list_view(request):
+@@ -74,6 +74,9 @@ def import_fruser(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
++        if not 'file' in request.FILES:
++            raise Exception(3)
++
+         mediadir = os.path.join(settings.MEDIA_PAR_DIR, 'media')
+         csvdir = os.path.join(mediadir, 'frusers.csv')
+         tarfile_dir = os.path.join(mediadir, request.FILES['file'].name)
+@@ -82,16 +85,17 @@ def import_fruser(request):
+                 destination.write(chunk)
+ 
+         if not tarfile.is_tarfile(tarfile_dir):
+-            raise Exception('res_code[2]')
++            raise Exception(2)
+ 
+         with tarfile.open(tarfile_dir, 'r:gz') as tar:
+             if all(k in tar.getnames() for k in {'frusers.csv', 'fruserpic'}):
+                 tar.extractall(mediadir)
+             else:
+-                raise Exception('res_code[2]')
++                raise Exception(2)
+ 
+         with open(csvdir, 'r') as csvfile:
+             for row in csv.DictReader(csvfile):
++                print(row.get('FRUserId'))
+                 try:
+                     Frusers.objects.get(FRUserId = row['FRUserId'])
+                 except:
+@@ -120,18 +124,16 @@ def import_fruser(request):
+                                 ).text)
+                                 if res['Result'] != 'Success':
+                                     raise
+-        raise Exception('res_code[0]')
++        raise Exception(0)
+ 
+     except Exception as e:
+         try:
+             os.remove(tarfile_dir)
+             os.remove(csvdir)
+         finally:
+-            if e.__str__() == 'res_code[0]':
+-                return JsonResponse(res_code[0])
+-            elif e.__str__() == 'res_code[2]':
+-                return JsonResponse(res_code[2])
+-            else:
++            try:
++                return JsonResponse(res_code[int(e.__str__())])
++            except:
+                 return JsonResponse(res_code[1])
+ 
+ def export_fruser(request):
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index fc02eaa..6ff4787 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -51,7 +51,7 @@
+                     </div>
+                     <div class="modal-body">
+                         <form id="ImportForm" class="form-horizontal" enctype="multipart/form-data" >{% csrf_token %}
+-                            <div class="form-body">
++                            <div id="ImportFormBody" class="form-body">
+                                 <input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">
+                             </div>
+                         </form>
+@@ -157,6 +157,7 @@
+                 var data = new FormData($('#ImportForm')[0]);
+                 data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+ 
++                $('#ImportFormBody').html('<div class="col-sm-offset-1">Please wait for uploading</div>');
+                 $.ajax({
+                     type: 'post',
+                     traditional: true,
+@@ -168,13 +169,17 @@
+                     contentType: false,
+                     success: function(data) {
+                         if (data.CODE == "0") {
++                            alert("Import success!");
+                             $('#ImportModal').modal("hide");
+-                            $('#FruserList').bootstrapTable('refresh');
+                         } else if (data.CODE == "2") {
+-                            alert("The file format is not correct");
++                            alert("The file format is not correct!");
++                        } else if (data.CODE == "3") {
++                            alert("Please wait for uploading!");
+                         } else {
+-                            alert("Fail to import fruser");
++                            alert("Fail to import fruser!");
+                         }
++                        $('#FruserList').bootstrapTable('refresh');
++                        $('#ImportFormBody').html('<input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">');
+                     },
+                     error: function(data) {
+                     }
+-- 
+1.9.1
+

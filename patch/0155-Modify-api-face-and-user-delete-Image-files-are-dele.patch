@@ -1,0 +1,115 @@
+From 72ecf0a80fe8e0b89e4ab893ba15363258a5293a Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 29 Jun 2016 15:55:37 +0800
+Subject: [PATCH 155/443] Modify api face and user delete : Image files are
+ deleted from absolute path
+
+---
+ api/face.py | 23 ++++++++++++++++++-----
+ api/user.py | 48 ++++++++++++++++++++++--------------------------
+ 2 files changed, 40 insertions(+), 31 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 6762e62..2e0f05f 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -139,19 +139,32 @@ def delete(request):
+             if all(k in req for k in req_key) and all(req.values()):
+                 ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
+                 if ip_devices.State != 'Proposed':
+-                    frusers = Frusers.objects.get(FRUserId = req['FRUserId'])
++                    fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
+                     res = json.loads(
+                         requests.post(
+                             'http://' + settings.TCIT_IP + '/face/person/update/remove',
+                             data={
+-                                'person_id':frusers.PersonId,
+-                                'face_id':frusers.FaceID1,
+-                                'face_id':frusers.FaceID2,
+-                                'face_id':frusers.FaceID3,
++                                'person_id':fruser.PersonId,
++                                'face_id':fruser.FaceID1,
++                                'face_id':fruser.FaceID2,
++                                'face_id':fruser.FaceID3,
+                             }
+                         ).text
+                     )
+                     if res['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1)):
++                            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1))
++                        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2)):
++                            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2))
++                        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3)):
++                            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3))
++                        fruser.Face1 = ''
++                        fruser.Face2 = ''
++                        fruser.Face3 = ''
++                        fruser.FaceID1 = ''
++                        fruser.FaceID2 = ''
++                        fruser.FaceID3 = ''
++                        fruser.save()
+                         logContent = 'Face Delete Successfully'
+                         return JsonResponse({'Result' : logContent})
+                     else:
+diff --git a/api/user.py b/api/user.py
+index cb64e1f..71bf610 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -123,32 +123,28 @@ def update(request):
+ 
+ def delete_fruser(id):
+     try:
+-        fruser = Frusers.objects.filter(FRUserId = id)
+-        if fruser.exists():
+-            # delete personid from TCIT
+-            if fruser[0].PersonId:
+-                res_personid_delete = TCIT_API('/face/person/delete/', data = {'person_id' : fruser[0].PersonId})
+-                fruser.update(PersonId = '', UpdateDate = datetime.now())
+-                if not res_personid_delete['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                    return dict(ChainMap(
+-                        result_fail,
+-                        fail_code999,
+-                        {'Message' : TCIT_res_state[res_personid_delete['state']]}
+-                    ))
+-            # delet img
+-            if fruser[0].Face1:
+-                os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser[0].Face1))
+-                fruser.update(Face1 = '', UpdateDate = datetime.now())
+-            if fruser[0].Face2:
+-                os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser[0].Face2))
+-                fruser.update(Face2 = '', UpdateDate = datetime.now())
+-            if fruser[0].Face3:
+-                os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser[0].Face3))
+-                fruser.update(Face3 = '', UpdateDate = datetime.now())
+-            fruser[0].delete()
+-            return dict({'Message': 'success'})# The Message is for logContent
+-        else:
+-            return dict(ChainMap(result_fail, fail_code999, {'Message' : 'FRUser Delete error'}))
++        fruser = Frusers.objects.get(FRUserId = id)
++        # delete personid from TCIT
++        if fruser.PersonId:
++            res_personid_delete = TCIT_API('/face/person/delete/', data = {'person_id' : fruser.PersonId})
++            if res_personid_delete['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                fruser.PersonId = ''
++                fruser.save()
++            else:
++                return dict(ChainMap(
++                    result_fail,
++                    fail_code999,
++                    {'Message' : TCIT_res_state[res_personid_delete['state']]}
++                ))
++        # delet img
++        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1)):
++            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1))
++        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2)):
++            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2))
++        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3)):
++            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3))
++        fruser.delete()
++        return dict({'Message': 'success'})# The Message is for logContent
+     except Exception as error:
+         print(str(error))
+         return dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)}))
+-- 
+1.9.1
+

@@ -1,0 +1,51 @@
+From cf7a3cff504bf1745fc8cd2ddd6dd38647bb61c2 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 20 Apr 2016 17:59:04 +0800
+Subject: [PATCH 004/443] Add Groups Management API Group List
+
+---
+ api/group.py | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/api/group.py b/api/group.py
+index 1c27fec..28da879 100644
+--- a/api/group.py
++++ b/api/group.py
+@@ -3,6 +3,7 @@
+ import json, requests
+ from collections import ChainMap
+ from django.http import HttpResponse, JsonResponse
++from .models import Devices, Frusergroups
+ 
+ result_success = {'Result':'Success'}
+ result_fail = {'Result':'Fail'}
+@@ -10,11 +11,23 @@ fail_code999 = {'Code':'9999'}
+ fail_message = {'Message':'xxxxxxxxxxxxxxxx'}
+ 
+ def list(request):
++    frusergroups = []
+     if request.method == 'POST':
+         try:
+-            """
+-            enter code
+-            """
++            ip_devices = Devices.objects.get(ip = request.META['REMOTE_ADDR'])
++            if ip_devices.State != 'Proposed':
++                groups = Frusergroups.objects.all()
++                if groups:
++                    for i in groups:
++                        frusergroups.append({'Oid':i.Oid, 'Name':i.Name})
++                    return JsonResponse(dict(ChainMap(result_success, {
++                        'Number':len(groups),
++                        'Groups':frusergroups
++                    })))
++                else:
++                    res = dict(ChainMap(result_fail, fail_code999, fail_message))
++            else:
++                res = dict(ChainMap(result_fail, fail_code999, fail_message))
+         except:
+             res = dict(ChainMap(result_fail, fail_code999, fail_message))
+ 
+-- 
+1.9.1
+

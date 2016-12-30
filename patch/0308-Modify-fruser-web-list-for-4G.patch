@@ -1,0 +1,256 @@
+From 8593421d9147ab3a6eded6c8641823be5bdd4440 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 6 Oct 2016 18:17:40 +0800
+Subject: [PATCH 308/443] Modify fruser web list for 4G
+
+Disable fruser manage for 4G.
+---
+ frusers/views.py           |   2 +-
+ templates/fruser_list.html | 178 +++++++++++++++++++++++----------------------
+ 2 files changed, 94 insertions(+), 86 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 990ff24..cc51f96 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -18,7 +18,7 @@ def fruser_list_view(request):
+         return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+-        return render(request, 'fruser_list.html', {'active': 'fruser_list', 'export_error' : 'false'})
++        return render(request, 'fruser_list.html', {'active': 'fruser_list', 'export_error' : 'false', 'EN_4G' : settings.EN_4G})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 3c05318..47473bd 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -29,11 +29,13 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <div id="ImExport">
+-                                <button class="btn btn-default" onclick="location.href='/fruser_add'">{% trans "Create FR User" %}</button>
+-                                <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal">{% trans "Import" %}</button>
+-                                <button class="btn btn-default" onclick="location.href='/export_fruser'">{% trans "Export" %}</button>
+-                            </div>
++                            {% if not EN_4G %}
++                                <div id="ImExport">
++                                    <button class="btn btn-default" onclick="location.href='/fruser_add'">{% trans "Create FR User" %}</button>
++                                    <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal">{% trans "Import" %}</button>
++                                    <button class="btn btn-default" onclick="location.href='/export_fruser'">{% trans "Export" %}</button>
++                                </div>
++                            {% endif %}
+                             <table id="FruserList"></table>
+                         </div>
+                     </div>
+@@ -41,29 +43,31 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <div id="ImportModal" class="modal fade col-lg-12" role="dialog">
+-            <div class="modal-dialog">
+-                <div class="modal-content">
+-                    <div class="modal-header">
+-                        <button class="close" data-dismiss="modal">
+-                            <span aria-hidden="true">&times;</span>
+-                        </button>
+-                        <h4 class="modal-title">{% trans "Import Fruser" %}</h4>
+-                    </div>
+-                    <div class="modal-body">
+-                        <form id="ImportForm" class="form-horizontal" enctype="multipart/form-data" >{% csrf_token %}
+-                            <div id="ImportFormBody" class="form-body">
+-                                <input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">
+-                            </div>
+-                        </form>
+-                    </div>
+-                    <div class="modal-footer">
+-                        <button class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+-                        <button id="ImportFruser" class="btn btn-default" onclick="ImportFruser()">{% trans "Upload" %}</button>
++        {% if not EN_4G %}
++            <div id="ImportModal" class="modal fade col-lg-12" role="dialog">
++                <div class="modal-dialog">
++                    <div class="modal-content">
++                        <div class="modal-header">
++                            <button class="close" data-dismiss="modal">
++                                <span aria-hidden="true">&times;</span>
++                            </button>
++                            <h4 class="modal-title">{% trans "Import Fruser" %}</h4>
++                        </div>
++                        <div class="modal-body">
++                            <form id="ImportForm" class="form-horizontal" enctype="multipart/form-data" >{% csrf_token %}
++                                <div id="ImportFormBody" class="form-body">
++                                    <input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">
++                                </div>
++                            </form>
++                        </div>
++                        <div class="modal-footer">
++                            <button class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
++                            <button id="ImportFruser" class="btn btn-default" onclick="ImportFruser()">{% trans "Upload" %}</button>
++                        </div>
+                     </div>
+                 </div>
+             </div>
+-        </div>
++        {% endif %}
+ 
+         <script>
+             var language = "{{ LANGUAGE_CODE }}";
+@@ -124,16 +128,18 @@
+                         title: '{% trans "Recently used Date" %}',
+                         sortable: true
+                     },
+-                    {
+-                        formatter: function(value, row) {
+-                            row.Name = row.Name.replace(/"/g, "&#34;").replace(/ /g, "&#160;").replace(/>/g, "&#62;").replace(/</g, "&#60;");
+-                            return ' \
+-                                <div align="center"> \
+-                                    <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                    <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+-                                </div>';
++                    {% if not EN_4G %}
++                        {
++                            formatter: function(value, row) {
++                                row.Name = row.Name.replace(/"/g, "&#34;").replace(/ /g, "&#160;").replace(/>/g, "&#62;").replace(/</g, "&#60;");
++                                return ' \
++                                    <div align="center"> \
++                                        <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                        <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
++                                    </div>';
++                            }
+                         }
+-                    }
++                    {% endif %}
+                 ],
+             });
+ 
+@@ -155,72 +161,74 @@
+                 return cookieValue;
+             }
+ 
+-            function ImportFruser() {
+-                var data = new FormData($('#ImportForm')[0]);
+-                data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+-
+-                $('#ImportFormBody').html('<div class="col-sm-offset-1">Please do not leave this page and wait for uploading!</div>');
+-                $('#ImportFruser').prop('disabled', true);
+-                $.ajax({
+-                    type: 'post',
+-                    traditional: true,
+-                    url: '/import_fruser/',
+-                    async: true,
+-                    cache: false,
+-                    data: data,
+-                    processData: false,
+-                    contentType: false,
+-                    success: function(data) {
+-                        console.log(data.CODE);
+-                        if (data.CODE == "0") {
+-                            alert("Import End!\nSuccess : " + data.import_success + "\nFailure : " + data.import_fail);
+-                            $('#ImportModal').modal("hide");
+-                        } else if (data.CODE == "2") {
+-                            alert("{% trans "The file format is not correct!" %}");
+-                        } else if (data.CODE == "3") {
+-                            alert("{% trans "Please wait for uploading!" %}");
+-                        } else {
+-                            alert("{% trans "Fail to import fruser!" %}");
+-                        }
+-                        $('#FruserList').bootstrapTable('refresh');
+-                        $('#ImportFormBody').html('<input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">');
+-                        $('#ImportFruser').prop('disabled', false);
+-                    },
+-                    error: function(data) {
+-                    }
+-                });
+-            }
++            {% if not EN_4G %}
++                function ImportFruser() {
++                    var data = new FormData($('#ImportForm')[0]);
++                    data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+ 
+-            function delete_fruser(OId, Name) {
+-                var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' ?');
+-                if (ret) {
++                    $('#ImportFormBody').html('<div class="col-sm-offset-1">Please do not leave this page and wait for uploading!</div>');
++                    $('#ImportFruser').prop('disabled', true);
+                     $.ajax({
+                         type: 'post',
+                         traditional: true,
+-                        url: '/delete_fruser/',
++                        url: '/import_fruser/',
+                         async: true,
+-                        dataType: 'json',
+-                        data: {
+-                            csrfmiddlewaretoken : getCookie('csrftoken'),
+-                            'OId': OId
+-                        },
++                        cache: false,
++                        data: data,
++                        processData: false,
++                        contentType: false,
+                         success: function(data) {
++                            console.log(data.CODE);
+                             if (data.CODE == "0") {
+-                                $('#FruserList').bootstrapTable('refresh');
++                                alert("Import End!\nSuccess : " + data.import_success + "\nFailure : " + data.import_fail);
++                                $('#ImportModal').modal("hide");
++                            } else if (data.CODE == "2") {
++                                alert("{% trans "The file format is not correct!" %}");
++                            } else if (data.CODE == "3") {
++                                alert("{% trans "Please wait for uploading!" %}");
+                             } else {
+-                                alert("{% trans "Fail to delete fruser" %}");
++                                alert("{% trans "Fail to import fruser!" %}");
+                             }
++                            $('#FruserList').bootstrapTable('refresh');
++                            $('#ImportFormBody').html('<input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">');
++                            $('#ImportFruser').prop('disabled', false);
+                         },
+                         error: function(data) {
+                         }
+                     });
+                 }
+-            }
+-            $(document).ready(function() {
+-                if ({{export_error}}) {
+-                    alert('{% trans "Duplicate export!" %}');
++
++                function delete_fruser(OId, Name) {
++                    var ret = confirm('{% trans "Confirm to delete" %} ' +Name+ ' ?');
++                    if (ret) {
++                        $.ajax({
++                            type: 'post',
++                            traditional: true,
++                            url: '/delete_fruser/',
++                            async: true,
++                            dataType: 'json',
++                            data: {
++                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                'OId': OId
++                            },
++                            success: function(data) {
++                                if (data.CODE == "0") {
++                                    $('#FruserList').bootstrapTable('refresh');
++                                } else {
++                                    alert("{% trans "Fail to delete fruser" %}");
++                                }
++                            },
++                            error: function(data) {
++                            }
++                        });
++                    }
+                 }
+-            });
++                $(document).ready(function() {
++                    if ({{export_error}}) {
++                        alert('{% trans "Duplicate export!" %}');
++                    }
++                });
++            {% endif %}
+         </script>
+     </body>
+ </html>
+-- 
+1.9.1
+

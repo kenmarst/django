@@ -1,0 +1,44 @@
+From d68e498baa2117cbf7352340465ed1f726fd0ba8 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 13 Jun 2016 15:58:34 +0800
+Subject: [PATCH 123/443] Modify API UserUpdate : add group in user update.
+
+---
+ api/user.py | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index 45908c2..3a03f14 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -69,10 +69,11 @@ def update(request):
+     if request.method == 'POST':
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFIDCard', 'State'}
++            req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFIDCard', 'State', 'Groups'}
+             if all(k in req for k in req_key):
+                 if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+-                    Frusers.objects.filter(OId = Frusers.objects.get(FRUserId = req['FRUserId']).OId).update(
++                    fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
++                    Frusers.objects.filter(OId = fruser.OId).update(
+                         Name = req['Name'],
+                         Gender = req['Gender'],
+                         Age = req['Age'] if not req['Age'] == "" else None,
+@@ -80,6 +81,13 @@ def update(request):
+                         State = req['State'],
+                         UpdateDate = datetime.now()
+                     )
++
++                    print('Groups update')
++                    for i in req['Groups']:
++                        if i['OId'] and i['Name']:
++                            group = Frusergroups.objects.get(OId = i['OId'])
++                            if not Frusergroupmember.objects.filter(FRUserOId = fruser).filter(GroupOId = group).exists():
++                                    Frusergroupmember.objects.create(FRUserOId = fruser, GroupOId = group)
+                     logContent = "FRUser Update Successfully"
+                     return JsonResponse(dict(result_success))
+                 else:
+-- 
+1.9.1
+

@@ -1,0 +1,36 @@
+From 8f7b1eed3e8b12ca186962cd5504f0f962e6dc92 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 23 Aug 2016 17:41:55 +0800
+Subject: [PATCH 235/443] Update Fingerprint Service v2.1 : fixed connect
+ Fingerprint USB dongle message.
+
+---
+ fingerprinterd/FingerprintService | Bin 34979 -> 34979 bytes
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+diff --git a/fingerprinterd/FingerprintService b/fingerprinterd/FingerprintService
+index 5d36772cb9291d864acd75c6fc02f193d65ccdac..ae8573201067772ee09600a9bc4f1c14a39acb46 100755
+GIT binary patch
+delta 443
+zcmZ2Hk!kTnrU@4~RWumDKxN|1{el8&5RQPF1DGK&c_rg*5#~d7zh{_kh`;}TtHRmv
+z+|J<Xjk%j=Fd4`(u9$pML5=as<PQpkjQ1udDF!nB+`L7Ro0-vY@&T0{QO@~!d8x@I
+z3MKgpZkc)MsYL}vnRz7&!Kp=MnaQaN#ihx~sl~-<r8zm3dI~@bxkB?2lX6l)>hWvU
+zn|w^wDJuu4g$Lx$SO5Qa0I4f)|Nq|rq&?pK|9=5UmjLMxKzb{X7GPvxkbnRGzX6c$
+z{P_QW0Fbu+^8bGUkd6h?6M*!DpFsUU`oM3Xejpw2=l}m7K$?MJa-NzJW5MK!YU+$K
+zlXt4g1KBr$WX<HCKyvP6Np*R~=aVggq~YX9AbEIlC6GKic_xs&F?lDDd@=c^x;kUP
+zW=4(etea2hHaIYbP4>*w=R^c_W1cx@12othHXqE(XJZtYY*;GJ*Z?F&H^-HBF)=D^
+Jep$Xt006RmplSdB
+
+delta 431
+zcmZ2Hk!kTnrU@4~MKl<|KxE?0{emoN5Dtr)1DL@wc_rg*k(pvS%3GZLzB69+YZemO
+zB(=%^sM+QjOa^j{3nrgbP-8qX`GZ0s<E6<-ih+!8H*ZnoW@a>)d_ZM~UvO!1a%yq0
+zf^&XeUTShlW?s628<0pXQgA8CEK4oYQ-D~<g(9lpT2z!@q+kWtmY=7PmYA6{`I4$r
+zS_V)D4+y{d|Gx!DKY089{~912^6vltGeEilNWTHn2Z1yXBLjo>`~UxSfb`Ul|Nr{{
+zY4<Px|K|YdOd#C@r04tu>Ic$iegpLb>6kzN|9@eeT&JeQ*f4panmVJ-<dbUhK=w-@
+z*)y3_U7m66WKAIXeX=Kzbex<CBri|y1d>-LuLP1WCZ7b7KPJCaS7%JvEU2-ab@Bs7
+zfz2m$8ypzDCVS@Tb0Pw_G0&W{02<T<n-AvYvoW$vHY^oqEC7<Co8wBmn1EVemhTb(
+E0Qu9ID*ylh
+
+-- 
+1.9.1
+

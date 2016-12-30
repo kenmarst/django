@@ -1,0 +1,181 @@
+From 57b9e39c3ad2d1e31d12172a71b6892aaad53a23 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 15 Jun 2016 18:51:54 +0800
+Subject: [PATCH 128/443] Modify systemlogs method
+
+Modify systemlogs method for large data load.
+---
+ br06/urls.py                  |  3 +-
+ systemlogs/views.py           | 39 +++++++++++++++++++------
+ templates/systemlog_list.html | 66 +++++++++++++++++++++++--------------------
+ 3 files changed, 68 insertions(+), 40 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 650c21d..0af02ef 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -18,7 +18,7 @@ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_setting, user_list_view, user_add_view, user_update_view, add_user, update_user, delete_user
+ from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser, fruser_data
+-from systemlogs.views import systemlog_list_view, systemlog_export
++from systemlogs.views import systemlog_list_view, systemlog_export, systemlog_data
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_data
+ from logsetting.views import logsetting
+ from systemsettings.views import settings_views
+@@ -45,6 +45,7 @@ urlpatterns = [
+ urlpatterns += [
+     url(r'^systemlog_list/?$', systemlog_list_view),
+     url(r'^systemlog_export/?$', systemlog_export),
++    url(r'^systemlog_data/?$', systemlog_data),
+ ]
+ 
+ urlpatterns += [
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 55f1d5b..fd2a0f2 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csr
+ from api.models import Users, Frusers, Systemlogs
+ from django.conf import settings
+ from login.views import check_login
++from django.db.models import Q
+ import json, urllib, datetime, types, csv
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -16,14 +17,7 @@ def systemlog_list_view(request):
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+-    obj = Systemlogs.objects.all().order_by('LogDateTime')
+-    # result = json.dumps(serializers.serialize("json", User.objects.all()))
+-    result = [res.as_json() for res in obj]
+-    index = 0
+-    for x in result:
+-        x['Index'] = index+1
+-        index += 1
+-    return render(request, 'systemlog_list.html', {'active': "systemlog_list", 'obj': result})
++    return render(request, 'systemlog_list.html', {'active': "systemlog_list"})
+ 
+ @csrf_exempt
+ def systemlog_export(request):
+@@ -83,3 +77,32 @@ def systemlog_export(request):
+        writer.writerow([symbol.join([x[i] for i in header])])
+ 
+     return response
++
++@csrf_exempt
++def systemlog_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    search = request.GET.get('search', None)
++    offset = int(request.GET.get('offset', 0))
++    limit = int(request.GET.get('limit', 0))
++    if request.GET.get('sort', None) in {'Category', 'LogContent', 'LogDateTime'}:
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort')
++        else:
++            order = '-' + request.GET.get('sort')
++    else:
++        order = 'LogDateTime'
++    if search:
++        systemlogs = Systemlogs.objects.filter(Q(Category__contains = search) | Q(LogContent__contains = search)).order_by(order)
++    else:
++        systemlogs = Systemlogs.objects.order_by(order)
++    systemlog_count = systemlogs.count()
++    systemlogs = [systemlog.as_json() for systemlog in systemlogs[offset : offset + limit]]
++    index = 0
++    for systemlog in systemlogs:
++        systemlog['Index'] = index + 1
++        index += 1
++    return JsonResponse({'total': systemlog_count, 'rows': systemlogs})
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index 3d9955a..5b6cf4c 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -45,44 +45,48 @@
+ 		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+-	<script src="{% static "js/chart.min.js" %}"></script>
+-	<script src="{% static "js/chart-data.js" %}"></script>
+-	<script src="{% static "js/easypiechart.js" %}"></script>
+-	<script src="{% static "js/easypiechart-data.js" %}"></script>
+-	<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+ 	<script src="{% static "js/bootstrap-table.js" %}"></script>
+ 	<script>
+-		// var dataSet = {{test|safe}};
+-		var index
+-		var dataSet = {{obj|safe}};
++		var index;
+ 		$('#SystemLogList').bootstrapTable({
+-			search: true,
++            url: '/systemlog_data',
++            search: true,
+             pagination: true,
+             toolbar: '#logexport',
+             pageSize: 10,
+-            pageList: [10, 25, 50, 100],
+-            sortName: 'Index',
++            sortName: 'LogDateTime',
+             sortOrder: 'asc',
+-			columns: [{
+-				field: 'Index',
+-				title: '{% trans "No." %}',
+-				sortable: true,
+-			},
+-			{
+-				field: 'Category',
+-				title: '{% trans "Category" %}',
+-				sortable: true
+-			},
+-			{
+-				field: 'LogContent',
+-				title: '{% trans "Notes" %}'
+-			},
+-			{
+-				field: 'LogDateTime',
+-				title: '{% trans "Date/Time" %}',
+-				sortable: true
+-			}],
+-			data: dataSet
++            sidePagination: 'server',
++            queryParams: function(params) {
++                return {
++                    limit: params.limit,
++                    offset: params.offset,
++                    search: params.search,
++                    sort: params.sort,
++                    order: params.order
++                };
++            },
++			columns: [
++                {
++                    field: 'Index',
++                    title: '{% trans "No." %}',
++                    sortable: true,
++                },
++                {
++                    field: 'Category',
++                    title: '{% trans "Category" %}',
++                    sortable: true
++                },
++                {
++                    field: 'LogContent',
++                    title: '{% trans "Notes" %}'
++                },
++                {
++                    field: 'LogDateTime',
++                    title: '{% trans "Date/Time" %}',
++                    sortable: true
++                }
++            ],
+ 		});
+ 
+ 		!function ($) {
+-- 
+1.9.1
+

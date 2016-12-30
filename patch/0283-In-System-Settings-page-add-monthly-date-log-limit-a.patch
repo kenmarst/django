@@ -1,0 +1,55 @@
+From 363cec63dc4ba3562e44247afa1be499c8648c20 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Mon, 19 Sep 2016 15:03:47 +0800
+Subject: [PATCH 283/443] In System Settings page, add monthly date, log limit
+ and log preservation input range confirm alert.
+
+---
+ templates/system_settings.html | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index e039945..b1cc63f 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -183,7 +183,7 @@
+                                     <p>{% trans "Log count limit" %}:
+                                     <input type="number" min="1" maxlength=7 size=10 id="LogLimit" name="LogLimit">
+                                     , {% trans "if the logs exceeds limit" %}, {% trans "keep" %}
+-                                    <input type="number" min="1" max="24" maxlength=2 size=1 id="LogPreservation" name="LogPreservation">
++                                    <input type="number" min="1" max="120" maxlength=2 size=1 id="LogPreservation" name="LogPreservation">
+                                     {% trans "month data" %}(default=1), {% trans "others will be remove." %}</p>
+                                     <p>* {% trans "In limit duration, the logs can be record to 150% amount." %}<br>
+                                     * {% trans "Over 150% amount, system will keep latest logs, and remove the other older logs." %}</p>
+@@ -290,6 +290,11 @@
+                 return;
+             }
+ 
++            if (BackupScheduling == 'Monthly' && (BackupMonthlyDate < 1 || BackupMonthlyDate > 31)) {
++                alert("{% trans "Must select correct monthly day!" %}");
++                return;
++            }
++
+             if (BackupScheduling == 'Monthly' && BackupMonthlyDate > 28) {
+                 var ret = confirm("{% trans "The backup may not be processed monthly, if you choose monthly date from 29 to 31 !\n\nWould you want to continue ?" %}");
+                 if (ret != true) {
+@@ -355,6 +360,16 @@
+             var PicCreateSave = $('input[name=PicCreateSave]').prop('checked');
+             var PicFaceSave = $('input[name=PicFaceSave]').prop('checked');
+ 
++            if (LogLimit < 1) {
++                alert("{% trans "Must input correct log limit value!" %}");
++                return;
++            }
++
++            if (LogPreservation < 1 || LogPreservation > 120) {
++                alert("{% trans "Must input correct month value for log preservation!" %}");
++                return;
++            }
++
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+-- 
+1.9.1
+

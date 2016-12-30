@@ -1,0 +1,67 @@
+From ab49e7ebe2a475ee600324ea5463267a84eab917 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Thu, 26 May 2016 16:43:26 +0800
+Subject: [PATCH 097/443] correct html title
+
+---
+ templates/logsetting.html | 2 +-
+ templates/role_add.html   | 2 +-
+ templates/user_add.html   | 2 +-
+ templates/user_list.html  | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 8099fdf..2b2c257 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -5,7 +5,7 @@
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>{% trans "User List" %}</title>
++<title>{% trans "Log Setting" %}</title>
+ 
+ <!--[if lt IE 9]>
+ <script src="js/html5shiv.js"></script>
+diff --git a/templates/role_add.html b/templates/role_add.html
+index 15bb324..e89f635 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -7,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>{% trans "Role List" %}</title>
++        <title>{% trans "Role add" %}</title>
+     </head>
+ 
+     <body>
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 5a63899..e51ef88 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -5,7 +5,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>{% trans "User List" %}</title>
++        <title>{% trans "User add" %}</title>
+     </head>
+ 
+     <body>
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 6be6ad8..9a1965d 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -7,7 +7,7 @@
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>User List</title>
++<title>{% trans "User List" %}</title>
+ 
+ <!--[if lt IE 9]>
+ <script src="js/html5shiv.js"></script>
+-- 
+1.9.1
+

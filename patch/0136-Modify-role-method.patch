@@ -1,0 +1,147 @@
+From 3f0c0e12c44c5d80441fb4ee8f85329a2afc48a4 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 20:32:51 +0800
+Subject: [PATCH 136/443] Modify role method
+
+Modify role method for large data load.
+---
+ br06/urls.py             |  3 ++-
+ role/views.py            | 37 +++++++++++++++++++++++++++++--------
+ templates/role_list.html | 20 +++++++++++++-------
+ 3 files changed, 44 insertions(+), 16 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index a6613b6..3e2e53d 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -25,7 +25,7 @@ from systemsettings.views import settings_views
+ from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+-from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
++from role.views import role_list_view, role_list_data, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, frusergroups_list_data, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, frusergroup_member_list_data, frusergroup_member_add_data, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, frusergroup_devices_list_data, frusergroup_devices_add_data, add_frusergroup_device, delete_frusergroup_device
+ from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView, login_i18n, home_view, empty_view
+ from django.conf import settings
+@@ -73,6 +73,7 @@ urlpatterns += [
+ 
+ urlpatterns += [
+     url(r'^role_list/?$', role_list_view),
++    url(r'^role_list_data/?$', role_list_data),
+     url(r'^role_add/?$', role_add_view),
+     url(r'^role_rename/?$', role_rename_view),
+     url(r'^role_permission/?$', role_permission_view),
+diff --git a/role/views.py b/role/views.py
+index 8c042a4..d940eeb 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -6,6 +6,7 @@ from br06.settings import *
+ from collections import ChainMap
+ from datetime import datetime
+ from login.views import check_login
++from django.db.models import Q
+ import json
+ 
+ # create default role: admin, users.
+@@ -71,15 +72,35 @@ def role_list_view(request):
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
++    return render(request, 'role_list.html')
+ 
+-    obj = Role.objects.all()
+-    result = [res.as_json() for res in obj]
+-
+-    index = 0
+-    for x in result:
+-        x['Index'] = index+1
+-        index += 1
+-    return render(request, 'role_list.html', {'obj': result})
++def role_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'CreateDate')
++        else:
++            order = '-' + request.GET.get('sort', 'CreateDate')
++        if search:
++            roles = Role.objects.filter(Q(Name__contains = search) | Q(Sort__contains = search) | Q(Category__contains = search)).order_by(order)
++        else:
++            roles = Role.objects.order_by(order)
++        role_count = roles.count()
++        roles = [role.as_json() for role in roles[offset : offset + limit]]
++        index = offset
++        for role in roles:
++            role['Index'] = index + 1
++            index += 1
++        return JsonResponse({'total': role_count, 'rows': roles})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
+ 
+ def role_permission_view(request):
+     login_request = json.loads(check_login(request, permission))
+diff --git a/templates/role_list.html b/templates/role_list.html
+index 91197a8..6fe63a5 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -65,21 +65,28 @@
+ 
+         <script>
+             var index
+-            var dataSet = {{obj|safe}};
+-            console.log(dataSet);
+             $('#roleList').bootstrapTable({
++                url: '/role_list_data',
+                 search: true,
+                 pagination: true,
+                 toolbar: '#toolbar',
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+                 sortName: 'CreateDate',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Index',
+-                        title: '{% trans "No." %}',
+-                        sortable: true,
++                        title: '{% trans "No." %}'
+                     },
+                     {
+                         field: 'Name',
+@@ -116,7 +123,6 @@
+                         }
+                     }
+                 ],
+-                data: dataSet
+             });
+ 
+             function getCookie(name) {
+@@ -152,7 +158,7 @@
+                             if (data.CODE == "0") {
+                                 alert("Default role can't delete")
+                             } else if (data.CODE == "1") {
+-                                location.reload();
++                                $('#roleList').bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete role");
+                             }
+-- 
+1.9.1
+

@@ -1,0 +1,76 @@
+From 19553808748224a9f4775fc1f3eb8c48439a327a Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 22 Dec 2016 10:48:57 +0800
+Subject: [PATCH 435/443] Fix bug - version number error.
+
+---
+ api/cron.py              | 9 +++++----
+ templates/dashboard.html | 4 ++--
+ 2 files changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 3d4834e..5469093 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -6,7 +6,7 @@ from django.conf import settings
+ from .utility import md5
+ from hashlib import md5 as md5_file
+ 
+-# 4G 
++# 4G
+ def QE_4G(sync_time):
+     try:
+         print('4G Updating: Post to 4G server')
+@@ -42,7 +42,7 @@ def Update_4G_User():
+                 logContent = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                 Systemlogs.objects.create(Category = '4GSyncT', LogContent = logContent)
+                 return
+-            # Get last sync time    
++            # Get last sync time
+             sync_time = SyncT[0].LogContent
+             print('4G Updating: Last SyncT: ', sync_time)
+             # Sync 4G user state
+@@ -111,7 +111,8 @@ def chk_new_version():
+ 
+         with open(update_file) as data_file:
+             data = json.load(data_file)
+-        new_version_date = data['Server']['Version'].split('.')[-1]
++        new_version = data['Server']['Version']
++        new_version_date = data['Server']['Date']
+         version_date = settings.VERSION.split('.')[-1]
+ 
+         print('update check: [Server VERSION]: [new]: {0} [now]: {1}'.format(new_version_date, version_date))
+@@ -119,7 +120,7 @@ def chk_new_version():
+         # check version
+         if new_version_date > version_date:
+             print('update check: Server has new version to update.')
+-            Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': new_version_date})
++            Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': new_version})
+         else:
+             print('update check: There is no new server version to update.')
+             Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': settings.VERSION})
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 58bc10c..89f9f81 100755
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -90,7 +90,7 @@
+                                 <dt>{% trans "Software Version" %}</dt>
+                                 <dd>
+                                     {{softwave_version}}
+-                                    {% if NewServerVersion != softwave_version %}
++                                    {% if NewServerVersion and NewServerVersion != softwave_version %}
+                                         (<em>{% trans "There is a newer version can be upgraded." %}</em>)
+                                     {% endif %}
+                                     <a data-toggle="modal" data-target="#Br06UpdateModal" data-backdrop="static" data-keyboard="false">
+@@ -146,7 +146,7 @@
+                                     </div>
+                                     <div class="form-group">
+                                         <small id="fileHelp" class="form-text">{% trans "Upgrade from server" %}</small><br>
+-                                        {% if NewServerVersion != softwave_version %}
++                                        {% if NewServerVersion and NewServerVersion != softwave_version %}
+                                             <label class="control-label" style="margin-top: 7px">{% trans "The latest version is" %} <em>'{{NewServerVersion}}'</em></label>
+                                             <button type="button" id="UpdateBr06ServerButton" class="btn btn-danger pull-right" onclick="UpdateBr06Server()">{% trans "Upgrade" %}</button>
+                                         {% else %}
+-- 
+1.9.1
+

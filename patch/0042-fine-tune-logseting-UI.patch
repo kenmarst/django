@@ -1,0 +1,43 @@
+From cd776702a02ba8f159a4d1b7fdae06d69e0dade9 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 18 May 2016 11:21:11 +0800
+Subject: [PATCH 042/443] fine tune logseting UI
+
+---
+ templates/logsetting.html | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 1a8d727..5ab555f 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -53,7 +53,7 @@
+                                             <label><input type="radio" name="optradio" value="space">space</label>
+                                         </div>
+                                         <div class="radio">
+-                                            <label><input type="radio" name="optradio" value="5">custom <input type="text" name="customsymbol" <p> 1 character</p></label>
++                                            <label><input type="radio" name="optradio" value="5">custom <input type="text" class="form-control" name="customsymbol" placeholder=" 1 character only"</label>
+                                         </div>
+                                         <!--div class="radio disabled">
+                                             <label><input type="radio" name="optradio" disabled>Option 3</label>
+@@ -64,7 +64,7 @@
+                                      <table>
+                                      <tr>
+                                      <td>
+-                                       <select multiple class="form-control" id="select1" style="width:200px;">
++                                       <select multiple class="form-control" id="select1" style="width:200px;height:150px">
+                                         <option value="OId">OId</option>
+                                         <option value="FRUserId">FRUserId</option>
+                                         <option value="FRUserName">FRUserName</option>
+@@ -81,7 +81,7 @@
+                                         <div>
+                                     </td>
+                                       <td>
+-                                        <select multiple class="form-control" id="select2" style="width:200px;"></select>
++                                        <select multiple class="form-control" id="select2" style="width:200px;height:150px"></select>
+                                       </td>
+                                      </tr>
+                                      </table>
+-- 
+1.9.1
+

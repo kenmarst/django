@@ -1,0 +1,62 @@
+From b2b8a33d3e33d2197657bfd164274de1cc2763cd Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 25 May 2016 09:46:30 +0800
+Subject: [PATCH 076/443] Adjust user_seeting page name to avoid confusions.
+
+---
+ br06/urls.py                                  | 2 +-
+ templates/menu.html                           | 2 +-
+ templates/{setting.html => user_setting.html} | 0
+ user/views.py                                 | 4 ++--
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+ rename templates/{setting.html => user_setting.html} (100%)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index e7e1315..730af9f 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -32,7 +32,7 @@ from login.views import login, logout, password_reset_confirm, ResetPasswordRequ
+ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^admin/', admin.site.urls),
+-    url(r'^setting/?$', user_setting),
++    url(r'^user_setting/?$', user_setting),
+     url(r'^fruser_list/?$', fruser_list_view),
+     url(r'^systemlog_list/?$', systemlog_list_view),
+     url(r'^systemlog_export/?$',systemlog_export),
+diff --git a/templates/menu.html b/templates/menu.html
+index 6118544..9392bb4 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -20,7 +20,7 @@
+ 					<a href="#" class="dropdown-toggle" data-toggle="dropdown"><svg class="glyph stroked male-user"><use xlink:href="#stroked-male-user"></use></svg> {{ request.session.Name }} <span class="caret"></span></a>
+ 					<ul class="dropdown-menu" role="menu">
+ 						<!-- <li><a href="#"><svg class="glyph stroked male-user"><use xlink:href="#stroked-male-user"></use></svg> Profile</a></li> -->
+-						<li><a href="/setting"><svg class="glyph stroked gear"><use xlink:href="#stroked-gear"></use></svg> {% trans "Settings" %}</a></li>
++						<li><a href="/user_setting"><svg class="glyph stroked gear"><use xlink:href="#stroked-gear"></use></svg> {% trans "Settings" %}</a></li>
+ 						<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"></use></svg> {% trans "Logout" %}</a></li>
+ 					</ul>
+ 				</li>
+diff --git a/templates/setting.html b/templates/user_setting.html
+similarity index 100%
+rename from templates/setting.html
+rename to templates/user_setting.html
+diff --git a/user/views.py b/user/views.py
+index 3c9857e..e813c4b 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -16,9 +16,9 @@ def user_setting(request):
+         return HttpResponseRedirect("/")
+     try:
+         obj = Users.objects.get(OId=request.session['OId'])
+-        return render(request, 'setting.html', {'active': "setting", 'obj': obj})
++        return render(request, 'user_setting.html', {'active': "setting", 'obj': obj})
+     except:
+-        return render(request, 'setting.html', {'active': "setting", 'Email': request.session['Email']})
++        return render(request, 'user_setting.html', {'active': "setting", 'Email': request.session['Email']})
+ 
+ # User List
+ def user_list_view(request):
+-- 
+1.9.1
+

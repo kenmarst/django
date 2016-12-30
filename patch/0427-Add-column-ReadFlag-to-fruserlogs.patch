@@ -1,0 +1,46 @@
+From cac0ddc077c4ce6f85e8a5c09d8ce51fbfe44243 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 20 Dec 2016 14:28:26 +0800
+Subject: [PATCH 427/443] Add column "ReadFlag" to fruserlogs.
+
+---
+ api/models.py | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 04ef0a8..c095192 100755
+--- a/api/models.py
++++ b/api/models.py
+@@ -494,10 +494,11 @@ class Fruserlogs(models.Model):
+     DeviceOId = models.CharField(db_column = 'DeviceOId', max_length = 36)
+     DeviceName = models.CharField(db_column = 'DeviceName', max_length = 36)
+     LogContent = models.CharField(db_column = 'LogContent', default = '', max_length = 256, blank = True, null = True)
++    ReadFlag = models.BooleanField(db_column = 'ReadFlag', default = False)
+ 
+     class Meta:
+         db_table = 'fruserlogs'
+-        ordering = ['OId']
++        ordering = ['LogDateTime']
+ 
+     def __del__(self):
+         if Fruserlogs.objects.count() > int(Config.objects.get(Name = 'LogLimit').Value):
+@@ -517,6 +518,7 @@ class Fruserlogs(models.Model):
+             DeviceName = self.DeviceName,
+             LogContent = self.LogContent,
+             LogDateTime = self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
++            ReadFlag = self.ReadFlag
+         )
+ 
+ 
+@@ -534,7 +536,7 @@ class Systemlogs(models.Model):
+ 
+     class Meta:
+         db_table = 'systemlogs'
+-        ordering = ['OId']
++        ordering = ['LogDateTime']
+ 
+     def __del__(self):
+         if Systemlogs.objects.count() > int(Config.objects.get(Name = 'LogLimit').Value):
+-- 
+1.9.1
+

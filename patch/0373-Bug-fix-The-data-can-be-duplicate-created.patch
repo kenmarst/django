@@ -1,0 +1,48 @@
+From f8767c9dacfe1ede823d87857448e4531e716f0f Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 25 Nov 2016 15:25:49 +0800
+Subject: [PATCH 373/443] Bug fix - The data can be duplicate created.
+
+---
+ devices/views.py      | 2 ++
+ frusergroups/views.py | 4 ++++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/devices/views.py b/devices/views.py
+index 09f0027..423f853 100755
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -218,6 +218,8 @@ def add_frusergroupdevice(request):
+         GroupOIds = [Frusergroups.objects.get(OId = GroupOId) for GroupOId in request.POST.getlist('GroupOIds')]
+         DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
+         for GroupOId in GroupOIds:
++            if Frusergroupdevices.objects.filter(GroupOId = GroupOId, DeviceOId = DeviceOId).exists():
++                continue
+             Frusergroupdevices.objects.create(GroupOId = GroupOId, DeviceOId = DeviceOId)
+         return JsonResponse(res_code[0])
+     except:
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index e2bc01e..6fb9d39 100755
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -196,6 +196,8 @@ def add_frusergroup_member(request):
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         FRUserOIds = [Frusers.objects.get(OId = FRUserOId) for FRUserOId in request.POST.getlist('UserOIds')]
+         for FRUserOId in FRUserOIds:
++            if Frusergroupmember.objects.filter(GroupOId = GroupOId, FRUserOId = FRUserOId).exists():
++                continue
+             Frusergroupmember.objects.create(GroupOId = GroupOId, FRUserOId = FRUserOId)
+             Frusergroupmember.objects.filter(GroupOId__Name = 'Default', FRUserOId = FRUserOId).delete()
+         return JsonResponse(res_code[0])
+@@ -284,6 +286,8 @@ def add_frusergroup_device(request):
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOIds = [Devices.objects.get(OId = DeviceOId) for DeviceOId in request.POST.getlist('DeviceOIds')]
+         for DeviceOId in DeviceOIds:
++            if Frusergroupdevices.objects.filter(GroupOId = GroupOId, DeviceOId = DeviceOId).exists():
++                continue
+             Frusergroupdevices.objects.create(GroupOId = GroupOId, DeviceOId = DeviceOId)
+         return JsonResponse(res_code[0])
+     except:
+-- 
+1.9.1
+

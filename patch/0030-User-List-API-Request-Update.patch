@@ -1,0 +1,56 @@
+From 0dcbb7af0d6b4008996e7278304f47c421c613d4 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 12 May 2016 17:29:20 +0800
+Subject: [PATCH 030/443] User List API Request Update.
+
+add Field, Keyword
+---
+ api/user.py | 27 +++++++++++++++++----------
+ 1 file changed, 17 insertions(+), 10 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index 3291bea..d12f95d 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -142,21 +142,28 @@ def list(request):
+         try:
+             if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+                 frusers = Frusers.objects.filter(State = "Enable")
+-                if frusers:
++                #print('Field : ', request.POST['Field'], 'Keyword : ',request.POST['Keyword'])
++                frusers_field = []
++                # query field in fruser
++                for obj in frusers:
++                    if obj.as_json()[request.POST['Field']] == request.POST['Keyword']:
++                        frusers_field.append(obj.as_json())
++
++                if frusers_field:
+                     return JsonResponse(dict(ChainMap(result_success, {
+-                        'Number':len(frusers),
++                        'Number':len(frusers_field),
+                         'Users': [{
+-                            'FRUserId':i.FRUserId,
+-                            'Name' : i.Name,
+-                            'Gender' : i.Gender,
+-                            'Age' : i.Age,
+-                            'RFIDCard' : i.RFIDCard,
+-                            'State' : i.State,
++                            'FRUserId':i['FRUserId'],
++                            'Name' : i['Name'],
++                            'Gender' : i['Gender'],
++                            'Age' : i['Age'],
++                            'RFIDCard' : i['RFIDCard'],
++                            'State' : i['State'],
+                             'Groups' : [{
+                                 'Oid' : j.GroupOId.OId,
+                                 'Name' : j.GroupOId.Name
+-                            } for j in i.frusergroupmember_set.filter(FRUserOId = i.OId)]
+-                        } for i in frusers]
++                            } for j in Frusergroupmember.objects.filter(FRUserOId = i['OId'])]
++                        } for i in frusers_field]
+                     })))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Frusers matching query does not exist.'})))
+-- 
+1.9.1
+

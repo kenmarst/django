@@ -1,0 +1,156 @@
+From 442f099f7d1862bacfd9088cfa4f3ffba9d8e45f Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 29 Aug 2016 13:03:23 +0800
+Subject: [PATCH 239/443] Add 4G API: get_result, user_add
+
+get_result: return recognition result to 4G server.
+user_add: check user exist in 4G server.
+---
+ api/recognition.py | 57 +++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ api/user.py        | 18 +++++++++++++++--
+ br06/settings.py   |  6 ++++++
+ br06/urls.py       |  5 +++++
+ 4 files changed, 83 insertions(+), 3 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 2136097..88002da 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -1,4 +1,4 @@
+-import json, requests, os
++import json, requests, os, time
+ from collections import ChainMap
+ from django.http import JsonResponse
+ from django.views.decorators.csrf import csrf_exempt
+@@ -7,6 +7,7 @@ from .models import Devices, Frusers, Systemlogs, Fruserlogs, Frusergroupmember,
+ from django.conf import settings
+ from operator import itemgetter
+ from datetime import datetime
++from .utility import md5
+ 
+ result_success = {'Result' : 'Success'}
+ result_pass = {'Result' : 'Pass'}
+@@ -285,3 +286,57 @@ def rfid_delete(request):
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+ 
++@csrf_exempt
++def get_result(request):
++    if not request.method == 'POST':
++        return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
++    try:
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Get Result', request_IP = request_IP)
++        req = json.loads(request.body.decode('utf-8'))
++        req_key = {'FRUserId', 'Result', 'Message'}
++        if not all(k in req for k in req_key):
++            logContent = '{message_head}Request parameter error'.format(message_head = message_head)
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        ip_device = Devices.objects.get(IP = request_IP)
++        if ip_device.State != 'Proposed':
++            try:
++                fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
++            except Exception as e:
++                Fruserlogs.objects.create( DeviceOId = ip_device.OId,
++                    DeviceName = ip_device.Name, LogContent = str(req))
++                logContent = '{message_head}{e}'.format(message_head = message_head, e = str(e))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++            Fruserlogs.objects.create(
++                FRUserOId = fruser.OId, FRUserId = fruser.FRUserId,
++                FRUserName = fruser.Name, DeviceOId = ip_device.OId,
++                DeviceName = ip_device.Name, LogContent = str(req)
++            )
++            # Send device verify or identify result(Success/Fail) to 4G
++            if req['Result'] == 'Success':
++                res_4G = json.loads(
++                    requests.post(
++                        settings.RE_4G,
++                        data = json.dumps({
++                            "account": req['FRUserId'],
++                            "login_time": time.time(),# Unix Timestamp
++                            "checksum": md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
++                        }).encode('utf8')
++                ).text)
++                #print(res_4G)
++                if res_4G['status'] == settings.SE_4G:#
++                    logContent = '{message_head}Success'.format(
++                        message_head = message_head)
++                    Systemlogs.objects.create(Category = "Recognition", LogContent = logContent)
++                    return JsonResponse(result_success)
++                else:
++                    raise Exception('The 4G result is fail')
++            else:
++                raise Exception('Recognition fail')
++        else:
++            raise Exception('Device is proposed')
++    except Exception as error:
++        logContent = '{message_head}Error cause by {error}'.format(
++                message_head = message_head, error = str(error))
++        Systemlogs.objects.create(Category = "GetResult", LogContent = logContent)
++        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+diff --git a/api/user.py b/api/user.py
+index 42f2e02..7920dec 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -4,7 +4,7 @@ from django.http import JsonResponse
+ from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
+ from django.core.exceptions import ObjectDoesNotExist
+-from .utility import TCIT_API, TCIT_res_state
++from .utility import TCIT_API, TCIT_res_state, md5
+ from datetime import datetime
+ from django.conf import settings
+ from django.db.models import Q
+@@ -41,7 +41,21 @@ def add(request):
+                         print(logContent)
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                     except ObjectDoesNotExist:
+-                        print("Creating new account now.")
++                        # For 4G UserAdd
++                        if settings.EN_4G:
++                            res_4G = json.loads(
++                                requests.post(
++                                    settings.LO_4G,
++                                    data = json.dumps({
++                                        'account': req['FRUserId'],
++                                        'checksum': md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
++                                    }).encode('utf8')
++                                ).text)
++                            #print(res_4G)
++                        if not res_4G['status'] == settings.SE_4G:
++                            logContent = '{message_head}4G User does not exist'.format(message_head = message_head)
++                            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++                        # print("Creating new account now.")
+                         Frusers.objects.create(
+                             FRUserId = req['FRUserId'],
+                             Name = req['Name'],
+diff --git a/br06/settings.py b/br06/settings.py
+index 331177a..176c3c7 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -189,3 +189,9 @@ DEFAULT_FROM_EMAIL = 'fr_serivce@tw.shuttle.com'
+ 
+ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+ SESSION_COOKIE_AGE = 86400 # sec
++
++# 4G   
++EN_4G = 0# Enable 4Gapi in UserAdd
++SE_4G = 1 # 4G return status: success
++LO_4G = 'http://61.247.173.118/daily/LoginApi/face'
++RE_4G = 'http://61.247.173.118/daily/importApi/UserFaceLoginRecord/add'
+diff --git a/br06/urls.py b/br06/urls.py
+index 737c854..79be0d0 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -201,3 +201,8 @@ urlpatterns += [
+     url(r'^api/recognition/finger/verify/?$', fingerprint.verify),
+     url(r'^api/recognition/finger/check/?$', fingerprint.check),
+ ]
++
++# 4G
++urlpatterns += [
++    url(r'^api/recognition/getResult/?$', recognition.get_result),
++]
+-- 
+1.9.1
+

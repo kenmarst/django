@@ -1,0 +1,24 @@
+From 56691c27e93fccd4623effb8811822c9aa338e36 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Thu, 1 Sep 2016 14:33:49 +0800
+Subject: [PATCH 250/443] Update the version to V.0.1.a.20160902
+
+---
+ br06/settings.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 8184dcb..35337a9 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -16,6 +16,7 @@ from api.utility import get_localtimezone
+ VERSION = 'V.0.1.a.20160902'
+ print(VERSION)
+ 
++
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ PROJECT_DIR = os.path.dirname(__file__)
+-- 
+1.9.1
+

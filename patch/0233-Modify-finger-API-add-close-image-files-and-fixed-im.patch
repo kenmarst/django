@@ -1,0 +1,156 @@
+From 6c99d3298898b2748050b44816c378549eac6466 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 23 Aug 2016 15:35:40 +0800
+Subject: [PATCH 233/443] Modify finger API : add close image files and fixed
+ image files determine.
+
+---
+ api/fingerprint.py | 115 +++++++++++++++++++++++++----------------------------
+ 1 file changed, 54 insertions(+), 61 deletions(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index d2b4d3a..e0a5387 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -25,13 +25,11 @@ def verify(request):
+                 check = s.connect((HOST, PORT))
+                 if (check == None):
+                     fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+-
+                     FingerDir = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_verify.bmp'])
+ 
+-                    open(
+-                        os.path.join(settings.MEDIA_DIR,FingerDir),
+-                        'wb+').write(request.FILES['image'].file.getvalue()
+-                    )
++                    f = open(os.path.join(settings.MEDIA_DIR,FingerDir),'wb+')
++                    f.write(request.FILES['image'].file.getvalue())
++                    f.close()
+ 
+                     VerifyUserId = 'V1' + str(settings.FINGER_LEVEL[ip_device.FingerBioScore]) + '*' + fruser.FRUserId
+                     if (not 0):
+@@ -68,59 +66,55 @@ def add(request):
+         try:
+             ip_device = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
+             if ip_device.State != 'Proposed':
+-                HOST, PORT = "127.0.0.1", 8003
+-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+-                check = s.connect((HOST, PORT))
+-                if (check == None):
+-                    fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+-                    FingerDir_1 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register1.bmp'])
+-                    FingerDir_2 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register2.bmp'])
+-                    FingerPath1 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_1))
+-                    FingerPath2 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_2))
+-
+-                    if (FingerPath1 == False and FingerPath2 == True) or (FingerPath1 == False and FingerPath2 == False) :
+-                        open(
+-                            os.path.join(settings.MEDIA_DIR,FingerDir_1),
+-                            'wb+').write(request.FILES['image'].file.getvalue()
+-                        )
+-                        RequestUserId ='R1' + '*' + fruser.FRUserId
+-                        if (not 0):
+-                            s.send(RequestUserId.encode())
+-
+-                        data = s.recv(7)
+-                        s.close()
+-                        if data.decode() == 'Success' :
+-                            Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
+-                            return JsonResponse(result_success)
+-                        else:
+-                            os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_1))
+-                            raise Exception('Finger add fail')
+-
+-                    if FingerPath1 == True and FingerPath2 == False :
+-                        open(
+-                            os.path.join(settings.MEDIA_DIR,FingerDir_2),
+-                            'wb+').write(request.FILES['image'].file.getvalue()
+-                        )
+-
+-                        RequestUserId ='R2' + '*' + fruser.FRUserId
+-                        if (not 0):
+-                            s.send(RequestUserId.encode())
+-
+-                        data = s.recv(7)
+-                        s.close()
+-                        if data.decode() == 'Success' :
+-                            Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
+-                            return JsonResponse(result_success)
+-                        else:
+-                            os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_2))
+-                            raise Exception('Finger add fail')
+-
+-                    if FingerPath1 == True and FingerPath2 == True :
+-                        s.close()
+-                        Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger already exists')
+-                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger already exists'})))
++                fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
++                FingerDir_1 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register1.bmp'])
++                FingerDir_2 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register2.bmp'])
++                FingerPath1 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_1))
++                FingerPath2 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_2))
++                if FingerPath1 == True and FingerPath2 == True :
++                    Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger already exists')
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger already exists'})))
+                 else:
+-                    raise Exception('Need connect Finger Deamon')
++                    HOST, PORT = "127.0.0.1", 8003
++                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++                    check = s.connect((HOST, PORT))
++                    if (check == None):
++                        if FingerPath1 == False :
++                            f = open(os.path.join(settings.MEDIA_DIR,FingerDir_1),'wb+')
++                            f.write(request.FILES['image'].file.getvalue())
++                            f.close()
++
++                            RequestUserId ='R1' + '*' + fruser.FRUserId
++                            if (not 0):
++                                s.send(RequestUserId.encode())
++
++                            data = s.recv(7)
++                            s.close()
++                            if data.decode() == 'Success' :
++                                Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
++                                return JsonResponse(result_success)
++                            else:
++                                os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_1))
++                                raise Exception('Finger add fail')
++                        else:
++                            f = open(os.path.join(settings.MEDIA_DIR,FingerDir_2),'wb+')
++                            f.write(request.FILES['image'].file.getvalue())
++                            f.close()
++
++                            RequestUserId ='R2' + '*' + fruser.FRUserId
++                            if (not 0):
++                                s.send(RequestUserId.encode())
++
++                            data = s.recv(7)
++                            s.close()
++                            if data.decode() == 'Success' :
++                                Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
++                                return JsonResponse(result_success)
++                            else:
++                                os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_2))
++                                raise Exception('Finger add fail')
++                    else:
++                        raise Exception('Need connect finger deamon')
+             else:
+                 raise Exception('Need accept')
+         except Exception as error:
+@@ -191,10 +185,9 @@ def check(request):
+                     fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+                     FingerDir = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_verify.bmp'])
+ 
+-                    open(
+-                        os.path.join(settings.MEDIA_DIR,FingerDir),
+-                        'wb+').write(request.FILES['image'].file.getvalue()
+-                    )
++                    f = open(os.path.join(settings.MEDIA_DIR,FingerDir),'wb+')
++                    f.write(request.FILES['image'].file.getvalue())
++                    f.close()
+ 
+                     VerifyUserId = 'V1' + str(settings.FINGER_LEVEL[ip_device.FingerBioScore]) + '*' + fruser.FRUserId
+                     if (not 0):
+-- 
+1.9.1
+

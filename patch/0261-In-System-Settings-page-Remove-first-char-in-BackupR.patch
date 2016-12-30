@@ -1,0 +1,34 @@
+From edb37900983b608d139e957b571629c1c0d2ec19 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 16:56:34 +0800
+Subject: [PATCH 261/443] In System Settings page, Remove first '/' char in
+ BackupRemotePath string to avoid to upload to incorrect path on FTP.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+(BZ #1516)
+BR06 Server - 備份時, 設定了Remote backup FTP 路徑, 但備份時卻存在FTP根目錄
+---
+ templates/system_settings.html | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index c9d3c93..97f6804 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -297,6 +297,11 @@
+                 }
+             }
+ 
++            while (BackupRemotePath.startsWith("/")) {
++                var res = BackupRemotePath.replace("/", "");
++                BackupRemotePath = res;
++            }
++
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+-- 
+1.9.1
+

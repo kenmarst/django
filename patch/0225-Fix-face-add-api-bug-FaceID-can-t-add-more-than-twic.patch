@@ -1,0 +1,27 @@
+From e1f83a9082f59b0ccd58b80ea0363448ac276e82 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 4 Aug 2016 13:48:55 +0800
+Subject: [PATCH 225/443] Fix face add api bug: FaceID can't add more than
+ twice before use face_delete api.
+
+---
+ api/face.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/api/face.py b/api/face.py
+index 5b5528b..430f01e 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -56,6 +56,9 @@ def add(request):
+         try:
+             # check FRUserId
+             fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId', ''))
++            # check FaceID can't add more than twice before use face_delete api.
++            if fruser.FaceID1 and fruser.FaceID2:
++                raise Exception('Face already existed')
+             #1. Update load face img to TCIT and get Image Id
+             res_upload = sendImg(request)
+             image_id = res_upload.get('img_id', '')
+-- 
+1.9.1
+

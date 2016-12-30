@@ -1,0 +1,324 @@
+From 4327325f5fb4782ce8af76776f32bd186aea32a7 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 25 May 2016 18:14:59 +0800
+Subject: [PATCH 088/443] fix database didn't update updatetime when data is
+ updated
+
+---
+ api/connection.py     |  4 +++-
+ api/face.py           | 21 ++++++++++++---------
+ api/user.py           |  4 +++-
+ devices/views.py      | 12 ++++++++++--
+ frusergroups/views.py |  6 +++++-
+ login/views.py        | 12 +++++++++---
+ role/views.py         | 31 ++++++++++++++++++++++++++-----
+ user/views.py         |  4 +++-
+ usergroups/views.py   |  6 +++++-
+ 9 files changed, 76 insertions(+), 24 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 8988c5d..375a98e 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -2,6 +2,7 @@ import json
+ from collections import ChainMap
+ from django.http import JsonResponse
+ from django.views.decorators.csrf import csrf_exempt
++from datetime import datetime
+ 
+ result_success = {'Result' : 'Success'}
+ result_fail = {'Result' : 'Fail'}
+@@ -67,7 +68,8 @@ def set(request):
+                     Timezone = req['Timezone'], \
+                     Audio = req['Audio'], \
+                     BioScore = req['BioScore'], \
+-                    Language = req['Language'] \
++                    Language = req['Language'], \
++                    UpdateDate = datetime.now() \
+                 )
+ 
+                 return JsonResponse(result_success)
+diff --git a/api/face.py b/api/face.py
+index 40af5a8..419ac6b 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -70,7 +70,8 @@ def add(request):
+             )
+             if not res_face_personadd['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                 Frusers.objects.filter(OId = fruser.OId).update(
+-                        PersonId = personId,
++                    PersonId = personId,
++                    UpdateDate = datetime.now()
+                 )
+                 logContent = "/face/person/update/add/" + TCIT_res_state[res_face_personadd['state']]
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+@@ -91,17 +92,19 @@ def add(request):
+                 #Fruser update
+                 if not fruser.Face1:
+                     Frusers.objects.filter(OId = fruser.OId).update(
+-                            PersonId = personId,
+-                            Face1 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+-                                    '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
+-                            FaceID1 = face_id
++                        PersonId = personId,
++                        Face1 = settings.PIC_DIR + request.POST.get('FRUserId') + \
++                                '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                        FaceID1 = face_id,
++                        UpdateDate = datetime.now()
+                     )
+                 else:
+                     Frusers.objects.filter(OId = fruser.OId).update(
+-                            PersonId = personId,
+-                            Face2 = settings.PIC_DIR + request.POST.get('FRUserId') + \
+-                                    '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
+-                            FaceID2 = face_id
++                        PersonId = personId,
++                        Face2 = settings.PIC_DIR + request.POST.get('FRUserId') + \
++                                '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                        FaceID2 = face_id,
++                        UpdateDate = datetime.now()
+                     )
+ 
+             # return
+diff --git a/api/user.py b/api/user.py
+index e1bbe27..7b74764 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -5,6 +5,7 @@ from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlog
+ from django.views.decorators.csrf import csrf_exempt
+ from django.core.exceptions import ObjectDoesNotExist
+ from .utility import TCIT_API
++from datetime import datetime
+ 
+ result_success = {'Result' : 'Success'}
+ result_fail = {'Result' : 'Fail'}
+@@ -74,7 +75,8 @@ def update(request):
+                         Gender = req['Gender'],
+                         Age = req['Age'] if not req['Age'] == "" else None,
+                         RFIDCard = req['RFIDCard'],
+-                        State = req['State']
++                        State = req['State'],
++                        UpdateDate = datetime.now()
+                     )
+                     logContent = "FRUser Update Successfully"
+                     return JsonResponse(dict(result_success))
+diff --git a/devices/views.py b/devices/views.py
+index dc8b3d1..92ad9cc 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -3,6 +3,7 @@ from django.shortcuts import render
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Frusergroups, Frusergroupdevices
++from datetime import datetime
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ 
+@@ -89,7 +90,10 @@ def accept_device(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+-        Devices.objects.filter(OId = request.POST['OId']).update(State = 'Approved')
++        Devices.objects.filter(OId = request.POST['OId']).update(
++            State = 'Approved',
++            UpdateDate = datetime.now()
++        )
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -98,7 +102,10 @@ def change_device_name(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+-        Devices.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'])
++        Devices.objects.filter(OId = request.POST['OId']).update(
++            Name = request.POST['Name'],
++            UpdateDate = datetime.now()
++        )
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -116,6 +123,7 @@ def settings_device(request):
+             Audio = request.POST['Audio'],
+             BioScore = request.POST['BioScore'],
+             Language = request.POST['Language'],
++            UpdateDate = datetime.now()
+         )
+         return JsonResponse(res_code[0])
+     except:
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index 62f4d14..5dfd80f 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -2,6 +2,7 @@ from django.shortcuts import render
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Frusergroups, Frusergroupmember, Frusergroupdevices, Devices, Frusers
++from datetime import datetime
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ 
+@@ -66,7 +67,10 @@ def change_frusergroup_name(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+-        Frusergroups.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'])
++        Frusergroups.objects.filter(OId = request.POST['OId']).update(
++            Name = request.POST['Name'],
++            UpdateDate = datetime.now()
++        )
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+diff --git a/login/views.py b/login/views.py
+index c07ae56..e9c2f1b 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -52,7 +52,11 @@ def change_passwd(request):
+         confirm_password = request.POST.get('confirm_password', '')
+         obj = Users.objects.filter(Email = mail, Password = password)
+         if len(obj) == 1:
+-            obj.update(Password=new_password,Name = name)
++            obj.update(
++                Password = new_password,
++                Name = name,
++                UpdateDate = datetime.now()
++            )
+             return HttpResponse(json.dumps(res_code[0]))
+         else:
+             return HttpResponse(json.dumps(res_code[1]))
+@@ -126,8 +130,10 @@ def password_reset_confirm(request, uidb64=None, times=None, token=None,
+         confirm_password = md5(request.POST.get('confirm_password', ''))
+         if new_password == confirm_password:
+             try:
+-                obj = Users.objects.filter(Account = account).update(Password = new_password)
+-                Users.objects.filter(Account = account).update(UpdateDate = datetime.now())
++                obj = Users.objects.filter(Account = account).update(
++                    Password = new_password,
++                    UpdateDate = datetime.now()
++                )
+                 return render(request, 'registration/password_reset_complete.html', {'Result':"Success",'Code': ""})
+             except:
+                 print ("/user/views.password_reset_confirm: update database error")
+diff --git a/role/views.py b/role/views.py
+index 49c8150..a5ba3a0 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -4,6 +4,7 @@ from api.models import Users, Role, Acl
+ from datetime import datetime
+ from br06.settings import *
+ from collections import ChainMap
++from datetime import datetime
+ 
+ # create default role: admin, users.
+ try:
+@@ -52,11 +53,17 @@ else:
+     print('default account "admin" exist.')
+     if Users.objects.get(Account = 'admin').Email != ADMIN_MAIL:
+         print('update admin email.')
+-        Users.objects.filter(Account = 'admin').update(Email = ADMIN_MAIL)
++        Users.objects.filter(Account = 'admin').update(
++            Email = ADMIN_MAIL,
++            UpdateDate = datetime.now()
++        )
+ 
+     if Users.objects.get(Account = 'admin').Password != ADMIN_PASSWORD:
+         print('update admin password.')
+-        Users.objects.filter(Account = 'admin').update(Password = ADMIN_PASSWORD)
++        Users.objects.filter(Account = 'admin').update(
++            Password = ADMIN_PASSWORD,
++            UpdateDate = datetime.now()
++        )
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ 
+@@ -117,7 +124,15 @@ def permission_save(request):
+         return HttpResponseRedirect("/")
+ 
+     try:
+-        Acl.objects.filter(OId = Acl.objects.get(RoleOId = request.POST['OId'], FunctionName = request.POST['field']).OId).update(ACL = request.POST['acl'])
++        Acl.objects.filter(
++            OId = Acl.objects.get(
++                RoleOId = request.POST['OId'],
++                FunctionName = request.POST['field']
++            ).OId
++        ).update (
++            ACL = request.POST['acl'],
++            UpdateDate = datetime.now()
++        )
+         return JsonResponse(res_code[1])
+     except:
+         return JsonResponse(res_code[2])
+@@ -142,7 +157,10 @@ def rename_role(request):
+     try:
+         if Role.objects.get(OId = request.POST['OId']).Category == 'System':
+             return JsonResponse(res_code[0])
+-        Role.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'], UpdateDate = datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
++        Role.objects.filter(OId = request.POST['OId']).update(
++            Name = request.POST['Name'],
++            UpdateDate = datetime.now()
++        )
+         return JsonResponse(res_code[1])
+     except:
+         return JsonResponse(res_code[2])
+@@ -153,7 +171,10 @@ def delete_role(request):
+     try:
+         if Role.objects.get(OId = request.POST['OId']).Category == 'System':
+             return JsonResponse(res_code[0])
+-        Users.objects.filter(RoleOId = request.POST['OId']).update(RoleOId = Role.objects.get(Name = 'Users(default)'))
++        Users.objects.filter(RoleOId = request.POST['OId']).update(
++            RoleOId = Role.objects.get(Name = 'Users(default)'),
++            UpdateDate = datetime.now()
++        )
+         Role.objects.filter(OId = request.POST['OId']).delete()
+         Acl.objects.filter(RoleOId = request.POST['OId']).delete()
+         return JsonResponse(res_code[1])
+diff --git a/user/views.py b/user/views.py
+index b44294a..f5f3303 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -7,6 +7,7 @@ from django.core import serializers
+ from api.models import Users, Role, Acl
+ from api.utility import md5
+ import json
++from datetime import datetime
+ 
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -84,7 +85,8 @@ def update_user(request):
+             Name = request.POST['Name'],
+             Password = md5(request.POST['Password']) if request.POST['Password'] else \
+                     Users.objects.get(OId = request.POST['OId']).Password,
+-            RoleOId = Role.objects.get(OId = request.POST['RoleOId'])
++            RoleOId = Role.objects.get(OId = request.POST['RoleOId']),
++            UpdateDate = datetime.now()
+         )
+         return JsonResponse(res_code[0])
+     except Exception as e:
+diff --git a/usergroups/views.py b/usergroups/views.py
+index fee30d7..9ca7ca4 100644
+--- a/usergroups/views.py
++++ b/usergroups/views.py
+@@ -3,6 +3,7 @@ from django.shortcuts import render
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Users, Usergroups, Usergroupmember, Usergroupdevices
++from datetime import datetime
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ 
+@@ -105,7 +106,10 @@ def change_user_group_name(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+-        Usergroups.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'])
++        Usergroups.objects.filter(OId = request.POST['OId']).update(
++            Name = request.POST['Name'],
++            UpdateDate = datetime.now()
++        )
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+-- 
+1.9.1
+

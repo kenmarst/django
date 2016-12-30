@@ -1,0 +1,475 @@
+From 20a19d89b8e082f678aba9575a48b84aaffc9170 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 14 Jul 2016 10:53:18 +0800
+Subject: [PATCH 178/443] Modify logsetting web
+
+Modify logsetting web for database column.
+Complete logsetting and modify log export function.
+Change media and logsetting root in setting.
+Bug fix - fruserlog export error cause by none column.
+---
+ api/face.py               | 20 +++++++--------
+ api/models.py             |  6 ++---
+ api/user.py               | 12 ++++-----
+ br06/settings.py          |  6 ++---
+ br06/urls.py              |  8 ++++--
+ fruserlogs/views.py       | 62 +++++++++++++++--------------------------------
+ frusers/views.py          |  6 ++---
+ logsetting/views.py       | 37 ++++++++++++++++------------
+ systemlogs/views.py       | 61 ++++++++++++++--------------------------------
+ templates/logsetting.html | 11 ++++-----
+ 10 files changed, 95 insertions(+), 134 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 5120e81..1b31cc8 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -97,7 +97,7 @@ def add(request):
+                     ])
+                     open(
+                         os.path.join(
+-                            settings.MEDIA_PAR_DIR,
++                            settings.MEDIA_DIR,
+                             FaceDir
+                         ),
+                         'wb+'
+@@ -156,12 +156,12 @@ def delete(request):
+                         ).text
+                     )
+                     if res.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1)):
+-                            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1))
+-                        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2)):
+-                            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2))
+-                        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3)):
+-                            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3))
++                        if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face1)):
++                            os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face1))
++                        if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face2)):
++                            os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face2))
++                        if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face3)):
++                            os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face3))
+                         fruser.Face1 = ''
+                         fruser.Face2 = ''
+                         fruser.Face3 = ''
+@@ -209,19 +209,19 @@ def list(request):
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
+                     if fruser.Face1 and req.get('FaceIndex', '') == 1:
+                         img_1 = open(os.path.join(
+-                                    settings.MEDIA_PAR_DIR,
++                                    settings.MEDIA_DIR,
+                                     fruser.Face1
+                                 ), 'rb')
+                         return HttpResponse(img_1.read(), content_type="image/jpg")
+                     if fruser.Face2 and req.get('FaceIndex', '') == 2:
+                         img_2 = open(os.path.join(
+-                                    settings.MEDIA_PAR_DIR,
++                                    settings.MEDIA_DIR,
+                                     fruser.Face2
+                                 ), 'rb')
+                         return HttpResponse(img_2.read(), content_type="image/jpg")
+                     if fruser.Face3 and req.get('FaceIndex', '') == 3:
+                         img_3 = open(os.path.join(
+-                                    settings.MEDIA_PAR_DIR,
++                                    settings.MEDIA_DIR,
+                                     fruser.Face3
+                                 ), 'rb')
+                         return HttpResponse(img_3.read(), content_type="image/jpg")
+diff --git a/api/models.py b/api/models.py
+index 1921110..10398f3 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -430,9 +430,9 @@ class Frusergroupdevices(models.Model):
+ class Fruserlogs(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     LogDateTime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add =  True)
+-    FRUserOId = models.CharField(db_column = 'FRUserOId', max_length = 36, blank = True, null = True)
+-    FRUserId = models.CharField(db_column = 'FRUserId', max_length = 36, blank = True, null = True)
+-    FRUserName = models.CharField(db_column = 'FRUserName', max_length = 36, blank = True, null = True)
++    FRUserOId = models.CharField(db_column = 'FRUserOId', default = '', max_length = 36, blank = True, null = True)
++    FRUserId = models.CharField(db_column = 'FRUserId', default = '', max_length = 36, blank = True, null = True)
++    FRUserName = models.CharField(db_column = 'FRUserName', default = '', max_length = 36, blank = True, null = True)
+     DeviceOId = models.CharField(db_column = 'DeviceOId', max_length = 36)
+     DeviceName = models.CharField(db_column = 'DeviceName', max_length = 36)
+     LogContent = models.CharField(db_column = 'LogContent', default = '', max_length = 256, blank = True, null = True)
+diff --git a/api/user.py b/api/user.py
+index 8561034..33ec091 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -156,12 +156,12 @@ def delete_fruser(id):
+             else:
+                 return {'Message' : TCIT_res_state[res_personid_delete.get('state', '')]}
+         # delet img
+-        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1)):
+-            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1))
+-        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2)):
+-            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2))
+-        if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3)):
+-            os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3))
++        if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face1)):
++            os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face1))
++        if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face2)):
++            os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face2))
++        if os.path.isfile(os.path.join(settings.MEDIA_DIR, fruser.Face3)):
++            os.remove(os.path.join(settings.MEDIA_DIR, fruser.Face3))
+         fruser.delete()
+         return {'Message' : 'success'}# The Message is for logContent
+     except Exception as error:
+diff --git a/br06/settings.py b/br06/settings.py
+index 26ff461..002bfb4 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -16,7 +16,7 @@ from api.utility import get_localtimezone
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ PROJECT_DIR = os.path.dirname(__file__)
+-MEDIA_PAR_DIR = os.path.dirname(os.path.dirname(__file__))
++MEDIA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'media')
+ 
+ # Quick-start development settings - unsuitable for production
+ # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
+@@ -165,9 +165,9 @@ STATICFILES_DIRS = [
+     os.path.join(BASE_DIR, 'static')
+ ]
+ 
+-PIC_DIR = 'media/fruserpic/'
++PIC_DIR = 'fruserpic'
+ 
+-LOGSETTING = 'logsetting/'
++LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ 
+ TCIT_IP = 'localhost:8800'
+ 
+diff --git a/br06/urls.py b/br06/urls.py
+index 1d35b91..4ac5272 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -20,7 +20,7 @@ from user.views import user_setting, user_list_view, user_list_data, user_add_vi
+ from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser, fruser_data
+ from systemlogs.views import systemlog_list_view, systemlog_export, systemlog_data
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_data
+-from logsetting.views import logsetting
++from logsetting.views import logsetting_view, settinglog
+ from systemsettings.views import system_settings_views, settings_system_backup, settings_system_connect_test, settings_system_log
+ from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+@@ -34,13 +34,17 @@ from django.conf import settings
+ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^shuttle_admin/', admin.site.urls),
+-    url(r'^logsetting/?$', logsetting),
+     url(r'^dashboard/$', dashboard_views),
+     url(r'^home/$', home_view),
+     url(r'^empty/$', empty_view),
+ ]
+ 
+ urlpatterns += [
++    url(r'^logsetting/?$', logsetting_view),
++    url(r'^settinglog/?$', settinglog),
++]
++
++urlpatterns += [
+     url(r'^system_settings/$', system_settings_views),
+     url(r'^settings_system_backup/?$', settings_system_backup),
+     url(r'^settings_system_connect_test/?$', settings_system_connect_test),
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index ea2bf6e..beec21f 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -7,7 +7,7 @@ from django.conf import settings
+ from login.views import check_login
+ from django.db.models import Q
+ import datetime,types
+-import csv, json
++import csv, json, os
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ permission = 'permission_log'
+@@ -53,53 +53,29 @@ def fruserlog_export(request):
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+-    #data2=[{'symbol':'!','val0':'FRUserName','val1':'LogDateTime', 'val2':'DeviceOId', 'val3':'LogContent'}]
+-    #with open('fruserlogssetting.json', 'w') as outfile:
+-    # json.dump(data2, outfile)
+-    symbolcover={
+-         "tab":'\t',
+-         "comma":',',
+-         "dot":'.',
+-         "space":' ',
+-        }
++
++    symbolcover = {'tab' : '\t', 'comma' : ',', 'dot' : '.', 'space' : ' '}
++
+     try:
+-     with open(settings.LOGSETTING+'logssetting.json') as f:
+-      data=f.read()
+-      json_data=json.loads(data)
+-      symbol=json_data[0]['symbol']
+-      if(len(symbol)>1):
+-        symbol=symbolcover[symbol]
++        with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
++            json_data = json.loads(f.read())
+ 
+-      header=[]
+-      for i in range(0,len(json_data[0])-1):
+-        field = "val"+str(i)
+-        if(json_data[0][field] != 'Category'):#hardcoding need to fix
+-            header.append(json_data[0][field])
++        if json_data['symbol']:
++            symbol = symbolcover.get(json_data['symbol'], json_data['symbol'])
++            header = [field for field in json_data.get('fields') if field not in {'Category'}]
++        else:
++            raise
+     except:
+-      header=['FRUserName','LogDateTime','DeviceOId', 'LogContent']
+-      symbol="!"
+-
+-    print(header)
+-    #json_data=json.loads(data)
+-    #symbol=json_data[0]['symbol']
+-    #header=[]
+-    #for i in range(0,len(json_data[0])-1):
+-    #  field = "val"+str(i)
+-    #  header.append(json_data[0][field])
++        header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++        symbol = "!"
+ 
+-    response = HttpResponse(content_type='text/csv')
+-    response['Content-Disposition'] = 'attachment; filename=fruserlog-export-%s.csv' % (
+-                        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'),
+-                    )
++    response = HttpResponse(content_type = 'text/csv')
++    response['Content-Disposition'] = 'attachment; filename=fruserlog-export-{0}.csv'.format(
++        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
++    )
+ 
+     writer = csv.writer(response)
+-
+-    obj = Fruserlogs.objects.all()
+-
+-    writer.writerow([symbol.join([i for i in header])])
+-
+-    result = [res.as_json() for res in obj]
+-    for x in result:
+-       writer.writerow([symbol.join([x[i] for i in header])])
++    writer.writerow([symbol.join(header)])
++    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Fruserlogs.objects.all()])
+ 
+     return response
+diff --git a/frusers/views.py b/frusers/views.py
+index 72b1117..4a8de44 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -85,7 +85,7 @@ def import_fruser(request):
+         if not 'file' in request.FILES:
+             raise Exception(3)
+ 
+-        mediadir = os.path.join(settings.MEDIA_PAR_DIR, 'media')
++        mediadir = settings.MEDIA_DIR
+         csvdir = os.path.join(mediadir, 'frusers.csv')
+         tarfile_dir = os.path.join(mediadir, request.FILES['file'].name)
+         with open(tarfile_dir, 'wb+') as destination:
+@@ -119,7 +119,7 @@ def import_fruser(request):
+                     )
+                     for Face in [row['Face1'], row['Face2']]:
+                         if Face:
+-                            with open(os.path.join(settings.MEDIA_PAR_DIR, Face), 'rb') as image:
++                            with open(os.path.join(mediadir, Face), 'rb') as image:
+                                 res = json.loads(requests.post(
+                                     'http://127.0.0.1:' + request.META['SERVER_PORT'] + '/api/face/add',
+                                     files = {'image' : (
+@@ -150,7 +150,7 @@ def export_fruser(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        mediadir = os.path.join(settings.MEDIA_PAR_DIR, 'media')
++        mediadir = settings.MEDIA_DIR
+         csvdir = os.path.join(mediadir, 'frusers.csv')
+         picdir = os.path.join(mediadir, 'fruserpic')
+ 
+diff --git a/logsetting/views.py b/logsetting/views.py
+index 036c397..14ccd9a 100644
+--- a/logsetting/views.py
++++ b/logsetting/views.py
+@@ -6,30 +6,37 @@ from django.views.decorators.csrf import csrf_exempt
+ from django.conf import settings
+ from login.views import check_login
+ import datetime,types
+-import csv, json
++import csv, json, os
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ permission = 'permission_log'
+ 
+-def logsetting(request):
++def logsetting_view(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
++    try:
++        return render(request, 'logsetting.html')
++    except:
++        return render(request, 'registration/not_found.html')
+ 
+-    if request.method == "POST":
+-      symbol = request.POST.get('separator', '')
+-      data = request.POST.getlist('fields','')
+-
+-      s='[{\"symbol\":'+'\"'+symbol+'\",'
+-      for i in range(0,len(data)):
+-        s+='\"val'+str(i)+'\":\"'+data[i]+'\"'
+-        if(i < len(data)-1):
+-          s+=','
+-      s+='}]'
++def settinglog(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
+ 
+-      file = open(settings.LOGSETTING+'logssetting.json', 'w', encoding = 'UTF-8')
+-      file.write(s)
++    try:
++        logsettingdir = os.path.join(settings.LOGSETTING_DIR, 'logsetting.json')
++        symbol = request.POST.get('separator', '')
++        data = request.POST.getlist('fields', '')
++        s = json.dumps({'symbol' : symbol, 'fields' : list(data)})
+ 
+-    return render(request, 'logsetting.html', {'CODE':""})
++        with open(logsettingdir, 'w', encoding = 'UTF-8') as file:
++            file.write(s)
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 469a9e0..8e1d542 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -6,7 +6,7 @@ from api.models import Users, Frusers, Systemlogs
+ from django.conf import settings
+ from login.views import check_login
+ from django.db.models import Q
+-import json, urllib, datetime, types, csv
++import json, urllib, datetime, types, csv, os
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ permission = 'permission_log'
+@@ -52,54 +52,29 @@ def systemlog_export(request):
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+-    #data2=[{'symbol':'!','val0':'Category','val1':'LogContent', 'val2':'LogDateTime'}]
+-    #with open('systemlogssetting.json', 'w') as outfile:
+-    #  json.dump(data2, outfile)
+-    symbolcover={
+-         "tab":'\t',
+-         "comma":',',
+-         "dot":'.',
+-         "space":' ',
+-        }
+ 
+-    try:
+-     with open(settings.LOGSETTING+'logssetting.json') as f:
+-      data=f.read()
+-      json_data=json.loads(data)
+-      symbol=json_data[0]['symbol']
+-      if(len(symbol)>1):
+-        symbol=symbolcover[symbol]
++    symbolcover = {'tab' : '\t', 'comma' : ',', 'dot' : '.', 'space' : ' '}
+ 
+-      header=[]
+-      for i in range(0,len(json_data[0])-1):
+-        field = "val"+str(i)
+-        if(json_data[0][field] != 'FRUserId' and json_data[0][field] != 'FRUserName' and json_data[0][field] != 'DeviceOId'): #hardcoding need to fix
+-            header.append(json_data[0][field])
++    try:
++        with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
++            json_data = json.loads(f.read())
+ 
++        if json_data['symbol']:
++            symbol = symbolcover.get(json_data['symbol'], json_data['symbol'])
++            header = [field for field in json_data.get('fields') if field not in {'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName'}]
++        else:
++            raise
+     except:
+-      header=['Category','LogContent','LogDateTime']
+-      symbol="!"
+-
+-    #json_data=json.loads(data)
+-    #symbol=json_data[0]['symbol']
+-    #header=[]
+-    #for i in range(0,len(json_data[0])-1):
+-    #  field = "val"+str(i)
+-    #  header.append(json_data[0][field])
++        header = ['OId', 'LogDateTime', 'Category', 'LogContent']
++        symbol = "!"
+ 
+-    response = HttpResponse(content_type='text/csv')
+-    response['Content-Disposition'] = 'attachment; filename=systemlog-export-%s.csv' % (
+-                        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'),
+-                    )
++    response = HttpResponse(content_type = 'text/csv')
++    response['Content-Disposition'] = 'attachment; filename=systemlog-export-{0}.csv'.format(
++        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
++    )
+ 
+     writer = csv.writer(response)
+-
+-    obj = Systemlogs.objects.all()
+-
+-    writer.writerow([symbol.join([i for i in header])])
+-
+-    result = [res.as_json() for res in obj]
+-    for x in result:
+-       writer.writerow([symbol.join([x[i] for i in header])])
++    writer.writerow([symbol.join(header)])
++    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Systemlogs.objects.all()])
+ 
+     return response
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 1f70222..cd65bb3 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -60,12 +60,14 @@
+                                             <td>
+                                                 <select multiple class="form-control" id="select1" style="width:200px; height:150px">
+                                                     <option value="OId">OId</option>
++                                                    <option value="LogDateTime">Log Date Time</option>
++                                                    <option value="FRUserOId">FR User OId</option>
+                                                     <option value="FRUserId">FR User Id</option>
+                                                     <option value="FRUserName">FR User Name</option>
+-                                                    <option value="Category">Category</option>
+                                                     <option value="DeviceOId">Device OId</option>
++                                                    <option value="DeviceName">Device Name</option>
++                                                    <option value="Category">Category</option>
+                                                     <option value="LogContent">Log Content</option>
+-                                                    <option value="LogDateTime">Log Date Time</option>
+                                                 </select>
+                                             </td>
+                                             <td>
+@@ -135,7 +137,7 @@
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+-                url: '/logsetting/',
++                url: '/settinglog/',
+                 async: true,
+                 dataType: 'json',
+                 data: {
+@@ -147,9 +149,6 @@
+                     console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         alert("successfully");
+-                        location.href = '/';
+-                    } else if (data.CODE == "2") {
+-                        alert("Wrong");
+                     } else {
+                         alert("Fail");
+                     }
+-- 
+1.9.1
+

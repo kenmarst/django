@@ -1,0 +1,34 @@
+From 329dec85de851d936c521f7da14d6ce5774bc7a4 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 10 Nov 2016 13:58:24 +0800
+Subject: [PATCH 353/443] Bug fix - frusergroup device can not be change.
+
+---
+ frusergroups/views.py | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index 26cacdb..e2bc01e 100755
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -281,8 +281,6 @@ def add_frusergroup_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        if Frusergroups.objects.get(OId = request.POST['GroupOId']).Name == 'Default':
+-            return JsonResponse(res_code[2])
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOIds = [Devices.objects.get(OId = DeviceOId) for DeviceOId in request.POST.getlist('DeviceOIds')]
+         for DeviceOId in DeviceOIds:
+@@ -296,8 +294,6 @@ def delete_frusergroup_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        if Frusergroups.objects.get(OId = request.POST['GroupOId']).Name == 'Default':
+-            return JsonResponse(res_code[2])
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
+         Frusergroupdevices.objects.filter(GroupOId = GroupOId, DeviceOId = DeviceOId).delete()
+-- 
+1.9.1
+

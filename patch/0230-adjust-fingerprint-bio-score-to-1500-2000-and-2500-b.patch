@@ -1,0 +1,26 @@
+From d1e76563b8baaaea5f5a48e5a7375996e84376c7 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Tue, 16 Aug 2016 10:27:35 +0800
+Subject: [PATCH 230/443] adjust fingerprint bio score to 1500,2000 and 2500 by
+ pm request
+
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index a6d47c2..b192f9b 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -177,7 +177,7 @@ LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ TCIT_IP = 'localhost:8800'
+ 
+ CONFIDENCE = {'Low': 700, 'Medium': 750, 'High': 800}
+-FINGER_LEVEL = {'Low': 15000, 'Medium': 20000, 'High': 25000}
++FINGER_LEVEL = {'Low': 1500, 'Medium': 2000, 'High': 2500}
+ EMAIL_HOST = 'webmail.tw.shuttle.com'
+ EMAIL_HOST_USER = 'fr_serivce'
+ EMAIL_HOST_PASSWORD = 'Pa0000'
+-- 
+1.9.1
+

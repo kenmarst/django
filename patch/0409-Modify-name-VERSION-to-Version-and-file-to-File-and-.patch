@@ -1,0 +1,59 @@
+From 4b921da750f0ac77312f2cecbfd9de9616e813f7 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 13 Dec 2016 14:13:09 +0800
+Subject: [PATCH 409/443] Modify name VERSION to Version and file to File and
+ md5 to MD5.
+
+---
+ api/cron.py | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index d53848b..58b7c4c 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -111,7 +111,7 @@ def chk_new_version():
+ 
+         with open(update_file) as data_file:
+             data = json.load(data_file)
+-        new_version_date = data['Server']['VERSION'].split('.')[-1]
++        new_version_date = data['Server']['Version'].split('.')[-1]
+         version_date = settings.VERSION.split('.')[-1]
+ 
+         print('update check: [Server VERSION]: [new]:' + new_version_date + ' [now]:' + version_date)
+@@ -127,7 +127,7 @@ def chk_new_version():
+         """ Device update check"""
+         # check version
+         device_conf = Config.objects.get(Name = 'NewDeviceVersion')
+-        DeviceVersion_New = ''.join( data['Device']['VERSION'][1:].split('.') ) # get from update file
++        DeviceVersion_New = ''.join( data['Device']['Version'][1:].split('.') ) # get from update file
+         DeviceVersion = ''.join( device_conf.Value[1:].split('.') ) # from database
+         print('update check: [Device VERSION]: [new]: ' + DeviceVersion_New + ' [now]: ' + DeviceVersion)
+         if not int(DeviceVersion_New) > int(DeviceVersion):
+@@ -135,19 +135,19 @@ def chk_new_version():
+             return
+ 
+         # download file
+-        DeviceFile = data['Device']['file']
++        DeviceFile = data['Device']['File']
+         print('update check: [Device File]: ', DeviceFile)
+         FTP_download_file(settings.UPDATE_DIR, settings.FTP_PATH, DeviceFile, settings.FTP_HOST,
+                             settings.FTP_PORT, settings.FTP_USER, settings.FTP_PW)
+ 
+         # check download file md5, ok: update config, else: delete file
+-        device_file_md5 = data['Device']['md5']
++        device_file_md5 = data['Device']['MD5']
+         local_device_file = os.path.join(settings.UPDATE_DIR, DeviceFile)
+         local_device_file_md5 = md5_file(open(local_device_file, 'rb').read()).hexdigest()
+         print('update check: [Device File md5]: ', device_file_md5, '[local file md5]: ', local_device_file_md5)
+         if local_device_file_md5 == device_file_md5:
+-            print('update check: Device update file md5 is correct. will update device version config: {version}'.format(version = data['Device']['VERSION']))
+-            device_conf.Value = data['Device']['VERSION']
++            print('update check: Device update file md5 is correct. will update device version config: {version}'.format(version = data['Device']['Version']))
++            device_conf.Value = data['Device']['Version']
+             device_conf.save()
+         else:
+             print('update check: Device update file md5 is not correct.')
+-- 
+1.9.1
+

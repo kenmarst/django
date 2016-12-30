@@ -1,0 +1,58 @@
+From 8f2786ae75e9c148523f05e3603261f4e0df075a Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 7 Oct 2016 10:26:45 +0800
+Subject: [PATCH 310/443] Modify relay function of device setting web.
+
+Disabling pulse select column when choice "None" or "On" or "Off".
+---
+ templates/device_settings.html | 30 +++++++++++++++++++++++++++++-
+ 1 file changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 92547d3..55be8c0 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -321,11 +321,39 @@
+                 $('#event').find('input, select').prop('disabled', true);
+                 $('select[name="Model"], select[name="Timeout"]').prop('disabled', true);
+             } else {
+-                $('#event').find('input, select').prop('disabled', false);
++                $('#event').find('input').prop('disabled', false);
++                pulseSwitch('WelcomeR0');
++                pulseSwitch('WelcomeR1');
++                pulseSwitch('AccessDeniedR0');
++                pulseSwitch('AccessDeniedR1');
+                 $('select[name="Model"], select[name="Timeout"]').prop('disabled', false);
+             }
+         }
+ 
++        function pulseSwitch(event) {
++            if ($('input[name="' + event +'Action"]:checked').val() == 'Pulse') {
++                $('select[name="' + event + 'Pulse"]').prop('disabled', false);
++            } else {
++                $('select[name="' + event + 'Pulse"]').prop('disabled', true);
++            }
++        }
++
++        $('input[name="WelcomeR0Action"]').change(function() {
++            pulseSwitch('WelcomeR0');
++        });
++
++        $('input[name="WelcomeR1Action"]').change(function() {
++            pulseSwitch('WelcomeR1');
++        });
++
++        $('input[name="AccessDeniedR0Action"]').change(function() {
++            pulseSwitch('AccessDeniedR0');
++        });
++
++        $('input[name="AccessDeniedR1Action"]').change(function() {
++            pulseSwitch('AccessDeniedR1');
++        });
++
+         $('select[name="Type"]').change(function() {
+             typeSwitch();
+         });
+-- 
+1.9.1
+

@@ -1,0 +1,128 @@
+From 13bfccc4af5efb5a1c824d380857469bcde3bb53 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Mon, 5 Sep 2016 10:27:24 +0800
+Subject: [PATCH 254/443] Fixed fingerprint API log message.
+
+---
+ api/fingerprint.py | 33 +++++++++++++++++----------------
+ 1 file changed, 17 insertions(+), 16 deletions(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index 0d2b4ff..d1cdcb4 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -44,18 +44,19 @@ def verify(request):
+                             for j in i.GroupOId.frusergroupdevices_set.filter(GroupOId = i.GroupOId.OId):
+                                 print(j.DeviceOId.IP)
+                                 if ip_device.IP == j.DeviceOId.IP:
+-                                    Fruserlogs.objects.create(FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceName = ip_device.Name, LogContent = 'Face verify pass')
++                                    Fruserlogs.objects.create(FRUserId = fruser.FRUserId, FRUserName = fruser.Name,
++                                            DeviceName = ip_device.Name, LogContent = 'Fingerprint verify pass')
+                                     return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
+                         raise Exception('No accept device in frusergroup')
+                     else:
+                         raise Exception('Fingerprint verify fail')
+                 else:
+-                    raise Exception('Need connect Finger Deamon')
++                    raise Exception('Need connect Fingerprint Deamon')
+             else:
+                 raise Exception('Need accept')
+         except Exception as error:
+             print(str(error))
+-            Fruserlogs.objects.create(DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Finger verify error : %s' % str(error))
++            Fruserlogs.objects.create(DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Fingerprint verify error : %s' % str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -71,8 +72,8 @@ def add(request):
+                 FingerDir_1 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register1.bmp'])
+                 FingerDir_2 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register2.bmp'])
+                 if fruser.FingerprintID1 != b'x00' and fruser.FingerprintID2 != b'x00' :
+-                    Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger already exists')
+-                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger already exists'})))
++                    Systemlogs.objects.create(Category = "Frusers", LogContent = 'Fingerprint already exists')
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Fingerprint already exists'})))
+                 else:
+                     HOST, PORT = "127.0.0.1", 8003
+                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+@@ -90,12 +91,12 @@ def add(request):
+                             data = s.recv(7)
+                             s.close()
+                             if data.decode() == 'Success' :
+-                                Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
++                                Systemlogs.objects.create(Category = "Frusers", LogContent = 'Fingerprint add Success')
+                                 return JsonResponse(result_success)
+                             else:
+                                 os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_1))
+                                 fruser.FingerprintID1 = b'x00'
+-                                raise Exception('Finger add fail')
++                                raise Exception('Fingerprint add fail')
+                         else:
+                             f = open(os.path.join(settings.MEDIA_DIR,FingerDir_2),'wb+')
+                             f.write(request.FILES['image'].file.getvalue())
+@@ -108,19 +109,19 @@ def add(request):
+                             data = s.recv(7)
+                             s.close()
+                             if data.decode() == 'Success' :
+-                                Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
++                                Systemlogs.objects.create(Category = "Frusers", LogContent = 'Fingerprint add Success')
+                                 return JsonResponse(result_success)
+                             else:
+                                 os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_2))
+                                 fruser.FingerprintID2 = b'x00'
+-                                raise Exception('Finger add fail')
++                                raise Exception('Fingerprint add fail')
+                     else:
+-                        raise Exception('Need connect finger deamon')
++                        raise Exception('Need connect Fingerprint deamon')
+             else:
+                 raise Exception('Need accept')
+         except Exception as error:
+             print(str(error))
+-            Systemlogs.objects.create(LogContent = 'Finger add error : %s' % str(error))
++            Systemlogs.objects.create(LogContent = 'Fingerprint add error : %s' % str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -130,7 +131,7 @@ def add(request):
+ def delete(request):
+     if request.method == 'POST':
+         request_IP = request.META.get('REMOTE_ADDR',  '')
+-        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Finger Delete', request_IP = request_IP)
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Fingerprint Delete', request_IP = request_IP)
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId'}
+@@ -149,7 +150,7 @@ def delete(request):
+                     fruser.FingerprintID2 = b'x00'
+                     fruser.save()
+ 
+-                    logContent = '{message_head}Delete Finger Successfully'.format(message_head = message_head)
++                    logContent = '{message_head}Delete Fingerprint Successfully'.format(message_head = message_head)
+                     return JsonResponse(result_success)
+                 else:
+                     logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+@@ -199,9 +200,9 @@ def check(request):
+                     if data.decode() == 'Pass' :
+                         return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
+                     else:
+-                        raise Exception('Finger check fail')
++                        raise Exception('Fingerprint check fail')
+                 else:
+-                    raise Exception('Need connect Finger Deamon')
++                    raise Exception('Need connect Fingerprint Deamon')
+             else:
+                 raise Exception('Need accept')
+         except Exception as e:
+@@ -224,7 +225,7 @@ def list(request):
+                     if fruser.FingerprintID1 != b'x00' and fruser.FingerprintID2 != b'x00' :
+                         return JsonResponse(result_true)
+                     else:
+-                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'One or all of the finger is null'})))
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'One or all of the Fingerprint is null'})))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Device is proposed'})))
+             else:
+-- 
+1.9.1
+

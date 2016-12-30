@@ -1,0 +1,43 @@
+From d293e8e9acdc5645dfeba81084ea5a2b50f0b58c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Mon, 20 Jun 2016 18:45:50 +0800
+Subject: [PATCH 143/443] Change pic path with absolute
+
+Use absolute path to replace relative path.
+---
+ api/face.py | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index f9f9487..cb0b3a5 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -194,13 +194,22 @@ def list(request):
+                     if (fruser.Face1=="") and (fruser.Face2=="") and (fruser.Face3==""):
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
+                     if fruser.Face1 and req['FaceIndex'] == 1:
+-                        img_1 = open(fruser.Face1, 'rb')
++                        img_1 = open(os.path.join(
++                                    settings.MEDIA_PAR_DIR,
++                                    fruser.Face1
++                                ), 'rb')
+                         return HttpResponse(img_1.read(), content_type="image/jpg")
+                     if fruser.Face2 and req['FaceIndex'] == 2:
+-                        img_2 = open(fruser.Face2, 'rb')
++                        img_2 = open(os.path.join(
++                                    settings.MEDIA_PAR_DIR,
++                                    fruser.Face2
++                                ), 'rb')
+                         return HttpResponse(img_2.read(), content_type="image/jpg")
+                     if fruser.Face3 and req['FaceIndex'] == 3:
+-                        img_3 = open(fruser.Face3, 'rb')
++                        img_3 = open(os.path.join(
++                                    settings.MEDIA_PAR_DIR,
++                                    fruser.Face3
++                                ), 'rb')
+                         return HttpResponse(img_3.read(), content_type="image/jpg")
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
+                 else:
+-- 
+1.9.1
+

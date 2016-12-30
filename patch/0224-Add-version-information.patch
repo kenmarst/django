@@ -1,0 +1,27 @@
+From baed8b9d536dcc9515df5dbbd7bbc8c5cfe663c3 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 4 Aug 2016 12:44:55 +0800
+Subject: [PATCH 224/443] Add version information
+
+Add version information and print log when load.
+---
+ br06/settings.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 5d4a98f..2a8466e 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/dev/ref/settings/
+ import os
+ from api.utility import get_localtimezone
+ 
++VERSION = 'V.0.1.a.20160729'
++print(VERSION)
++
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ PROJECT_DIR = os.path.dirname(__file__)
+-- 
+1.9.1
+

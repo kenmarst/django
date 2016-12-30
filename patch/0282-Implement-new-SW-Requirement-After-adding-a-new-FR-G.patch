@@ -1,0 +1,35 @@
+From 88505f3e58fbe91d2dd017a7a685ac895a3c9e89 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Mon, 19 Sep 2016 10:53:06 +0800
+Subject: [PATCH 282/443] Implement new SW Requirement: After adding a new FR
+ Group by 'Save and Add another', system should save the editted group and
+ reset(clean) the group name editor
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Implement new SW Requirement in Page 128 in
+PageBR06_SystemDesignSpecification_1.0.33_20160909.pdf
+
+Desciption:
+  需求規格3.如果選擇繼續建立,則新增新群組後畫面停留在本畫面,但清空群組名稱欄位。
+---
+ templates/frusergroup_add.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index b68e440..c09bc36 100644
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -128,7 +128,7 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("{% trans "Group add successfully" %}");
+-                        location.reload();
++                        location = loaction;
+                     } else {
+                         alert("{% trans "Fail to add group" %}");
+                     }
+-- 
+1.9.1
+

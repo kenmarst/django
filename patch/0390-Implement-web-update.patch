@@ -1,0 +1,462 @@
+From a2ed23686ffee925f8a06ce0b43858c41c518773 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 2 Dec 2016 17:15:56 +0800
+Subject: [PATCH 390/443] Implement web update.
+
+Add ota update from ftp server.
+Add ota update from file by user uploaded.
+---
+ br06/settings.py         |  11 +++-
+ br06/urls.py             |   9 ++-
+ dashboard/views.py       | 139 +++++++++++++++++++++++++++++++++++++--
+ templates/dashboard.html | 168 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 316 insertions(+), 11 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index acc7890..1ed3cc8 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -14,7 +14,6 @@ import os
+ from api.utility import get_localtimezone
+ 
+ VERSION = 'V.0.2.a.20161125'
+-print(VERSION)
+ 
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+@@ -44,6 +43,11 @@ LOGGING = {
+             'class': 'logging.FileHandler',
+             'filename': os.path.join(BR06_LOG_DIR, 'debug.log'),
+         },
++        'update': {
++            'level': logging.DEBUG,
++            'class': 'logging.FileHandler',
++            'filename': '/var/log/br06/update.log',
++        }
+     },
+     'loggers': {
+         'api.face': {
+@@ -56,6 +60,11 @@ LOGGING = {
+             'level': 'DEBUG',
+             'propagate': True,
+         },
++        'dashboard.views': {
++            'handlers': ['update'],
++            'level': 'DEBUG',
++            'propagate': True,
++        },
+     }
+ }
+ 
+diff --git a/br06/urls.py b/br06/urls.py
+index f4a1560..7ca4f50 100755
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -23,7 +23,7 @@ from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_da
+ from logsetting.views import logsetting_view, settinglog
+ from downloads.views import device_update
+ from systemsettings.views import system_settings_views, settings_system_backup, settings_system_connect_test, settings_system_log
+-from dashboard.views import dashboard_views
++from dashboard.views import dashboard_views, update_server, update_file
+ from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_list_data, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_members_list_data, user_group_members_add_data, user_group_devices_view, user_group_devices_list_data, user_group_devices_add_data, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_list_data, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+@@ -35,12 +35,17 @@ from django.conf import settings
+ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^shuttle_admin/', admin.site.urls),
+-    url(r'^dashboard/$', dashboard_views),
+     url(r'^home/$', home_view),
+     url(r'^empty/$', empty_view),
+ ]
+ 
+ urlpatterns += [
++    url(r'^dashboard/?$', dashboard_views),
++    url(r'^update_server/?$', update_server),
++    url(r'^update_file/?$', update_file),
++]
++
++urlpatterns += [
+     url(r'^logsetting/?$', logsetting_view),
+     url(r'^settinglog/?$', settinglog),
+ ]
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 03cfad8..baa14ca 100755
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -2,16 +2,18 @@ from django.shortcuts import render, render_to_response
+ from django.http import HttpResponseRedirect, JsonResponse
+ from django.conf import settings
+ from datetime import timedelta, datetime
+-from time import gmtime, strftime
++from time import gmtime, strftime, sleep
+ from api.utility import get_localtimezone
+ from api.models import Config, Systemlogs, Frusers, Devices
+ from login.views import check_login, check_login_redirect
+-import psutil, json
++from hashlib import md5
+ from decimal import Decimal
++from subprocess import check_output, CalledProcessError
++import psutil, json, ftplib, socket, os, logging, tarfile
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_system'
+-
++logger = logging.getLogger(__name__)
+ 
+ def _bytes2human(n):
+     # http://code.activestate.com/recipes/578019
+@@ -65,7 +67,7 @@ def dashboard_views(request):
+ 
+     frusers_total_count = Frusers.objects.count()
+     syslogs_total_count = Systemlogs.objects.count()
+-    frusers_limit = 3000
++    frusers_limit = 10000
+ 
+     try:
+         syslog_limit = Config.objects.get(Name = 'LogLimit').Value
+@@ -74,7 +76,6 @@ def dashboard_views(request):
+         syslog_limit = 200000
+ 
+     frusers_percent = Decimal(frusers_total_count) / Decimal(frusers_limit / 100)
+-    frusers_percent = round (frusers_percent,1)
+     syslog_percent = Decimal(syslogs_total_count) / Decimal(int(syslog_limit) / 100)
+     syslog_percent = round(syslog_percent,1)
+ 
+@@ -123,6 +124,132 @@ def dashboard_views(request):
+                       'device_proposed_count' : device_proposed_count,
+                       'devices': devices,
+                       'frusers': frusers,
+-                      'softwave_version' : settings.VERSION
++                      'softwave_version' : settings.VERSION,
++                      'NewVersion' : Config.objects.filter(Name = 'NewVersion')[0].Value
+                       }
+                   )
++def update_br06(request, tmpfile, setupdir, update_method = ''):
++    try:
++        OLDPWD = os.getcwd()
++        if not tarfile.is_tarfile(tmpfile):
++            logger.debug('[{0}] [{1}] The update file is not correct format!'.format(datetime.now().strftime('%a %b %d %T %Y'), update_method))
++            raise Exception(3)
++        with tarfile.open(tmpfile, 'r:gz') as tar:
++            logger.debug('[{0}] [{1}] >>>Uncompressing the update file'.format(datetime.now().strftime('%a %b %d %T %Y'), update_method))
++            tar.extractall('/tmp')
++
++        installdir = os.path.join(os.path.splitext(tmpfile)[0], setupdir)
++        logger.debug('[{0}] [{1}] install directory: {2}'.format(datetime.now().strftime('%a %b %d %T %Y'), update_method, installdir))
++
++        if os.path.exists(os.path.join(installdir, 'setup.py')):
++            os.chdir(installdir)
++            try:
++                logger.debug('[{0}] [{1}] >>>Updating'.format(datetime.now().strftime('%a %b %d %T %Y'), update_method))
++                check_output('echo {0} | su -c "python3.4 setup.py install serverupdate >> /var/log/br06/update.log"'.format(request.POST.get('password', '')), shell = True)
++                logger.debug('[{0}] [{1}] Update completed!'.format(datetime.now().strftime('%a %b %d %T %Y'), update_method))
++            except CalledProcessError as e:
++                logger.debug(e.output.decode('utf8'))
++                if e.returncode == 1:
++                    raise Exception(2)
++                raise Exception(1)
++        else:
++            raise Exception(3)
++        raise Exception(0)
++    except Exception as e:
++        os.chdir(OLDPWD)
++        return int(e.__str__())
++
++def update_server(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
++    try:
++        request.session.set_expiry(0)
++        ftp = ftplib.FTP()
++
++        update_info = json.loads(open(os.path.join(settings.UPDATE_DIR, 'update.json'), 'r').read()).get('Server', '')
++
++        ftpfile = update_info.get('file', '')
++        logger.debug('[{0}] [update_server] ftp file: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), ftpfile))
++
++        filepath, filename = os.path.split(ftpfile)
++        logger.debug('[{0}] [update_server] ftp file path: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), filepath))
++        logger.debug('[{0}] [update_server] ftp file name: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), filename))
++
++        tmpfile = os.path.join('/tmp', filename)
++        logger.debug('[{0}] [update_server] tmp file: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), tmpfile))
++
++        try:
++            ftp.connect(settings.FTP_HOST, settings.FTP_PORT, 30)
++        except (ConnectionRefusedError, socket.error, socket.gaierror):
++            logger.debug('[{0}] [update_server] FTP connected fail!'.format(datetime.now().strftime('%a %b %d %T %Y')))
++            raise Exception(4)
++        try:
++            ftp.login(settings.FTP_USER, settings.FTP_PW)
++        except ftplib.error_perm:
++            logger.debug('[{0}] [update_server] FTP login incorrect!'.format(datetime.now().strftime('%a %b %d %T %Y')))
++            raise Exception(4)
++        if filename in ftp.nlst(filepath):
++            try:
++                logger.debug('[{0}] [update_server] >>>Downloading the update file'.format(datetime.now().strftime('%a %b %d %T %Y')))
++                with open(tmpfile, 'wb') as f:
++                    ftp.retrbinary('RETR {0}'.format(ftpfile), f.write)
++            except ftplib.error_perm:
++                logger.debug('[{0}] [update_server] Download the update file fail!'.format(datetime.now().strftime('%a %b %d %T %Y')))
++                raise Exception(4)
++        else:
++            logger.debug('[{0}] [update_server] The update file is not in FTP!'.format(datetime.now().strftime('%a %b %d %T %Y')))
++            raise Exception(4)
++
++        tmpfile_md5 = md5(open(tmpfile, 'rb').read()).hexdigest()
++        logger.debug('[{0}] [update_server] tmpfile md5: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), tmpfile_md5))
++        logger.debug('[{0}] [update_server] update information md5: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), update_info.get('md5', '')))
++        if tmpfile_md5 == update_info.get('md5', ''):
++            update_ret = update_br06(request, tmpfile, update_info.get('setupDIR', ''), 'update_server')
++            if update_ret:
++                raise Exception(update_ret)
++        else:
++            raise Exception(3)
++        raise Exception(0)
++    except Exception as e:
++        try:
++            ftp.quit()
++            request.session.set_expiry(request.session.get_expiry_age())
++        finally:
++            try:
++                return JsonResponse(res_code[int(e.__str__())])
++            except Exception as e:
++                logger.debug('[{0}] [update_server] {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), e.__str__()))
++                return JsonResponse(res_code[1])
++
++def update_file(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
++    try:
++        request.session.set_expiry(0)
++        if not 'file' in request.FILES:
++            logger.debug('[{0}] [update_file] There is no file!'.format(datetime.now().strftime('%a %b %d %T %Y')))
++            raise Exception(3)
++
++        tmpfile = os.path.join('/tmp', request.FILES['file'].name)
++        logger.debug('[{0}] [update_file] tmp file: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), tmpfile))
++
++        with open(tmpfile, 'wb+') as destination:
++            for chunk in request.FILES['file'].chunks():
++                destination.write(chunk)
++        update_ret = update_br06(request, tmpfile, 'QuickInstallPackage', 'update_file')
++        if update_ret:
++            raise Exception(update_ret)
++        raise Exception(0)
++    except Exception as e:
++        try:
++            request.session.set_expiry(request.session.get_expiry_age())
++        finally:
++            try:
++                return JsonResponse(res_code[int(e.__str__())])
++            except Exception as e:
++                logger.debug('[{0}] [update_file] {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), e.__str__()))
++                return JsonResponse(res_code[1])
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 06c5cff..0ceddb4 100755
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -11,6 +11,7 @@
+         <link rel="stylesheet" href="{% static "css/datepicker3.css" %}">
+         <link rel="stylesheet" href="{% static "css/bootstrap-table.css" %}">
+         <link rel="stylesheet" href="{% static "css/styles.css" %}">
++        <link rel="stylesheet" href="{% static "css/font-awesome.min.css" %}">
+         <title>{% trans "Dashboard" %}</title>
+     </head>
+ 
+@@ -92,8 +93,14 @@
+                                 <dt>{% trans "System Current Time" %}</dt>
+                                 <dd>{{now}} ({{tz}})</dd>
+                                 <dt>{% trans "Software Version" %}</dt>
+-                                <dd>{{softwave_version}}</dd>
+-
++                                <dd>{{softwave_version}}
++                                    <a data-toggle="modal" data-target="#Br06UpdateModal" data-backdrop="static" data-keyboard="false">
++                                        {% if NewVersion != softwave_version %}
++                                            (<em>{% trans "There is a newer version can be updated." %}</em>)
++                                        {% endif %}
++                                        {% trans "Update here" %}
++                                    </a>
++                                </dd>
+                             </dl>
+ 
+                             <div class="row">
+@@ -128,6 +135,49 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
++        <div id="Br06UpdateModal" class="modal fade" role="dialog">
++            <div class="modal-dialog" role="document">
++                <div class="modal-content">
++                    <div class="modal-header">
++                        <h4 class="modal-title">{% trans "Update System" %}</h4>
++                    </div>
++                    <div class="modal-body">
++                        <div class="row">
++                            <form id="Br06UpdateForm" class="form-horizontal col-md-offset-1 col-md-10" enctype="multipart/form-data" >{% csrf_token %}
++                                <div id="Br06UpdateBody" class="form-body">
++                                    <div class="form-group">
++                                        <h4><strong>Note:</strong> {% trans "The system cannot be operated when updating!" %}</h4>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="label label-default control-label">{% trans "Update from server" %}</label><br>
++                                        {% if NewVersion != softwave_version %}
++                                            <label class="control-label">{% trans "The latest version is" %} <em>'{{NewVersion}}'</em></label>
++                                            <button type="button" id="UpdateBr06ServerButton" class="btn btn-default pull-right" onclick="UpdateBr06Server()">{% trans "Update" %}</button>
++                                        {% else %}
++                                            <label class="control-label">{% trans "There are no newer versions." %}</label>
++                                            <button type="button" class="btn btn-default" disabled>{% trans "Update" %}</button>
++                                        {% endif %}
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="label label-default control-label">{% trans "Update from the choosed file" %}</label><br>
++                                        <label class="control-label"><input id="Br06UpdateFile" type="file" name="file" title="Select File"></label>
++                                        <button type="button" id="UpdateBr06FileButton" class="btn btn-default pull-right" onclick="UpdateBr06File()">{% trans "Update" %}</button>
++                                    </div>
++                                </div>
++                            </form>
++                        </div>
++                    </div>
++                    <div class="modal-footer">
++                        <div class="row">
++                            <div class="col-md-11">
++                                <button type="button" id="UpdateBr06Close" class="btn btn-default pull-right" data-dismiss="modal">{% trans "Close" %}</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div>
++        </div>
++
+         <script>
+             var language = "{{ LANGUAGE_CODE }}";
+             if (language == "zh-tw") {
+@@ -139,6 +189,120 @@
+             }
+         </script>
+         <script>
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
++
++            {% if NewVersion != softwave_version %}
++                function UpdateBr06Server() {
++                    ret = prompt("{% trans "Please enter server password" %}");
++                    if (ret) {
++                        clearTimeout(timeoutVar);
++                        $('#UpdateBr06ServerButton').prop('disabled', true);
++                        $('#UpdateBr06FileButton').prop('disabled', true);
++                        $('#UpdateBr06Close').prop('disabled', true);
++                        $('#Br06UpdateBody').html('\
++                            <div class="col-md-offset-1 col-md-10">\
++                                {% trans "Updating! Improper actions may cause damage to the system!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
++                            </div>\
++                        ');
++
++                        $.ajax({
++                            type: 'post',
++                            traditional: true,
++                            url: '/update_server/',
++                            async: true,
++                            dataType: 'json',
++                            data: {
++                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                password : ret,
++                            },
++                            success: function(data) {
++                                if (data.CODE == "0") {
++                                    alert("{% trans "Update completed" %}")
++                                } else if (data.CODE == "2") {
++                                    alert("{% trans "Password incorrect" %}");
++                                } else if (data.CODE == "3") {
++                                    alert("{% trans "The file format is not correct!" %}");
++                                } else if (data.CODE == "4") {
++                                    alert("{% trans "Connect to FTP failed!" %}");
++                                } else {
++                                    alert("{% trans "Fail to update server!" %}");
++                                }
++                                location.reload();
++                            },
++                            error: function(data) {
++                                location.reload();
++                            }
++                        });
++                    }
++                }
++            {% endif %}
++
++            function UpdateBr06File() {
++                if ($('#Br06UpdateFile').val()) {
++                    var data = new FormData($('#Br06UpdateForm')[0]);
++                    data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
++
++                    ret = prompt("{% trans "Please enter server passwor" %}");
++                    if (ret) {
++                        clearTimeout(timeoutVar);
++                        data.append('password', ret);
++                        $('#UpdateBr06ServerButton').prop('disabled', true);
++                        $('#UpdateBr06FileButton').prop('disabled', true);
++                        $('#UpdateBr06Close').prop('disabled', true);
++                        $('#Br06UpdateBody').html('\
++                            <div class="col-md-12">\
++                                {% trans "Updating! Restart the server may cause damage to the system!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
++                            </div>\
++                        ');
++
++                        $.ajax({
++                            type: 'post',
++                            traditional: true,
++                            url: '/update_file/',
++                            async: true,
++                            cache: false,
++                            data: data,
++                            processData: false,
++                            contentType: false,
++                            success: function(data) {
++                                timeoutVar = timeoutStart();
++                                if (data.CODE == "0") {
++                                    alert("{% trans "Update completed" %}")
++                                } else if (data.CODE == "2") {
++                                    alert("{% trans "Password incorrect" %}");
++                                } else if (data.CODE == "3") {
++                                    alert("{% trans "The file format is not correct!" %}");
++                                } else {
++                                    alert("{% trans "Fail to update server!" %}");
++                                }
++                                location.reload();
++                            },
++                            error: function(data) {
++                                location.reload();
++                            }
++                        });
++                    }
++                } else {
++                    alert("{% trans "Please choose a file!" %}");
++                }
++            }
++
+             var $DeviceList = $('#DeviceList');
+             var $FRList = $('#FRList');
+ 
+-- 
+1.9.1
+

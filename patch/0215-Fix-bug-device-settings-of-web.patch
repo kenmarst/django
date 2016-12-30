@@ -1,0 +1,33 @@
+From 999a786882aca43e9a6998ec7fd0887f17191105 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 2 Aug 2016 14:22:18 +0800
+Subject: [PATCH 215/443] Fix bug device settings of web
+
+Bug fix - device settings of web can not save.
+---
+ templates/device_settings.html | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index e185352..2f3b48a 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -337,6 +337,7 @@
+             var AccessDeniedR0Pulse = $('select[name=AccessDeniedR0Pulse]').val();
+             var AccessDeniedR1Action = $('input[name=AccessDeniedR1Action]:checked').val();
+             var AccessDeniedR1Pulse = $('select[name=AccessDeniedR1Pulse]').val();
++            var Timeout = $('select[name=Timeout]').val();
+             var ScreenSaver = $('select[name=ScreenSaver]').val();
+             var NTP = $('input[name=NTP]').val();
+             var Timezone = $('select[name=Timezone]').val();
+@@ -369,6 +370,7 @@
+                     'AccessDeniedR0Pulse': AccessDeniedR0Pulse,
+                     'AccessDeniedR1Action': AccessDeniedR1Action,
+                     'AccessDeniedR1Pulse': AccessDeniedR1Pulse,
++                    'Timeout': Timeout,
+                     'ScreenSaver': ScreenSaver,
+                     'NTP': NTP,
+                     'Timezone': Timezone,
+-- 
+1.9.1
+

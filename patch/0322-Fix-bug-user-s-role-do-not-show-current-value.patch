@@ -1,0 +1,69 @@
+From 9fe268a7533f024649cc52bfa707e5a4703f7358 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 17 Oct 2016 15:46:12 +0800
+Subject: [PATCH 322/443] Fix bug - user's role do not show current value.
+
+---
+ api/models.py              | 3 ++-
+ templates/user_list.html   | 2 +-
+ templates/user_update.html | 3 +++
+ user/views.py              | 2 +-
+ 4 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 21760a4..4b6ee1b 100755
+--- a/api/models.py
++++ b/api/models.py
+@@ -304,7 +304,8 @@ class Users(models.Model):
+             Password = self.Password,
+             Name = self.Name,
+             Email = self.Email,
+-            RoleOId = self.RoleOId.Name,
++            RoleOId = self.RoleOId.OId,
++            RoleName = self.RoleOId.Name,
+             CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+             UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+         )
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 968e84d..8e5dcfe 100755
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -93,7 +93,7 @@
+                     title: '{% trans "Email" %}',
+                     sortable: true
+                 }, {
+-                    field: 'RoleOId',
++                    field: 'RoleName',
+                     title: '{% trans "Role" %}',
+                     sortable: true
+                 }, {
+diff --git a/templates/user_update.html b/templates/user_update.html
+index 780a2e5..e795f2f 100755
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -173,6 +173,9 @@
+                     },
+                 });
+             }
++            $(document).ready(function() {
++                $('select[name="Role"]').val({{obj|safe}}.RoleOId);
++            });
+         </script>
+     </body>
+ </html>
+diff --git a/user/views.py b/user/views.py
+index 4f67810..7ee8bb6 100755
+--- a/user/views.py
++++ b/user/views.py
+@@ -76,7 +76,7 @@ def user_update_view(request):
+         return render(
+             request,
+             'user_update.html',
+-            {'obj' : Users.objects.get(OId = request.GET['OId']), 'Roles': Role.objects.all()},
++            {'obj' : user, 'Roles': Role.objects.all()},
+         )
+     except Exception as e:
+         print (e)
+-- 
+1.9.1
+

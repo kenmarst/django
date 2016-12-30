@@ -1,0 +1,25 @@
+From c4056056632dd18b0099cbbc4ed55e67da30e4c8 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 28 Oct 2016 11:40:04 +0800
+Subject: [PATCH 337/443] Fix bug
+
+---
+ api/recognition.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index bedbde9..534242a 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -37,7 +37,7 @@ def face_save(request, id):
+ 
+ @csrf_exempt
+ def face_save_debug(request, device, id, fun):
+-    if settings.DEBUG == False
++    if settings.DEBUG == False:
+         return
+     print('--------------------------------------------face debug now')
+     FaceDir = ''.join([
+-- 
+1.9.1
+

@@ -1,0 +1,241 @@
+From acca99b14ec7a57cc6537a83c57b97839630d463 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 09:48:37 +0800
+Subject: [PATCH 158/443] In System Settings page, add backup rotation script
+ on crontab
+
+---
+ systembackup/backup.conf   |  6 ++++
+ systembackup/br06backup.sh | 68 +++++++++++++++++++++++++++++++++++++
+ systembackup/log.conf      |  2 ++
+ systemsettings/views.py    | 84 +++++++++++++++++++++++++++++++++++++++++++---
+ 4 files changed, 156 insertions(+), 4 deletions(-)
+ create mode 100644 systembackup/backup.conf
+ create mode 100755 systembackup/br06backup.sh
+ create mode 100644 systembackup/log.conf
+
+diff --git a/systembackup/backup.conf b/systembackup/backup.conf
+new file mode 100644
+index 0000000..2fc68a1
+--- /dev/null
++++ b/systembackup/backup.conf
+@@ -0,0 +1,6 @@
++BackupLocal=/opt/backup
++BackupLocation=local
++BackupRemoteHost=172.30.100.165
++BackupRemotePort=21
++BackupRemoteAccount=rd@MobileSW
++BackupRemotePassword=rd-2014
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+new file mode 100755
+index 0000000..0c17f61
+--- /dev/null
++++ b/systembackup/br06backup.sh
+@@ -0,0 +1,68 @@
++#!/bin/bash
++. backup.conf
++. log.conf
++
++PWD=$(pwd)
++echo "PWD:$PWD"
++
++DATE=$(date +%F)
++echo "DATE:$DATE"
++
++DATE30=$(date +%F --date -30days)
++echo "DATE30:$DATE30"
++
++TIME=$(date +%H%M)
++echo "TIME:$TIME"
++
++echo "BackupLocal:$BackupLocal"
++echo "BackupRemoteHost:$BackupRemoteHost"
++echo "BackupRemotePort:$BackupRemotePort"
++echo "BackupRemoteAccount:$BackupRemoteAccount"
++echo "BackupRemotePassword:$BackupRemotePassword"
++echo "PicCreateSave:$PicCreateSave"
++echo "PicFaceSave:$PicFaceSave"
++
++
++
++GZIP=$(which gzip)
++RM=$(which rm)
++MYSQL=$(which mysql)
++MYSQLDUMP=$(which mysqldump)
++MYSQLUSER="root"
++MYSQLPASS="1"
++LOCALBAKPATH="$BackupLocal/$DATE"
++echo "LOCALBAKPATH:$LOCALBAKPATH"
++FRUSERPICDIR="media/fruserpic"
++BR06DIR="br06.git"
++
++[ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
++
++DBS=$($MYSQL -u $MYSQLUSER -p$MYSQLPASS -Bse 'show databases')
++for db in $DBS
++do
++    echo $db
++    FILE="$LOCALBAKPATH/$db.$DATE-$TIME.gz"
++    echo $FILE
++    #$MYSQLDUMP -u $MYSQLUSER -p$MYSQLPASS --force $db | $GZIP -9 > $FILE
++done
++
++if [ $PicCreateSave = '1' ] || [ $PicFaceSave ='1' ]; then
++    FILE="$LOCALBAKPATH/FruserPicBackup.$DATE-$TIME.tar.gz"
++    echo $FILE
++    tar czf $FILE ./$BR06DIR/$FRUSERPICDIR
++fi
++
++if [ $BackupLocation = 'ftp' ]; then
++    echo "Uploading backup files to ftp..."
++    lftp $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword << EOF
++cd SW1/BR06
++mkdir bak/$DATE
++cd bak/$DATE
++mput /opt/backup/$DATE/*
++bye
++EOF
++
++echo "complete."
++fi
++
++$RM -rf $BackupLocal/$DATE30
+diff --git a/systembackup/log.conf b/systembackup/log.conf
+new file mode 100644
+index 0000000..5740123
+--- /dev/null
++++ b/systembackup/log.conf
+@@ -0,0 +1,2 @@
++PicCreateSave=1
++PicFaceSave=1
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 4e9a59a..f031189 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -3,7 +3,9 @@ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Config
+ from login.views import check_login
+ import json
++import os
+ from ftplib import FTP
++from django.conf import settings
+ 
+ # create default system settings configs
+ # BackupMethod
+@@ -359,10 +361,10 @@ def settings_system_backup(request):
+                 if BackupMonthlyDate != 'n/a':
+                     Config.objects.filter(Name = 'BackupMonthlyDate').update(Value=BackupMonthlyDate)
+ 
+-                BackupMonthlyDate_hours = request.POST['BackupMonthlyDate_hours']
++                BackupTime_hours = BackupMonthlyDate_hours = request.POST['BackupMonthlyDate_hours']
+                 print('BackupMonthlyDate_hours : ', BackupMonthlyDate_hours)
+ 
+-                BackupMonthlyDate_mins = request.POST['BackupMonthlyDate_mins']
++                BackupTime_mins = BackupMonthlyDate_mins = request.POST['BackupMonthlyDate_mins']
+                 print('BackupMonthlyDate_mins : ', BackupMonthlyDate_mins)
+ 
+                 BackupTime = BackupMonthlyDate_hours + ':' + BackupMonthlyDate_mins
+@@ -410,10 +412,10 @@ def settings_system_backup(request):
+                 print('BackupWeeklyDate : ', BackupWeeklyDate)
+                 Config.objects.filter(Name = 'BackupWeeklyDate').update(Value=BackupWeeklyDate)
+ 
+-                BackupWeeklyDate_hours = request.POST['BackupWeeklyDate_hours']
++                BackupTime_hours = BackupWeeklyDate_hours = request.POST['BackupWeeklyDate_hours']
+                 print('BackupWeeklyDate_hours : ', BackupWeeklyDate_hours)
+ 
+-                BackupWeeklyDate_mins = request.POST['BackupWeeklyDate_mins']
++                BackupTime_mins = BackupWeeklyDate_mins = request.POST['BackupWeeklyDate_mins']
+                 print('BackupWeeklyDate_mins : ', BackupWeeklyDate_mins)
+ 
+                 BackupTime = BackupWeeklyDate_hours + ':' + BackupWeeklyDate_mins
+@@ -454,6 +456,68 @@ def settings_system_backup(request):
+                 BackupLocation = 'local'
+                 Config.objects.filter(Name = 'BackupLocation').update(Value=BackupLocation)
+ 
++
++            backupdir = os.path.join(settings.BASE_DIR, 'systembackup')
++            newcrontabfile = os.path.join(backupdir, 'crontab.new')
++            newbackupconfile = os.path.join(backupdir, 'backup.conf')
++            backupshfile = os.path.join(backupdir, 'br06backup.sh')
++
++            #newcrontabfile = 'crontab.new'
++            #newbackupconfile = 'backup.conf.new'
++            #newlogconfile = 'log.conf.new'
++
++            # backupconf modify
++            backupconf_content=[]
++            backupconf_content.append('BackupLocal={0}\n'.format(BackupLocal))
++            backupconf_content.append('BackupLocation={0}\n'.format(BackupLocation))
++            backupconf_content.append('BackupRemoteHost={0}\n'.format(BackupRemoteHost))
++            backupconf_content.append('BackupRemotePort={0}\n'.format(BackupRemotePort))
++            backupconf_content.append('BackupRemoteAccount={0}\n'.format(BackupRemoteAccount))
++            backupconf_content.append('BackupRemotePassword={0}\n'.format(BackupRemotePassword))
++            print(backupconf_content)
++            with open(newbackupconfile, mode='wt', encoding='utf-8') as f:
++                f.write(''.join(backupconf_content))
++
++
++            # crontab modify
++            crontabfile = '/etc/crontab'
++            with open(crontabfile, 'r') as f:
++                content = f.readlines()
++
++            content1 = [line for line in content if line.find("br06backup.sh") < 0]
++            content2 = [line for line in content if line.find("br06backup.sh") >= 0]
++            content2_idx = content.index(content2[0])
++
++            #print('content2_idx:{0}'.format(content2_idx))
++            #print('content1:')
++            #print(content1)
++            #print('content2:')
++            #print(content2)
++
++            if BackupMethod == 'Manually':
++                if content2 != []:
++                    print('old content2:'+ content2[0])
++                    content2[0] = '#'+ content2[0]
++                    print('new content2:'+ content2[0])
++                    content[content2_idx]=content2[0]
++
++                os.system('{0}\n'.format(backupshfile))
++
++            else:
++                if BackupScheduling == 'Monthly':
++                    cmd = '{0} {1}\t{2} * *\troot\t/var/www/br06/systembackup/br06backup.sh >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate)
++                    print('cmd:'+cmd)
++                    content[content2_idx]=cmd
++                else:
++                    cmd = '{0} {1}\t* * {2}\troot\t/var/www/br06/systembackup/br06backup.sh >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate)
++                    print('cmd:'+cmd)
++                    content[content2_idx]=cmd
++
++            with open(newcrontabfile, mode='wt', encoding='utf-8') as f:
++                f.write(''.join(content))
++
++            os.system('mv {0} {1}\n'.format(newcrontabfile, crontabfile))
++
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -519,6 +583,18 @@ def settings_system_log(request):
+         print('PicFaceSave :', PicFaceSave)
+         Config.objects.filter(Name = 'PicFaceSave').update(Value=PicFaceSave)
+ 
++        # logconf modify
++        backupdir = os.path.join(settings.BASE_DIR, 'systembackup')
++        newlogconfile = os.path.join(backupdir, 'log.conf')
++        #newlogconfile = 'log.conf.new'
++
++        logconf_content=[]
++        logconf_content.append('PicCreateSave={0}\n'.format(PicCreateSave))
++        logconf_content.append('PicFaceSave={0}\n'.format(PicFaceSave))
++        print(logconf_content)
++        with open(newlogconfile, mode='wt', encoding='utf-8') as f:
++            f.write(''.join(logconf_content))
++
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+-- 
+1.9.1
+

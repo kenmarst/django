@@ -1,0 +1,38 @@
+From 0fbc12073ba66ef22c026d8af7e28ead45b443f0 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 13 Dec 2016 10:44:32 +0800
+Subject: [PATCH 407/443] Modify the parameter name for update.json
+
+---
+ dashboard/views.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 04a87c0..4f04d3c 100755
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -171,7 +171,7 @@ def update_server(request):
+ 
+         update_info = json.loads(open(os.path.join(settings.UPDATE_DIR, 'update.json'), 'r').read()).get('Server', '')
+ 
+-        ftpfile = update_info.get('file', '')
++        ftpfile = update_info.get('File', '')
+         logger.debug('[{0}] [update_server] ftp file: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), ftpfile))
+ 
+         filepath, filename = os.path.split(ftpfile)
+@@ -205,9 +205,9 @@ def update_server(request):
+ 
+         tmpfile_md5 = md5(open(tmpfile, 'rb').read()).hexdigest()
+         logger.debug('[{0}] [update_server] tmpfile md5: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), tmpfile_md5))
+-        logger.debug('[{0}] [update_server] update information md5: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), update_info.get('md5', '')))
+-        if tmpfile_md5 == update_info.get('md5', ''):
+-            update_ret = update_br06(request, tmpfile, update_info.get('setupDIR', ''), 'update_server')
++        logger.debug('[{0}] [update_server] update information md5: {1}'.format(datetime.now().strftime('%a %b %d %T %Y'), update_info.get('MD5', '')))
++        if tmpfile_md5 == update_info.get('MD5', ''):
++            update_ret = update_br06(request, tmpfile, update_info.get('SetupDIR', ''), 'update_server')
+             if update_ret:
+                 raise Exception(update_ret)
+         else:
+-- 
+1.9.1
+

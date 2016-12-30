@@ -1,0 +1,25 @@
+From 3f1865e28f3bbb704196e512780b6ba1a42216c2 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 22 Nov 2016 19:43:23 +0800
+Subject: [PATCH 369/443] Bug fix - fix directory of logs.
+
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 1465137..0902a22 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
+ LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO # Python logger level: debug, info, warning, error, critical
+ logging.basicConfig(level = LOGGING_LEVEL)
+ logger.debug('Enable debug mode')
+-BR06_LOG_DIR = os.path.join(BASE_DIR, 'log')
++BR06_LOG_DIR = os.path.join(BASE_DIR, 'logs')
+ LOGGING = {
+     'version': 1,
+     'disable_existing_loggers': False,
+-- 
+1.9.1
+

@@ -1,0 +1,176 @@
+From ca52781bd7d2a79598d68820a3d380a486a12421 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 5 Jul 2016 19:07:50 +0800
+Subject: [PATCH 157/443] Fix name bug of web
+
+Bug fix - special name can not be passed as a parameter.
+---
+ templates/device_list.html         | 8 +++++---
+ templates/fruser_list.html         | 3 ++-
+ templates/frusergroup_devices.html | 3 ++-
+ templates/frusergroup_member.html  | 3 ++-
+ templates/frusergroups_list.html   | 3 ++-
+ templates/user_group_devices.html  | 3 ++-
+ templates/user_group_list.html     | 3 ++-
+ templates/user_group_members.html  | 3 ++-
+ templates/user_list.html           | 1 +
+ 9 files changed, 20 insertions(+), 10 deletions(-)
+
+diff --git a/templates/device_list.html b/templates/device_list.html
+index a2471b0..e267cb2 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -103,18 +103,20 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
++
+                             if (row.State == 'Proposed') {
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick=accept_device("' + row.OId + '","' +row.Name+ '")>{% trans "Accept" %}</button> \
+-                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Reject" %}</button> \
++                                        <button class="btn btn-default" onclick=accept_device("' + row.OId + '","' + row.Name + '")>{% trans "Accept" %}</button> \
++                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Reject" %}</button> \
+                                     </div>';
+                             } else {
+                                 return ' \
+                                     <div align="center"> \
+                                         <button class="btn btn-default" onclick="location.href=\'/device_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+                                         <button class="btn btn-default" onclick="location.href=\'/device_settings?OId=' + row.OId + '\'">{% trans "Settings" %}</button> \
+-                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
++                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                     </div>';
+                             }
+                         }
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 6ff4787..0cadca9 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -125,10 +125,11 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+                                     <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                    <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 29e1f90..6067d9d 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -104,9 +104,10 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>Delete</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 0cabb6e..6a92446 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -104,9 +104,10 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Name + '")>Delete</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index 6c9b087..effc867 100644
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -83,10 +83,11 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+                                     <button class="btn btn-default" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index c1b195a..be849c4 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -104,9 +104,10 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index e18942b..1a77434 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -83,10 +83,11 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+                                     <button class="btn btn-default" onclick="location.href=\'/user_group_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index 57f817d..f080c4e 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -104,9 +104,10 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
++                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 0f271fd..6950994 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -112,6 +112,7 @@
+                     sortable: true
+                 }, {
+                     formatter: function(value, row) {
++                        row.Account = row.Account.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                         return '<button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
+                     }
+                 }
+-- 
+1.9.1
+

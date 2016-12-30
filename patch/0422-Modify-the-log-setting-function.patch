@@ -1,0 +1,123 @@
+From fc4e780c8ea10be4266aa48d0b0f9a08d32e0ccc Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 15 Dec 2016 17:35:56 +0800
+Subject: [PATCH 422/443] Modify the log setting function.
+
+Modify the log export function.
+Modify the default delimiter to "tab".
+Remove the delimiter "dot" and "space" from log setting of web.
+---
+ fruserlogs/views.py       | 10 +++++-----
+ frusers/views.py          |  2 +-
+ systemlogs/views.py       | 10 +++++-----
+ templates/logsetting.html |  8 +-------
+ 4 files changed, 12 insertions(+), 18 deletions(-)
+
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 25e7384..b3507e9 100755
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -50,7 +50,7 @@ def fruserlog_export(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+ 
+-    symbolcover = {'tab' : '\t', 'comma' : ',', 'dot' : '.', 'space' : ' '}
++    symbolcover = {'tab' : '\t', 'comma' : ','}
+ 
+     try:
+         with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
+@@ -63,15 +63,15 @@ def fruserlog_export(request):
+             raise
+     except:
+         header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
+-        symbol = ","
++        symbol = "\t"
+ 
+     response = HttpResponse(content_type = 'text/csv')
+     response['Content-Disposition'] = 'attachment; filename=fruserlog-export-{0}.csv'.format(
+         datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+     )
+ 
+-    writer = csv.writer(response)
+-    writer.writerow([symbol.join(header)])
+-    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Fruserlogs.objects.all().order_by('LogDateTime')])
++    writer = csv.writer(response, delimiter = symbol)
++    writer.writerow(header)
++    writer.writerows([[res.as_json()[column] for column in header] for res in Fruserlogs.objects.all().order_by('-LogDateTime')])
+ 
+     return response
+diff --git a/frusers/views.py b/frusers/views.py
+index d5ca28d..2bf180d 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -203,7 +203,7 @@ def export_fruser(request):
+         picdir = os.path.join(mediadir, 'fruserpic')
+ 
+         if not os.path.exists(csvdir):
+-            with open(csvdir, 'w', encoding='utf-8') as csvfile:
++            with open(csvdir, 'w', encoding = 'utf-8') as csvfile:
+                 header = ['FRUserId', 'Name', 'Group', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
+                 writer = csv.writer(csvfile)
+                 writer.writerow(header)
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 8b0ccd5..416fa89 100755
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -49,7 +49,7 @@ def systemlog_export(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+ 
+-    symbolcover = {'tab' : '\t', 'comma' : ',', 'dot' : '.', 'space' : ' '}
++    symbolcover = {'tab' : '\t', 'comma' : ','}
+ 
+     try:
+         with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
+@@ -62,15 +62,15 @@ def systemlog_export(request):
+             raise
+     except:
+         header = ['OId', 'LogDateTime', 'Category', 'LogContent']
+-        symbol = ","
++        symbol = "\t"
+ 
+     response = HttpResponse(content_type = 'text/csv')
+     response['Content-Disposition'] = 'attachment; filename=systemlog-export-{0}.csv'.format(
+         datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+     )
+ 
+-    writer = csv.writer(response)
+-    writer.writerow([symbol.join(header)])
+-    writer.writerows([[symbol.join([res.as_json()[column] for column in header])] for res in Systemlogs.objects.all().order_by('LogDateTime')])
++    writer = csv.writer(response, delimiter = symbol)
++    writer.writerow(header)
++    writer.writerows([[res.as_json()[column] for column in header] for res in Systemlogs.objects.all().order_by('-LogDateTime')])
+ 
+     return response
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 54e09ed..7917048 100755
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -46,12 +46,6 @@
+                                             <label><input type="radio" name="optradio" value="comma">comma</label>
+                                         </div>
+                                         <div class="radio">
+-                                            <label><input type="radio" name="optradio" value="dot">dot</label>
+-                                        </div>
+-                                        <div class="radio">
+-                                            <label><input type="radio" name="optradio" value="space">space</label>
+-                                        </div>
+-                                        <div class="radio">
+                                             <label><input type="radio" name="optradio" value="custom">custom</label>
+                                             <label><input type="text" class="form-control" name="customsymbol" placeholder=" 1 character only"></label>
+                                         </div>
+@@ -173,7 +167,7 @@
+         });
+ 
+         $(document).ready(function() {
+-            if (['tab', 'comma', 'dot', 'space'].includes('{{symbol|safe}}')) {
++            if (['tab', 'comma'].includes('{{symbol|safe}}')) {
+                 $('input[name="optradio"][value={{symbol|safe}}]').prop('checked', true);
+             } else {
+                 $('input[name="optradio"][value=custom]').prop('checked', true);
+-- 
+1.9.1
+

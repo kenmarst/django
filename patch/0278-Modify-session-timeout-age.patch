@@ -1,0 +1,25 @@
+From 1586882ceddd1ae766915c490d72a29830f2c303 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Tue, 13 Sep 2016 17:55:51 +0800
+Subject: [PATCH 278/443] Modify session timeout age.
+
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 7a81f8d..b6d1102 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -188,7 +188,7 @@ EMAIL_TIMEOUT = 120
+ DEFAULT_FROM_EMAIL = 'fr_serivce@tw.shuttle.com'
+ 
+ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+-SESSION_COOKIE_AGE = 10800 # sec
++SESSION_COOKIE_AGE = 600 # sec
+ 
+ # 4G
+ EN_4G = 0 # Enable 4Gapi in UserAdd
+-- 
+1.9.1
+

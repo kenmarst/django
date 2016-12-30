@@ -1,0 +1,30 @@
+From d50dcc954adc1b1466e9551bf8ed2cd995cdb152 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 31 Aug 2016 11:17:11 +0800
+Subject: [PATCH 245/443] Modify finger list API : need to have two fingerprint
+ images
+
+---
+ api/fingerprint.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index d415c47..0d2b4ff 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -221,10 +221,10 @@ def list(request):
+                 ip_device = Devices.objects.get(IP = request_IP)
+                 if ip_device.State != 'Proposed':
+                     fruser = Frusers.objects.get(FRUserId = req.get('FRUserId', ''))
+-                    if fruser.FingerprintID1 != b'x00' or fruser.FingerprintID2 != b'x00' :
++                    if fruser.FingerprintID1 != b'x00' and fruser.FingerprintID2 != b'x00' :
+                         return JsonResponse(result_true)
+                     else:
+-                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger is null'})))
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'One or all of the finger is null'})))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Device is proposed'})))
+             else:
+-- 
+1.9.1
+

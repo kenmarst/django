@@ -1,0 +1,42 @@
+From 65e2e4946ea82ba27c6996eed5b6bbe3793a8a5b Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Mon, 23 May 2016 15:13:48 +0800
+Subject: [PATCH 066/443] Add TIME_ZONE option to Django DATABASES configure,
+ this option requires installing pytz.
+
+---
+ br06/settings.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 480e8d4..4580e62 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -78,6 +78,7 @@ TEMPLATES = [
+ 
+ WSGI_APPLICATION = 'br06.wsgi.application'
+ 
++TIME_ZONE = get_localtimezone()
+ 
+ # Database
+ # https://docs.djangoproject.com/en/dev/ref/settings/#databases
+@@ -90,6 +91,7 @@ DATABASES = {
+         'PASSWORD': '1',
+         'HOST': '',
+         'PORT': '',
++        'TIME_ZONE': TIME_ZONE,     # Setting this option requires installing pytz.
+     }
+ }
+ 
+@@ -118,8 +120,6 @@ AUTH_PASSWORD_VALIDATORS = [
+ 
+ LANGUAGE_CODE = 'en-us'
+ 
+-TIME_ZONE = get_localtimezone()
+-
+ USE_I18N = True
+ 
+ USE_L10N = True
+-- 
+1.9.1
+

@@ -1,0 +1,23 @@
+From 98bd15d03d5ac558e59034b8dc46643510f5b809 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 15:24:28 +0800
+Subject: [PATCH 164/443] Commit systembackup folder and ignore .conf file
+
+---
+ systembackup/.gitignore | 4 ++++
+ 1 file changed, 4 insertions(+)
+ create mode 100644 systembackup/.gitignore
+
+diff --git a/systembackup/.gitignore b/systembackup/.gitignore
+new file mode 100644
+index 0000000..af254fd
+--- /dev/null
++++ b/systembackup/.gitignore
+@@ -0,0 +1,4 @@
++!.gitignore
++crontab.new
++backup.conf
++log.conf
+-- 
+1.9.1
+

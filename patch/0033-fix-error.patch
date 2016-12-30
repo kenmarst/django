@@ -1,0 +1,50 @@
+From 21f332f6e9bed63eb3c8e40e81fb45278fd365b0 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Fri, 13 May 2016 16:04:47 +0800
+Subject: [PATCH 033/443] fix error
+
+---
+ br06/urls.py        | 4 ++--
+ fruserlogs/views.py | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 7bcfa83..9c40f01 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -20,7 +20,7 @@ from user.views import user_list_view, user_setting, login, logout, change_passw
+ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view,systemlog_export
+ from fruserlogs.views import fruserlog_list_view,fruserlog_export
+-from logsetting.views import logsetting
++#from logsetting.views import logsetting
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, add_device, delete_device
+ 
+ urlpatterns = [
+@@ -34,7 +34,7 @@ urlpatterns = [
+     url(r'^systemlog_export/?$',systemlog_export),
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_export/?$',fruserlog_export),
+-    url(r'^logsetting/?$',logsetting),
++    #url(r'^logsetting/?$',logsetting),
+ ]
+ 
+ urlpatterns += [
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index af15e16..be56ac5 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -46,8 +46,8 @@ def fruserlog_export(request):
+       header=[]
+       for i in range(0,len(json_data[0])-1):
+         field = "val"+str(i)
+-         if(json_data[0][field] != 'Category'): #hardcoding need to fix
+-           header.append(json_data[0][field])
++        if(json_data[0][field] != 'Category'):#hardcoding need to fix
++            header.append(json_data[0][field])
+     except:
+       header=['FRUserName','LogDateTime','DeviceOId', 'LogContent']
+       symbol="!" 
+-- 
+1.9.1
+

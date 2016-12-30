@@ -1,0 +1,626 @@
+From 3d7c15908cb78de10457de2bf54d5e2ac829d9b5 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Fri, 29 Apr 2016 12:38:36 +0800
+Subject: [PATCH 020/443] Fix bug and add device list web
+
+Fix two fruserlogs and systemlogs's view name repeat.
+Fix fruserlist bug - can not show list when Gender is Null.
+Add models content of devices list web.
+Add device list web.
+Add file __init__.py and devices app folder at project root.
+---
+ __init__.py                                        |  0
+ api/models.py                                      | 21 +++++-
+ api/utility.py                                     |  2 -
+ br06/urls.py                                       | 10 +--
+ devices/__init__.py                                |  0
+ devices/admin.py                                   |  3 +
+ devices/apps.py                                    |  5 ++
+ devices/migrations/__init__.py                     |  0
+ devices/models.py                                  |  3 +
+ devices/tests.py                                   |  3 +
+ devices/views.py                                   | 16 +++++
+ fruserlogs/views.py                                |  6 +-
+ systemlogs/views.py                                |  6 +-
+ templates/{log_list.html => device_list.html}      | 80 ++++++++++------------
+ templates/{FRlog_list.html => fruserlog_list.html} | 16 ++---
+ templates/menu.html                                | 25 ++++---
+ templates/{log_list.html => systemlog_list.html}   | 22 +++---
+ 17 files changed, 131 insertions(+), 87 deletions(-)
+ create mode 100644 __init__.py
+ create mode 100644 devices/__init__.py
+ create mode 100644 devices/admin.py
+ create mode 100644 devices/apps.py
+ create mode 100644 devices/migrations/__init__.py
+ create mode 100644 devices/models.py
+ create mode 100644 devices/tests.py
+ create mode 100644 devices/views.py
+ copy templates/{log_list.html => device_list.html} (61%)
+ rename templates/{FRlog_list.html => fruserlog_list.html} (95%)
+ rename templates/{log_list.html => systemlog_list.html} (91%)
+
+diff --git a/__init__.py b/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/api/models.py b/api/models.py
+index e9b6059..a02c1b6 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -159,6 +159,25 @@ class Devices(models.Model):
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+ 
++    def as_json(self):
++        return dict(
++            Index = 0,
++            OId = self.OId,
++            Name = self.Name,
++            State = self.State,
++            MAC = self.MAC,
++            IP = self.IP,
++            #Welcome = self.Welcome,
++            #AccessDenied = self.AccessDenied,
++            #ScreenSaver = self.ScreenSaver,
++            NTP = self.NTP,
++            #Timezone = self.Timezone,
++            #Audio = self.Audio,
++            #BioScore = self.BioScore,
++            #Language = self.Language,
++            CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
++            UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++        )
+ 
+ class Users(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+@@ -268,7 +287,7 @@ class Frusers(models.Model):
+             OId = self.OId,
+             FRUserID = self.FRUserId,
+             Name = self.Name,
+-            Gender = self.Gender,
++            #Gender = self.Gender,
+             #Age = self.Age,
+             PersonId = self.PersonId,
+             Face1 = self.Face1,
+diff --git a/api/utility.py b/api/utility.py
+index b9c888a..2482a90 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -15,8 +15,6 @@ def TCIT_API(pattern, **kwargs):
+     except Exception as error:
+         return HttpResponse(error)
+ 
+-# Create your views here.
+-
+ def check_session(request):
+     if not 'OId' in request.session:
+         return False
+diff --git a/br06/urls.py b/br06/urls.py
+index 2d82141..25b21e9 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -18,8 +18,9 @@ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_list_view, user_setting, login, logout, change_passwd
+ from frusers.views import fruser_list_view
+-from systemlogs.views import log_list_view
+-from fruserlogs.views import log_list_view
++from systemlogs.views import systemlog_list_view
++from fruserlogs.views import fruserlog_list_view
++from devices.views import device_list_view
+ 
+ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+@@ -28,8 +29,9 @@ urlpatterns = [
+     url(r'^user_list/?$', user_list_view),
+     url(r'^setting/?$', user_setting),
+     url(r'^fruser_list/?$', fruser_list_view),
+-    url(r'^log_list/?$', log_list_view),
+-    url(r'^FRlog_list/?$', log_list_view),
++    url(r'^systemlog_list/?$', systemlog_list_view),
++    url(r'^fruserlog_list/?$', fruserlog_list_view),
++    url(r'^device_list/?$', device_list_view),
+ ]
+ 
+ urlpatterns += [
+diff --git a/devices/__init__.py b/devices/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/devices/admin.py b/devices/admin.py
+new file mode 100644
+index 0000000..8c38f3f
+--- /dev/null
++++ b/devices/admin.py
+@@ -0,0 +1,3 @@
++from django.contrib import admin
++
++# Register your models here.
+diff --git a/devices/apps.py b/devices/apps.py
+new file mode 100644
+index 0000000..d43cc4b
+--- /dev/null
++++ b/devices/apps.py
+@@ -0,0 +1,5 @@
++from django.apps import AppConfig
++
++
++class DevicesConfig(AppConfig):
++    name = 'devices'
+diff --git a/devices/migrations/__init__.py b/devices/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/devices/models.py b/devices/models.py
+new file mode 100644
+index 0000000..71a8362
+--- /dev/null
++++ b/devices/models.py
+@@ -0,0 +1,3 @@
++from django.db import models
++
++# Create your models here.
+diff --git a/devices/tests.py b/devices/tests.py
+new file mode 100644
+index 0000000..7ce503c
+--- /dev/null
++++ b/devices/tests.py
+@@ -0,0 +1,3 @@
++from django.test import TestCase
++
++# Create your tests here.
+diff --git a/devices/views.py b/devices/views.py
+new file mode 100644
+index 0000000..f2d5f46
+--- /dev/null
++++ b/devices/views.py
+@@ -0,0 +1,16 @@
++from django.shortcuts import render
++
++# Create your views here.
++from django.http import HttpResponseRedirect
++from api.models import Devices
++
++def device_list_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    obj = Devices.objects.all()
++    devices = [res.as_json() for res in obj]
++    index = 0
++    for x in devices:
++        x['Index'] = index+1
++        index += 1
++    return render(request, 'device_list.html', {'active': "device_list", 'obj': devices})
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index b6d729b..55ed1a8 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -3,11 +3,11 @@ from django.http import HttpResponseRedirect
+ from django.http import JsonResponse
+ from django.http import HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+-from api.models import Fruserlogs,Systemlogs
++from api.models import Fruserlogs, Systemlogs
+ 
+ # Create your views here.
+ 
+-def log_list_view(request):
++def fruserlog_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     obj = Fruserlogs.objects.all()
+@@ -17,4 +17,4 @@ def log_list_view(request):
+     for x in result:
+         x['Index'] = index+1
+         index += 1
+-    return render(request, 'FRlog_list.html', {'active': "FRlog_list", 'obj': result})
++    return render(request, 'fruserlog_list.html', {'active': "fruserlog_list", 'obj': result})
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 7fa4555..325f85f 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -4,7 +4,7 @@ from django.http import JsonResponse
+ from django.http import HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
+-from api.models import Users,Frusers,Systemlogs
++from api.models import Users, Frusers, Systemlogs
+ import json
+ import urllib
+ 
+@@ -14,7 +14,7 @@ import urllib
+ # b = SysLog.objects.get(id="29")
+ # b.delete()
+ 
+-def log_list_view(request):
++def systemlog_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     obj = Systemlogs.objects.all()
+@@ -24,4 +24,4 @@ def log_list_view(request):
+     for x in result:
+         x['Index'] = index+1
+         index += 1
+-    return render(request, 'log_list.html', {'active': "syslog_list", 'obj': result})
++    return render(request, 'systemlog_list.html', {'active': "systemlog_list", 'obj': result})
+diff --git a/templates/log_list.html b/templates/device_list.html
+similarity index 61%
+copy from templates/log_list.html
+copy to templates/device_list.html
+index 6249420..cdc1f85 100644
+--- a/templates/log_list.html
++++ b/templates/device_list.html
+@@ -6,7 +6,7 @@
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>System Log List</title>
++<title>Device List</title>
+ 
+ <!--[if lt IE 9]>
+ <script src="js/html5shiv.js"></script>
+@@ -17,50 +17,33 @@
+ 
+ <body>
+ 	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">System Log List</li>
++				<li class="active">User List</li>
+ 			</ol>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-				<h1 class="page-header">System Log List</h1>
++				<h1 class="page-header">Device List</h1>
+ 			</div>
++			<div class="col-lg-12">
++				<button class="btn green pull-right"  value="">Create new device</button>
++			<div>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+-					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 					<div class="panel-body">
+-						<!-- data-url="{%static "data1.json"%}" -->
+-						<table id="userList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
+-						    <thead>
+-						    <tr>
+-<!-- 						        <th data-field="id" data-sortable="true">Item ID</th>
+-						        <th data-field="name"  data-sortable="true">Item Name</th>
+-						        <th data-field="price" data-sortable="true">Item Price</th> -->
+-						    </tr>
+-						    </thead>
++						<table id="UserList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
+ 						</table>
+-						<!-- kimi test 
+-						{% for story in obj %}
+-							<h2>
+-							  <p>{{story.Account}}</p>
+-							  <p>{{story.Name}}</p>
+-							  <p>{{story.Email}}</p>
+-							  <p>{{story.OId}}</p>
+-							  <p>{{story.RoleId}}</p>
+-							</h2>
+-						{% endfor %}
+-						 -->
+ 					</div>
+ 				</div>
+ 			</div>
+-		</div><!--/.row-->	
++		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+ 	<script src="{% static "chart.min.js" %}"></script>
+@@ -70,37 +53,44 @@
+ 	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+ 	<script src="{% static "bootstrap-table.js" %}"></script>
+ 	<script>
+-		// var dataSet = {{test|safe}};
+ 		var index
+ 		var dataSet = {{obj|safe}};
+ 		console.log(dataSet);
+-		$('#userList').bootstrapTable({
++		$('#UserList').bootstrapTable({
+ 			columns: [{
+-				field: 'Index',
+-				title: 'No.',
+-				sortable: true,
++				field: 'MAC',
++				title: 'MAC-Address',
++				sortable: true
+ 			},
+-			{
+-				field: 'Category',
+-				title: 'Category',
++            {
++				field: 'IP',
++				title: 'IP',
++				sortable: true
++			},
++            {
++				field: 'Name',
++				title: 'Device Name',
+ 				sortable: true
+-			}, 
+-			{
+-				field: 'LogContent',
+-				title: 'Notes'
+ 			},
+ 			{
+-				field: 'LogDateTime',
+-				title: 'Date/Time',
++				field: 'State',
++				title: 'Status',
+ 				sortable: true
++			},
++			{
++				field: 'OId',
++				title: '',
++				formatter: function(value, row, index) {
++					return '<button class="btn green"  value="' + value + '">Delete</button>';
++				}
+ 			}],
+ 			data: dataSet
+ 		});
+ 
+ 		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+-				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+-			}); 
++			$(document).on("click","ul.nav li.parent > a > span.icon", function(){
++				$(this).find('em:first').toggleClass("glyphicon-minus");
++			});
+ 			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+ 		}(window.jQuery);
+ 
+@@ -110,7 +100,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+-	</script>	
++	</script>
+ </body>
+ 
+ </html>
+diff --git a/templates/FRlog_list.html b/templates/fruserlog_list.html
+similarity index 95%
+rename from templates/FRlog_list.html
+rename to templates/fruserlog_list.html
+index 910bd5a..9fe1798 100644
+--- a/templates/FRlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -17,14 +17,14 @@
+ 
+ <body>
+ 	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+ 				<li class="active">FRUser Log List</li>
+ 			</ol>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<h1 class="page-header">FRUser Log List</h1>
+@@ -46,7 +46,7 @@
+ 						    </tr>
+ 						    </thead>
+ 						</table>
+-						<!-- kimi test 
++						<!-- kimi test
+ 						{% for story in obj %}
+ 							<h2>
+ 							  <p>{{story.Account}}</p>
+@@ -60,7 +60,7 @@
+ 					</div>
+ 				</div>
+ 			</div>
+-		</div><!--/.row-->	
++		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+ 	<script src="{% static "chart.min.js" %}"></script>
+@@ -104,9 +104,9 @@
+ 		});
+ 
+ 		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+-				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+-			}); 
++			$(document).on("click","ul.nav li.parent > a > span.icon", function(){
++				$(this).find('em:first').toggleClass("glyphicon-minus");
++			});
+ 			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+ 		}(window.jQuery);
+ 
+@@ -116,7 +116,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+-	</script>	
++	</script>
+ </body>
+ 
+ </html>
+diff --git a/templates/menu.html b/templates/menu.html
+index bf680eb..4d7bcc5 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -25,10 +25,10 @@
+ 				</li>
+ 			</ul>
+ 		</div>
+-						
++
+ 	</div><!-- /.container-fluid -->
+ </nav>
+-	
++
+ <div id="sidebar-collapse" class="col-sm-3 col-lg-2 sidebar">
+ 	<form role="search">
+ 		<div class="form-group">
+@@ -38,11 +38,11 @@
+ 	<ul class="nav menu">
+ 		<li class="parent ">
+ 				<a href="#">
+-					<span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System 
++					<span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System
+ 				</a>
+ 				<ul class="children collapse" id="sub-item-1">
+ 					<li>
+-						<a class="" href="user_list">
++						<a class="" href="/user_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> User List
+ 						</a>
+ 					</li>
+@@ -65,11 +65,16 @@
+ 			</li>
+         <li class="parent ">
+ 				<a href="#">
+-					<span data-toggle="collapse" href="#sub-item-2"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Device 
++					<span data-toggle="collapse" href="#sub-item-2"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Device
+ 				</a>
+ 				<ul class="children collapse" id="sub-item-2">
+ 					<li>
+-						<a class="" href="/user_list">
++						<a class="" href="/device_list">
++							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Manage
++						</a>
++					</li>
++					<li>
++						<a class="" href="/device_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Config
+ 						</a>
+ 					</li>
+@@ -79,16 +84,16 @@
+         <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser Group</a></li>
+          <li class="parent ">
+ 				<a href="#">
+-					<span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log 
++					<span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log
+ 				</a>
+ 				<ul class="children collapse" id="sub-item-3">
+ 					<li>
+-						<a class="" href="/FRlog_list">
++						<a class="" href="/fruserlog_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> FRUser Log List
+ 						</a>
+ 					</li>
+                     <li>
+-						<a class="" href="/log_list">
++						<a class="" href="/systemlog_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> System Log List
+ 						</a>
+ 					</li>
+@@ -103,7 +108,7 @@
+ 		<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"/></svg> Log Out</a></li>
+ 	</ul>
+ 	<script>
+-		$('li[name='+'{{active}}'+']').addClass("active") 
++		$('li[name='+'{{active}}'+']').addClass("active")
+ 	</script>
+ 	<a class="navbar-fixed-bottom" href="http://MediaLoot.com" style=" color:white"> Theme from MediaLoot</a>
+ </div><!--/.sidebar-->
+diff --git a/templates/log_list.html b/templates/systemlog_list.html
+similarity index 91%
+rename from templates/log_list.html
+rename to templates/systemlog_list.html
+index 6249420..5ecd68e 100644
+--- a/templates/log_list.html
++++ b/templates/systemlog_list.html
+@@ -17,14 +17,14 @@
+ 
+ <body>
+ 	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+ 		<div class="row">
+ 			<ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+ 				<li class="active">System Log List</li>
+ 			</ol>
+ 		</div><!--/.row-->
+-		
++
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<h1 class="page-header">System Log List</h1>
+@@ -37,7 +37,7 @@
+ 					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 					<div class="panel-body">
+ 						<!-- data-url="{%static "data1.json"%}" -->
+-						<table id="userList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
++						<table id="UserList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
+ 						    <thead>
+ 						    <tr>
+ <!-- 						        <th data-field="id" data-sortable="true">Item ID</th>
+@@ -46,7 +46,7 @@
+ 						    </tr>
+ 						    </thead>
+ 						</table>
+-						<!-- kimi test 
++						<!-- kimi test
+ 						{% for story in obj %}
+ 							<h2>
+ 							  <p>{{story.Account}}</p>
+@@ -60,7 +60,7 @@
+ 					</div>
+ 				</div>
+ 			</div>
+-		</div><!--/.row-->	
++		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+ 	<script src="{% static "chart.min.js" %}"></script>
+@@ -74,7 +74,7 @@
+ 		var index
+ 		var dataSet = {{obj|safe}};
+ 		console.log(dataSet);
+-		$('#userList').bootstrapTable({
++		$('#UserList').bootstrapTable({
+ 			columns: [{
+ 				field: 'Index',
+ 				title: 'No.',
+@@ -84,7 +84,7 @@
+ 				field: 'Category',
+ 				title: 'Category',
+ 				sortable: true
+-			}, 
++			},
+ 			{
+ 				field: 'LogContent',
+ 				title: 'Notes'
+@@ -98,9 +98,9 @@
+ 		});
+ 
+ 		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+-				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+-			}); 
++			$(document).on("click","ul.nav li.parent > a > span.icon", function(){
++				$(this).find('em:first').toggleClass("glyphicon-minus");
++			});
+ 			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+ 		}(window.jQuery);
+ 
+@@ -110,7 +110,7 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+-	</script>	
++	</script>
+ </body>
+ 
+ </html>
+-- 
+1.9.1
+

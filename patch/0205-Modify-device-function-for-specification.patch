@@ -1,0 +1,398 @@
+From bdce10c99bfd7ae2db202debe23ec281f778e192 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 27 Jul 2016 13:03:53 +0800
+Subject: [PATCH 205/443] Modify device function for specification
+
+Modify database of device and web of device for specification.
+---
+ api/models.py                  |  97 +++++++++++++++++++++++-----------
+ br06/settings.py               |   4 +-
+ devices/views.py               |  11 +++-
+ templates/device_edit.html     |   4 +-
+ templates/device_settings.html | 115 +++++++++++++++++++++++++++--------------
+ 5 files changed, 156 insertions(+), 75 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index a5a2386..cf653f6 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -125,39 +125,72 @@ class Devices(models.Model):
+         ('3', '3'),
+         ('5', '5'),
+     )
++    devices_timeout = (
++        ('10', '10 Seconds'),
++        ('30', '30 Seconds'),
++        ('60', '60 Seconds'),
++    )
+     devices_screensaver = (
+         ('5', '5 Minutes'),
+         ('30', '30 Minutes'),
+         ('60', '60 Minutes'),
+     )
+     devices_timezone = (
+-        ('UTC-12', 'UTC-12'),
+-        ('UTC-11', 'UTC-11'),
+-        ('UTC-10', 'UTC-10'),
+-        ('UTC-9', 'UTC-9'),
+-        ('UTC-8', 'UTC-8'),
+-        ('UTC-7', 'UTC-7'),
+-        ('UTC-6', 'UTC-6'),
+-        ('UTC-5', 'UTC-5'),
+-        ('UTC-4', 'UTC-4'),
+-        ('UTC-3', 'UTC-3'),
+-        ('UTC-2', 'UTC-2'),
+-        ('UTC-1', 'UTC-1'),
+-        ('UTC+0', 'UTC+0'),
+-        ('UTC+1', 'UTC+1'),
+-        ('UTC+2', 'UTC+2'),
+-        ('UTC+3', 'UTC+3'),
+-        ('UTC+4', 'UTC+4'),
+-        ('UTC+5', 'UTC+5'),
+-        ('UTC+6', 'UTC+6'),
+-        ('UTC+7', 'UTC+7'),
+-        ('UTC+8', 'UTC+8'),
+-        ('UTC+9', 'UTC+9'),
+-        ('UTC+10', 'UTC+10'),
+-        ('UTC+11', 'UTC+11'),
+-        ('UTC+12', 'UTC+12'),
+-        ('UTC+13', 'UTC+13'),
+-        ('UTC+14', 'UTC+14'),
++        ('(UTC-11:00) Midway Island, Samoa', '(UTC-11:00) Midway Island, Samoa'),
++        ('(UTC-10:00) Hawaii', '(UTC-10:00) Hawaii'),
++        ('(UTC-9:00)  Alaska', '(UTC-9:00)  Alaska'),
++        ('(UTC-8:00) Pacific Time(US & Canada)', '(UTC-8:00) Pacific Time(US & Canada)'),
++        ('(UTC-7:00) Mountain Time(US & Canada)', '(UTC-7:00) Mountain Time(US & Canada)'),
++        ('(UTC-7:00) Arizona', '(UTC-7:00) Arizona'),
++        ('(UTC-7:00) Chihuahua, La Paz, Mazatlan', '(UTC-7:00) Chihuahua, La Paz, Mazatlan'),
++        ('(UTC-6:00) Central Time(US & Canada)', '(UTC-6:00) Central Time(US & Canada)'),
++        ('(UTC-6:00) Guadalajara, Mexico, Monterrey', '(UTC-6:00) Guadalajara, Mexico, Monterrey'),
++        ('(UTC-6:00) Saskatchewan', '(UTC-6:00) Saskatchewan'),
++        ('(UTC-5:00) Indiana(East)', '(UTC-5:00) Indiana(East)'),
++        ('(UTC-5:00) Eastern Time(US & Canada)', '(UTC-5:00) Eastern Time(US & Canada)'),
++        ('(UTC-5:00) Bogota, Lima, Quito', '(UTC-5:00) Bogota, Lima, Quito'),
++        ('(UTC-4:00) Cuiaba', '(UTC-4:00) Cuiaba'),
++        ('(UTC-4:00) Atlantic Time(Canada)', '(UTC-4:00) Atlantic Time(Canada)'),
++        ('(UTC-4:00) Georgetown, Manaus, San Juan', '(UTC-4:00) Georgetown, Manaus, San Juan'),
++        ('(UTC-4:00) Asuncion', '(UTC-4:00) Asuncion'),
++        ('(UTC-4:00) Santiago', '(UTC-4:00) Santiago'),
++        ('(UTC-3:30) Newfoundland', '(UTC-3:30) Newfoundland'),
++        ('(UTC-3:00) Montevideo', '(UTC-3:00) Montevideo'),
++        ('(UTC-3:00) Buenos Aires, Cayenne, Fortaleza, Salvador', '(UTC-3:00) Buenos Aires, Cayenne, Fortaleza, Salvador'),
++        ('(UTC-2:00) Mid-Atlantic', '(UTC-2:00) Mid-Atlantic'),
++        ('(UTC-1:00) Azores, Cape Verde Islands', '(UTC-1:00) Azores, Cape Verde Islands'),
++        ('(UTC) Monrovia, Reykjavik', '(UTC) Monrovia, Reykjavik'),
++        ('(UTC) London, Dublin, Edinburgh, Lisbon', '(UTC) London, Dublin, Edinburgh, Lisbon'),
++        ('(UTC+1:00) Amsterdam, Brussels, Berlin, Madrid, Paris', '(UTC+1:00) Amsterdam, Brussels, Berlin, Madrid, Paris'),
++        ('(UTC+2:00) Athens, Bucharest', '(UTC+2:00) Athens, Bucharest'),
++        ('(UTC+2:00) Beirut', '(UTC+2:00) Beirut'),
++        ('(UTC+2:00) Cairo', '(UTC+2:00) Cairo'),
++        ('(UTC+2:00) Damascus', '(UTC+2:00) Damascus'),
++        ('(UTC+2:00) Harare, Pretoria', '(UTC+2:00) Harare, Pretoria'),
++        ('(UTC+2:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius', '(UTC+2:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius'),
++        ('(UTC+2:00) Istanbul', '(UTC+2:00) Istanbul'),
++        ('(UTC+2:00) Jerusalem', '(UTC+2:00) Jerusalem'),
++        ('(UTC+2:00) Tripoli', '(UTC+2:00) Tripoli'),
++        ('(UTC+3:00) Amman, Baghdad, Kuwait, Riyadh, Tehran, Nairobi', '(UTC+3:00) Amman, Baghdad, Kuwait, Riyadh, Tehran, Nairobi'),
++        ('(UTC+3:30) Tehran', '(UTC+3:30) Tehran'),
++        ('(UTC+4:00) Baku', '(UTC+4:00) Baku'),
++        ('(UTC+4:00) Moscow, St.Petersburg, Volgograd', '(UTC+4:00) Moscow, St.Petersburg, Volgograd'),
++        ('(UTC+4:30) Kabul', '(UTC+4:30) Kabul'),
++        ('(UTC+5:00) Ashgabat', '(UTC+5:00) Ashgabat'),
++        ('(UTC+5:30) Chennai, Kolkata, Mumbai, New Delhi', '(UTC+5:30) Chennai, Kolkata, Mumbai, New Delhi'),
++        ('(UTC+5:45) Kathmandu', '(UTC+5:45) Kathmandu'),
++        ('(UTC+6:00) Dhaka', '(UTC+6:00) Dhaka'),
++        ('(UTC+7:00) Novosibirsk, Bangkok, Hanoi, Jakarta', '(UTC+7:00) Novosibirsk, Bangkok, Hanoi, Jakarta'),
++        ('(UTC+8:00) Beijing, Singapore, Hong Kong, Taiwan', '(UTC+8:00) Beijing, Singapore, Hong Kong, Taiwan'),
++        ('(UTC+9:00) Tokyo, Seoul, Osaka, Sapporo, Yakutsk', '(UTC+9:00) Tokyo, Seoul, Osaka, Sapporo, Yakutsk'),
++        ('(UTC+9:30) Darwin', '(UTC+9:30) Darwin'),
++        ('(UTC+9:30) Adelaide', '(UTC+9:30) Adelaide'),
++        ('(UTC+10:00) Yakutsk', '(UTC+10:00) Yakutsk'),
++        ('(UTC+10:00) Hobart', '(UTC+10:00) Hobart'),
++        ('(UTC+10:00) Sydney, Canberra, Melbourne', '(UTC+10:00) Sydney, Canberra, Melbourne'),
++        ('(UTC+11:00) Sakhalin, Solomon Islands, New Caledonia', '(UTC+11:00) Sakhalin, Solomon Islands, New Caledonia'),
++        ('(UTC+12:00) Fiji', '(UTC+12:00) Fiji'),
++        ('(UTC+12:00) Auckland', '(UTC+12:00) Auckland'),
+     )
+     devices_audio = (
+         ('Enable', 'Enable'),
+@@ -187,11 +220,12 @@ class Devices(models.Model):
+     AccessDeniedR0Pulse = models.CharField(db_column = 'AccessDeniedR0Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
+     AccessDeniedR1Action = models.CharField(db_column = 'AccessDeniedR1Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
+     AccessDeniedR1Pulse = models.CharField(db_column = 'AccessDeniedR1Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
++    Timeout = models.CharField(db_column = 'Timeout', choices = devices_timeout, default = '10', max_length = 8, blank = True)
+     ScreenSaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, default = '5', max_length = 8, blank = True)
+-    NTP = models.CharField(db_column = 'NTP', default = '', max_length = 256, blank = True, null = True)
+-    Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, default = 'UTC+8', max_length = 8, blank = True)
++    NTP = models.CharField(db_column = 'NTP', default = 'time.stdtime.gov.tw', max_length = 256, blank = True, null = True)
++    Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, default = '(UTC) London, Dublin, Edinburgh, Lisbon', max_length = 256, blank = True)
+     Audio = models.CharField(db_column = 'Audio', choices = devices_audio, default = 'Enable', max_length = 8, blank = True)
+-    BioScore = models.CharField(db_column = 'BioScore', choices = devices_bioscore, default = 'Low', max_length = 8, blank = True)
++    FaceBioScore = models.CharField(db_column = 'FaceBioScore', choices = devices_bioscore, default = 'Low', max_length = 8, blank = True)
+     FingerBioScore = models.CharField(db_column = 'FingerBioScore', choices = devices_bioscore, default = 'Low', max_length = 8, blank = True)
+     Language = models.CharField(db_column = 'Language', choices = devices_language, default = 'en', max_length = 8, blank = True)
+     CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+@@ -221,11 +255,12 @@ class Devices(models.Model):
+             AccessDeniedR0Pulse = self.AccessDeniedR0Pulse,
+             AccessDeniedR1Action = self.AccessDeniedR1Action,
+             AccessDeniedR1Pulse = self.AccessDeniedR1Pulse,
++            Timeout = self.Timeout,
+             ScreenSaver = self.ScreenSaver,
+             NTP = self.NTP,
+             Timezone = self.Timezone,
+             Audio = self.Audio,
+-            BioScore = self.BioScore,
++            FaceBioScore = self.FaceBioScore,
+             FingerBioScore = self.FingerBioScore,
+             Language = self.Language,
+             CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+diff --git a/br06/settings.py b/br06/settings.py
+index 754075d..5d4a98f 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -173,8 +173,8 @@ LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ 
+ TCIT_IP = 'localhost:8800'
+ 
+-CONFIDENCE = {'Low':700, 'Medium':750, 'High':800}
+-FINGER_LEVEL = {'Low':15000, 'Medium':20000, 'High':25000}
++CONFIDENCE = {'Low': 700, 'Medium': 750, 'High': 800}
++FINGER_LEVEL = {'Low': 15000, 'Medium': 20000, 'High': 25000}
+ EMAIL_HOST = 'webmail.tw.shuttle.com'
+ EMAIL_HOST_USER = 'fr_serivce'
+ EMAIL_HOST_PASSWORD = 'Pa0000'
+diff --git a/devices/views.py b/devices/views.py
+index beebe19..3739e3f 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -3,6 +3,7 @@ from django.shortcuts import render
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Frusergroups, Frusergroupdevices
++from django.conf import settings
+ from datetime import datetime
+ from login.views import check_login
+ from django.db.models import Q
+@@ -75,7 +76,12 @@ def device_settings_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
++        return render(request, 'device_settings.html', {
++            'active': 'device_settings',
++            'obj': Devices.objects.get(OId = request.GET['OId']).as_json(),
++            'CONFIDENCE': settings.CONFIDENCE,
++            'FINGER_LEVEL': settings.FINGER_LEVEL
++        })
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+@@ -201,11 +207,12 @@ def settings_device(request):
+             AccessDeniedR0Pulse = request.POST['AccessDeniedR0Pulse'],
+             AccessDeniedR1Action = request.POST['AccessDeniedR1Action'],
+             AccessDeniedR1Pulse = request.POST['AccessDeniedR1Pulse'],
++            Timeout = request.POST['Timeout'],
+             ScreenSaver = request.POST['ScreenSaver'],
+             NTP = request.POST['NTP'],
+             Timezone = request.POST['Timezone'],
+             Audio = request.POST['Audio'],
+-            BioScore = request.POST['BioScore'],
++            FaceBioScore = request.POST['FaceBioScore'],
+             FingerBioScore = request.POST['FingerBioScore'],
+             Language = request.POST['Language'],
+             UpdateDate = datetime.now()
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index cf83cc2..057af00 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -163,9 +163,9 @@
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Bio score :</label>
++                                        <label class="col-md-3 control-label">Face Bio score :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">{{obj.BioScore}}</p>
++                                            <p class="text-left">{{obj.FaceBioScore}}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 6e2002d..495362a 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -168,6 +168,16 @@
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
++                                        <label class="col-md-3 control-label">Time out :</label>
++                                        <div class="col-md-3">
++                                            <select class="form-control" name="Timeout">
++                                                <option value="10">10 Seconds</option>
++                                                <option value="30">30 Seconds</option>
++                                                <option value="60">60 Seconds</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
+                                         <label class="col-md-3 control-label">Screen saver :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="ScreenSaver">
+@@ -187,33 +197,61 @@
+                                         <label class="col-md-3 control-label">Timezone :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Timezone">
+-                                                <option value="UTC-12">(UTC-12)</option>
+-                                                <option value="UTC-11">(UTC-11)</option>
+-                                                <option value="UTC-10">(UTC-10)</option>
+-                                                <option value="UTC-9">(UTC-9)</option>
+-                                                <option value="UTC-8">(UTC-8)</option>
+-                                                <option value="UTC-7">(UTC-7)</option>
+-                                                <option value="UTC-6">(UTC-6)</option>
+-                                                <option value="UTC-5">(UTC-5)</option>
+-                                                <option value="UTC-4">(UTC-4)</option>
+-                                                <option value="UTC-3">(UTC-3)</option>
+-                                                <option value="UTC-2">(UTC-2)</option>
+-                                                <option value="UTC-1">(UTC-1)</option>
+-                                                <option value="UTC+0">(UTC+0)</option>
+-                                                <option value="UTC+1">(UTC+1)</option>
+-                                                <option value="UTC+2">(UTC+2)</option>
+-                                                <option value="UTC+3">(UTC+3)</option>
+-                                                <option value="UTC+4">(UTC+4)</option>
+-                                                <option value="UTC+5">(UTC+5)</option>
+-                                                <option value="UTC+6">(UTC+6)</option>
+-                                                <option value="UTC+7">(UTC+7)</option>
+-                                                <option value="UTC+8">(UTC+8)</option>
+-                                                <option value="UTC+9">(UTC+9)</option>
+-                                                <option value="UTC+10">(UTC+10)</option>
+-                                                <option value="UTC+11">(UTC+11)</option>
+-                                                <option value="UTC+12">(UTC+12)</option>
+-                                                <option value="UTC+13">(UTC+13)</option>
+-                                                <option value="UTC+14">(UTC+14)</option>
++                                                <option value="(UTC-11:00) Midway Island, Samoa">(UTC-11:00) Midway Island, Samoa</option>
++                                                <option value="(UTC-10:00) Hawaii">(UTC-10:00) Hawaii</option>
++                                                <option value="(UTC-9:00)  Alaska">(UTC-9:00) Alaska</option>
++                                                <option value="(UTC-8:00) Pacific Time(US & Canada)">(UTC-8:00) Pacific Time(US & Canada)</option>
++                                                <option value="(UTC-7:00) Mountain Time(US & Canada)">(UTC-7:00) Mountain Time(US & Canada)</option>
++                                                <option value="(UTC-7:00) Arizona">(UTC-7:00) Arizona</option>
++                                                <option value="(UTC-7:00) Chihuahua, La Paz, Mazatlan">(UTC-7:00) Chihuahua, La Paz, Mazatlan</option>
++                                                <option value="(UTC-6:00) Central Time(US & Canada)">(UTC-6:00) Central Time(US & Canada)</option>
++                                                <option value="(UTC-6:00) Guadalajara, Mexico, Monterrey">(UTC-6:00) Guadalajara, Mexico, Monterrey</option>
++                                                <option value="(UTC-6:00) Saskatchewan">(UTC-6:00) Saskatchewan</option>
++                                                <option value="(UTC-5:00) Indiana(East)">(UTC-5:00) Indiana(East)</option>
++                                                <option value="(UTC-5:00) Eastern Time(US & Canada)">(UTC-5:00) Eastern Time(US & Canada)</option>
++                                                <option value="(UTC-5:00) Bogota, Lima, Quito">(UTC-5:00) Bogota, Lima, Quito</option>
++                                                <option value="(UTC-4:00) Cuiaba">(UTC-4:00) Cuiaba</option>
++                                                <option value="(UTC-4:00) Atlantic Time(Canada)">(UTC-4:00) Atlantic Time(Canada)</option>
++                                                <option value="(UTC-4:00) Georgetown, Manaus, San Juan">(UTC-4:00) Georgetown, Manaus, San Juan</option>
++                                                <option value="(UTC-4:00) Asuncion">(UTC-4:00) Asuncion</option>
++                                                <option value="(UTC-4:00) Santiago">(UTC-4:00) Santiago</option>
++                                                <option value="(UTC-3:30) Newfoundland">(UTC-3:30) Newfoundland</option>
++                                                <option value="(UTC-3:00) Montevideo">(UTC-3:00) Montevideo</option>
++                                                <option value="(UTC-3:00) Buenos Aires, Cayenne, Fortaleza, Salvador">(UTC-3:00) Buenos Aires, Cayenne, Fortaleza, Salvador</option>
++                                                <option value="(UTC-2:00) Mid-Atlantic">(UTC-2:00) Mid-Atlantic</option>
++                                                <option value="(UTC-1:00) Azores, Cape Verde Islands">(UTC-1:00) Azores, Cape Verde Islands</option>
++                                                <option value="(UTC) Monrovia, Reykjavik">(UTC) Monrovia, Reykjavik</option>
++                                                <option value="(UTC) London, Dublin, Edinburgh, Lisbon">(UTC) London, Dublin, Edinburgh, Lisbon</option>
++                                                <option value="(UTC+1:00) Amsterdam, Brussels, Berlin, Madrid, Paris">(UTC+1:00) Amsterdam, Brussels, Berlin, Madrid, Paris</option>
++                                                <option value="(UTC+2:00) Athens, Bucharest">(UTC+2:00) Athens, Bucharest</option>
++                                                <option value="(UTC+2:00) Beirut">(UTC+2:00) Beirut</option>
++                                                <option value="(UTC+2:00) Cairo">(UTC+2:00) Cairo</option>
++                                                <option value="(UTC+2:00) Damascus">(UTC+2:00) Damascus</option>
++                                                <option value="(UTC+2:00) Harare, Pretoria">(UTC+2:00) Harare, Pretoria</option>
++                                                <option value="(UTC+2:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius">(UTC+2:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius</option>
++                                                <option value="(UTC+2:00) Istanbul">(UTC+2:00) Istanbul</option>
++                                                <option value="(UTC+2:00) Jerusalem">(UTC+2:00) Jerusalem</option>
++                                                <option value="(UTC+2:00) Tripoli">(UTC+2:00) Tripoli</option>
++                                                <option value="(UTC+3:00) Amman, Baghdad, Kuwait, Riyadh, Tehran, Nairobi">(UTC+3:00) Amman, Baghdad, Kuwait, Riyadh, Tehran, Nairobi</option>
++                                                <option value="(UTC+3:30) Tehran">(UTC+3:30) Tehran</option>
++                                                <option value="(UTC+4:00) Baku">(UTC+4:00) Baku</option>
++                                                <option value="(UTC+4:00) Moscow, St.Petersburg, Volgograd">(UTC+4:00) Moscow, St.Petersburg, Volgograd</option>
++                                                <option value="(UTC+4:30) Kabul">(UTC+4:30) Kabul</option>
++                                                <option value="(UTC+5:00) Ashgabat">(UTC+5:00) Ashgabat</option>
++                                                <option value="(UTC+5:30) Chennai, Kolkata, Mumbai, New Delhi">(UTC+5:30) Chennai, Kolkata, Mumbai, New Delhi</option>
++                                                <option value="(UTC+5:45) Kathmandu">(UTC+5:45) Kathmandu</option>
++                                                <option value="(UTC+6:00) Dhaka">(UTC+6:00) Dhaka</option>
++                                                <option value="(UTC+7:00) Novosibirsk, Bangkok, Hanoi, Jakarta">(UTC+7:00) Novosibirsk, Bangkok, Hanoi, Jakarta</option>
++                                                <option value="(UTC+8:00) Beijing, Singapore, Hong Kong, Taiwan">(UTC+8:00) Beijing, Singapore, Hong Kong, Taiwan</option>
++                                                <option value="(UTC+9:00) Tokyo, Seoul, Osaka, Sapporo, Yakutsk">(UTC+9:00) Tokyo, Seoul, Osaka, Sapporo, Yakutsk</option>
++                                                <option value="(UTC+9:30) Darwin">(UTC+9:30) Darwin</option>
++                                                <option value="(UTC+9:30) Adelaide">(UTC+9:30) Adelaide</option>
++                                                <option value="(UTC+10:00) Yakutsk">(UTC+10:00) Yakutsk</option>
++                                                <option value="(UTC+10:00) Hobart">(UTC+10:00) Hobart</option>
++                                                <option value="(UTC+10:00) Sydney, Canberra, Melbourne">(UTC+10:00) Sydney, Canberra, Melbourne</option>
++                                                <option value="(UTC+11:00) Sakhalin, Solomon Islands, New Caledonia">(UTC+11:00) Sakhalin, Solomon Islands, New Caledonia</option>
++                                                <option value="(UTC+12:00) Fiji">(UTC+12:00) Fiji</option>
++                                                <option value="(UTC+12:00) Auckland">(UTC+12:00) Auckland</option>
+                                             </select>
+                                         </div>
+                                     </div>
+@@ -226,12 +264,12 @@
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Bio score :</label>
++                                        <label class="col-md-3 control-label">Face Bio score :</label>
+                                         <div class="col-md-3">
+-                                            <select class="form-control" name="BioScore">
+-                                                <option value="Low">Low</option>
+-                                                <option value="Medium">Medium</option>
+-                                                <option value="High">High</option>
++                                            <select class="form-control" name="FaceBioScore">
++                                                <option value="Low">Low({{CONFIDENCE.Low}})</option>
++                                                <option value="Medium">Medium({{CONFIDENCE.Medium}})</option>
++                                                <option value="High">High({{CONFIDENCE.High}})</option>
+                                             </select>
+                                         </div>
+                                     </div>
+@@ -239,9 +277,9 @@
+                                         <label class="col-md-3 control-label">Finger Bio score :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="FingerBioScore">
+-                                                <option value="Low">Low</option>
+-                                                <option value="Medium">Medium</option>
+-                                                <option value="High">High</option>
++                                                <option value="Low">Low({{FINGER_LEVEL.Low}})</option>
++                                                <option value="Medium">Medium({{FINGER_LEVEL.Medium}})</option>
++                                                <option value="High">High({{FINGER_LEVEL.High}})</option>
+                                             </select>
+                                         </div>
+                                     </div>
+@@ -303,7 +341,7 @@
+             var NTP = $('input[name=NTP]').val();
+             var Timezone = $('select[name=Timezone]').val();
+             var Audio = $('input[name=Audio]').prop('checked');
+-            var BioScore = $('select[name=BioScore]').val();
++            var FaceBioScore = $('select[name=FaceBioScore]').val();
+             var FingerBioScore = $('select[name=FingerBioScore]').val();
+             var Language = $('select[name=Language]').val();
+ 
+@@ -335,7 +373,7 @@
+                     'NTP': NTP,
+                     'Timezone': Timezone,
+                     'Audio': Audio,
+-                    'BioScore': BioScore,
++                    'FaceBioScore': FaceBioScore,
+                     'FingerBioScore': FingerBioScore,
+                     'Language': Language
+                 },
+@@ -362,6 +400,7 @@
+             $('select[name="AccessDeniedR0Pulse"]').val({{obj|safe}}.AccessDeniedR0Pulse);
+             $('input[name="AccessDeniedR1Action"][value=' + {{obj|safe}}.AccessDeniedR1Action + ']').prop('checked', true);
+             $('select[name="AccessDeniedR1Pulse"]').val({{obj|safe}}.AccessDeniedR1Pulse);
++            $('select[name="Timeout"]').val({{obj|safe}}.Timeout);
+             $('select[name="ScreenSaver"]').val({{obj|safe}}.ScreenSaver);
+             $('select[name="Timezone"]').val({{obj|safe}}.Timezone);
+             if ({{obj|safe}}.Audio == 'Enable') {
+@@ -369,7 +408,7 @@
+             } else {
+                 $('input[name="Audio"]').prop('checked', false);
+             }
+-            $('select[name="BioScore"]').val({{obj|safe}}.BioScore);
++            $('select[name="FaceBioScore"]').val({{obj|safe}}.FaceBioScore);
+             $('select[name="FingerBioScore"]').val({{obj|safe}}.FingerBioScore);
+             $('select[name="Language"]').val({{obj|safe}}.Language);
+         });
+-- 
+1.9.1
+

@@ -1,0 +1,25 @@
+From 57175126efbd998f77b037da97f82c0ad704f49c Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Wed, 14 Sep 2016 17:09:55 +0800
+Subject: [PATCH 281/443] Update the version to V.0.1.a.20160914
+
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index b6d1102..f95e30b 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
+ import os
+ from api.utility import get_localtimezone
+ 
+-VERSION = 'V.0.1.a.20160902'
++VERSION = 'V.0.1.a.20160914'
+ print(VERSION)
+ 
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+-- 
+1.9.1
+

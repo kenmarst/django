@@ -1,0 +1,1405 @@
+From 2b74458a917040109078156e42a377036df54228 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 13 Dec 2016 16:37:05 +0800
+Subject: [PATCH 412/443] Update the UI.
+
+---
+ templates/dashboard.html           |  25 ++-
+ templates/device_add.html          |   2 +-
+ templates/device_edit.html         |  28 ++--
+ templates/device_frusergroups.html |   9 +-
+ templates/device_list.html         |  20 +--
+ templates/device_settings.html     |   2 +-
+ templates/fruser_add.html          |  27 +--
+ templates/fruser_edit.html         |  40 ++---
+ templates/fruser_list.html         |  18 +-
+ templates/frusergroup_add.html     |   6 +-
+ templates/frusergroup_devices.html |   8 +-
+ templates/frusergroup_edit.html    |   2 +-
+ templates/frusergroup_member.html  |   9 +-
+ templates/frusergroups_list.html   |   8 +-
+ templates/fruserlog_list.html      |  12 +-
+ templates/logsetting.html          |  71 ++++----
+ templates/menu.html                |  11 +-
+ templates/role_add.html            |   4 +-
+ templates/role_list.html           |  10 +-
+ templates/role_permission.html     |   2 +-
+ templates/role_rename.html         |   2 +-
+ templates/system_settings.html     | 328 +++++++++++++++++++++++--------------
+ templates/systemlog_list.html      |   2 +-
+ templates/user_add.html            |   2 +-
+ templates/user_list.html           |   4 +-
+ 25 files changed, 372 insertions(+), 280 deletions(-)
+ mode change 100644 => 100755 templates/device_list.html
+
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index a984012..18d92b4 100755
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -11,7 +11,6 @@
+         <link rel="stylesheet" href="{% static "css/datepicker3.css" %}">
+         <link rel="stylesheet" href="{% static "css/bootstrap-table.css" %}">
+         <link rel="stylesheet" href="{% static "css/styles.css" %}">
+-        <link rel="stylesheet" href="{% static "css/font-awesome.min.css" %}">
+         <title>{% trans "Dashboard" %}</title>
+     </head>
+ 
+@@ -27,7 +26,7 @@
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>{% trans "Dashboard" %}</small></h1>
++                    <h1 class="page-header"><i class="ic-title fa fa-tachometer" aria-hidden="true"></i><small>{% trans "Dashboard" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -101,7 +100,7 @@
+ 
+                             <div class="row">
+                                 <div class="col-md-6 col-lg-6">
+-                                    <div class="panel panel-default" style="background-color:lavender;">
++                                    <div class="panel panel-default" style="background-color:#dfefff;">
+                                         <div class="panel-heading">{% trans "Device Info" %}</div>
+                                         <div class="panel-body">
+                                             <label>{% trans "Device Count" %}: {{device_total_count}} (online : {{device_online_count}} / offline : {{device_offline_count}} / {% trans "proposed" %} : {{device_proposed_count}})</label>
+@@ -113,7 +112,7 @@
+                                     </div>
+                                 </div>
+                                 <div class="col-md-6 col-lg-6">
+-                                    <div class="panel panel-default" style="background-color:lavenderblush;">
++                                    <div class="panel panel-default" style="background-color:#dfefff;">
+                                         <div class="panel-heading">{% trans "FR Users Info" %}</div>
+                                         <div class="panel-body">
+                                             <label>{% trans "FR User Count" %}: {{frusers_total_count}}</label>
+@@ -139,25 +138,25 @@
+                     </div>
+                     <div class="modal-body">
+                         <div class="row">
+-                            <form id="Br06UpdateForm" class="form-horizontal col-md-offset-1 col-md-10" enctype="multipart/form-data" >{% csrf_token %}
++                            <form id="Br06UpdateForm" class="col-md-12" enctype="multipart/form-data">{% csrf_token %}
+                                 <div id="Br06UpdateBody" class="form-body">
+                                     <div class="form-group">
+-                                        <h4><strong>{% trans "Note" %}:</strong> {% trans "The system cannot be operated when upgrading!" %}</h4>
++                                        <h4 style="color: #ff4d4d"><strong>{% trans "Note" %}:</strong> {% trans "The system cannot be operated when upgrading!" %}</h4>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="label label-default control-label">{% trans "Upgrade from server" %}</label><br>
++                                        <small id="fileHelp" class="form-text">{% trans "Upgrade from server" %}</small><br>
+                                         {% if NewServerVersion != softwave_version %}
+-                                            <label class="control-label">{% trans "The latest version is" %} <em>'{{NewServerVersion}}'</em></label>
+-                                            <button type="button" id="UpdateBr06ServerButton" class="btn btn-default pull-right" onclick="UpdateBr06Server()">{% trans "Upgrade" %}</button>
++                                            <label class="control-label" style="margin-top: 7px">{% trans "The latest version is" %} <em>'{{NewServerVersion}}'</em></label>
++                                            <button type="button" id="UpdateBr06ServerButton" class="btn btn-danger pull-right" onclick="UpdateBr06Server()">{% trans "Upgrade" %}</button>
+                                         {% else %}
+                                             <label class="control-label">{% trans "There are no newer versions." %}</label>
+                                             <button type="button" class="btn btn-default pull-right" disabled>{% trans "Upgrade" %}</button>
+                                         {% endif %}
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="label label-default control-label">{% trans "Upgrade from the choosed file" %}</label><br>
+-                                        <label class="control-label"><input id="Br06UpdateFile" type="file" name="file" title="Select File"></label>
+-                                        <button type="button" id="UpdateBr06FileButton" class="btn btn-default pull-right" onclick="UpdateBr06File()">{% trans "Upgrade" %}</button>
++                                        <small id="fileHelp" class="form-text">{% trans "Upgrade from the choosed file" %}</small><br>
++                                        <label class="control-label" style="margin-top: 7px"><input id="Br06UpdateFile" type="file" name="file" title="Select File" class="form-control-file"></label>
++                                        <button type="button" id="UpdateBr06FileButton" class="btn btn-danger pull-right" onclick="UpdateBr06File()">{% trans "Upgrade" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -165,7 +164,7 @@
+                     </div>
+                     <div class="modal-footer">
+                         <div class="row">
+-                            <div class="col-md-11">
++                            <div class="col-md-12">
+                                 <button type="button" id="UpdateBr06Close" class="btn btn-default pull-right" data-dismiss="modal">{% trans "Close" %}</button>
+                             </div>
+                         </div>
+diff --git a/templates/device_add.html b/templates/device_add.html
+index 6c58c42..1ae5970 100755
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -60,7 +60,7 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                       <button type="button" class="btn btn-default" onclick="location.href = '/device_list/'">{% trans "Back" %}</button>
+-                                      <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 1249898..25040e4 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -71,7 +71,7 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                       <button type="button" class="btn btn-default" onclick="location.href = '/device_list/'">{% trans "Back" %}</button>
+-                                      <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -106,9 +106,9 @@
+                                             <label class="col-md-3 control-label">{% trans "Event" %} :</label>
+                                             <div class="col-md-9">
+                                                 <div class="form-group">
+-                                                    <label class="col-md-3 control-label">{% trans "Welcome" %} :</label>
+-                                                    <label class="col-md-6 control-label">
++                                                    <label class="col-md-12 control-label">
+                                                         <p class="text-left">
++                                                            <span>{% trans "Welcome" %} :</span><br>
+                                                             {% if obj.WelcomeR0Action == 'Pulse' %}
+                                                                 {% trans "Relay" %}0 ({% trans "pulse" %} {{obj.WelcomeR0Pulse}} {% trans "sec" %})
+                                                             {% else %}
+@@ -124,19 +124,19 @@
+                                                     </label>
+                                                 </div>
+                                                 <div class="form-group">
+-                                                    <label class="col-md-3 control-label">{% trans "Access Denied" %} :</label>
+-                                                    <label class="col-md-6 control-label">
++                                                    <label class="col-md-12 control-label">
+                                                         <p class="text-left">
+-                                                            {% if obj.AccessDeniedR0Action == 'Pulse' %}
+-                                                                {% trans "Relay" %}0 ({% trans "pulse" %} {{obj.AccessDeniedR0Pulse}} {% trans "sec" %})
++                                                            <span>{% trans "Access Denied" %} :</span><br>
++                                                            {% if obj.WelcomeR0Action == 'Pulse' %}
++                                                                {% trans "Relay" %}0 ({% trans "pulse" %} {{obj.WelcomeR0Pulse}} {% trans "sec" %})
+                                                             {% else %}
+-                                                                {% trans "Relay" %}0 ({% trans obj.AccessDeniedR0Action %})
++                                                                {% trans "Relay" %}0 ({% trans obj.WelcomeR0Action %})
+                                                             {% endif%}
+                                                             ,
+-                                                            {% if obj.AccessDeniedR1Action == 'Pulse' %}
+-                                                                {% trans "Relay" %}1 ({% trans "pulse" %} {{obj.AccessDeniedR1Pulse}} {% trans "sec" %})
++                                                            {% if obj.WelcomeR1Action == 'Pulse' %}
++                                                                {% trans "Relay" %}1 ({% trans "pulse" %} {{obj.WelcomeR1Pulse}} {% trans "sec" %})
+                                                             {% else %}
+-                                                                {% trans "Relay" %}1 ({% trans obj.AccessDeniedR1Action %})
++                                                                {% trans "Relay" %}1 ({% trans obj.WelcomeR1Action %})
+                                                             {% endif%}
+                                                         </p>
+                                                     </label>
+@@ -194,10 +194,10 @@
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">{% trans "Version" %} :</label>
++                                        <label class="col-md-3 control-label">{% trans "Software Version" %} :</label>
+                                         <label class="col-md-6 control-label">
+                                             <p class="text-left">v1.0.0.9
+-                                                <a onclick="confirm('Confirm to upgrade this Device?');">
++                                                <a onclick="confirm('{% trans "Confirm to upgrade this device?" %}');">
+                                                     (<em>{% trans "There is a newer version can be upgraded." %}</em>)
+                                                     {% trans "Upgrade here" %}
+                                                 </a>
+@@ -207,7 +207,7 @@
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-9">
+-                                <button class="btn btn-default" onclick="location.href='/device_settings?OId={{obj.OId}}'">{% trans "Parameter Settings" %}</button>
++                                <button class="btn btn-primary" onclick="location.href='/device_settings?OId={{obj.OId}}'">{% trans "Parameter Settings" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 233ab0d..9b64c97 100755
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -38,10 +38,9 @@
+                     </ul>
+                 </div>
+             </div><!--/.row-->
+-
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <div class="col-md-8 panel panel-default">
++                    <div class="col-md-12 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Group list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="GroupList"></table>
+@@ -50,14 +49,14 @@
+                             <button type="button" class="btn btn-default" onclick="location.href='/device_list/'">{% trans "Back" %}</button>
+                         </div>
+                     </div>
+-                    <div class="col-md-offset-1 col-md-3 panel panel-default">
++                    <div class="col-md-12 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Group" %}</p></div>
+                         <div class="panel-body">
+                             <label>{% trans "Search Group" %} :</label>
+                             <table id="GroupAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
++                            <button class="btn btn-success" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -107,7 +106,7 @@
+                             row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
++                                    <button class="btn btn-danger" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/device_list.html b/templates/device_list.html
+old mode 100644
+new mode 100755
+index 1977a7f..e356f5f
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -31,8 +31,8 @@
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+                             <div id="DeviceAction">
+-                                <button id="AddDevice" class="btn btn-default" onclick="location.href='/device_add/'">{% trans "Create new device" %}</button>
+-                                <button id="UpgradeDevices" class="btn btn-default" onclick="update_all_device()" >{% trans "Upgrade all the devices" %}</button>{% csrf_token %}
++                                <button id="AddDevice" class="btn btn-success" onclick="location.href='/device_add/'">{% trans "Create new device" %}</button>
++                                <button id="UpgradeDevices" class="btn btn-primary" onclick="confirm('{% trans "Confirm to upgrade software of all the devices?" %}');">{% trans "Upgrade all the devices" %}</button>
+                             </div>
+                             <table id="DeviceList"></table>
+                         </div>
+@@ -91,11 +91,11 @@
+                         title: '{% trans "Status" %}',
+                         formatter: function(value, row) {
+                             if (value == 'Proposed') {
+-                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:gray"></i>';
++                                return '<i class="fa fa-exclamation-circle fa-2x text-center" aria-hidden="true" style="color:#ffa900"></i>';
+                             } else if (row.TimeGap > 30) {
+-                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:red"></i>';
++                                return '<i class="fa fa-times-circle fa-2x text-center" aria-hidden="true" style="color:#ff4d4d"></i>';
+                             } else {
+-                                return '<i class="fa fa-circle fa-2x text-center" aria-hidden="true" style="color:green"></i>';
++                                return '<i class="fa fa-check-circle fa-2x text-center" aria-hidden="true" style="color:#29cc29"></i>';
+                             }
+                         }
+                     },
+@@ -111,15 +111,15 @@
+                             if (row.State == 'Proposed') {
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick=accept_device("' + row.OId + '","' + row.Name + '")>{% trans "Accept" %}</button> \
+-                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Reject" %}</button> \
++                                        <button class="btn btn-success" onclick=accept_device("' + row.OId + '","' + row.Name + '")>{% trans "Accept" %}</button> \
++                                        <button class="btn btn-danger" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Reject" %}</button> \
+                                     </div>';
+                             } else {
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick="location.href=\'/device_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                        <button class="btn btn-default" onclick="location.href=\'/device_settings?OId=' + row.OId + '\'">{% trans "Settings" %}</button> \
+-                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
++                                        <button class="btn btn-primary" onclick="location.href=\'/device_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                        <button class="btn btn-primary" onclick="location.href=\'/device_settings?OId=' + row.OId + '\'">{% trans "Settings" %}</button> \
++                                        <button class="btn btn-danger" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                     </div>';
+                             }
+                         }
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 1b05161..922b682 100755
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -304,7 +304,7 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                         <button type="button" class="btn btn-default" onclick="location.href='/device_list/'">{% trans "Back" %}</button>
+-                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+diff --git a/templates/fruser_add.html b/templates/fruser_add.html
+index 9358cac..c503ef5 100755
+--- a/templates/fruser_add.html
++++ b/templates/fruser_add.html
+@@ -34,48 +34,51 @@
+                             <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">
++                                        <label class="col-lg-1 control-label">
+ 					                        <i style="color: red;">*</i>
+                                             {% trans "FRUserId" %} :
+                                         </label>
+-                                        <div class="col-md-2">
++                                        <div class="col-lg-3">
+                                             <input type="text" class="form-control" placeholder="{% trans "Input the user ID" %}" title="{% trans "Input the user ID" %}" name="FRUserId" AutoComplete="Off" pattern="[\w-]{1,16}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "The user ID can only contain 1 to 16 bit of English or Number or '_' or '-'" %}`)" autofocus required>
+                                         </div>
+-                                        <label class="col-md-1 control-label">
++                                        <label class="col-lg-1 control-label">
+ 					                        <i style="color: red;">*</i>
+                                             {% trans "Name" %} :
+                                         </label>
+-                                        <div class="col-md-2">
++                                        <div class="col-lg-3">
+                                             <input type="text" class="form-control" placeholder="{% trans "Input your name" %}" title="{% trans "Input your name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+-                                        <label class="col-md-1 control-label checkbox">
++                                        <label class="col-lg-1 control-label checkbox">
+                                             <input type="checkbox" name="State">{% trans "Disable" %}
+                                         </label>
+-                                        <div class="col-md-3">
++                                        <div class="col-lg-3">
+                                             <input type="text" class="form-control" placeholder="{% trans "Please input disable causes" %}" title="{% trans "Please input disable causes" %}" name="DisableCauses" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input disable causes" %}')" disabled required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">
++                                        <label class="col-lg-1 control-label">
+ 					                        <i style="color: red;">*</i>
+                                             {% trans "Gender" %} :
+                                         </label>
+-                                        <div class="col-md-2">
++                                        <div class="col-lg-3">
+                                             <select class="form-control" name="Gender">
+                                                 <option value="Male">{% trans "Male" %}</option>
+                                                 <option value="Female">{% trans "Female" %}</option>
+                                             </select>
+                                         </div>
+-                                        <label class="col-md-1 control-label">
++                                        <label class="col-lg-1 control-label">
+ 					                        <i style="color: red;">*</i>
+                                             {% trans "Age" %} :
+                                         </label>
+-                                        <div class="col-md-2">
++                                        <div class="col-lg-3">
+                                             <input type="number" class="form-control" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" min="1" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "The age can only be positive integers" %}')" required>
+                                         </div>
+-                                        <div class="col-md-offset-1 col-md-3" align="right">
++                                    </div>
++
++                                    <div class="form-group">
++                                        <div class="col-lg-12" align="right">
+                                             <button type="button" class="btn btn-default" onclick="location.href='/fruser_list'">{% trans "Back" %}</button>
+-                                            <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                            <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                         </div>
+                                     </div>
+                                 </div>
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index 1b4b104..cf74cf0 100755
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -37,80 +37,80 @@
+                             <form onsubmit="onSaveClick(); return false;" class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">{% trans "FRUserId" %} :</label>
+-                                        <label class="col-md-2 control-label">
++                                        <label class="col-lg-2 control-label">{% trans "FRUserId" %} :</label>
++                                        <label class="col-lg-2 control-label">
+                                             <p class="text-left">{{obj.FRUserId}}</p>
+                                         </label>
+-                                        <label class="col-md-1 control-label">{% trans "Name" %} :</label>
+-                                        <div class="col-md-2">
++                                        <label class="col-lg-1 control-label">{% trans "Name" %} :</label>
++                                        <div class="col-lg-2">
+                                             <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" value="{{obj.Name}}" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+-                                        <label class="col-md-1 control-label checkbox">
++                                        <label class="col-lg-1 control-label checkbox">
+                                             <input type="checkbox" name="State">{% trans "Disable" %}
+                                         </label>
+-                                        <div class="col-md-3">
++                                        <div class="col-lg-3">
+                                             <input type="text" class="form-control" value="{{obj.DisableCauses}}" placeholder="{% trans "Please input disable causes" %}" title="{% trans "Please input disable causes" %}" name="DisableCauses" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "Please input disable causes" %}')" required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-2 control-label">
++                                        <label class="col-lg-2 control-label">
+ 					                        <i style="color: red;">*</i>
+                                             {% trans "Gender" %} :
+                                         </label>
+-                                        <div class="col-md-2">
++                                        <div class="col-lg-2">
+                                             <select class="form-control" name="Gender">
+                                                 <option value="Male">{% trans "Male" %}</option>
+                                                 <option value="Female">{% trans "Female" %}</option>
+                                             </select>
+                                         </div>
+-                                        <label class="col-md-1 control-label">
++                                        <label class="col-lg-1 control-label">
+ 					                        <i style="color: red;">*</i>
+                                             {% trans "Age" %} :
+                                         </label>
+-                                        <div class="col-md-2">
++                                        <div class="col-lg-2">
+                                             <input type="number" class="form-control" value="{{obj.Age}}" placeholder="{% trans "Ex : 25" %}" title="{% trans "Ex : 25" %}" name="Age" min="1" oninput="setCustomValidity(''); checkValidity();" oninvalid="setCustomValidity('{% trans "The age can only be positive integers" %}')" required>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <div class="col-md-2 control-label">
++                                        <div class="col-lg-2 control-label">
+                                             {% if obj.RFID == 'archived' %}
+                                                 <i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>
+                                             {% else %}
+                                                 <i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>
+                                             {% endif %}
+                                         </div>
+-                                        <label class="col-md-2 control-label">
++                                        <label class="col-lg-2 control-label">
+                                             <p class="text-left">{% trans "RFID" %}</p>
+                                         </label>
+-                                        <div class="col-md-1 control-label">
++                                        <div class="col-lg-1 control-label">
+                                             {% if obj.FR == 'archived' %}
+                                                 <i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>
+                                             {% else %}
+                                                 <i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>
+                                             {% endif %}
+                                         </div>
+-                                        <label class="col-md-2 control-label">
++                                        <label class="col-lg-2 control-label">
+                                             <p class="text-left">{% trans "FR" %}</p>
+                                         </label>
+-                                        <div class="col-md-1 control-label">
++                                        <div class="col-lg-1 control-label">
+                                             {% if obj.FP == 'archived' %}
+                                                 <i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>
+                                             {% else %}
+                                                 <i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>
+                                             {% endif %}
+                                         </div>
+-                                        <label class="col-md-3 control-label">
++                                        <label class="col-lg-3 control-label">
+                                             <p class="text-left">{% trans "FP" %}</p>
+                                         </label>
+                                     </div>
+                                     <div class="form-group">
+-                                        <div class="col-md-offset-1 col-md-10" align="right">
++                                        <div class="col-lg-offset-1 col-lg-10" align="right">
+                                             <button type="button" class="btn btn-default" onclick="location.href='/fruser_list'">{% trans "Back" %}</button>
+-                                            <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                            <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <div class="col-md-6">
++                                        <div class="col-lg-6">
+                                             {% if obj.FaceID1 %}
+                                                 {% if obj.Face1 %}
+                                                     <img class="img-responsive" src="{{obj.Face1}}">
+@@ -119,7 +119,7 @@
+                                                 {% endif %}
+                                             {% endif %}
+                                         </div>
+-                                        <div class="col-md-6">
++                                        <div class="col-lg-6">
+                                             {% if obj.FaceID2 %}
+                                                 {% if obj.Face2 %}
+                                                     <img class="img-responsive" src="{{obj.Face2}}">
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index b819e6f..1d07a6b 100755
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -32,9 +32,9 @@
+                         <div class="panel-body">
+                             {% if not EN_4G %}
+                                 <div id="ImExport">
+-                                    <button class="btn btn-default" onclick="location.href='/fruser_add'">{% trans "Create FR User" %}</button>
+-                                    <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal" data-backdrop="static" data-keyboard="false">{% trans "Import" %}</button>
+-                                    <button class="btn btn-default" onclick="location.href='/export_fruser'">{% trans "Export" %}</button>
++                                    <button class="btn btn-success" onclick="location.href='/fruser_add'">{% trans "Create FR User" %}</button>
++                                    <button class="btn btn-primary" data-toggle="modal" data-target="#ImportModal" data-backdrop="static" data-keyboard="false">{% trans "Import" %}</button>
++                                    <button class="btn btn-primary" onclick="location.href='/export_fruser'">{% trans "Export" %}</button>
+                                 </div>
+                             {% endif %}
+                             <table id="FruserList"></table>
+@@ -60,7 +60,7 @@
+                         </div>
+                         <div class="modal-footer">
+                             <button id="ImportFruserClose" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+-                            <button id="ImportFruser" class="btn btn-default" onclick="ImportFruser()">{% trans "Upload" %}</button>
++                            <button id="ImportFruser" class="btn btn-primary" onclick="ImportFruser()">{% trans "Upload" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -126,7 +126,7 @@
+                         title: '{% trans "RFID" %}',
+                         formatter: function(value, row) {
+                             if (value == 'archived') {
+-                                return '<i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>';
++                                return '<i class="fa fa-check-square fa-lg" aria-hidden="true" style="color:#29a329"></i>';
+                             } else {
+                                 return '<i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>';
+                             }
+@@ -137,7 +137,7 @@
+                         title: '{% trans "FR" %}',
+                         formatter: function(value, row) {
+                             if (value == 'archived') {
+-                                return '<i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>';
++                                return '<i class="fa fa-check-square fa-lg" aria-hidden="true" style="color:#29a329"></i>';
+                             } else {
+                                 return '<i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>';
+                             }
+@@ -148,7 +148,7 @@
+                         title: '{% trans "FP" %}',
+                         formatter: function(value, row) {
+                             if (value == 'archived') {
+-                                return '<i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>';
++                                return '<i class="fa fa-check-square fa-lg" aria-hidden="true" style="color:#29a329"></i>';
+                             } else {
+                                 return '<i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>';
+                             }
+@@ -170,8 +170,8 @@
+                                 row.Name = row.Name.replace(/"/g, "&#34;").replace(/ /g, "&#160;").replace(/>/g, "&#62;").replace(/</g, "&#60;");
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                        <button class="btn btn-default" onclick=delete_fruser("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
++                                        <button class="btn btn-primary" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                        <button class="btn btn-danger" onclick=delete_fruser("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                     </div>';
+                             }
+                         }
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index 459296d..64a3f75 100755
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -41,10 +41,10 @@
+                                             <input type="text" class="form-control" placeholder="{% trans "Please input the group name" %}" title="{% trans "Please input the group name" %}" name="Name" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
+                                         </div>
+                                     </div>
+-                                    <div class="col-md-offset-3 col-md-9">
++                                    <div class="col-md-offset-3 col-md-6">
+                                         <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
+-                                        <button type="submit" class="btn btn-default" onclick="addAnother = false;">{% trans "Save" %}</button>
+-                                        <button type="submit" class="btn btn-default" onclick="addAnother = true;">{% trans "Save and Add another" %}</button>
++                                        <button type="submit" class="btn btn-primary" onclick="addAnother = false;">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-primary" onclick="addAnother = true;">{% trans "Save and Add another" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index e8a7a87..ee8b4b6 100755
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -46,7 +46,7 @@
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <div class="col-md-8 panel panel-default">
++                    <div class="col-md-12 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Device list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="DeviceList"></table>
+@@ -55,14 +55,14 @@
+                             <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
+                         </div>
+                     </div>
+-                    <div class="col-md-offset-1 col-md-3 panel panel-default">
++                    <div class="col-md-12 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Device" %}</p></div>
+                         <div class="panel-body">
+                             <label>{% trans "Search Device" %} :</label>
+                             <table id="DeviceAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
++                            <button class="btn btn-success" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -112,7 +112,7 @@
+                             row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>Delete</button> \
++                                    <button class="btn btn-danger" onclick=delete_device("' + row.OId + '","' + row.Name + '")>Delete</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index 2a9246a..f21c75c 100755
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -60,7 +60,7 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                         <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
+-                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 6ff082e..1c4e0a6 100755
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -41,10 +41,9 @@
+                     </ul>
+                 </div>
+             </div><!--/.row-->
+-
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <div class="col-md-8 panel panel-default">
++                    <div class="col-md-12 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Member list" %}</p></div>
+                         <div class="panel-body">
+                             <table id="MemberList"></table>
+@@ -53,14 +52,14 @@
+                             <button type="button" class="btn btn-default" onclick="location.href='/fruser_group/'">{% trans "Back" %}</button>
+                         </div>
+                     </div>
+-                    <div class="col-md-offset-1 col-md-3 panel panel-default">
++                    <div class="col-md-12 panel panel-default">
+                         <div class="panel-heading"><p>{% trans "Add New Member" %}</p></div>
+                         <div class="panel-body">
+                             <label>{% trans "Search User" %} :</label>
+                             <table id="MemberAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+-                            <button class="btn btn-default" onclick="onAddClick()">{% trans "Add" %}</button>
++                            <button class="btn btn-success" onclick="onAddClick()">{% trans "Add" %}</button>
+                         </div>
+                     </div>
+                 </div>
+@@ -110,7 +109,7 @@
+                             row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Name + '")>Delete</button> \
++                                    <button class="btn btn-danger" onclick=delete_user("' + row.OId + '","' + row.Name + '")>Delete</button> \
+                                 </div>';
+                         }
+                     }
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index f6e5d78..bda5b5b 100755
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -29,7 +29,7 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <button id="AddGroup" class="btn btn-default pull-right" onclick="location.href='/frusergroup_add/'">{% trans "Create new group" %}</button>
++                            <button id="AddGroup" class="btn btn-success pull-right" onclick="location.href='/frusergroup_add/'">{% trans "Create new group" %}</button>
+                             <table id="GroupList"></table>
+                         </div>
+                     </div>
+@@ -87,13 +87,13 @@
+                             if (row.Name != 'Default')
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-                                        <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
++                                        <button class="btn btn-primary" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                        <button class="btn btn-danger" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                     </div>';
+                             else
+                                 return ' \
+                                     <div align="center"> \
+-                                        <button class="btn btn-default" onclick="location.href=\'/frusergroup_devices?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                        <button class="btn btn-primary" onclick="location.href=\'/frusergroup_devices?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+                                     </div>';
+                         }
+                     }
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index aa3d525..351c2d4 100755
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -14,7 +14,7 @@
+ <script src="js/respond.min.js"></script>
+ <![endif]-->
+ 
+-</head>l
++</head>
+ 
+ <body>
+ 	{% include 'menu.html' %}
+@@ -27,10 +27,10 @@
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+-                <div class="col-lg-12">
+-                    <h1 class="page-header"><small>{% trans "FRUser Log List" %}</small></h1>
+-                </div>
+-            </div><!--/.row-->
++            <div class="col-lg-12">
++                <h1 class="page-header"><small>{% trans "FRUser Log List" %}</small></h1>
++            </div>
++        </div><!--/.row-->
+ 
+ 		<div class="row">
+ 			<div class="col-lg-12">
+@@ -38,7 +38,7 @@
+ 					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 				     <div class="panel-body">
+ 						<!-- data-url="{%static "data1.json"%}" -->
+-                         <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/fruserlog_export/'">{% trans "Export" %}</button>
++                         <button id="logexport" class="btn btn-primary pull-right" onclick="location.href='/fruserlog_export/'">{% trans "Export" %}</button>
+ 						 <table id="FRUserloglist"></table>
+ 						<!-- kimi test
+ 						{% for story in obj %}
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 7b0c3e3..54e09ed 100755
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -1,6 +1,8 @@
+ <!DOCTYPE html>
+ {% load i18n %}
+ {% include 'commons_js.html' %}
++{% load static %}
++
+ <html>
+ <head>
+ <meta charset="utf-8">
+@@ -13,28 +15,28 @@
+ <![endif]-->
+ 
+ </head>
+-    <body>
+-        {% include 'menu.html' %}
+-        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-            <div class="row">
+-                <ol class="breadcrumb">
+-                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">{% trans "Log Setting" %}</li>
+-                </ol>
+-            </div><!--/.row-->
+ 
+-            <div class="row">
+-                <div class="col-lg-12">
+-                    <h1 class="page-header"><small>{% trans "Log Setting" %}</small></h1>
+-                </div>
+-            </div><!--/.row-->
++<body>
++    {% include 'menu.html' %}
++    <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++        <div class="row">
++            <ol class="breadcrumb">
++                <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                <li class="active">{% trans "Log Setting" %}</li>
++            </ol>
++        </div><!--/.row-->
+ 
+-            <div class="row">
+-                <div class="col-lg-12">
+-                    <div class="panel panel-default">
+-                        <div class="panel-body">
+-                            <div class="form-body">
+-                                <div class="container">
++        <div class="row">
++            <div class="col-lg-12">
++                <h1 class="page-header"><small>{% trans "Log Setting" %}</small></h1>
++            </div>
++        </div><!--/.row-->
++
++        <div class="row">
++            <div class="col-lg-12">
++                <div class="panel panel-default">
++                    <!-- <div class="panel-heading">Advanced Table</div> -->
++                    <div class="panel-body">
+                                     <h4>{% trans "Separator Options" %}</h4><br>
+                                     <form role="form">
+                                         <div class="radio">
+@@ -79,20 +81,20 @@
+                                             </td>
+                                         </tr>
+                                     </table>
+-                                </div>
+                                 <div class="form-actions">
+-                                    <div class="col-md-offset-2 col-md-9">
+-                                        <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                    <div>
++                                        <br>
++                                        <a class="btn btn-primary" onclick="onSaveClick()">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+-                            </div>
+-                        </div>
++
+                     </div>
+                 </div>
+-            </div><!--/.row-->
+-        </div><!--/.main-->
++            </div>
++        </div><!--/.row-->
++    </div><!--/.main-->
+ 
+-        <script>
++    <script>
+         $(function () {
+             $("#add").click(function () {
+                 var $option = $("#select1 option:selected");
+@@ -123,10 +125,10 @@
+             var csrftoken = getCookie('csrftoken');
+             var symbol1 = $('input[name=optradio]').filter(":checked").val()
+             var symbol2 = $('input[name=customsymbol]').val()
+-			$("#select2").children().each(function(){
+-				this.selected = true;
+-			});
+-			var s = $("#select2").val()
++            $("#select2").children().each(function(){
++                this.selected = true;
++            });
++            var s = $("#select2").val()
+             symbol = symbol1;
+             if (s == null) {
+                 alert("{% trans "Please select items." %}");
+@@ -178,6 +180,7 @@
+                 $('input[name="customsymbol"]').val('{{symbol|safe}}');
+             }
+         });
+-        </script>
+-    </body>
++    </script>
++</body>
++
+ </html>
+diff --git a/templates/menu.html b/templates/menu.html
+index df687b2..a6884a3 100755
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -5,6 +5,7 @@
+ <link rel="stylesheet" href="{% static "css/datepicker3.css" %}">
+ <link rel="stylesheet" href="{% static "css/bootstrap-table.css" %}">
+ <link rel="stylesheet" href="{% static "css/styles.css" %}">
++<link rel="stylesheet" href="{% static "css/font-awesome.min.css" %}">
+ 
+ <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+ 	<div class="container-fluid">
+@@ -32,13 +33,13 @@
+ 	    <li class="parent ">
+ 			<a href="#"><span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked desktop"><use xlink:href="#stroked-desktop"/></svg> {% trans "System" %} </span></a>
+             <ul class="children collapse" id="sub-item-1">
+-                <li><a class="" href="/dashboard"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Dashboard" %} </a></li>
+-                <li><a class="" href="/user_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User List" %} </a></li>
++                <li><a class="" href="/dashboard"><i class="ic-menu fa fa-tachometer" aria-hidden="true"></i> {% trans "Dashboard" %} </a></li>
++                <li><a class="" href="/user_list"><i class="ic-menu fa fa-address-book" aria-hidden="true"></i> {% trans "User List" %} </a></li>
+                 <!--
+                 <li><a class="" href="/user_group_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User Group List" %} </a></li>
+                 -->
+-                <li><a class="" href="/role_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Role and Permission" %} </a></li>
+-                <li><a class="" href="/system_settings"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg> {% trans "Settings" %} </a></li>
++                <li><a class="" href="/role_list"><i class="ic-menu fa fa-address-card" aria-hidden="true"></i> {% trans "Role and Permission" %} </a></li>
++                <li><a class="" href="/system_settings"><i class="ic-menu fa fa-cog" aria-hidden="true"></i> {% trans "Settings" %} </a></li>
+             </ul>
+         </li>
+         {% endifequal %}
+@@ -66,7 +67,7 @@
+     </ul>
+ 
+     <script>
+-        function timeoutStart() { 
++        function timeoutStart() {
+             return setTimeout(function() {
+                 alert("{% trans "Longin timeout!" %}");
+                 location.href = '/';
+diff --git a/templates/role_add.html b/templates/role_add.html
+index b6ed086..dab6982 100755
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -48,8 +48,8 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                         <button type="button" class="btn btn-default" onclick="location.href='/role_list/'">{% trans "Back" %}</button>
+-                                        <button type="submit" class="btn btn-default" onclick="addAnother = false;">{% trans "Save" %}</button>
+-                                        <button type="submit" class="btn btn-default" onclick="addAnother = true;">{% trans "Save and Add another" %}</button>
++                                        <button type="submit" class="btn btn-primary" onclick="addAnother = false;">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-primary" onclick="addAnother = true;">{% trans "Save and Add another" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+diff --git a/templates/role_list.html b/templates/role_list.html
+index f9f214b..c21aa9d 100755
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -26,8 +26,8 @@
+ 		    </div><!--/.row-->
+ 
+             <div id='toolbar'>
+-                <button class="btn btn-default" onclick="location.href='/role_add/'" value="">{% trans "Create new Role" %}</button>
+-                <button class="btn btn-default" onclick="location.href='/role_permission/'" value="">{% trans "Role Permission" %}</button>
++                <button class="btn btn-success" onclick="location.href='/role_add/'" value="">{% trans "Create new Role" %}</button>
++                <button class="btn btn-primary" onclick="location.href='/role_permission/'" value="">{% trans "Role Permission" %}</button>
+             </div>
+ 
+             <div class="row">
+@@ -65,7 +65,7 @@
+                 search: true,
+                 pagination: true,
+                 toolbar: '#toolbar',
+-                pageSize: 10,
++                pageSize: 12,
+                 sortName: 'CreateDate',
+                 sortOrder: 'asc',
+                 sidePagination: 'server',
+@@ -117,8 +117,8 @@
+                             {
+                                 return ' \
+                                     <div align="center"> \
+-                                    <button class="btn btn-default" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">{% trans "Rename" %}</button> \
+-                                    <button class="btn btn-default" onclick=role_delete("' + row.OId + '")>{% trans "Delete" %}</button> \
++                                    <button class="btn btn-primary" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">{% trans "Rename" %}</button> \
++                                    <button class="btn btn-danger" onclick=role_delete("' + row.OId + '")>{% trans "Delete" %}</button> \
+                                     </div>';
+                             }
+                         }
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index dbb73bb..312d6ad 100755
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -35,7 +35,7 @@
+                         <div class="panel-footer">
+                             <div>
+                                 <button type="button" class="btn btn-default" onclick="location.href='/role_list/'">{% trans "Back" %}</button>
+-                                <button class="btn btn-default" onclick="permission_save()">{% trans "Save" %}</button>
++                                <button class="btn btn-primary" onclick="permission_save()">{% trans "Save" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index cca0a30..e815c59 100755
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -42,7 +42,7 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                         <button type="button" class="btn btn-default" onclick="location.href='/role_list/'">{% trans "Back" %}</button>
+-                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 29d4ede..9ba91e5 100755
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -7,7 +7,6 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <link rel="stylesheet" href="{% static "css/font-awesome.min.css" %}">
+         <title>{% trans "Settings" %}</title>
+     </head>
+ 
+@@ -29,141 +28,198 @@
+ 
+             <div class="row">
+                 <div class="col-md-12 col-lg-12">
+-                    <div class="panel panel-default" style="background-color:lavender;">
++                    <div class="panel panel-default" >
+                         <div class="panel-heading"><p>{% trans "Backup Scheduling" %}</p></div>
+                         <div class="panel-body">
+                             <form role="form">
+-                                <div class = "form-group form-inline" >
+-                                    <div class="radio">
++
++                                <div class="form-group">
++                                    <div class="radio-inline">
+                                         <label>
+                                             <input type="radio" value="Manually" id="BackupMethod_Manually" name="BackupMethod">{% trans "Manually" %}
+                                             <font size="-1" color="gray">({% trans "Instantly backup after clicking save" %})</font>
+                                         </label>
+                                     </div>
+-                                    <div></div>
+-                                    <div class="radio">
+-                                        <label><input type="radio" value="Automatic" id="BackupMethod_Automatic" name="BackupMethod">{% trans "Automatic" %}</label>
++                                </div>
++
++                                <div class="form-group">
++                                    <div class="radio-inline">
++                                        <label>
++                                            <input type="radio" value="Automatic" id="BackupMethod_Automatic" name="BackupMethod">{% trans "Automatic" %}
++                                        </label>
+                                     </div>
+                                 </div>
+-                                <div class = "form-group form-inline" >
+-                                    <div class="col-md-12">
+-                                        <input type="radio" value="Monthly" id="BackupScheduling_Month" name="BackupScheduling">{% trans "Every Month" %}
+-                                        <input type="number" min="1" max="31" maxlength=2 size=1 id="BackupMonthlyDate" name="BackupMonthlyDate">{% trans "Day" %}, {% trans "Time" %}:
+-                                        <select id="BackupMonthlyDate_hours" name="BackupMonthlyDate_hours">
+-                                            <option value="0">00</option>
+-                                            <option value="1">01</option>
+-                                            <option value="2">02</option>
+-                                            <option value="3">03</option>
+-                                            <option value="4">04</option>
+-                                            <option value="5">05</option>
+-                                            <option value="6">06</option>
+-                                            <option value="7">07</option>
+-                                            <option value="8">08</option>
+-                                            <option value="9">09</option>
+-                                            <option value="10">10</option>
+-                                            <option value="11">11</option>
+-                                            <option value="12">12</option>
+-                                            <option value="13">13</option>
+-                                            <option value="14">14</option>
+-                                            <option value="15">15</option>
+-                                            <option value="16">16</option>
+-                                            <option value="17">17</option>
+-                                            <option value="18">18</option>
+-                                            <option value="19">19</option>
+-                                            <option value="20">20</option>
+-                                            <option value="21">21</option>
+-                                            <option value="22">22</option>
+-                                            <option value="23">23</option>
+-                                        </select>
+-                                        <label>:</label>
+-                                        <select id="BackupMonthlyDate_mins"  name="BackupMonthlyDate_mins">
+-                                            <option value="0">00</option>
+-                                            <option value="5">05</option>
+-                                            <option value="10">10</option>
+-                                            <option value="15">15</option>
+-                                            <option value="20">20</option>
+-                                            <option value="25">25</option>
+-                                            <option value="30">30</option>
+-                                            <option value="35">35</option>
+-                                            <option value="40">40</option>
+-                                            <option value="45">45</option>
+-                                            <option value="50">50</option>
+-                                            <option value="55">55</option>
+-                                        </select>
++
++                                <div class="form-group">
++                                    <div class="form-group col-md-12">
++                                        <div class="form-group form-inline">
++                                            <input type="radio" value="Monthly" id="BackupScheduling_Month" name="BackupScheduling">
++                                            <label>{% trans "Every Month" %}</label>
++                                            <input type="number" class="form-control" min="1" max="31" maxlength=2 size=1 id="BackupMonthlyDate" name="BackupMonthlyDate">
++                                            <label>{% trans "Day" %}, {% trans "Time" %}：</label>
++                                            <select id="BackupMonthlyDate_hours" class="form-control" name="BackupMonthlyDate_hours">
++                                                <option value="0">00</option>
++                                                <option value="1">01</option>
++                                                <option value="2">02</option>
++                                                <option value="3">03</option>
++                                                <option value="4">04</option>
++                                                <option value="5">05</option>
++                                                <option value="6">06</option>
++                                                <option value="7">07</option>
++                                                <option value="8">08</option>
++                                                <option value="9">09</option>
++                                                <option value="10">10</option>
++                                                <option value="11">11</option>
++                                                <option value="12">12</option>
++                                                <option value="13">13</option>
++                                                <option value="14">14</option>
++                                                <option value="15">15</option>
++                                                <option value="16">16</option>
++                                                <option value="17">17</option>
++                                                <option value="18">18</option>
++                                                <option value="19">19</option>
++                                                <option value="20">20</option>
++                                                <option value="21">21</option>
++                                                <option value="22">22</option>
++                                                <option value="23">23</option>
++                                            </select>
++                                            <label>：</label>
++                                            <select id="BackupMonthlyDate_mins" class="form-control" name="BackupMonthlyDate_mins">
++                                                <option value="0">00</option>
++                                                <option value="5">05</option>
++                                                <option value="10">10</option>
++                                                <option value="15">15</option>
++                                                <option value="20">20</option>
++                                                <option value="25">25</option>
++                                                <option value="30">30</option>
++                                                <option value="35">35</option>
++                                                <option value="40">40</option>
++                                                <option value="45">45</option>
++                                                <option value="50">50</option>
++                                                <option value="55">55</option>
++                                            </select>
++                                        </div>
++
++                                        <div class="form-group form-inline">
++                                            <input type="radio" value="Weekly" id="BackupScheduling_Week" name="BackupScheduling">
++                                            <label>{% trans "Every Week" %}</label>
++                                            <label class="checkbox-inline">
++                                                <input type="checkbox" id="sun_chk" name="sun_chk" value="7">{% trans "Sun" %}
++                                            </label>
++                                            <label class="checkbox-inline">
++                                                <input type="checkbox" id="mon_chk" name="mon_chk" value="1">{% trans "Mon" %}
++                                            </label>
++                                            <label class="checkbox-inline">
++                                                <input type="checkbox" id="tue_chk" name="tue_chk" value="2">{% trans "Tue" %}
++                                            </label>
++                                            <label class="checkbox-inline">
++                                                <input type="checkbox" id="wed_chk" name="wed_chk" value="3">{% trans "Wed" %}
++                                            </label>
++                                            <label class="checkbox-inline">
++                                                <input type="checkbox" id="thu_chk" name="thu_chk" value="4">{% trans "Thu" %}
++                                            </label>
++                                            <label class="checkbox-inline">
++                                                <input type="checkbox" id="fri_chk" name="fri_chk" value="5">{% trans "Fri" %}
++                                            </label>
++                                            <label class="checkbox-inline">
++                                                <input type="checkbox" id="sat_chk" name="sat_chk" value="6">{% trans "Sat" %} Time：
++                                            </label>
++                                            <select id="BackupWeeklyDate_hours" class="form-control" name="BackupWeeklyDate_hours">
++                                                <option value="0">00</option>
++                                                <option value="1">01</option>
++                                                <option value="2">02</option>
++                                                <option value="3">03</option>
++                                                <option value="4">04</option>
++                                                <option value="5">05</option>
++                                                <option value="6">06</option>
++                                                <option value="7">07</option>
++                                                <option value="8">08</option>
++                                                <option value="9">09</option>
++                                                <option value="10">10</option>
++                                                <option value="11">11</option>
++                                                <option value="12">12</option>
++                                                <option value="13">13</option>
++                                                <option value="14">14</option>
++                                                <option value="15">15</option>
++                                                <option value="16">16</option>
++                                                <option value="17">17</option>
++                                                <option value="18">18</option>
++                                                <option value="19">19</option>
++                                                <option value="20">20</option>
++                                                <option value="21">21</option>
++                                                <option value="22">22</option>
++                                                <option value="23">23</option>
++                                            </select>
++                                            <label>：</label>
++                                            <select id="BackupWeeklyDate_mins" class="form-control" name="BackupWeeklyDate_mins">
++                                                <option value="0">00</option>
++                                                <option value="5">05</option>
++                                                <option value="10">10</option>
++                                                <option value="15">15</option>
++                                                <option value="20">20</option>
++                                                <option value="25">25</option>
++                                                <option value="30">30</option>
++                                                <option value="35">35</option>
++                                                <option value="40">40</option>
++                                                <option value="45">45</option>
++                                                <option value="50">50</option>
++                                                <option value="55">55</option>
++                                            </select>
++                                        </div>
++
++                                        <div class="form-group form-inline">
++                                            <div class="form-md-line-input">
++                                                <label class="control-label">{% trans "Local backup location" %}：</label>
++                                                <input class="form-control" type="text" id="BackupLocal" name="BackupLocal" maxlength=256 size=32 placeholder="/opt/backup">
++                                            </div>
++                                        </div>
+                                     </div>
+                                 </div>
+-                                <div class = "form-group form-inline">
++
++                                <div class="form-group">
++                                    <label class="checkbox-inline control-label">
++                                        <input type="checkbox" id="rftp_chk" name="rftp_chk">
++                                        <strong>{% trans "Remote backup FTP Setting" %}：</strong>
++                                    </label>
++                                </div>
++                                
++                                <div class="form-group">
+                                     <div class="col-md-12">
+-                                        <input type="radio" value="Weekly" id="BackupScheduling_Week" name="BackupScheduling">{% trans "Every Week" %}
+-                                        <input type="checkbox" id="sun_chk" name="sun_chk" value="7">{% trans "Sun" %},
+-                                        <input type="checkbox" id="mon_chk" name="mon_chk" value="1">{% trans "Mon" %},
+-                                        <input type="checkbox" id="tue_chk" name="tue_chk" value="2">{% trans "Tue" %},
+-                                        <input type="checkbox" id="wed_chk" name="wed_chk" value="3">{% trans "Wed" %},
+-                                        <input type="checkbox" id="thu_chk" name="thu_chk" value="4">{% trans "Thu" %},
+-                                        <input type="checkbox" id="fri_chk" name="fri_chk" value="5">{% trans "Fri" %},
+-                                        <input type="checkbox" id="sat_chk" name="sat_chk" value="6">{% trans "Sat" %}, Time:
+-                                        <select id="BackupWeeklyDate_hours" name="BackupWeeklyDate_hours">
+-                                            <option value="0">00</option>
+-                                            <option value="1">01</option>
+-                                            <option value="2">02</option>
+-                                            <option value="3">03</option>
+-                                            <option value="4">04</option>
+-                                            <option value="5">05</option>
+-                                            <option value="6">06</option>
+-                                            <option value="7">07</option>
+-                                            <option value="8">08</option>
+-                                            <option value="9">09</option>
+-                                            <option value="10">10</option>
+-                                            <option value="11">11</option>
+-                                            <option value="12">12</option>
+-                                            <option value="13">13</option>
+-                                            <option value="14">14</option>
+-                                            <option value="15">15</option>
+-                                            <option value="16">16</option>
+-                                            <option value="17">17</option>
+-                                            <option value="18">18</option>
+-                                            <option value="19">19</option>
+-                                            <option value="20">20</option>
+-                                            <option value="21">21</option>
+-                                            <option value="22">22</option>
+-                                            <option value="23">23</option>
+-                                        </select>
+-                                        <label>:</label>
+-                                        <select id="BackupWeeklyDate_mins"  name="BackupWeeklyDate_mins">
+-                                            <option value="0">00</option>
+-                                            <option value="5">05</option>
+-                                            <option value="10">10</option>
+-                                            <option value="15">15</option>
+-                                            <option value="20">20</option>
+-                                            <option value="25">25</option>
+-                                            <option value="30">30</option>
+-                                            <option value="35">35</option>
+-                                            <option value="40">40</option>
+-                                            <option value="45">45</option>
+-                                            <option value="50">50</option>
+-                                            <option value="55">55</option>
+-                                        </select>
+-                                        <div>{% trans "Local backup location" %}:<input type="text" id="BackupLocal" name="BackupLocal" maxlength=256 size=32 placeholder="/opt/backup"></div>
+-                                        <div class="checkbox"><input type="checkbox" id="rftp_chk" name="rftp_chk">{% trans "Remote backup FTP Setting" %}:</div>
+-                                        <div class="col-md-12">
+-                                            <!--{% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=20 placeholder="IP ADDRESS" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$">-->
+-                                            {% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=25 placeholder="HOST NAME / IP ADDRESS">
+-                                            {% trans "PORT" %}(P):<input type="text" id="BackupRemotePort" name="BackupRemotePort" maxlength=5 size=4 placeholder="21">
+-                                            {% trans "PATH" %}(D):<input type="text" id="BackupRemotePath" name="BackupRemotePath" maxlength=256 size=20 placeholder="BR06">
++                                        <div class="form-group form-inline">
++                                            <label>{% trans "PATH" %}(D)：</label>
++                                            <input class="form-control" type="text" id="BackupRemotePath" name="BackupRemotePath" maxlength=256 size=25 placeholder="BR06">
++                                        </div>
++
++                                        <div class="form-group form-inline">
++                                            <label>{% trans "PORT" %}(P)：</label>
++                                            <input class="form-control" type="text" id="BackupRemotePort" name="BackupRemotePort" maxlength=5 size=4 placeholder="21">
++                                        </div>
++
++                                        <div class="form-group form-inline">
++                                            <label>{% trans "HOST" %}(H)：</label>
++                                            <input class="form-control" type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=25 placeholder="HOST NAME / IP ADDRESS">
++                                        </div>
++
++                                        <div class="form-group form-inline">
++                                            <label>{% trans "USERNAME" %}(U)：</label>
++                                            <input class="form-control" type="text" id="BackupRemoteAccount" name="BackupRemoteAccount" maxlength=20 size=20 placeholder="USERNAME">
+                                         </div>
+-                                        <div class="col-md-12">
+-                                            {% trans "USERNAME" %}(U):<input type="text" id="BackupRemoteAccount" name="BackupRemoteAccount" maxlength=20 size=20 placeholder="USERNAME">
+-                                            {% trans "PASSWORD" %}(W):<input type="password" id="BackupRemotePassword" name="BackupRemotePassword" maxlength=20 size=20 placeholder="PASSWORD">
+-                                            <button type="button" class="btn btn-info btn-sm" id="connect_test" name="connect_test" onclick="OnConnectTestClick()">
++
++                                        <div class="form-group form-inline">
++                                            <label>{% trans "PASSWORD" %}(W)：</label>
++                                            <input class="form-control" type="password" id="BackupRemotePassword" name="BackupRemotePassword" maxlength=20 size=20 placeholder="PASSWORD">
++                                            <button type="button" class="btn btn-success" id="connect_test" name="connect_test" onclick="OnConnectTestClick()">
+                                                 {% trans "Connect Test" %}
+                                             </button>
+                                         </div>
++
+                                     </div>
+                                 </div>
+-                                <div class="col-md-12"><br></div>
+-                                <div class="form-actions form-group">
+-                                    <input type="button" class="btn btn-info" onclick="backupOnSaveClick()" value="{% trans "Save" %}">
++                                         
++                                <div class="form-group form-actions">
++                                    <input type="button" class="btn btn-primary" onclick="backupOnSaveClick()" value="{% trans "Save" %}">
+                                 </div>
++
+                                 <!--<div>
+                                      {{BackupMethod}},<br>{{BackupScheduling}},<br>{{BackupMonthlyDate}},<br>{{BackupWeeklyDate}},
+                                      <br>{{BackupTime}}, {{BackupTime_hours}} : {{BackupTime_mins}}
+@@ -176,14 +232,46 @@
+                     </div><!--panel panel-default-->
+                 </div><!--col-lg-12-->
+             </div><!--/.row-->
++
+             <div class="row">
+                 <div class="col-md-12 col-lg-12">
+-                    <div class="panel panel-default" style="background-color:lavenderblush;">
++                    <div class="panel panel-default">
+                         <div class="panel-heading">{% trans "System Log" %}</div>
+                         <div class="panel-body">
++
+                             <form role="form">
+                                 <div class="form-group">
+-                                    <p>{% trans "Log count limit" %}:
++                                    <div class="form-group form-inline">
++                                        {% trans "Log count limit" %}：
++                                        <input type="number" class="form-control" min="1" maxlength=7 size=10 id="LogLimit" name="LogLimit">
++                                        , {% trans "if the logs exceeds limit" %}, {% trans "keep" %}
++                                        <input type="number" class="form-control" min="1" max="120" maxlength=2 size=1 id="LogPreservation" name="LogPreservation">
++                                        {% trans "month data" %}(default=1), {% trans "others will be remove." %}
++                                    </div>
++                                    <p>
++                                        * {% trans "In limit duration, the logs can be record to 150% amount." %} <br>
++                                        * {% trans "Over 150% amount, system will keep latest logs, and remove the other older logs." %}
++                                    </p>
++                                </div>
++
++                                <div class="form-group">
++                                    <label class="checkbox-inline">
++                                        <input type="checkbox" id="PicCreateSave" name="PicCreateSave">{% trans "Save FR user register photo image" %}
++                                    </label>
++                                    <label class="checkbox-inline">
++                                        <input type="checkbox" id="PicFaceSave" name="PicFaceSave">{% trans "Save FR user recognition photo image" %}
++                                    </label>
++                                </div>
++
++                                <div class="form-group form-actions">
++                                    <input type="button" class="btn btn-primary" onclick="logOnSaveClick()" value="{% trans "Save" %}">
++                                </div>
++
++                            </form>
++
++                            <!-- <form role="form">
++                                <div class="form-group">
++                                    <p>{% trans "Log count limit" %}：
+                                     <input type="number" min="1" maxlength=7 size=10 id="LogLimit" name="LogLimit">
+                                     , {% trans "if the logs exceeds limit" %}, {% trans "keep" %}
+                                     <input type="number" min="1" max="120" maxlength=2 size=1 id="LogPreservation" name="LogPreservation">
+@@ -199,9 +287,9 @@
+                                 </div>
+                                 <div class="col-md-12"><br></div>
+                                 <div class="form-actions form-group">
+-                                    <input type="button" class="btn btn-info" onclick="logOnSaveClick()" value="{% trans "Save" %}">
++                                    <input type="button" class="btn btn-primary" onclick="logOnSaveClick()" value="{% trans "Save" %}">
+                                 </div>
+-                            </form>
++                            </form> -->
+                         </div><!--panel-body-->
+                     </div><!--panel panel-default-->
+                 </div><!--col-lg-12-->
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index 2a97a80..3b198ec 100755
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -37,7 +37,7 @@
+ 				<div class="panel panel-default">
+ 					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 					<div class="panel-body">
+-					    <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/systemlog_export/'">{% trans "Export" %}</button>
++					    <button id="logexport" class="btn btn-primary pull-right" onclick="location.href='/systemlog_export/'">{% trans "Export" %}</button>
+ 						<table id="SystemLogList"></table>
+                     </div>
+ 				</div>
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 8fd5896..e318e8d 100755
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -93,7 +93,7 @@
+                                     </div>
+                                     <div class="col-md-offset-3 col-md-9">
+                                         <button type="button" class="btn btn-default" onclick="location.href = '/user_list/'">{% trans "Back" %}</button>
+-                                        <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
++                                        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 8e5dcfe..fddff70 100755
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -36,7 +36,7 @@
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+ 					<div class="panel-body">
+-				        <button id="new_acc" class="btn btn-default" onclick="location.href='/user_add/'" value="">{% trans "Create new account" %}</button>
++				        <button id="new_acc" class="btn btn-success" onclick="location.href='/user_add/'" value="">{% trans "Create new account" %}</button>
+ 						<table id="userList">
+ 					</div>
+ 				</div>
+@@ -108,7 +108,7 @@
+                     formatter: function(value, row) {
+                         row.Account = row.Account.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                         if (row.Account != 'admin')
+-                            return '<button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
++                            return '<button class="btn btn-danger" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
+                         else
+                             return '';
+                     }
+-- 
+1.9.1
+

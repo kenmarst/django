@@ -1,0 +1,32 @@
+From 1c8448f466c3e4b7f1cef59612db334b8fe09e17 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 1 Dec 2016 17:20:14 +0800
+Subject: [PATCH 385/443] [FaceVerify, RFIDVerify] Add Fruserlogs when pass.
+
+---
+ api/recognition.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 054e998..d34b0c6 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -95,6 +95,7 @@ def face_verify(request):
+                                         for j in i.GroupOId.frusergroupdevices_set.filter(GroupOId = i.GroupOId.OId):
+                                             #print(j.DeviceOId.IP)
+                                             if ip_device.IP == j.DeviceOId.IP:
++                                                Fruserlogs.objects.create(FRUserOId = fruser.OId, FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face verify pass')
+                                                 return JsonResponse(result_pass)
+                                     raise Exception('No accept device in frusergroup')
+                                 else:
+@@ -254,6 +255,7 @@ def rfid_verify(request):
+                     for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+                         for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
+                             if device.DeviceOId == ip_device:
++                                Fruserlogs.objects.create(FRUserOId = fruser.OId, FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'RFID verify pass')
+                                 return JsonResponse(dict(ChainMap(result_pass, {'FRUserId':fruser.FRUserId}, {'Name':fruser.Name})))
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'There is no permission device'})))
+                 else:
+-- 
+1.9.1
+

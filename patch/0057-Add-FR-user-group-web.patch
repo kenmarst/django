@@ -1,0 +1,1177 @@
+From 0c75fdb25de3bff9db72951eabb414804b3059c3 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Fri, 20 May 2016 16:57:31 +0800
+Subject: [PATCH 057/443] Add FR user group web.
+
+---
+ br06/urls.py                                     |  16 ++
+ frusergroups/__init__.py                         |   0
+ frusergroups/__pycache__/__init__.cpython-34.pyc | Bin 0 -> 139 bytes
+ frusergroups/__pycache__/views.cpython-34.pyc    | Bin 0 -> 7251 bytes
+ frusergroups/admin.py                            |   3 +
+ frusergroups/apps.py                             |   5 +
+ frusergroups/migrations/__init__.py              |   0
+ frusergroups/models.py                           |   3 +
+ frusergroups/tests.py                            |   3 +
+ frusergroups/views.py                            | 159 ++++++++++++++++++
+ templates/frusergroup_add.html                   | 140 ++++++++++++++++
+ templates/frusergroup_devices.html               | 202 +++++++++++++++++++++++
+ templates/frusergroup_edit.html                  | 125 ++++++++++++++
+ templates/frusergroup_member.html                | 202 +++++++++++++++++++++++
+ templates/frusergroups_list.html                 | 123 ++++++++++++++
+ 15 files changed, 981 insertions(+)
+ create mode 100644 frusergroups/__init__.py
+ create mode 100644 frusergroups/__pycache__/__init__.cpython-34.pyc
+ create mode 100644 frusergroups/__pycache__/views.cpython-34.pyc
+ create mode 100644 frusergroups/admin.py
+ create mode 100644 frusergroups/apps.py
+ create mode 100644 frusergroups/migrations/__init__.py
+ create mode 100644 frusergroups/models.py
+ create mode 100644 frusergroups/tests.py
+ create mode 100644 frusergroups/views.py
+ create mode 100644 templates/frusergroup_add.html
+ create mode 100644 templates/frusergroup_devices.html
+ create mode 100644 templates/frusergroup_edit.html
+ create mode 100644 templates/frusergroup_member.html
+ create mode 100644 templates/frusergroups_list.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 8ebc9a0..d03f8d1 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -24,6 +24,7 @@ from logsetting.views import logsetting
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role
++from frusergroups.views import frusergroups_list, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, add_frusergroup_device, delete_frusergroup_device
+ 
+ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+@@ -87,6 +88,21 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
++    url(r'^fruser_group/?$', frusergroups_list),
++    url(r'^delete_frusergroup/?$', delete_frusergroup),
++    url(r'^frusergroup_add/?$', frusergroup_add_view),
++    url(r'^add_frusergroup/?$', add_frusergroup),
++    url(r'^frusergroup_edit/?$', frusergroup_edit_view),
++    url(r'^change_frusergroup_name/?$', change_frusergroup_name),
++    url(r'^frusergroup_member/?$', frusergroup_member_view),
++    url(r'^add_frusergroup_member/?$', add_frusergroup_member),
++    url(r'^delete_frusergroup_member/?$', delete_frusergroup_member),
++    url(r'^frusergroup_devices/?$', frusergroup_devices_view),
++    url(r'^add_frusergroup_device/?$', add_frusergroup_device),
++    url(r'^delete_frusergroup_device/?$', delete_frusergroup_device),
++]
++
++urlpatterns += [
+     url(r'^api/user/add/?$', user.add),
+     url(r'^api/user/update/?$', user.update),
+     url(r'^api/user/delete/?$', user.delete),
+diff --git a/frusergroups/__init__.py b/frusergroups/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/frusergroups/__pycache__/__init__.cpython-34.pyc b/frusergroups/__pycache__/__init__.cpython-34.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..ada12bd88d0ec6e77277c2e187d901fa1b421a5b
+GIT binary patch
+literal 139
+zcmaFI!^>s<+$x*_2p)q77+?f49Dul(1xTbYFa&Ed`mJOr0tq9CUl#fq`MIh3NvV0o
+z`FZ+IK?Y{}Mh1pv2BwA<`bkAVURqIUacWU|QGRJbv3`7fW?p7Ve7s&k<t+}I-29Z%
+NoK!oIiN!$7002>>AJqT=
+
+literal 0
+HcmV?d00001
+
+diff --git a/frusergroups/__pycache__/views.cpython-34.pyc b/frusergroups/__pycache__/views.cpython-34.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..e5435beb2ee9caef5d2925386c5073d5fe4771e0
+GIT binary patch
+literal 7251
+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
+M7K_D+;(W3A9}(w7#Q*>R
+
+literal 0
+HcmV?d00001
+
+diff --git a/frusergroups/admin.py b/frusergroups/admin.py
+new file mode 100644
+index 0000000..8c38f3f
+--- /dev/null
++++ b/frusergroups/admin.py
+@@ -0,0 +1,3 @@
++from django.contrib import admin
++
++# Register your models here.
+diff --git a/frusergroups/apps.py b/frusergroups/apps.py
+new file mode 100644
+index 0000000..954b38f
+--- /dev/null
++++ b/frusergroups/apps.py
+@@ -0,0 +1,5 @@
++from django.apps import AppConfig
++
++
++class FrusergroupsConfig(AppConfig):
++    name = 'frusergroups'
+diff --git a/frusergroups/migrations/__init__.py b/frusergroups/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/frusergroups/models.py b/frusergroups/models.py
+new file mode 100644
+index 0000000..71a8362
+--- /dev/null
++++ b/frusergroups/models.py
+@@ -0,0 +1,3 @@
++from django.db import models
++
++# Create your models here.
+diff --git a/frusergroups/tests.py b/frusergroups/tests.py
+new file mode 100644
+index 0000000..7ce503c
+--- /dev/null
++++ b/frusergroups/tests.py
+@@ -0,0 +1,3 @@
++from django.test import TestCase
++
++# Create your tests here.
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+new file mode 100644
+index 0000000..eab7c07
+--- /dev/null
++++ b/frusergroups/views.py
+@@ -0,0 +1,159 @@
++from django.shortcuts import render
++from collections import ChainMap
++from django.http import HttpResponseRedirect, JsonResponse
++from api.models import Frusergroups, Frusergroupmember, Frusergroupdevices, Devices, Frusers
++
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++
++def frusergroups_list(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        obj = Frusergroups.objects.all()
++        groups = [res.as_json() for res in obj]
++        index = 0
++        for group in groups:
++            group['Index'] = index+1
++            group['UserNumber'] = len(Frusergroupmember.objects.filter(GroupOId = Frusergroups.objects.get(OId = group['OId'])))
++            index += 1
++
++        return render(request, 'frusergroups_list.html', {'active': 'frusergroups_list', 'obj': groups})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def frusergroup_add_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        return render(request, 'frusergroup_add.html')
++    except:
++        return render(request, 'registration/not_found.html')
++
++def delete_frusergroup(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Frusergroups.objects.filter(OId = request.POST['OId']).delete()
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def add_frusergroup(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Frusergroups.objects.create(Name = request.POST['Name'])
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def frusergroup_edit_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        FRUserGroupsList = Frusergroups.objects.get(OId = request.GET['OId']).as_json()
++        return render(request, 'frusergroup_edit.html', {'active': 'frusergroup_edit', 'obj': FRUserGroupsList})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def change_frusergroup_name(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Frusergroups.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'])
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def frusergroup_member_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        obj = Frusergroupmember.objects.filter(GroupOId = Frusergroups.objects.get(OId = request.GET['OId']))
++        print(obj)
++        members = [res.FRUserOId.as_json() for res in obj]
++        index = 0
++        for member in members:
++            member['Index'] = index+1
++            member['Age'] = member['Age'] or ''
++            index += 1
++
++        obj_all = Frusers.objects.all()
++        FR_users = [res_all.as_json() for res_all in obj_all if res_all not in [res.FRUserOId for res in obj]]
++        index = 0
++        for user in FR_users:
++            user['Index'] = index+1
++            user['Age'] = user['Age'] or ''
++            index += 1
++
++        return render(request, 'frusergroup_member.html', {'active': 'frusergroup_member', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json(), 'members': members, 'FR_users': FR_users})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def add_frusergroup_member(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
++        FRUserOIds = [Frusers.objects.get(OId = FRUserOId) for FRUserOId in request.POST.getlist('UserOIds')]
++        for FRUserOId in FRUserOIds:
++            Frusergroupmember.objects.create(GroupOId = GroupOId, FRUserOId = FRUserOId)
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_frusergroup_member(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
++        FRUserOId = Frusers.objects.get(OId = request.POST['FRUserOId'])
++        Frusergroupmember.objects.filter(GroupOId = GroupOId, FRUserOId = FRUserOId).delete()
++        return JsonResponse(dict(ChainMap(res_code[0], FRUserOId.as_json())))
++    except:
++        return JsonResponse(res_code[1])
++
++def frusergroup_devices_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        obj = Frusergroupdevices.objects.filter(GroupOId = Frusergroups.objects.get(OId = request.GET['OId']))
++        groupdevices = [res.DeviceOId.as_json() for res in obj]
++        index = 0
++        for device in groupdevices:
++            device['Index'] = index+1
++            index += 1
++
++        obj_all = Devices.objects.all()
++        devices = [res_all.as_json() for res_all in obj_all if res_all not in [res.DeviceOId for res in obj]]
++        index = 0
++        for device in devices:
++            device['Index'] = index+1
++            index += 1
++
++        return render(request, 'frusergroup_devices.html', {'active': 'frusergroup_devices', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json(), 'groupdevices': groupdevices, 'devices': devices})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def add_frusergroup_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
++        DeviceOIds = [Devices.objects.get(OId = DeviceOId) for DeviceOId in request.POST.getlist('DeviceOIds')]
++        for DeviceOId in DeviceOIds:
++            Frusergroupdevices.objects.create(GroupOId = GroupOId, DeviceOId = DeviceOId)
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_frusergroup_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
++        DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
++        Frusergroupdevices.objects.filter(GroupOId = GroupOId, DeviceOId = DeviceOId).delete()
++        return JsonResponse(dict(ChainMap(res_code[0], DeviceOId.as_json())))
++    except:
++        return JsonResponse(res_code[1])
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+new file mode 100644
+index 0000000..e0b122f
+--- /dev/null
++++ b/templates/frusergroup_add.html
+@@ -0,0 +1,140 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>FR User Group Add</title>
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">FR User Group Add</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>FR User Group Add</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>Group</p>
++                        </div>
++                        <div class="panel-body">
++                            <form class="form-horizontal">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            <span style="color: red;">*</span> Group Name
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="text" class="form-control" placeholder="Please input Group Name" name="Name" required="required">
++                                        </div>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-4 pull-right">
++                                <button class="btn btn-default" onclick="location.href='/fruser_group'">Cancel</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="onSaveAnotherClick()">Save and add another</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function onSaveClick(){
++            var Name = $('input[name=Name]').val();
++
++            if(!Name){
++                alert("please enter correct information");
++                return
++            }
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/add_frusergroup/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'Name': Name,
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("Group add successfully");
++                        location.href = '/fruser_group/';
++                    } else {
++                        alert("Fail to add group");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
++
++        function onSaveAnotherClick(){
++            var Name = $('input[name=Name]').val();
++
++            if(!Name){
++                alert("please enter correct information");
++                return
++            }
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/add_frusergroup/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'Name': Name,
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("Group add successfully");
++                        location.reload();
++                    } else {
++                        alert("Fail to add group");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
++        </script>
++    </body>
++
++</html>
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+new file mode 100644
+index 0000000..3b60e1e
+--- /dev/null
++++ b/templates/frusergroup_devices.html
+@@ -0,0 +1,202 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>FR User Group Device</title>
++    </head>
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li>FR User Group Edit</li>
++                    <li class="active">{{obj.Name}}</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>FR User Group Edit</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <ul class="nav nav-tabs navbar-nav">
++                        <li>
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                        </li>
++                        <li>
++                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">Member List</a>
++                        </li>
++                        <li class="active">
++                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                        </li>
++                    </ul>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="col-md-8 panel panel-default">
++                        <div class="panel-heading"><p>Device list</p></div>
++                        <div class="panel-body">
++                            <table id="DeviceList"></table>
++                        </div>
++                    </div>
++                    <div class="col-md-offset-1 col-md-3 panel panel-default">
++                        <div class="panel-heading"><p>Add New Device</p></div>
++                        <div class="panel-body">
++                            <label>Search Device :</label>
++                            <table id="DeviceAdd"></table>
++                        </div>
++                        <div class="panel-footer">
++                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var $DeviceList = $('#DeviceList');
++            var $DeviceAdd = $('#DeviceAdd');
++
++            $DeviceList.bootstrapTable({
++                search: true,
++                pagination: true,
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'Name',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        field: 'Name',
++                        title: 'Name',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            return ' \
++                                <div align="center"> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                </div>';
++                        }
++                    }
++                ],
++                data: {{groupdevices|safe}}
++            });
++
++            $DeviceAdd.bootstrapTable({
++                search: true,
++                pageSize: 10,
++                sortName: 'Name',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        checkbox: true
++                    },
++                    {
++                        field: 'Name',
++                        title: 'Device',
++                        sortable: true
++                    }
++                ],
++                data: {{devices|safe}}
++            });
++
++
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
++
++            function delete_device(DeviceOId, Name) {
++                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/delete_frusergroup_device/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'GroupOId': {{obj|safe}}.OId,
++                            'DeviceOId': DeviceOId
++                        },
++                        success: function(data) {
++                            if (data.CODE == "0") {
++                                $DeviceAdd.bootstrapTable('append', data);
++                                $DeviceList.bootstrapTable('remove', {
++                                    field: 'OId',
++                                    values: [data.OId]
++                                });
++                            } else {
++                                alert("Fail to delete device");
++                            }
++                        },
++                        error: function(data) {
++                        }
++                    });
++                }
++            }
++
++            function onAddClick() {
++                var DeviceOIds = $.map(
++                    $DeviceAdd.bootstrapTable('getSelections'),
++                    function (row) {return row.OId}
++                );
++
++                $.ajax({
++                    type: 'post',
++                    traditional: true,
++                    url: '/add_frusergroup_device/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'GroupOId': {{obj|safe}}.OId,
++                        'DeviceOIds': DeviceOIds
++                    },
++                    success: function(data) {
++                        if (data.CODE == "0") {
++                            $DeviceList.bootstrapTable('append', $.map(
++                                $DeviceAdd.bootstrapTable('getSelections'),
++                                function (row) {return row}
++                            ));
++                            $DeviceAdd.bootstrapTable('remove', {
++                                field: 'OId',
++                                values: DeviceOIds
++                            });
++                        } else {
++                            alert("Fail to add device");
++                        }
++                    },
++                    error: function(data) {
++                    }
++                });
++
++            };
++        </script>
++    </body>
++</html>
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+new file mode 100644
+index 0000000..1b8253e
+--- /dev/null
++++ b/templates/frusergroup_edit.html
+@@ -0,0 +1,125 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>FR User Group Edit</title>
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li>FR User Group Edit</li>
++                    <li class="active">{{obj.Name}}</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>FR User Group Edit</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <ul class="nav nav-tabs navbar-nav">
++                        <li class="active">
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                        </li>
++                        <li>
++                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">Member List</a>
++                        </li>
++                        <li>
++                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                        </li>
++                    </ul>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>Group</p>
++                        </div>
++                        <div class="panel-body">
++                            <form class="form-horizontal">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">
++                                            <span style="color: red;">*</span> Group Name :
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Group Name" name="Name" required="required">
++                                        </div>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-3 pull-right">
++                                <button class="btn btn-default" onclick="location.href='/fruser_group'">Cancel</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function onSaveClick(){
++            var Name = $('input[name=Name]').val();
++
++            if (Name) {
++                $.ajax({
++                    type: 'post',
++                    traditional: true,
++                    url: '/change_frusergroup_name/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'OId': {{obj|safe}}.OId,
++                        'Name': Name
++                    },
++                    success: function(data) {
++                        if (data.CODE == "0") {
++                            alert("Change group name successfully");
++                            location.reload();
++                        } else {
++                            alert("Fail to change group name");
++                        }
++                    },
++                    error: function(data) {
++                    }
++                });
++            } else {
++                alert("Please input group name");
++            }
++        }
++        </script>
++    </body>
++
++</html>
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+new file mode 100644
+index 0000000..88e1853
+--- /dev/null
++++ b/templates/frusergroup_member.html
+@@ -0,0 +1,202 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>FR User Group Member</title>
++    </head>
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li>FR User Group Edit</li>
++                    <li class="active">{{obj.Name}}</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>FR User Group Edit</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <ul class="nav nav-tabs navbar-nav">
++                        <li>
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                        </li>
++                        <li class="active">
++                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">Member List</a>
++                        </li>
++                        <li>
++                            <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                        </li>
++                    </ul>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="col-md-8 panel panel-default">
++                        <div class="panel-heading"><p>Member list</p></div>
++                        <div class="panel-body">
++                            <table id="MemberList"></table>
++                        </div>
++                    </div>
++                    <div class="col-md-offset-1 col-md-3 panel panel-default">
++                        <div class="panel-heading"><p>Add New Member</p></div>
++                        <div class="panel-body">
++                            <label>Search User :</label>
++                            <table id="MemberAdd"></table>
++                        </div>
++                        <div class="panel-footer">
++                            <button class="btn btn-default" onclick="onAddClick()">Add</button>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var $MemberList = $('#MemberList');
++            var $MemberAdd = $('#MemberAdd');
++
++            $MemberList.bootstrapTable({
++                search: true,
++                pagination: true,
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'Name',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        field: 'Name',
++                        title: 'Name',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            return ' \
++                                <div align="center"> \
++                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                </div>';
++                        }
++                    }
++                ],
++                data: {{members|safe}}
++            });
++
++            $MemberAdd.bootstrapTable({
++                search: true,
++                pageSize: 10,
++                sortName: 'Name',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        checkbox: true
++                    },
++                    {
++                        field: 'Name',
++                        title: 'User',
++                        sortable: true
++                    }
++                ],
++                data: {{FR_users|safe}}
++            });
++
++
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
++
++            function delete_user(FRUserOId, Name) {
++                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/delete_frusergroup_member/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'GroupOId': {{obj|safe}}.OId,
++                            'FRUserOId': FRUserOId
++                        },
++                        success: function(data) {
++                            if (data.CODE == "0") {
++                                $MemberAdd.bootstrapTable('append', data);
++                                $MemberList.bootstrapTable('remove', {
++                                    field: 'OId',
++                                    values: [data.OId]
++                                });
++                            } else {
++                                alert("Fail to delete user");
++                            }
++                        },
++                        error: function(data) {
++                        }
++                    });
++                }
++            }
++
++            function onAddClick() {
++                var UserOIds = $.map(
++                    $MemberAdd.bootstrapTable('getSelections'),
++                    function (row) {return row.OId}
++                );
++
++                $.ajax({
++                    type: 'post',
++                    traditional: true,
++                    url: '/add_frusergroup_member/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'GroupOId': {{obj|safe}}.OId,
++                        'UserOIds': UserOIds
++                    },
++                    success: function(data) {
++                        if (data.CODE == "0") {
++                            $MemberList.bootstrapTable('append', $.map(
++                                $MemberAdd.bootstrapTable('getSelections'),
++                                function (row) {return row}
++                            ));
++                            $MemberAdd.bootstrapTable('remove', {
++                                field: 'OId',
++                                values: UserOIds
++                            });
++                        } else {
++                            alert("Fail to add user");
++                        }
++                    },
++                    error: function(data) {
++                    }
++                });
++
++            };
++        </script>
++    </body>
++</html>
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+new file mode 100644
+index 0000000..12e025e
+--- /dev/null
++++ b/templates/frusergroups_list.html
+@@ -0,0 +1,123 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>User Group List</title>
++    </head>
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">FR User Group List</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>FR User Group List</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <button id="AddGroup" class="btn btn-default pull-right" onclick="location.href='/frusergroup_add/'">Create new group</button>
++                            <table id="GroupList"></table>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var dataSet = {{obj|safe}};
++            $('#GroupList').bootstrapTable({
++                search: true,
++                pagination: true,
++                toolbar: '#AddGroup',
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'Index',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        field: 'Index',
++                        title: 'No',
++                        sortable: true
++                    },
++                    {
++                        field: 'Name',
++                        title: 'Group',
++                        sortable: true
++                    },
++                    {
++                        field: 'UserNumber',
++                        title: 'Users',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            return ' \
++                                <div align="center"> \
++                                    <button class="btn btn-default" onclick="location.href=\'/frusergroup_edit?OId=' + row.OId + '\'">Edit</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                </div>';
++                        }
++                    }
++                ],
++                data: dataSet
++            });
++
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
++
++            function delete_device(OId, Name) {
++                var ret = confirm('Confirm to delete ' +Name+ ' group?');
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/delete_frusergroup/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'OId': OId
++                        },
++                        success: function(data) {
++                            if (data.CODE == "0") {
++                                location.reload();
++                            } else {
++                                alert("Fail to delete group");
++                            }
++                        },
++                        error: function(data) {
++                        }
++                    });
++                }
++            }
++        </script>
++    </body>
++</html>
+-- 
+1.9.1
+

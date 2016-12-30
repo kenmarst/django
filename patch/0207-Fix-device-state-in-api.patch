@@ -1,0 +1,25 @@
+From 260fc0139b95a6970e991e5d373740bf2218a82e Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 27 Jul 2016 14:37:44 +0800
+Subject: [PATCH 207/443] Fix device state in api.
+
+---
+ api/connection.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 92112ca..9087155 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -18,7 +18,7 @@ def check(request):
+             try:
+                 devices = Devices.objects.get(IP = client_ip)
+                 states = {'Proposed' : 0, 'Approved' : 1, 'Online' : 1, 'Offline' : 1, 'Setting' : 2, 'Getting': 3}
+-                Devices.objects.filter(IP = client_ip).update(State = 'Approved', UpdateDate = datetime.now())
++                Devices.objects.filter(IP = client_ip).update(UpdateDate = datetime.now())
+ 
+                 return JsonResponse({'Result' : states[devices.State]})
+             except:
+-- 
+1.9.1
+

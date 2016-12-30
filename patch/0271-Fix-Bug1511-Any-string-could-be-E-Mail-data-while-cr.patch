@@ -1,0 +1,57 @@
+From a957c331d65c96009cc4a082d2213d3dda43d399 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Fri, 9 Sep 2016 14:38:59 +0800
+Subject: [PATCH 271/443] Fix Bug1511 - Any string could be "E-Mail" data,
+ while creating a new account.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Bugzila Id: 1511
+Desciption:
+      BR06 Server - Create new account時, E-Mail隨意輸入值,也能新增成功
+Solution:
+  System should check the entry data. If it not valid email format,
+  "Please enter the correct e-mail format!" Alert window will be shown.
+---
+ templates/user_add.html | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 33232d5..069cd68 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -58,7 +58,7 @@
+                                             {% trans "E-Mail" %}
+                                         </label>
+                                         <div class="col-md-6">
+-                                                <input type="email" class="form-control" placeholder="" name="email">
++                                                <input type="email" class="form-control" placeholder="" name="email" style="ime-mode:disabled" onblur="return ValidateEmail(this,value)">
+                                         </div>
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+@@ -123,6 +123,13 @@
+             }
+             return cookieValue;
+         }
++    function ValidateEmail(e, pEmail){
++        if (!/^[0-9a-zA-Z]([-._]*[0-9a-zA-Z])*@[0-9a-zA-Z]([-._]*[0-9a-zA-Z])*\.+[a-zA-Z]+$/.test(pEmail))
++        {
++            alert("Please enter the correct e-mail format!");
++        }
++        return false;
++    }
+ 
+     function onSaveClick () {
+ 		var account = $('input[name=account]').val();
+@@ -131,6 +138,7 @@
+ 		var password = $('input[name=password]').val();
+ 		var psw_confirm = $('input[name=confirm]').val();
+ 		var role = $('select[name=role]').val();
++
+         if (account && name && email && password && psw_confirm && role) {
+             if (password == psw_confirm) {
+                 $.ajax({
+-- 
+1.9.1
+

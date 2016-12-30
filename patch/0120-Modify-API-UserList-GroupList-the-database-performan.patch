@@ -1,0 +1,102 @@
+From 3be7670430f0dab6eab32dcdaca2d80abf501306 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 8 Jun 2016 15:37:19 +0800
+Subject: [PATCH 120/443] Modify API : UserList, GroupList the database
+ performance issue
+
+---
+ api/group.py | 11 ++++++-----
+ api/user.py  | 54 +++++++++++++++++++++++++-----------------------------
+ 2 files changed, 31 insertions(+), 34 deletions(-)
+
+diff --git a/api/group.py b/api/group.py
+index e56f5d4..9bef044 100644
+--- a/api/group.py
++++ b/api/group.py
+@@ -13,11 +13,12 @@ def list(request):
+             from .models import Devices, Frusergroups
+             ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
+             if ip_devices.State != 'Proposed':
+-                groups = Frusergroups.objects.all()
+-                if groups:
+-                    return JsonResponse({'Result' : 'Success', 'Number' : len(groups), 'Groups' : [{'Oid':i.OId, 'Name':i.Name} for i in groups]})
+-                else:
+-                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'There is no group of imformation in database'})))
++                groups_count = Frusergroups.objects.all().count()
++                return JsonResponse({
++                    'Result' : 'Success',
++                    'Number' : groups_count,
++                    'Groups' : [group for group in Frusergroups.objects.values('OId', 'Name')]
++                })
+             else:
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+         except Exception as e:
+diff --git a/api/user.py b/api/user.py
+index 4762ede..b2350d7 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -181,36 +181,32 @@ def list(request):
+             req_key = {'Field', 'Keyword', 'FlipPage'}
+             if all(k in req for k in req_key) and all(req.values()):
+                 if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+-                    frusers = Frusers.objects.filter(State = "Enable")
+-                    print('Field : ', req['Field'], 'Keyword : ',req['Keyword'])
+-                    number = 0
+-                    frusers_field = []
++
++                    #print('Field : ', req['Field'], 'Keyword : ',req['Keyword'])
++
+                     FlipPage = ( int( req['FlipPage'] ) - 1 ) * 5
+-                    # query Keyword of Field in fruser
+-                    for k in frusers :
+-                        if k.as_json()[ req['Field'] ] == req['Keyword']:
+-                            number = number + 1
+-                            frusers_field.append(k.as_json())
+-                    if frusers_field:
+-                        return JsonResponse(dict(ChainMap(result_success, {
+-                            'Numbers' : number,
+-                            'CurrentPage' : int ( req['FlipPage'] ),
+-                            'TotalPage' : int ( number / 5  ) + 1,
+-                            'Users' : [{
+-                                'FRUserId' : i['FRUserId'],
+-                                'Name' : i['Name'],
+-                                'Gender' : i['Gender'],
+-                                'Age' : i['Age'],
+-                                'RFIDCard' : i['RFIDCard'],
+-                                'State' : i['State'],
+-                                'Groups' : [{
+-                                    'Oid' : j.GroupOId.OId,
+-                                    'Name' : j.GroupOId.Name
+-                                } for j in Frusergroupmember.objects.filter(FRUserOId = i['OId'])]
+-                            } for i in frusers_field[ FlipPage : FlipPage + 5]] # ex:[ 0 : 5 ] => 5 frusers / 1 page
+-                        })))
+-                    else:
+-                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Frusers matching query does not exist.'})))
++                    numbers = Frusers.objects.filter(State = "Enable", **{req['Field']:req['Keyword']}).count()
++
++                    return JsonResponse(dict(ChainMap(result_success, {
++                        'Numbers' : numbers,
++                        'CurrentPage' : int ( req['FlipPage'] ),
++                        'TotalPage' : int ( numbers / 5  ) + 1,
++                        'Users' : [{
++                            'FRUserId' : i.FRUserId,
++                            'Name' : i.Name,
++                            'Gender' : i.Gender,
++                            'Age' : i.Age,
++                            'RFIDCard' : i.RFIDCard,
++                            'State' : i.State,
++                            'Groups' : [
++                                group for group in Frusergroups.objects.filter(
++                                    frusergroupmember__FRUserOId__OId = i.OId
++                                ).values('OId', 'Name')
++                            ]
++                        } for i in Frusers.objects.filter( State = "Enable" ) \
++                            .filter( **{ req['Field'] : req['Keyword'] } ) \
++                            [ FlipPage : FlipPage + 5 ] ] # ex:[ 0 : 5 ] => 5 frusers / 1 page
++                    })))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+             else:
+-- 
+1.9.1
+

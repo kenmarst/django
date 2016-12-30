@@ -1,0 +1,23 @@
+From bae9cc7e1be9fc0c208b605817abc0ca6e7aade3 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Mon, 20 Jun 2016 16:19:41 +0800
+Subject: [PATCH 142/443] Bug fix os not defined
+
+Bug fix - not import os
+---
+ api/face.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/face.py b/api/face.py
+index d079885..f9f9487 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -1,4 +1,4 @@
+-import json, requests
++import json, requests, os
+ from collections import ChainMap
+ from django.http import HttpResponse, JsonResponse
+ from .models import Devices, Frusers, Systemlogs, Config
+-- 
+1.9.1
+

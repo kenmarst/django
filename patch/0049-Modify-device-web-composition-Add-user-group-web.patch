@@ -1,0 +1,1515 @@
+From e46ef97a9608c7662dc83e2a3ea0ac89fc16f7d4 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 19 May 2016 14:21:48 +0800
+Subject: [PATCH 049/443] Modify device web composition & Add user group web
+
+Modify composition of device web.
+Add user group web.
+---
+ api/models.py                                      |   9 ++
+ br06/urls.py                                       |  19 ++-
+ devices/views.py                                   |  20 +--
+ templates/device_add.html                          |   4 +-
+ templates/device_edit.html                         |   6 +-
+ templates/device_frusergroups.html                 |  24 ++--
+ templates/device_list.html                         |   7 +-
+ templates/device_settings.html                     |   4 +-
+ templates/menu.html                                |   2 +-
+ templates/{device_add.html => user_group_add.html} |  84 ++++++-----
+ ...e_frusergroups.html => user_group_devices.html} |  87 ++++++------
+ .../{device_add.html => user_group_edit.html}      | 107 +++++++-------
+ templates/user_group_list.html                     | 123 ++++++++++++++++
+ ...e_frusergroups.html => user_group_members.html} |  87 ++++++------
+ usergroups/__init__.py                             |   0
+ usergroups/admin.py                                |   3 +
+ usergroups/apps.py                                 |   5 +
+ usergroups/migrations/__init__.py                  |   0
+ usergroups/models.py                               |   3 +
+ usergroups/tests.py                                |   3 +
+ usergroups/views.py                                | 156 +++++++++++++++++++++
+ 21 files changed, 551 insertions(+), 202 deletions(-)
+ copy templates/{device_add.html => user_group_add.html} (61%)
+ copy templates/{device_frusergroups.html => user_group_devices.html} (67%)
+ copy templates/{device_add.html => user_group_edit.html} (50%)
+ create mode 100644 templates/user_group_list.html
+ copy templates/{device_frusergroups.html => user_group_members.html} (67%)
+ create mode 100644 usergroups/__init__.py
+ create mode 100644 usergroups/admin.py
+ create mode 100644 usergroups/apps.py
+ create mode 100644 usergroups/migrations/__init__.py
+ create mode 100644 usergroups/models.py
+ create mode 100644 usergroups/tests.py
+ create mode 100644 usergroups/views.py
+
+diff --git a/api/models.py b/api/models.py
+index f471dc4..bd813a1 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -234,6 +234,15 @@ class Usergroups(models.Model):
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+ 
++    def as_json(self):
++        return dict(
++            Index = 0,
++            OId = self.OId,
++            Name = self.Name,
++            CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
++            UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++        )
++
+ 
+ class Usergroupmember(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+diff --git a/br06/urls.py b/br06/urls.py
+index 4ce465e..942f5cc 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -21,7 +21,8 @@ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view, systemlog_export
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export
+ from logsetting.views import logsetting
+-from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, add_frusergroupdevice, delete_frusergroupdevice, delete_device
++from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
++from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ 
+ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+@@ -46,6 +47,20 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
++    url(r'^user_group_list/?$', user_group_list_view),
++    url(r'^user_group_add/?$', user_group_add_view),
++    url(r'^user_group_edit/?$', user_group_edit_view),
++    url(r'^user_group_members/?$', user_group_members_view),
++    url(r'^user_group_devices/?$', user_group_devices_view),
++    url(r'^add_user_group/?$', add_user_group),
++    url(r'^change_user_group_name/?$', change_user_group_name),
++    url(r'^delete_user_group/?$', delete_user_group),
++    url(r'^add_user_group_member/?$', add_user_group_member),
++    url(r'^delete_user_group_member/?$', delete_user_group_member),
++    url(r'^add_user_group_device/?$', add_user_group_device),
++    url(r'^delete_user_group_device/?$', delete_user_group_device),
++]
++urlpatterns += [
+     url(r'^device_list/?$', device_list_view),
+     url(r'^device_add/?$', device_add_view),
+     url(r'^device_edit/?$', device_edit_view),
+@@ -55,9 +70,9 @@ urlpatterns += [
+     url(r'^accept_device/?$', accept_device),
+     url(r'^change_device_name/?$', change_device_name),
+     url(r'^settings_device/?$', settings_device),
++    url(r'^delete_device/?$', delete_device),
+     url(r'^add_frusergroupdevice/?$', add_frusergroupdevice),
+     url(r'^delete_frusergroupdevice/?$', delete_frusergroupdevice),
+-    url(r'^delete_device/?$', delete_device),
+ ]
+ 
+ urlpatterns += [
+diff --git a/devices/views.py b/devices/views.py
+index bc63eb6..4848e71 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -62,7 +62,7 @@ def device_frusergroups_view(request):
+             x['Index'] = index+1
+             index += 1
+ 
+-        return render(request, 'device_frusergroups.html', {'active': 'device_frusergroups', 'devicegroups': devicegroups, 'groups': groups, 'DeviceOId': request.GET['OId']})
++        return render(request, 'device_frusergroups.html', {'active': 'device_frusergroups', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json, 'devicegroups': devicegroups, 'groups': groups})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+@@ -111,6 +111,15 @@ def settings_device(request):
+     except:
+         return JsonResponse(res_code[1])
+ 
++def delete_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Devices.objects.get(OId = request.POST['OId']).delete()
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
+ def add_frusergroupdevice(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+@@ -133,12 +142,3 @@ def delete_frusergroupdevice(request):
+         return JsonResponse(dict(ChainMap(res_code[0], GroupOId.as_json())))
+     except:
+         return JsonResponse(res_code[1])
+-
+-def delete_device(request):
+-    if not 'OId' in request.session:
+-        return HttpResponseRedirect("/")
+-    try:
+-        Devices.objects.get(OId = request.POST['OId']).delete()
+-        return JsonResponse(res_code[0])
+-    except:
+-        return JsonResponse(res_code[1])
+diff --git a/templates/device_add.html b/templates/device_add.html
+index b579b80..b3f1094 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -14,7 +14,7 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Device add</li>
++                    <li class="active">Device Add</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+@@ -74,6 +74,7 @@
+         //For getting CSRF token
+         function getCookie(name) {
+             var cookieValue = null;
++
+             if (document.cookie && document.cookie != '') {
+                 var cookies = document.cookie.split(';');
+                 for (var i = 0; i < cookies.length; i++) {
+@@ -92,6 +93,7 @@
+             var Name = $('input[name=Name]').val();
+             var MAC = $('input[name=MAC]').val();
+             var IP = $('input[name=IP]').val();
++
+             if(!Name || !MAC || !IP){
+                 alert("please enter correct information");
+                 return
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 238cc5b..c2cde81 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -14,7 +14,8 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Device edit</li>
++                    <li>Device Edit</li>
++                    <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+@@ -171,6 +172,7 @@
+         //For getting CSRF token
+         function getCookie(name) {
+             var cookieValue = null;
++
+             if (document.cookie && document.cookie != '') {
+                 var cookies = document.cookie.split(';');
+                 for (var i = 0; i < cookies.length; i++) {
+@@ -212,7 +214,7 @@
+                     }
+                 });
+             } else {
+-                alert("Please input Device name");
++                alert("Please input device name");
+             }
+         }
+ 
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index f7579b2..978e39b 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -6,7 +6,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device List</title>
++        <title>Device Edit</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -14,7 +14,8 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User List</li>
++                    <li>Device Edit</li>
++                    <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+@@ -28,10 +29,10 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/device_edit?OId={{DeviceOId}}" class="input-lg">Imformation</a>
++                            <a href="/device_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/device_frusergroups?OId={{DeviceOId}}" class="input-lg">FRUser Group List</a>
++                            <a href="/device_frusergroups?OId={{obj.OId}}" class="input-lg">FRUser Group List</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -61,17 +62,17 @@
+ 
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+-            var $GroupAdd = $('#GroupAdd');
+             var $GroupList = $('#GroupList');
+-
++            var $GroupAdd = $('#GroupAdd');
+             var devicegroups = {{devicegroups|safe}};
++
+             $GroupList.bootstrapTable({
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+                 pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+-                sortOrder: 'desc',
++                sortOrder: 'asc',
+                 columns: [
+                     {
+                         field: 'Name',
+@@ -91,13 +92,14 @@
+             });
+ 
+             var groups = {{groups|safe}};
++
+             $GroupAdd.bootstrapTable({
+                 search: true,
+                 pageSize: 10,
+                 sortName: 'Name',
++                sortOrder: 'asc',
+                 columns: [
+                     {
+-                        field: 'State',
+                         checkbox: true
+                     },
+                     {
+@@ -113,6 +115,7 @@
+             //For getting CSRF token
+             function getCookie(name) {
+                 var cookieValue = null;
++
+                 if (document.cookie && document.cookie != '') {
+                     var cookies = document.cookie.split(';');
+                     for (var i = 0; i < cookies.length; i++) {
+@@ -129,6 +132,7 @@
+ 
+             function delete_group(GroupOId, Name) {
+                 var ret = confirm('Confirm to delete ' + Name + ' from this device?');
++
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+@@ -138,7 +142,7 @@
+                         dataType: 'json',
+                         data: {
+                             csrfmiddlewaretoken : getCookie('csrftoken'),
+-                            'DeviceOId': '{{DeviceOId|safe}}',
++                            'DeviceOId': {{obj|safe}}.OId,
+                             'GroupOId': GroupOId
+                         },
+                         success: function(data) {
+@@ -172,7 +176,7 @@
+                     dataType: 'json',
+                     data: {
+                         csrfmiddlewaretoken : getCookie('csrftoken'),
+-                        'DeviceOId': '{{DeviceOId|safe}}',
++                        'DeviceOId': {{obj|safe}}.OId,
+                         'GroupOIds': GroupOIds
+                     },
+                     success: function(data) {
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 17bb654..941e878 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -15,7 +15,7 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User List</li>
++                    <li class="active">Device List</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+@@ -47,7 +47,7 @@
+                 pageSize: 10,
+                 pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+-                sortOrder: 'desc',
++                sortOrder: 'asc',
+                 columns: [
+                     {
+                         field: 'MAC',
+@@ -107,6 +107,7 @@
+             //For getting CSRF token
+             function getCookie(name) {
+                 var cookieValue = null;
++
+                 if (document.cookie && document.cookie != '') {
+                     var cookies = document.cookie.split(';');
+                     for (var i = 0; i < cookies.length; i++) {
+@@ -123,6 +124,7 @@
+ 
+             function accept_device(OId, Name) {
+                 var ret = confirm('Confirm to accept ' +Name+ ' Device?');
++
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+@@ -149,6 +151,7 @@
+ 
+             function delete_device(OId, Name) {
+                 var ret = confirm('Confirm to delete ' +Name+ ' Device?');
++
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index de8549e..9a42f49 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -14,7 +14,8 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Device settings</li>
++                    <li>Device Settings</li>
++                    <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+@@ -159,6 +160,7 @@
+         //For getting CSRF token
+         function getCookie(name) {
+             var cookieValue = null;
++
+             if (document.cookie && document.cookie != '') {
+                 var cookies = document.cookie.split(';');
+                 for (var i = 0; i < cookies.length; i++) {
+diff --git a/templates/menu.html b/templates/menu.html
+index d86f7b2..572b529 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -51,7 +51,7 @@
+ 						</a>
+ 					</li>
+ 					<li>
+-						<a class="" href="#">
++						<a class="" href="/user_group_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Group List
+ 						</a>
+ 					</li>
+diff --git a/templates/device_add.html b/templates/user_group_add.html
+similarity index 61%
+copy from templates/device_add.html
+copy to templates/user_group_add.html
+index b579b80..9215abe 100644
+--- a/templates/device_add.html
++++ b/templates/user_group_add.html
+@@ -4,8 +4,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device Add</title>
+-
++        <title>User Group Add</title>
+     </head>
+ 
+     <body>
+@@ -13,14 +12,14 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Device add</li>
++                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">User Group Add</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device add</small></h1>
++                    <h1 class="page-header"><small>User Group Add</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,40 +27,25 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Device</p>
++                            <p>Group</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Device Name
++                                            <span style="color: red;">*</span> Group Name
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input Device Name" name="Name" required="required">
+-                                        </div>
+-                                    </div>
+-                                    <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> MAC-Address
+-                                        </label>
+-                                        <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input MAC-Address" name="MAC" required="required">
+-                                        </div>
+-                                    </div>
+-                                    <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> IP
+-                                        </label>
+-                                        <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input IP" name="IP" required="required">
++                                            <input type="text" class="form-control" placeholder="Please input Group Name" name="Name" required="required">
+                                         </div>
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">Cancel</button>
++                            <div class="col-md-offset-3 col-md-4 pull-right">
++                                <button class="btn btn-default" onclick="location.href='/user_group_list'">Cancel</button>
+                                 <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                                <button class="btn btn-default" onclick="onSaveAnotherClick()">Save and add another</button>
+                             </div>
+                         </div>
+                     </div>
+@@ -74,6 +58,7 @@
+         //For getting CSRF token
+         function getCookie(name) {
+             var cookieValue = null;
++
+             if (document.cookie && document.cookie != '') {
+                 var cookies = document.cookie.split(';');
+                 for (var i = 0; i < cookies.length; i++) {
+@@ -90,30 +75,59 @@
+ 
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+-            var MAC = $('input[name=MAC]').val();
+-            var IP = $('input[name=IP]').val();
+-            if(!Name || !MAC || !IP){
++
++            if(!Name){
+                 alert("please enter correct information");
+                 return
+             }
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/add_user_group/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'Name': Name,
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("Group add successfully");
++                        location.href = '/user_group_list/';
++                    } else {
++                        alert("Fail to add group");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
++
++        function onSaveAnotherClick(){
++            var Name = $('input[name=Name]').val();
++
++            if(!Name){
++                alert("please enter correct information");
++                return
++            }
++
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+-                url: '/add_device/',
++                url: '/add_user_group/',
+                 async: true,
+                 dataType: 'json',
+                 data: {
+                     csrfmiddlewaretoken : getCookie('csrftoken'),
+                     'Name': Name,
+-                    'MAC': MAC,
+-                    'IP': IP,
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Device add successfully");
+-                        location.href = '/device_list/';
++                        alert("Group add successfully");
++                        location.reload();
+                     } else {
+-                        alert("Fail to add device");
++                        alert("Fail to add group");
+                     }
+                 },
+                 error: function(data) {
+diff --git a/templates/device_frusergroups.html b/templates/user_group_devices.html
+similarity index 67%
+copy from templates/device_frusergroups.html
+copy to templates/user_group_devices.html
+index f7579b2..56288f9 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/user_group_devices.html
+@@ -6,21 +6,22 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device List</title>
++        <title>User Group Device</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User List</li>
++                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li>User Group Edit</li>
++                    <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device Edit</small></h1>
++                    <h1 class="page-header"><small>User Group Edit</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,10 +29,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/device_edit?OId={{DeviceOId}}" class="input-lg">Imformation</a>
++                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                        </li>
++                        <li>
++                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">Member List</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/device_frusergroups?OId={{DeviceOId}}" class="input-lg">FRUser Group List</a>
++                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -40,16 +44,16 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="col-md-8 panel panel-default">
+-                        <div class="panel-heading"><p>Group list</p></div>
++                        <div class="panel-heading"><p>Device list</p></div>
+                         <div class="panel-body">
+-                            <table id="GroupList"></table>
++                            <table id="DeviceList"></table>
+                         </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+-                        <div class="panel-heading"><p>Add New Group</p></div>
++                        <div class="panel-heading"><p>Add New Device</p></div>
+                         <div class="panel-body">
+-                            <label>Search Group :</label>
+-                            <table id="GroupAdd"></table>
++                            <label>Search Device :</label>
++                            <table id="DeviceAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+                             <button class="btn btn-default" onclick="onAddClick()">Add</button>
+@@ -61,58 +65,57 @@
+ 
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+-            var $GroupAdd = $('#GroupAdd');
+-            var $GroupList = $('#GroupList');
++            var $DeviceList = $('#DeviceList');
++            var $DeviceAdd = $('#DeviceAdd');
+ 
+-            var devicegroups = {{devicegroups|safe}};
+-            $GroupList.bootstrapTable({
++            $DeviceList.bootstrapTable({
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+                 pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+-                sortOrder: 'desc',
++                sortOrder: 'asc',
+                 columns: [
+                     {
+                         field: 'Name',
+-                        title: 'FRUser Group',
++                        title: 'Name',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
+                                 </div>';
+                         }
+                     }
+                 ],
+-                data: devicegroups
++                data: {{groupdevices|safe}}
+             });
+ 
+-            var groups = {{groups|safe}};
+-            $GroupAdd.bootstrapTable({
++            $DeviceAdd.bootstrapTable({
+                 search: true,
+                 pageSize: 10,
+                 sortName: 'Name',
++                sortOrder: 'asc',
+                 columns: [
+                     {
+-                        field: 'State',
+                         checkbox: true
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Group',
++                        title: 'Device',
+                         sortable: true
+                     }
+                 ],
+-                data: groups
++                data: {{devices|safe}}
+             });
+ 
+ 
+             //For getting CSRF token
+             function getCookie(name) {
+                 var cookieValue = null;
++
+                 if (document.cookie && document.cookie != '') {
+                     var cookies = document.cookie.split(';');
+                     for (var i = 0; i < cookies.length; i++) {
+@@ -127,29 +130,29 @@
+                 return cookieValue;
+             }
+ 
+-            function delete_group(GroupOId, Name) {
+-                var ret = confirm('Confirm to delete ' + Name + ' from this device?');
++            function delete_device(DeviceOId, Name) {
++                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+                         traditional: true,
+-                        url: '/delete_frusergroupdevice/',
++                        url: '/delete_user_group_device/',
+                         async: true,
+                         dataType: 'json',
+                         data: {
+                             csrfmiddlewaretoken : getCookie('csrftoken'),
+-                            'DeviceOId': '{{DeviceOId|safe}}',
+-                            'GroupOId': GroupOId
++                            'GroupOId': {{obj|safe}}.OId,
++                            'DeviceOId': DeviceOId
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                $GroupAdd.bootstrapTable('append', data);
+-                                $GroupList.bootstrapTable('remove', {
++                                $DeviceAdd.bootstrapTable('append', data);
++                                $DeviceList.bootstrapTable('remove', {
+                                     field: 'OId',
+                                     values: [data.OId]
+                                 });
+                             } else {
+-                                alert("Fail to delete group");
++                                alert("Fail to delete device");
+                             }
+                         },
+                         error: function(data) {
+@@ -159,34 +162,34 @@
+             }
+ 
+             function onAddClick() {
+-                var GroupOIds = $.map(
+-                    $GroupAdd.bootstrapTable('getSelections'),
++                var DeviceOIds = $.map(
++                    $DeviceAdd.bootstrapTable('getSelections'),
+                     function (row) {return row.OId}
+                 );
+ 
+                 $.ajax({
+                     type: 'post',
+                     traditional: true,
+-                    url: '/add_frusergroupdevice/',
++                    url: '/add_user_group_device/',
+                     async: true,
+                     dataType: 'json',
+                     data: {
+                         csrfmiddlewaretoken : getCookie('csrftoken'),
+-                        'DeviceOId': '{{DeviceOId|safe}}',
+-                        'GroupOIds': GroupOIds
++                        'GroupOId': {{obj|safe}}.OId,
++                        'DeviceOIds': DeviceOIds
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            $GroupList.bootstrapTable('append', $.map(
+-                                $GroupAdd.bootstrapTable('getSelections'),
++                            $DeviceList.bootstrapTable('append', $.map(
++                                $DeviceAdd.bootstrapTable('getSelections'),
+                                 function (row) {return row}
+                             ));
+-                            $GroupAdd.bootstrapTable('remove', {
++                            $DeviceAdd.bootstrapTable('remove', {
+                                 field: 'OId',
+-                                values: GroupOIds
++                                values: DeviceOIds
+                             });
+                         } else {
+-                            alert("Fail to add group");
++                            alert("Fail to add device");
+                         }
+                     },
+                     error: function(data) {
+diff --git a/templates/device_add.html b/templates/user_group_edit.html
+similarity index 50%
+copy from templates/device_add.html
+copy to templates/user_group_edit.html
+index b579b80..ad33d5c 100644
+--- a/templates/device_add.html
++++ b/templates/user_group_edit.html
+@@ -4,8 +4,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device Add</title>
+-
++        <title>User Group Edit</title>
+     </head>
+ 
+     <body>
+@@ -13,14 +12,31 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Device add</li>
++                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li>User Group Edit</li>
++                    <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device add</small></h1>
++                    <h1 class="page-header"><small>User Group Edit</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <ul class="nav nav-tabs navbar-nav">
++                        <li class="active">
++                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
++                        </li>
++                        <li>
++                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">Member List</a>
++                        </li>
++                        <li>
++                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
++                        </li>
++                    </ul>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,39 +44,23 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-heading" style="background-color: #FFFFFF;">
+-                            <p>Device</p>
++                            <p>Group</p>
+                         </div>
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+-                                    <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> Device Name
+-                                        </label>
+-                                        <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input Device Name" name="Name" required="required">
+-                                        </div>
+-                                    </div>
+-                                    <div class="form-group form-md-line-input">
++                                    <div class="form-group">
+                                         <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> MAC-Address
++                                            <span style="color: red;">*</span> Group Name :
+                                         </label>
+                                         <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input MAC-Address" name="MAC" required="required">
+-                                        </div>
+-                                    </div>
+-                                    <div class="form-group form-md-line-input">
+-                                        <label class="col-md-3 control-label">
+-                                            <span style="color: red;">*</span> IP
+-                                        </label>
+-                                        <div class="col-md-6">
+-                                            <input type="text" class="form-control" placeholder="Please input IP" name="IP" required="required">
++                                            <input type="text" class="form-control" value="{{obj.Name}}" placeholder="Please input Group Name" name="Name" required="required">
+                                         </div>
+                                     </div>
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">Cancel</button>
++                                <button class="btn btn-default" onclick="location.href='/user_group_list'">Cancel</button>
+                                 <button class="btn btn-default" onclick="onSaveClick()">Save</button>
+                             </div>
+                         </div>
+@@ -73,6 +73,7 @@
+         <script>
+         //For getting CSRF token
+         function getCookie(name) {
++
+             var cookieValue = null;
+             if (document.cookie && document.cookie != '') {
+                 var cookies = document.cookie.split(';');
+@@ -90,35 +91,33 @@
+ 
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+-            var MAC = $('input[name=MAC]').val();
+-            var IP = $('input[name=IP]').val();
+-            if(!Name || !MAC || !IP){
+-                alert("please enter correct information");
+-                return
+-            }
+-            $.ajax({
+-                type: 'post',
+-                traditional: true,
+-                url: '/add_device/',
+-                async: true,
+-                dataType: 'json',
+-                data: {
+-                    csrfmiddlewaretoken : getCookie('csrftoken'),
+-                    'Name': Name,
+-                    'MAC': MAC,
+-                    'IP': IP,
+-                },
+-                success: function(data) {
+-                    if (data.CODE == "0") {
+-                        alert("Device add successfully");
+-                        location.href = '/device_list/';
+-                    } else {
+-                        alert("Fail to add device");
++
++            if (Name) {
++                $.ajax({
++                    type: 'post',
++                    traditional: true,
++                    url: '/change_user_group_name/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'OId': {{obj|safe}}.OId,
++                        'Name': Name
++                    },
++                    success: function(data) {
++                        if (data.CODE == "0") {
++                            alert("Change group name successfully");
++                            location.reload();
++                        } else {
++                            alert("Fail to change group name");
++                        }
++                    },
++                    error: function(data) {
+                     }
+-                },
+-                error: function(data) {
+-                }
+-            });
++                });
++            } else {
++                alert("Please input group name");
++            }
+         }
+         </script>
+     </body>
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+new file mode 100644
+index 0000000..fe0ba8e
+--- /dev/null
++++ b/templates/user_group_list.html
+@@ -0,0 +1,123 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>User Group List</title>
++    </head>
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">User Group List</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>User Group List</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <button id="AddGroup" class="btn btn-default pull-right" onclick="location.href='/user_group_add/'">Create new group</button>
++                            <table id="GroupList"></table>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var dataSet = {{obj|safe}};
++            $('#GroupList').bootstrapTable({
++                search: true,
++                pagination: true,
++                toolbar: '#AddGroup',
++                pageSize: 10,
++                pageList: [10, 25, 50, 100],
++                sortName: 'Index',
++                sortOrder: 'asc',
++                columns: [
++                    {
++                        field: 'Index',
++                        title: 'No',
++                        sortable: true
++                    },
++                    {
++                        field: 'Name',
++                        title: 'Group',
++                        sortable: true
++                    },
++                    {
++                        field: 'UserNumber',
++                        title: 'Users',
++                        sortable: true
++                    },
++                    {
++                        formatter: function(value, row) {
++                            return ' \
++                                <div align="center"> \
++                                    <button class="btn btn-default" onclick="location.href=\'/user_group_edit?OId=' + row.OId + '\'">Edit</button> \
++                                    <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                </div>';
++                        }
++                    }
++                ],
++                data: dataSet
++            });
++
++            //For getting CSRF token
++            function getCookie(name) {
++                var cookieValue = null;
++                if (document.cookie && document.cookie != '') {
++                    var cookies = document.cookie.split(';');
++                    for (var i = 0; i < cookies.length; i++) {
++                        var cookie = jQuery.trim(cookies[i]);
++                        // Does this cookie string begin with the name we want?
++                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                            break;
++                        }
++                    }
++                }
++                return cookieValue;
++            }
++
++            function delete_device(OId, Name) {
++                var ret = confirm('Confirm to delete ' +Name+ ' group?');
++                if (ret) {
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/delete_user_group/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'OId': OId
++                        },
++                        success: function(data) {
++                            if (data.CODE == "0") {
++                                location.reload();
++                            } else {
++                                alert("Fail to delete group");
++                            }
++                        },
++                        error: function(data) {
++                        }
++                    });
++                }
++            }
++        </script>
++    </body>
++</html>
+diff --git a/templates/device_frusergroups.html b/templates/user_group_members.html
+similarity index 67%
+copy from templates/device_frusergroups.html
+copy to templates/user_group_members.html
+index f7579b2..68aa767 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/user_group_members.html
+@@ -6,21 +6,22 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Device List</title>
++        <title>User Group Member</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">User List</li>
++                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li>User Group Edit</li>
++                    <li class="active">{{obj.Name}}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Device Edit</small></h1>
++                    <h1 class="page-header"><small>User Group Edit</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+@@ -28,10 +29,13 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/device_edit?OId={{DeviceOId}}" class="input-lg">Imformation</a>
++                            <a href="/user_group_edit?OId={{obj.OId}}" class="input-lg">Imformation</a>
+                         </li>
+                         <li class="active">
+-                            <a href="/device_frusergroups?OId={{DeviceOId}}" class="input-lg">FRUser Group List</a>
++                            <a href="/user_group_members?OId={{obj.OId}}" class="input-lg">Member List</a>
++                        </li>
++                        <li>
++                            <a href="/user_group_devices?OId={{obj.OId}}" class="input-lg">Device List</a>
+                         </li>
+                     </ul>
+                 </div>
+@@ -40,16 +44,16 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="col-md-8 panel panel-default">
+-                        <div class="panel-heading"><p>Group list</p></div>
++                        <div class="panel-heading"><p>Member list</p></div>
+                         <div class="panel-body">
+-                            <table id="GroupList"></table>
++                            <table id="MemberList"></table>
+                         </div>
+                     </div>
+                     <div class="col-md-offset-1 col-md-3 panel panel-default">
+-                        <div class="panel-heading"><p>Add New Group</p></div>
++                        <div class="panel-heading"><p>Add New Member</p></div>
+                         <div class="panel-body">
+-                            <label>Search Group :</label>
+-                            <table id="GroupAdd"></table>
++                            <label>Search User :</label>
++                            <table id="MemberAdd"></table>
+                         </div>
+                         <div class="panel-footer">
+                             <button class="btn btn-default" onclick="onAddClick()">Add</button>
+@@ -61,58 +65,57 @@
+ 
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+-            var $GroupAdd = $('#GroupAdd');
+-            var $GroupList = $('#GroupList');
++            var $MemberList = $('#MemberList');
++            var $MemberAdd = $('#MemberAdd');
+ 
+-            var devicegroups = {{devicegroups|safe}};
+-            $GroupList.bootstrapTable({
++            $MemberList.bootstrapTable({
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+                 pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+-                sortOrder: 'desc',
++                sortOrder: 'asc',
+                 columns: [
+                     {
+                         field: 'Name',
+-                        title: 'FRUser Group',
++                        title: 'Name',
+                         sortable: true
+                     },
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+                                 <div align="center"> \
+-                                    <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>Delete</button> \
++                                    <button class="btn btn-default" onclick=delete_user("' + row.OId + '","' +row.Name+ '")>Delete</button> \
+                                 </div>';
+                         }
+                     }
+                 ],
+-                data: devicegroups
++                data: {{members|safe}}
+             });
+ 
+-            var groups = {{groups|safe}};
+-            $GroupAdd.bootstrapTable({
++            $MemberAdd.bootstrapTable({
+                 search: true,
+                 pageSize: 10,
+                 sortName: 'Name',
++                sortOrder: 'asc',
+                 columns: [
+                     {
+-                        field: 'State',
+                         checkbox: true
+                     },
+                     {
+                         field: 'Name',
+-                        title: 'Group',
++                        title: 'User',
+                         sortable: true
+                     }
+                 ],
+-                data: groups
++                data: {{users|safe}}
+             });
+ 
+ 
+             //For getting CSRF token
+             function getCookie(name) {
+                 var cookieValue = null;
++
+                 if (document.cookie && document.cookie != '') {
+                     var cookies = document.cookie.split(';');
+                     for (var i = 0; i < cookies.length; i++) {
+@@ -127,29 +130,29 @@
+                 return cookieValue;
+             }
+ 
+-            function delete_group(GroupOId, Name) {
+-                var ret = confirm('Confirm to delete ' + Name + ' from this device?');
++            function delete_user(UserOId, Name) {
++                var ret = confirm('Confirm to delete ' + Name + ' from this group?');
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+                         traditional: true,
+-                        url: '/delete_frusergroupdevice/',
++                        url: '/delete_user_group_member/',
+                         async: true,
+                         dataType: 'json',
+                         data: {
+                             csrfmiddlewaretoken : getCookie('csrftoken'),
+-                            'DeviceOId': '{{DeviceOId|safe}}',
+-                            'GroupOId': GroupOId
++                            'GroupOId': {{obj|safe}}.OId,
++                            'UserOId': UserOId
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                $GroupAdd.bootstrapTable('append', data);
+-                                $GroupList.bootstrapTable('remove', {
++                                $MemberAdd.bootstrapTable('append', data);
++                                $MemberList.bootstrapTable('remove', {
+                                     field: 'OId',
+                                     values: [data.OId]
+                                 });
+                             } else {
+-                                alert("Fail to delete group");
++                                alert("Fail to delete user");
+                             }
+                         },
+                         error: function(data) {
+@@ -159,34 +162,34 @@
+             }
+ 
+             function onAddClick() {
+-                var GroupOIds = $.map(
+-                    $GroupAdd.bootstrapTable('getSelections'),
++                var UserOIds = $.map(
++                    $MemberAdd.bootstrapTable('getSelections'),
+                     function (row) {return row.OId}
+                 );
+ 
+                 $.ajax({
+                     type: 'post',
+                     traditional: true,
+-                    url: '/add_frusergroupdevice/',
++                    url: '/add_user_group_member/',
+                     async: true,
+                     dataType: 'json',
+                     data: {
+                         csrfmiddlewaretoken : getCookie('csrftoken'),
+-                        'DeviceOId': '{{DeviceOId|safe}}',
+-                        'GroupOIds': GroupOIds
++                        'GroupOId': {{obj|safe}}.OId,
++                        'UserOIds': UserOIds
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            $GroupList.bootstrapTable('append', $.map(
+-                                $GroupAdd.bootstrapTable('getSelections'),
++                            $MemberList.bootstrapTable('append', $.map(
++                                $MemberAdd.bootstrapTable('getSelections'),
+                                 function (row) {return row}
+                             ));
+-                            $GroupAdd.bootstrapTable('remove', {
++                            $MemberAdd.bootstrapTable('remove', {
+                                 field: 'OId',
+-                                values: GroupOIds
++                                values: UserOIds
+                             });
+                         } else {
+-                            alert("Fail to add group");
++                            alert("Fail to add user");
+                         }
+                     },
+                     error: function(data) {
+diff --git a/usergroups/__init__.py b/usergroups/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/usergroups/admin.py b/usergroups/admin.py
+new file mode 100644
+index 0000000..8c38f3f
+--- /dev/null
++++ b/usergroups/admin.py
+@@ -0,0 +1,3 @@
++from django.contrib import admin
++
++# Register your models here.
+diff --git a/usergroups/apps.py b/usergroups/apps.py
+new file mode 100644
+index 0000000..e57574b
+--- /dev/null
++++ b/usergroups/apps.py
+@@ -0,0 +1,5 @@
++from django.apps import AppConfig
++
++
++class UsergroupsConfig(AppConfig):
++    name = 'usergroups'
+diff --git a/usergroups/migrations/__init__.py b/usergroups/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/usergroups/models.py b/usergroups/models.py
+new file mode 100644
+index 0000000..71a8362
+--- /dev/null
++++ b/usergroups/models.py
+@@ -0,0 +1,3 @@
++from django.db import models
++
++# Create your models here.
+diff --git a/usergroups/tests.py b/usergroups/tests.py
+new file mode 100644
+index 0000000..7ce503c
+--- /dev/null
++++ b/usergroups/tests.py
+@@ -0,0 +1,3 @@
++from django.test import TestCase
++
++# Create your tests here.
+diff --git a/usergroups/views.py b/usergroups/views.py
+new file mode 100644
+index 0000000..9f94ca8
+--- /dev/null
++++ b/usergroups/views.py
+@@ -0,0 +1,156 @@
++from django.shortcuts import render
++
++from collections import ChainMap
++from django.http import HttpResponseRedirect, JsonResponse
++from api.models import Devices, Users, Usergroups, Usergroupmember, Usergroupdevices
++
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++
++def user_group_list_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        obj = Usergroups.objects.all()
++        groups = [res.as_json() for res in obj]
++        index = 0
++        for group in groups:
++            group['Index'] = index+1
++            group['UserNumber'] = len(Usergroupmember.objects.filter(GroupOId = Usergroups.objects.get(OId = group['OId'])))
++            index += 1
++
++        return render(request, 'user_group_list.html', {'active': 'user_group_list', 'obj': groups})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def user_group_add_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        return render(request, 'user_group_add.html', {'active': 'user_group_add'})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def user_group_edit_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        return render(request, 'user_group_edit.html', {'active': 'user_group_edit', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json()})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def user_group_members_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        obj = Usergroupmember.objects.filter(GroupOId = Usergroups.objects.get(OId = request.GET['OId']))
++        members = [res.UserOId.as_json() for res in obj]
++        index = 0
++        for member in members:
++            member['Index'] = index+1
++            index += 1
++
++        obj_all = Users.objects.all()
++        users = [res_all.as_json() for res_all in obj_all if res_all not in [res.UserOId for res in obj]]
++        index = 0
++        for user in users:
++            user['Index'] = index+1
++            index += 1
++
++        return render(request, 'user_group_members.html', {'active': 'user_group_members', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json(), 'members': members, 'users': users})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def user_group_devices_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        obj = Usergroupdevices.objects.filter(GroupOId = Usergroups.objects.get(OId = request.GET['OId']))
++        groupdevices = [res.DeviceOId.as_json() for res in obj]
++        index = 0
++        for device in groupdevices:
++            device['Index'] = index+1
++            index += 1
++
++        obj_all = Devices.objects.all()
++        devices = [res_all.as_json() for res_all in obj_all if res_all not in [res.DeviceOId for res in obj]]
++        index = 0
++        for device in devices:
++            device['Index'] = index+1
++            index += 1
++
++        return render(request, 'user_group_devices.html', {'active': 'user_group_devices', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json(), 'groupdevices': groupdevices, 'devices': devices})
++    except:
++        return render(request, 'registration/not_found.html')
++
++def add_user_group(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Usergroups.objects.create(Name = request.POST['Name'])
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def change_user_group_name(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Usergroups.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'])
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_user_group(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Usergroups.objects.get(OId = request.POST['OId']).delete()
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def add_user_group_member(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
++        UserOIds = [Users.objects.get(OId = UserOId) for UserOId in request.POST.getlist('UserOIds')]
++        for UserOId in UserOIds:
++            Usergroupmember.objects.create(GroupOId = GroupOId, UserOId = UserOId)
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_user_group_member(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
++        UserOId = Users.objects.get(OId = request.POST['UserOId'])
++        Usergroupmember.objects.filter(GroupOId = GroupOId, UserOId = UserOId).delete()
++        return JsonResponse(dict(ChainMap(res_code[0], UserOId.as_json())))
++    except:
++        return JsonResponse(res_code[1])
++
++def add_user_group_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
++        DeviceOIds = [Devices.objects.get(OId = DeviceOId) for DeviceOId in request.POST.getlist('DeviceOIds')]
++        for DeviceOId in DeviceOIds:
++            Usergroupdevices.objects.create(GroupOId = GroupOId, DeviceOId = DeviceOId)
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def delete_user_group_device(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
++        DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
++        Usergroupdevices.objects.filter(GroupOId = GroupOId, DeviceOId = DeviceOId).delete()
++        return JsonResponse(dict(ChainMap(res_code[0], DeviceOId.as_json())))
++    except:
++        return JsonResponse(res_code[1])
+-- 
+1.9.1
+

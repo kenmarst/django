@@ -1,0 +1,328 @@
+From 0df6a86a0ce221c0898ec34db7e224d75ce964f3 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 27 Apr 2016 15:16:29 +0800
+Subject: [PATCH 013/443] merge kiwi's 0426 source code and fix json format
+ error
+
+---
+ api/models.py             |  15 ++++++-
+ api/utility.py            |  61 ++++++++++++++++++++++++-
+ fruserlogs/views.py       |   2 +-
+ frusers/views.py          | 111 +---------------------------------------------
+ templates/FRlog_list.html |  25 +++++------
+ 5 files changed, 85 insertions(+), 129 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 2b0d63a..42daccd 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -183,7 +183,7 @@ class Users(models.Model):
+             Account=self.Account,
+             Password=self.Password,
+             Name=self.Name,
+-            RoleOId=self.RoleOId,
++            RoleOId=self.RoleOId.Category,
+             CreateDate=self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+             UpdateDate=self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+         )
+@@ -269,7 +269,7 @@ class Frusers(models.Model):
+             FRUserID = self.FRUserId,
+             Name = self.Name,
+             Gender = self.Gender,
+-            Age = self.Age,
++            #Age = self.Age,
+             PersonId = self.PersonId,
+             Face1 = self.Face1,
+             Face2 = self.Face2,
+@@ -335,6 +335,17 @@ class Fruserlogs(models.Model):
+     class Meta:
+         db_table = 'fruserlogs'
+ 
++    def as_json(self):
++        return dict(
++            Index = 0,
++            OId=self.OId,
++            FRUserId=self.FRUserOId.FRUserId if self.FRUserOId else "",
++            FRUserName=self.FRUserOId.Name if self.FRUserOId else "",
++            DeviceOId=self.DeviceOId.Name,
++            LogContent=self.LogContent,
++            LogDateTime=self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
++        )
++
+     def __str__(self):
+         return '%s %s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
+ 
+diff --git a/api/utility.py b/api/utility.py
+index 2690cc8..10c611d 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -1,12 +1,69 @@
+ #-*-coding:utf-8-*-
+-
++from django.shortcuts import render
++from django.shortcuts import render
++from django.http import HttpResponseRedirect
++from django.http import JsonResponse
++from django.http import HttpResponse
++from django.core.exceptions import ObjectDoesNotExist
++from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
+ from django.conf import settings
+-
++import json, requests, urllib
+ 
+ def TCIT_API(url):
+     url = 'http://%s/%s' % (settings.TCIT_IP, url)
+     return url
+ 
++
++# Create your views here.
++
++def check_session(request):
++    if not 'OId' in request.session:
++        return False
++    else:
++        return True
++
++def TCIT_API(url_query,data):
++    url_query = "http://" + settings.TCIT_IP + url_query
++    # url_query = "http://192.168.154.131:5566/test/"
++    if data == "":
++        u = urllib.request.urlopen(url_query)
++    else:
++        binary_data = data.encode('utf-8') 
++        u = urllib.request.urlopen(url_query, binary_data)
++    string = u.read().decode('utf-8')
++    json_obj = json.loads(string)
++    return json_obj
++
++def TCIT_res_str(code):
++    TCIT_res_code = {1000: "STATE_SUCCESSFUL", 3000: "STATE_FAIL", 3001: "STATE_REQUEST_METHOD_ERROR",3002:"STATE_PARAMETER_ERROR",3003:"STATE_PROCESS_ERROR"}
++    return TCIT_res_code[code]
++
++def sendImg(request):
++    try:
++        url_query = "http://" + settings.TCIT_IP + "/storage/upload/"
++        res_upload = json.loads(
++            requests.post(
++                url_query,
++                files = {'image' : (
++                    request.FILES['image'].name,
++                    request.FILES['image'].file,
++                    request.FILES['image'].content_type
++                )}
++            ).text
++        )
++    except Exception as error:
++        print(error)
++        return HttpResponse(error)
++    return res_upload
++
++def getImg(path):
++    try:
++        image_data = open(path, "rb").read()
++    except Exception as error:
++        print(error)
++        return ""
++    return image_data
++
+ def md5(str):
+     from hashlib import md5
+     pwd = md5(str.encode('utf-8'))
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 90d37a2..b6d729b 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -10,7 +10,7 @@ from api.models import Fruserlogs,Systemlogs
+ def log_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    obj = Systemlogs.objects.all()
++    obj = Fruserlogs.objects.all()
+     # result = json.dumps(serializers.serialize("json", User.objects.all()))
+     result = [res.as_json() for res in obj]
+     index = 0
+diff --git a/frusers/views.py b/frusers/views.py
+index fd1373c..b3be105 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -10,103 +10,6 @@ import urllib
+ 
+ # Create your views here.
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+-# b = FRUser.objects.get(id="5")
+-# b.delete()
+-# b = FRUser.objects.get(id="8")
+-# b.delete()
+-# b = SysLog.objects.get(id="9")
+-# b.delete()
+-
+-@csrf_exempt
+-def test(request):
+-    print("test")
+-    Name = request.POST.get('name','')
+-    print("-----------Name = ",Name)
+-    return HttpResponse(json.dumps(res_code[2]))
+-
+-@csrf_exempt
+-def Create(request):
+-    if not 'OId' in request.session:
+-        return HttpResponseRedirect("/")
+-    FRUserId = request.POST.get('FRUserId','')
+-
+-    try:
+-        obj = FRUser.objects.get(FRUserId=FRUserId)
+-        logContent = "FRUser Fail to create: This FRUser already exists"
+-    except ObjectDoesNotExist:
+-        print("Creating new account now.")
+-        FRUser.objects.create(FRUserId = FRUserId, Name = request.POST.get('Name',''), Gender = request.POST.get('Gender',''), Age = request.POST.get('Age',''), RFIDCard = request.POST.get('RFIDCard',''), State = 'Enable')
+-        logContent = "FRUser Create Successfully"
+-        return HttpResponse(json.dumps({"Result" : "Success"}))
+-    except:
+-        print("---FRUser error---")
+-        logContent = "FRUser Fail to create: FRUser db error"
+-        return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":logContent}))
+-    finally:
+-        category = "FRUser"
+-        try:
+-            log = SysLog.objects.create(Category = category, LogContent = logContent)
+-        except:
+-            return HttpResponse(json.dumps({"Result" : "fail ","Code":"9999","Message":"Can't write log in SysLog db"}))
+-
+-    return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":logContent}))
+-
+-@csrf_exempt
+-def Update(request):
+-    if not 'OId' in request.session:
+-        return HttpResponseRedirect("/")
+-    FRUserId = request.POST.get('FRUserId','')
+-    try:
+-        obj = Frusers.objects.get(FRUserId=FRUserId)
+-        # obj.update(Age=22)
+-        obj_json = obj.as_json()
+-        FRUser.objects.filter(OId=obj_json['OId']) \
+-            .update(Name=request.POST.get('Name','') if not request.POST.get('Name','')=="" else obj_json['Name'], \
+-                Gender=request.POST.get('Gender','') if not request.POST.get('Gender','')=="" else obj_json['Gender'], \
+-                Age=request.POST.get('Age','') if not request.POST.get('Age','')=="" else obj_json['Age'], \
+-                RFIDCard=request.POST.get('RFIDCard','') if not request.POST.get('RFIDCard','')=="" else obj_json['RFIDCard'], \
+-                State=request.POST.get('State','') if not request.POST.get('State','')=="" else obj_json['State'] \
+-        )
+-        logContent = "FRUser Update Successfully"
+-    except ObjectDoesNotExist:
+-        logContent = "FRUser Fail to Update: Can't find this FRUser Id"
+-        return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":logContent}))
+-    except:
+-        print("---FRUser error---")
+-        logContent = "FRUser Fail to Update: FRUser db error"
+-        return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":logContent}))
+-    finally:
+-        category = "FRUser"
+-        try:
+-            log = SysLog.objects.create(Category = category, LogContent = logContent)
+-        except:
+-            return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":"Can't write log in SysLog db"}))
+-
+-    return HttpResponse(json.dumps({"Result" : "Success "}))
+-
+-@csrf_exempt
+-def Delete(request):
+-    if not 'OId' in request.session:
+-        return HttpResponseRedirect("/")
+-    FRUserId = request.POST.get('FRUserId','')
+-    try:
+-        obj = FRUser.objects.get(FRUserId=FRUserId)
+-        logContent = "FRUser Delete Successfully"
+-        obj.delete()
+-    except ObjectDoesNotExist:
+-        logContent = "FRUser Fail to delete: Can't find this FRUser Id"
+-        return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":logContent}))
+-    except:
+-        print("---FRUser error---")
+-        logContent = "FRUser Fail to delete: FRUser db error"
+-        return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":logContent}))
+-    finally:
+-        category = "FRUser"
+-        try:
+-            log = SysLog.objects.create(Category = category, LogContent = logContent)
+-        except:
+-            return HttpResponse(json.dumps({"Result" : "Fail ","Code":"9999","Message":"Can't write log in SysLog db"}))
+-    return HttpResponse(json.dumps({"Result" : "Success "}))
+ 
+ def get_FRUlist():
+     try:
+@@ -116,25 +19,15 @@ def get_FRUlist():
+         return json.dumps({"Result" : "Fail ","Code":"9999","Message":error})
+     return result;
+ 
+-@csrf_exempt
+-def get_fruser_list(request):
+-    if not 'OId' in request.session:
+-        return HttpResponseRedirect("/")
+-    # obj = FRUser.objects.filter(State="Enable")
+-    # result = [res.as_json() for res in obj]
+-    result = get_FRUlist()
+-    return HttpResponse(json.dumps(result))
+-
+ def fruser_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    # obj = FRUser.objects.filter(State="Enable")
++    # obj = Frusers.objects.filter(State="Enable")
+     # result = [res.as_json() for res in obj]
+     result = get_FRUlist()
++    
+     index = 0
+     for x in result:
+         x['Index'] = index+1
+         index += 1
+-        print(x['Index'])
+-
+     return render(request, 'fruser_list.html', {'active': "fruser_list", 'obj': result})
+diff --git a/templates/FRlog_list.html b/templates/FRlog_list.html
+index 794dd29..910bd5a 100644
+--- a/templates/FRlog_list.html
++++ b/templates/FRlog_list.html
+@@ -80,31 +80,26 @@
+ 				title: 'No.',
+ 				sortable: true,
+ 			},{
+-				field: 'FRUserOId',
++				field: 'FRUserId',
+ 				title: 'FRUserId',
+ 				sortable: true
+ 			}, {
+-				field: 'Name',
++				field: 'FRUserName',
+ 				title: 'Name',
+ 				sortable: true
+ 			}, {
+-				field: 'RoleOId',
+-				title: 'Role',
+-				sortable: true
++				field: 'DeviceOId',
++				title: 'Device Name',
++				sortable: true,
++				//formatter: function(value, row, index) {
++				//	return 'Device 1';
++				//}
+ 			},{
+-				field: 'CreateDate',
++				field: 'LogDateTime',
+ 				title: 'CreateDate',
+ 				sortable: true
+ 			},
+-			{
+-				field: 'UpdateDate',
+-				title: 'UpdateDate',
+-				sortable: true
+-			},
+-			{
+-				field: 'OId',
+-				title: '123'
+-			}],
++            ],
+ 			data: dataSet
+ 		});
+ 
+-- 
+1.9.1
+

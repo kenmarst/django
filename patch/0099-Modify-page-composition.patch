@@ -1,0 +1,609 @@
+From 3fedd8e94b5e8b2a464b27f621479f469c5f3685 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Thu, 26 May 2016 17:13:52 +0800
+Subject: [PATCH 099/443] Modify page composition.
+
+---
+ templates/device_add.html       |   8 +-
+ templates/device_edit.html      |  40 +++++-
+ templates/device_settings.html  |  32 ++++-
+ templates/frusergroup_add.html  |  10 +-
+ templates/frusergroup_edit.html |   8 +-
+ templates/logsetting.html       | 295 +++++++++++++++++-----------------------
+ templates/menu.html             |  12 +-
+ templates/user_group_add.html   |  10 +-
+ templates/user_group_edit.html  |   8 +-
+ 9 files changed, 218 insertions(+), 205 deletions(-)
+
+diff --git a/templates/device_add.html b/templates/device_add.html
+index f7c7555..d62328d 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -60,9 +60,11 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">{% trans "Cancel" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 2cd1365..438b4d1 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -71,9 +71,11 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">{% trans "Cancel" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="location.href='/device_list'">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+@@ -89,7 +91,7 @@
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+-                                    <div class="form-group">
++                                    <!--<div class="form-group">
+                                         <label class="col-md-3 control-label">Event :</label>
+                                         <div class="col-md-9">
+                                             <div class="form-group">
+@@ -119,6 +121,32 @@
+                                                 </label>
+                                             </div>
+                                         </div>
++                                    </div>-->
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Welcome :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">
++                                                {% if obj.Welcome == 'Do0' %}
++                                                    None
++                                                {% endif %}
++                                                {% if obj.Welcome == 'Do1' %}
++                                                    Pulse 3 sec
++                                                {% endif %}
++                                            </p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Access Denied :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">
++                                                {% if obj.AccessDenied == 'Do0' %}
++                                                    On
++                                                {% endif %}
++                                                {% if obj.AccessDenied == 'Do1' %}
++                                                    Off
++                                                {% endif %}
++                                            </p>
++                                        </label>
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">Screen saver :</label>
+@@ -159,8 +187,8 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_settings?OId={{obj.OId}}'">{% trans "parameterSettings" %}</button>
++                            <div class="col-md-offset-3 col-md-9">
++                                <button class="btn btn-default" onclick="location.href='/device_settings?OId={{obj.OId}}'">{% trans "Parameter Settings" %}</button>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 574d000..337563c 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -35,7 +35,7 @@
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+-                                    <div class="form-group">
++                                    <!--<div class="form-group">
+                                         <label class="col-md-3 control-label">Event :</label>
+                                         <div class="col-md-9">
+                                             <div class="form-group">
+@@ -61,6 +61,28 @@
+                                                 </div>
+                                             </div>
+                                         </div>
++                                    </div>-->
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Welcome</label>
++                                        <div class="col-md-6">
++                                            <label class="col-md-3 radio-inline">
++                                                <input type="radio" value="Do0" name="Welcome">None
++                                            </label>
++                                            <label class="col-md-3 radio-inline">
++                                                <input type="radio" value="Do1" name="Welcome">Pulse
++                                            </label>
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Access Denied</label>
++                                        <div class="col-md-6">
++                                            <label class="col-md-3 radio-inline">
++                                                <input type="radio" value="Do0" name="AccessDenied">On
++                                            </label>
++                                            <label class="col-md-3 radio-inline">
++                                                <input type="radio" value="Do1" name="AccessDenied">Off
++                                            </label>
++                                        </div>
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">Screen saver :</label>
+@@ -146,9 +168,11 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/device_list'">{% trans "Cancel" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="location.href='/device_list'">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index 2a9e04a..097d350 100644
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -43,10 +43,12 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-4 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/fruser_group'">{% trans "Cancel" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveAnotherClick()">{% trans "Save and add another" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                    <a class="btn default" onclick="onSaveAnotherClick()">{% trans "Save and Add another" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index 719a1e1..86180d7 100644
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -60,9 +60,11 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/fruser_group'">{% trans "Cancel" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="location.href='/fruser_group'">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 2b2c257..1f70222 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -13,33 +13,29 @@
+ <![endif]-->
+ 
+ </head>
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">{% trans "Log Setting" %}</li>
++                </ol>
++            </div><!--/.row-->
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">{% trans "Log Setting" %}</li>
+-			</ol>
+-		</div><!--/.row-->
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>{% trans "Log Setting" %}</small></h1>
++                </div>
++            </div><!--/.row-->
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header"><small>{% trans "Log Setting" %}</small></h1>
+-			</div>
+-		</div><!--/.row-->
+-
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<!-- <div class="panel-heading">Advanced Table</div> -->
+-					<div class="panel-body">
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
+                             <div class="form-body">
+                                 <div class="container">
+-                                    <h4>{% trans "Separator Options" %}</h4>
+-									<br>
+-                                    <!--p>Separator Options</p-->
++                                    <h4>{% trans "Separator Options" %}</h4><br>
+                                     <form role="form">
+                                         <div class="radio">
+                                             <label><input type="radio" name="optradio" value="tab">tab</label>
+@@ -54,162 +50,115 @@
+                                             <label><input type="radio" name="optradio" value="space">space</label>
+                                         </div>
+                                         <div class="radio">
+-                                            <label><input type="radio" name="optradio" value="5">custom <input type="text" class="form-control" name="customsymbol" placeholder=" 1 character only"</label>
+-                                        </div>
+-                                        <!--div class="radio disabled">
+-                                            <label><input type="radio" name="optradio" disabled>Option 3</label>
+-                                        </div-->
+-                                     </form>
+-                                     <br><br>
+-
+-                                     <table>
+-                                     <tr>
+-                                     <td>
+-                                       <select multiple class="form-control" id="select1" style="width:200px;height:150px">
+-                                        <option value="OId">OId</option>
+-                                        <option value="FRUserId">FRUserId</option>
+-                                        <option value="FRUserName">FRUserName</option>
+-										<option value="Category">Category</option>
+-                                        <option value="DeviceOId">DeviceOId</option>
+-                                        <option value="LogContent">LogContent</option>
+-                                        <option value="LogDateTime">LogDateTime</option>
+-                                     </select>
+-                                     </td>
+-                                     <td>
+-                                        <div class="col-lg-12">
+-                                            <button id="add" class="btn green pull-right"  value=""> >> </button><br><br>
+-                                            <button id="remove" class="btn green pull-right"  value=""> << </button>
+-                                        <div>
+-                                    </td>
+-                                      <td>
+-                                        <select multiple class="form-control" id="select2" style="width:200px;height:150px"></select>
+-                                      </td>
+-                                     </tr>
+-                                     </table>
+-                               </div>
+-
+-                                <!--div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Account
+-                                        <span class="required"> </span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                      <div class="input-icon">
+-                                        	<input readonly type="text" class="form-control" placeholder="" name="Account" value="{{obj.Account}}">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
+-                                        </div>
+-
+-                                    </div>
+-                                </div-->
+-                                <!--div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">Name
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                      <div class="input-icon">
+-                                        	<input type="text" class="form-control" placeholder="" name="name" value="{{obj.Name}}">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
++                                            <label><input type="radio" name="optradio" value="5">custom</label>
++                                            <label><input type="text" class="form-control" style="width:150px; height:20px" name="customsymbol" placeholder=" 1 character only"></label>
+                                         </div>
+-                                    </div>
+-                                </div-->
+-
++                                    </form><br>
+ 
+-
+-                                   <br><br>
+-
+-                            <div class="form-actions">
+-                                <div class="row">
+-                                    <div class="col-md-offset-3 col-md-9">
+-                                       <a onClick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
++                                    <table>
++                                        <tr>
++                                            <td>
++                                                <select multiple class="form-control" id="select1" style="width:200px; height:150px">
++                                                    <option value="OId">OId</option>
++                                                    <option value="FRUserId">FR User Id</option>
++                                                    <option value="FRUserName">FR User Name</option>
++                                                    <option value="Category">Category</option>
++                                                    <option value="DeviceOId">Device OId</option>
++                                                    <option value="LogContent">Log Content</option>
++                                                    <option value="LogDateTime">Log Date Time</option>
++                                                </select>
++                                            </td>
++                                            <td>
++                                                <div class="col-lg-12">
++                                                    <button id="add" class="btn green pull-right"  value=""> >> </button><br><br>
++                                                    <button id="remove" class="btn green pull-right"  value=""> << </button>
++                                                <div>
++                                            </td>
++                                            <td>
++                                                <select multiple class="form-control" id="select2" style="width:200px;height:150px"></select>
++                                            </td>
++                                        </tr>
++                                    </table>
++                                </div>
++                                <div class="form-actions">
++                                    <div class="col-md-offset-2 col-md-9">
++                                        <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+                             </div>
+-                        </form>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->
+-	</div><!--/.main-->
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
+ 
+-    <script>
+-	$(function () {
+-      $("#add").click(function () {
+-	    var $option = $("#select1 option:selected");
+-        $option.appendTo("#select2");
+-      });
+-      //$("#add_all").click(function () {
+-      //  var $option = $("#select1 option");
+-      //  $option.appendTo("#select2");
+-      //});
+-      $("#remove").click(function () {
+-        var $option = $("#select2 option:selected");
+-        $option.appendTo("#select1");
+-      });
+-      //$("#remove_all").click(function () {
+-      //  var $option = $("#select2 option");
+-      //  $option.appendTo("#select1");
+-     // });
+-    });
+-	//For getting CSRF token
+-	function getCookie(name) {
+-		var cookieValue = null;
+-		if (document.cookie && document.cookie != '') {
+-			var cookies = document.cookie.split(';');
+-			for (var i = 0; i < cookies.length; i++) {
+-				var cookie = jQuery.trim(cookies[i]);
+-				// Does this cookie string begin with the name we want?
+-				if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-					break;
+-				}
+-			}
+-		}
+-		return cookieValue;
+-	}
++        <script>
++        $(function () {
++            $("#add").click(function () {
++                var $option = $("#select1 option:selected");
++                $option.appendTo("#select2");
++            });
++            $("#remove").click(function () {
++                var $option = $("#select2 option:selected");
++                $option.appendTo("#select1");
++            });
++        });
+ 
+-	function onSaveClick(){
+-		var csrftoken = getCookie('csrftoken');
+-		var symbol1 = $('input[name=optradio]').filter(":checked").val()
+-		var symbol2 = $('input[name=customsymbol]').val()
+-		var s = $("#select2").val();
+-	    console.log(symbol1)
+-	    symbol=symbol1;
+-		if((symbol1==5 && (symbol2=="")||(symbol2.length>1))||(symbol1==undefined)||s==null){
+-			alert("input error");
+-			return
+-		}
+-		if (symbol1==5) {
+-			var symbol=symbol2;
+-		}
+-		$.ajax({
+-			type: 'post',
+-            traditional: true,
+-			url: '/logsetting/',
+-			async: true,
+-			dataType: 'json',
+-			data: {
+-				csrfmiddlewaretoken : csrftoken,
+-				'separator':symbol,
+-				'fields': s,
+-			},
+-			success: function(data) {
+-				console.log("CODE = ",data.CODE);
+-				if (data.CODE == "0") {
+-					alert("successfully");
+-					location.href = '/';
+-				}else if (data.CODE == "2") {
+-					alert("Wrong");
+-				}else{
+-					alert("Fail");
+-				}
+-			},
+-			error: function(data) {
+-				console.log('why nunu');
+-			}
+-		});
+-	}
+-	</script>
+-</body>
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
+ 
++        function onSaveClick(){
++            var csrftoken = getCookie('csrftoken');
++            var symbol1 = $('input[name=optradio]').filter(":checked").val()
++            var symbol2 = $('input[name=customsymbol]').val()
++            var s = $("#select2").val();
++            symbol = symbol1;
++            if ((symbol1 == 5 && (symbol2 == "") || (symbol2.length > 1)) || (symbol1 == undefined) || s == null) {
++                alert("input error");
++                return
++            }
++            if (symbol1 == 5) {
++                var symbol = symbol2;
++            }
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/logsetting/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : csrftoken,
++                    'separator':symbol,
++                    'fields': s,
++                },
++                success: function(data) {
++                    console.log("CODE = ",data.CODE);
++                    if (data.CODE == "0") {
++                        alert("successfully");
++                        location.href = '/';
++                    } else if (data.CODE == "2") {
++                        alert("Wrong");
++                    } else {
++                        alert("Fail");
++                    }
++                },
++                error: function(data) {
++                    console.log('why nunu');
++                }
++            });
++        }
++        </script>
++    </body>
+ </html>
+diff --git a/templates/menu.html b/templates/menu.html
+index fff07fb..119ebd8 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -44,10 +44,10 @@
+         <li name="device_list"><a href="/device_list"><svg class="glyph stroked external hard drive"><use xlink:href="#stroked-external-hard-drive"/></svg> {% trans "Device List" %} </a></li>
+         {% endifequal %}
+         {% ifequal request.session.permission_fruserlist "Enable" %}
+-        <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked male user "><use xlink:href="#stroked-male-user"/></svg> {% trans "FRUser List" %} </a></li>
++        <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked male user "><use xlink:href="#stroked-male-user"/></svg> {% trans "FR User List" %} </a></li>
+         {% endifequal %}
+         {% ifequal request.session.permission_frusergroup "Enable" %}
+-        <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked male user "><use xlink:href="#stroked-male-user"/></svg> {% trans "FRUser Group" %} </a></li>
++        <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked male user "><use xlink:href="#stroked-male-user"/></svg> {% trans "FR User Group" %} </a></li>
+         {% endifequal %}
+         {% ifequal request.session.permission_log "Enable" %}
+         <li class="parent ">
+@@ -65,15 +65,17 @@
+ 
+     <script>
+         $(document).ready(function() {
+-            var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_group_list", "/user_group_add", "/role_list", "/role_add/", "/role_rename", "/role_permission/", "/user_group_add/"];
++            var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_update",
++                                "/user_group_list", "/user_group_add/", "/user_group_edit", "/user_group_members", "/user_group_devices",
++                                "/role_list", "/role_add/", "/role_rename", "/role_permission/"];
+             var loglink = ["/fruserlog_list", "/systemlog_list", "/logsetting"];
+             jQuery.each(systemlink, function() {
+-                if($(location).attr('pathname') ==this){
++                if($(location).attr('pathname') == this){
+                     $('#sub-item-1').collapse('show');
+                 }
+             });
+             jQuery.each(loglink, function() {
+-                if($(location).attr('pathname') ==this){
++                if($(location).attr('pathname') == this){
+                     $('#sub-item-3').collapse('show');
+                 }
+             });
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index da02e85..8911fd6 100644
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -43,10 +43,12 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-4 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/user_group_list'">{% trans "Cancel" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveAnotherClick()">{% trans "Save and add another" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                    <a class="btn default" onclick="onSaveAnotherClick()">{% trans "Save and Add another" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index e40d52e..4b24f34 100644
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -60,9 +60,11 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="location.href='/user_group_list'">{% trans "Cancel" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="location.href='/user_group_list'">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+-- 
+1.9.1
+

@@ -1,0 +1,26 @@
+From a13ea95f6f594b9a0a945abdf2322509c8b4f99d Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 14 Dec 2016 11:40:06 +0800
+Subject: [PATCH 418/443] Modify the time of crontab job which check version
+ start at 3:00 AM everyday.
+
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 23ce0fa..89dcf72 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -244,7 +244,7 @@ CRON_LOG_DIR = os.path.join(BR06_LOG_DIR, 'cronlog')
+ 
+ CRONJOBS = [
+     ('*/10 * * * *', 'api.cron.Update_4G_User', '>> {0}/4G_user_sync.log 2>&1'.format(CRON_LOG_DIR)),# 10 minutes
+-    ('0 0 * * *', 'api.cron.chk_new_version', '>> {0}/chk_br06_new_version.log 2>&1'.format(CRON_LOG_DIR)), # daily
++    ('0 3 * * *', 'api.cron.chk_new_version', '>> {0}/chk_br06_new_version.log 2>&1'.format(CRON_LOG_DIR)), # daily
+ ]
+ 
+ # FTP server: check the new version for br06 server update
+-- 
+1.9.1
+

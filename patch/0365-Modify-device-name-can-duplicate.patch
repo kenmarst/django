@@ -1,0 +1,25 @@
+From 6307567b0b5577aef342ce1f764848e3fd818267 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E2=80=9CFrank?= <“frank_lin@tw.shuttle.com”>
+Date: Tue, 22 Nov 2016 13:53:37 +0800
+Subject: [PATCH 365/443] Modify device name can duplicate.
+
+---
+ devices/views.py | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index 09f0027..4bc4a6d 100755
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -132,8 +132,6 @@ def add_device(request):
+         Name = request.POST.get('Name', '')
+         MAC = request.POST.get('MAC', '')
+         IP = request.POST.get('IP', '')
+-        if Name != '' and Devices.objects.filter(Name = Name).exists():
+-            return JsonResponse(res_code[2])
+         if MAC != '' and Devices.objects.filter(MAC = MAC).exists():
+             return JsonResponse(res_code[3])
+         if IP == '' or Devices.objects.filter(IP = IP).exists():
+-- 
+1.9.1
+

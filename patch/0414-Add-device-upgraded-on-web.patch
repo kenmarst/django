@@ -1,0 +1,113 @@
+From 222c8fbd606e4982d0f9b59e5cc14951ae1d251a Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 13 Dec 2016 18:35:23 +0800
+Subject: [PATCH 414/443] Add device upgraded on web.
+
+---
+ br06/urls.py               |  3 ++-
+ devices/views.py           | 16 ++++++++++++++++
+ templates/device_edit.html | 29 ++++++++++++++++++++++++++++-
+ templates/device_list.html |  2 +-
+ 4 files changed, 47 insertions(+), 3 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 71d953d..203ee06 100755
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -24,7 +24,7 @@ from logsetting.views import logsetting_view, settinglog
+ from downloads.views import device_update
+ from systemsettings.views import system_settings_views, settings_system_backup, settings_system_connect_test, settings_system_log
+ from dashboard.views import dashboard_views, update_server, update_file
+-from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice, update_all_device
++from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice, update_all_device, update_device
+ from usergroups.views import user_group_list_view, user_group_list_data, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_members_list_data, user_group_members_add_data, user_group_devices_view, user_group_devices_list_data, user_group_devices_add_data, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_list_data, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, frusergroups_list_data, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, frusergroup_member_list_data, frusergroup_member_add_data, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, frusergroup_devices_list_data, frusergroup_devices_add_data, add_frusergroup_device, delete_frusergroup_device
+@@ -137,6 +137,7 @@ urlpatterns += [
+     url(r'^add_frusergroupdevice/?$', add_frusergroupdevice),
+     url(r'^delete_frusergroupdevice/?$', delete_frusergroupdevice),
+     url(r'^update_all_device/?$', update_all_device),
++    url(r'^update_device/?$', update_device),
+ ]
+ 
+ urlpatterns += [
+diff --git a/devices/views.py b/devices/views.py
+index 857f0da..f716b42 100755
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -253,3 +253,19 @@ def update_all_device(request):
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
++
++def update_device(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++    try:
++        device = Devices.objects.get(OId = request.POST['OId'])
++        device_conf = Config.objects.get(Name = 'NewDeviceVersion')
++        if int(''.join(device.Version[1:].split('.'))) < int(''.join(device_conf.Value[1:].split('.'))):
++            device.State = 'Upgrade'
++            device.save()
++            return JsonResponse(res_code[0])
++        else:
++            return JsonResponse(res_code[2])
++    except:
++        return JsonResponse(res_code[1])
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 25040e4..9facc39 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -261,7 +261,34 @@
+                 },
+             });
+         }
+-        </script>
++
++        function update_device() {
++            var ret = confirm('Confirm to upgrade all the Devices?');
++
++            if(ret) {
++                $.ajax({ 
++                    type: 'post',
++                    traditional: true,
++                    url: '/update_device/',
++                    async: true,
++                    dataTypde: 'json',
++                    date: {
++                        csrfmiddlewaretoken : getCookie('csrftoken')
++                        'OId': {{obj|safe}}.OId,
++                    },
++                    success: function(data) {
++                        if (data.CODE == "0") {
++                            alert("{% trans "Device will upgrade" %}");
++                        } else if (data.CODE == "1") {
++                            alert("{% trans "Fail to upgrade device" %}");
++                        } else if (data.CODE == "2") {
++                            alert("{% trans "No new Version  to upgrade device" %}");
++                        }
++                    }
++                });
++            }
++        }
++            </script>
+     </body>
+ 
+ </html>
+diff --git a/templates/device_list.html b/templates/device_list.html
+index e356f5f..bfd7c3b 100755
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -195,7 +195,7 @@
+                 }
+             }
+ 
+-            function update_all_device(Name) {
++            function update_all_device() {
+                 var ret = confirm('Confirm to upgrade all the Devices?');
+ 
+                 if(ret) {
+-- 
+1.9.1
+

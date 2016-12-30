@@ -1,0 +1,21 @@
+From 3490b5763b8bf1d93bec22d8c73e7d1fb6ed52cf Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 9 Dec 2016 19:08:36 +0800
+Subject: [PATCH 405/443] Ignore the file in "__pycache__" and "migrations".
+
+---
+ .gitignore | 2 ++
+ 1 file changed, 2 insertions(+)
+ create mode 100644 .gitignore
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..a447b5c
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++*__pycache__
++*migrations
+-- 
+1.9.1
+

@@ -1,0 +1,85 @@
+From d05efcb7f784044332d6a9eed3167a69ad4a1e25 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Wed, 25 May 2016 18:38:37 +0800
+Subject: [PATCH 089/443] Modify role page composition.
+
+---
+ templates/menu.html            | 2 +-
+ templates/role_add.html        | 6 +++---
+ templates/role_permission.html | 4 ++--
+ templates/role_rename.html     | 7 +++----
+ 4 files changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/templates/menu.html b/templates/menu.html
+index 1ae6464..fff07fb 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -65,7 +65,7 @@
+ 
+     <script>
+         $(document).ready(function() {
+-            var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_group_list", "/user_group_add", "/role_list", "/role_add/", "/role_permission/", "/user_group_add/"];
++            var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_group_list", "/user_group_add", "/role_list", "/role_add/", "/role_rename", "/role_permission/", "/user_group_add/"];
+             var loglink = ["/fruserlog_list", "/systemlog_list", "/logsetting"];
+             jQuery.each(systemlink, function() {
+                 if($(location).attr('pathname') ==this){
+diff --git a/templates/role_add.html b/templates/role_add.html
+index 3185429..914157a 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -57,9 +57,9 @@
+                             </div>
+                             <div class="form-actions">
+                                 <div class="row">
+-                                    <div class="col-md-offset-3 col-md-9">
+-                                        <a onclick="history.back()" type="reset" class="btn default">{% trans "Back" %}</a>
+-                                        <a onclick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
++                                    <div class="col-md-offset-3 col-md-4 pull-right">
++                                        <a onclick="history.back()" type="reset" class="btn btn-default">{% trans "Back" %}</a>
++                                        <a onclick="onSaveClick()" type="" class="btn btn-default">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+                             </div>
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index b837242..1f88057 100644
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -34,8 +34,8 @@
+                         </div>
+                         <div class="panel-footer">
+                             <div>
+-                                <a onclick=history.back() type="reset" class="btn default">{% trans "Back" %}</a>
+-                                <a onclick=permission_save() type="" class="btn green">{% trans "Save" %}</a>
++                                <a onclick=history.back() type="reset" class="btn btn-default">{% trans "Back" %}</a>
++                                <a onclick=permission_save() type="" class="btn btn-default">{% trans "Save" %}</a>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index c8eb313..b97f5a6 100644
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -6,7 +6,6 @@
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+         <title>{% trans "Role Rename" %}</title>
+-
+     </head>
+ 
+ <body>
+@@ -46,9 +45,9 @@
+                             </div>
+                             <div class="form-actions">
+                                 <div class="row">
+-                                    <div class="col-md-offset-3 col-md-9">
+-                                        <a onclick="history.back()" type="reset" class="btn default">{% trans "Back" %}</a>
+-                                        <a onclick="onSaveClick()" type="" class="btn green">{% trans "Save" %}</a>
++                                    <div class="col-md-offset-3 col-md-4 pull-right">
++                                        <a onclick="history.back()" type="reset" class="btn btn-default">{% trans "Back" %}</a>
++                                        <a onclick="onSaveClick()" type="" class="btn btn-default">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+                             </div>
+-- 
+1.9.1
+

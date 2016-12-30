@@ -1,0 +1,152 @@
+From b857f056619c3a4c66435859d93aecebafd8ccd6 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 18 Nov 2016 14:25:46 +0800
+Subject: [PATCH 360/443] Add crontab job: Check new version from FTP server
+
+Check version once a day.
+Save the new version to database table 'Config' where name is 'NewVersion'.
+Add log in media folder.
+---
+ api/cron.py                  | 53 ++++++++++++++++++++++++++++++++++++++++----
+ br06/settings.py             | 18 +++++++++++++--
+ media/log/.gitignore         |  0
+ media/log/cronlog/.gitignore |  0
+ media/update/.gitignore      |  0
+ 5 files changed, 65 insertions(+), 6 deletions(-)
+ create mode 100644 media/log/.gitignore
+ create mode 100644 media/log/cronlog/.gitignore
+ create mode 100644 media/update/.gitignore
+
+diff --git a/api/cron.py b/api/cron.py
+index 09dfd46..7c7ddeb 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -1,14 +1,12 @@
+ from datetime import datetime
+-from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlogs
++from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlogs, Config
+ import time
+-import os, sys
++import os, sys, ftplib
+ import json, requests
+ from django.http import JsonResponse
+ from django.conf import settings
+ from .utility import md5
+ 
+-print('4G Updating: ', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+-
+ def QE_4G(sync_time):
+     try:
+         print('4G Updating: Post to 4G server')
+@@ -31,6 +29,7 @@ def QE_4G(sync_time):
+         sys.exit(0)
+ 
+ def Update_4G_User():
++    print('4G Updating: ', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+ 
+     try:
+         if settings.EN_4G:
+@@ -80,3 +79,49 @@ def Update_4G_User():
+         logContent = str(error)
+         Systemlogs.objects.create(Category = '4GSync', LogContent = logContent)
+         return
++
++def FTP_download_file(localpath, filepath, filename, ftphost, ftpport, ftpuser, ftppw):
++    try:
++        ftp = ftplib.FTP()
++        ftp.set_debuglevel(2)
++        ftp.connect(ftphost, ftpport, 30)
++        ftp.login(ftpuser, ftppw)
++
++        bufsize = 1024
++        ftp.cwd(filepath)
++        file_handler = open(localpath + filename, 'wb').write # local
++        ftp.retrbinary('RETR %s' % os.path.basename(filename),file_handler,bufsize)
++
++        ftp.quit()
++    except Exception as error:
++        print('FTP:' + str(error))
++
++def chk_new_version():
++    print('BR06 update check: check new version for update')
++    try:
++        # download file
++        FTP_download_file(settings.UPDATE_DIR, settings.FTP_PATH, settings.FTP_FILE_NAME, settings.FTP_HOST,
++                            settings.FTP_PORT, settings.FTP_USER, settings.FTP_PW)
++        # read file
++        update_file = os.path.join(settings.UPDATE_DIR, settings.FTP_FILE_NAME)
++
++        with open(update_file) as data_file:
++            data = json.load(data_file)
++        new_version_date = data['VERSION'].split('.')[4]
++        version_date = settings.VERSION.split('.')[4]
++
++        print('VERSION: [new]:' + new_version_date + ' [now]:' + version_date)
++
++        # check version
++        if new_version_date > version_date:
++            print('BR06 update check: new version to update')
++            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': data['VERSION']})
++            FTP_download_file(settings.FTP_PATH, settings.FTP_FILE_NAME, settings.FTP_HOST,
++                                settings.FTP_PORT, settings.FTP_USER, settings.FTP_PW)
++        else:
++            print('BR06 update check: There hadn\'t new version to update')
++            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': ''})
++
++        #print('BR06 update check: check version for update end')
++    except Exception as error:
++        print('BR06 update check Error:' + str(error))
+diff --git a/br06/settings.py b/br06/settings.py
+index 5374ea9..cc25adb 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
+ LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO # Python logger level: debug, info, warning, error, critical
+ logging.basicConfig(level = LOGGING_LEVEL)
+ logger.debug('Enable debug mode')
++BR06_LOG_DIR = os.path.join(MEDIA_DIR, 'log')
+ LOGGING = {
+     'version': 1,
+     'disable_existing_loggers': False,
+@@ -41,7 +42,7 @@ LOGGING = {
+         'file': {
+             'level': LOGGING_LEVEL,
+             'class': 'logging.FileHandler',
+-            'filename': os.path.join(MEDIA_DIR, 'debug.log'),
++            'filename': os.path.join(BR06_LOG_DIR, 'debug.log'),
+         },
+     },
+     'loggers': {
+@@ -232,6 +233,19 @@ LO_4G = 'http://4g.shuttle.com/daily/LoginApi/face'
+ RE_4G = 'http://4g.shuttle.com/daily/importApi/UserFaceLoginRecord/add'
+ QE_4G = 'http://4g.shuttle.com/daily/loginApi/faceQuery'
+ 
++# Crontab: 4G user update, br06 new version
++CRON_LOG_DIR = os.path.join(BR06_LOG_DIR, 'cronlog')
++
+ CRONJOBS = [
+-    ('*/10 * * * *', 'api.cron.Update_4G_User', '>> {0}/4G_user_sync.log 2>&1'.format(MEDIA_DIR)),
++    ('*/10 * * * *', 'api.cron.Update_4G_User', '>> {0}/4G_user_sync.log 2>&1'.format(CRON_LOG_DIR)),# 10 minutes
++    ('0 0 * * *', 'api.cron.chk_new_version', '>> {0}/chk_br06_new_version.log 2>&1'.format(CRON_LOG_DIR)), # daily
+ ]
++
++# FTP server: check the new version for br06 server update
++UPDATE_DIR = os.path.join(MEDIA_DIR, 'update')
++FTP_PATH = 'SW1/BR06/SW_Release'
++FTP_FILE_NAME = 'update.json'
++FTP_HOST = '61.247.173.105'
++FTP_PORT = 21
++FTP_USER = 'rd@MobileSW'
++FTP_PW = 'rd-2014'
+diff --git a/media/log/.gitignore b/media/log/.gitignore
+new file mode 100644
+index 0000000..e69de29
+diff --git a/media/log/cronlog/.gitignore b/media/log/cronlog/.gitignore
+new file mode 100644
+index 0000000..e69de29
+diff --git a/media/update/.gitignore b/media/update/.gitignore
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.1
+

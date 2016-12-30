@@ -1,0 +1,150 @@
+From 8ce564c3a4a84dcb4d626f9197f1e6e289c2c771 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Fri, 13 May 2016 15:42:33 +0800
+Subject: [PATCH 032/443] add log/log setting
+
+---
+ br06/settings.py    |  1 +
+ br06/urls.py        |  2 ++
+ fruserlogs/views.py | 20 +++++++++++++++-----
+ systemlogs/views.py | 18 +++++++++++++++---
+ templates/menu.html |  4 ++--
+ 5 files changed, 35 insertions(+), 10 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 0f49e2d..6b8f400 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -136,6 +136,7 @@ STATICFILES_DIRS = [
+      "static/css",
+      "static/img/",
+      "fruserpic/",
++     "logsetting/",	
+ ]
+ 
+ TCIT_IP = 'localhost:8800'
+diff --git a/br06/urls.py b/br06/urls.py
+index 5109877..7bcfa83 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -20,6 +20,7 @@ from user.views import user_list_view, user_setting, login, logout, change_passw
+ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view,systemlog_export
+ from fruserlogs.views import fruserlog_list_view,fruserlog_export
++from logsetting.views import logsetting
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, add_device, delete_device
+ 
+ urlpatterns = [
+@@ -33,6 +34,7 @@ urlpatterns = [
+     url(r'^systemlog_export/?$',systemlog_export),
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_export/?$',fruserlog_export),
++    url(r'^logsetting/?$',logsetting),
+ ]
+ 
+ urlpatterns += [
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 888e2a8..af15e16 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -5,6 +5,7 @@ from django.http import HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+ from api.models import Fruserlogs, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
++from django.conf import settings
+ import datetime,types
+ import csv
+ import json
+@@ -27,17 +28,26 @@ def fruserlog_list_view(request):
+ def fruserlog_export(request):
+     #data2=[{'symbol':'!','val0':'FRUserName','val1':'LogDateTime', 'val2':'DeviceOId', 'val3':'LogContent'}]
+     #with open('fruserlogssetting.json', 'w') as outfile:
+-    #  json.dump(data2, outfile)
+-    try:	
+-     with open('fruserlogssetting.json') as f:
++    # json.dump(data2, outfile)
++    symbolcover={
++         "tab":'\t',
++         "comma":',',
++         "dot":'.',
++         "space":' ',
++        }
++    try:
++     with open(settings.STATICFILES_DIRS[5]+'logssetting.json') as f:
+       data=f.read()
+       json_data=json.loads(data)
+       symbol=json_data[0]['symbol']
++      if(len(symbol)>1):
++        symbol=symbolcover[symbol]
++           
+       header=[]
+       for i in range(0,len(json_data[0])-1):
+         field = "val"+str(i)
+-        header.append(json_data[0][field])
+-
++         if(json_data[0][field] != 'Category'): #hardcoding need to fix
++           header.append(json_data[0][field])
+     except:
+       header=['FRUserName','LogDateTime','DeviceOId', 'LogContent']
+       symbol="!" 
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 4690c3c..4445715 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -5,6 +5,7 @@ from django.http import HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
+ from api.models import Users, Frusers, Systemlogs
++from django.conf import settings
+ import json
+ import urllib
+ import datetime,types
+@@ -33,16 +34,27 @@ def systemlog_export(request):
+     #data2=[{'symbol':'!','val0':'Category','val1':'LogContent', 'val2':'LogDateTime'}]
+     #with open('systemlogssetting.json', 'w') as outfile:
+     #  json.dump(data2, outfile)
++    symbolcover={
++         "tab":'\t',
++         "comma":',',
++         "dot":'.',
++         "space":' ',
++        }
++
+     try:
+-     with open('systemlogssetting.json') as f:
++     with open(settings.STATICFILES_DIRS[5]+'logssetting.json') as f:
+       data=f.read()
+       json_data=json.loads(data)
+       symbol=json_data[0]['symbol']
++      if(len(symbol)>1):
++        symbol=symbolcover[symbol]
++
+       header=[]
+       for i in range(0,len(json_data[0])-1):
+         field = "val"+str(i)
+-        header.append(json_data[0][field])
+-
++        if(json_data[0][field] != 'FRUserId' and json_data[0][field] != 'FRUserName' and json_data[0][field] != 'DeviceOId'): #hardcoding need to fix
++            header.append(json_data[0][field])
++    
+     except:
+       header=['Category','LogContent','LogDateTime']
+       symbol="!"
+diff --git a/templates/menu.html b/templates/menu.html
+index 913812f..9672b3a 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -82,8 +82,8 @@
+ 						</a>
+ 					</li>
+                     <li>
+-						<a class="" href="/setting"">
+-							<svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg>  Setting
++						<a class="" href="/logsetting"">
++							<svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg> Log Setting
+ 						</a>
+ 					</li>
+ 				</ul>
+-- 
+1.9.1
+

@@ -1,0 +1,712 @@
+From 5932e80fefd0d2fd7a8d584284b3dc0487bf9424 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 1 Nov 2016 15:47:11 +0800
+Subject: [PATCH 340/443] Modify "Default" group of frusergroup for Spec.
+
+---
+ frusergroups/views.py                        |   2 --
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/frusergroup_devices.html           |  14 ++++----
+ templates/frusergroup_edit.html              |   2 +-
+ templates/frusergroup_member.html            |   2 +-
+ templates/frusergroups_list.html             |   5 ++-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 19096 -> 19131 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  47 +++++++++++++++------------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 19096 -> 19131 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  47 +++++++++++++++------------
+ 13 files changed, 68 insertions(+), 55 deletions(-)
+
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index a13141a..6b4ff96 100755
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -226,8 +226,6 @@ def frusergroup_devices_view(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        if Frusergroups.objects.get(OId = request.GET['OId']).Name == 'Default':
+-            raise
+         return render(request, 'frusergroup_devices.html', {'active': 'frusergroup_devices', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 654fdef5fb6062236a449590b909fdf5dae24677..23730a5b74fc768dab57287392fd865ce93e68a9 100755
+GIT binary patch
+delta 21
+ccmZo-X=0i1oXb$xz)-=^)XKzo<3~Y807VT3C;$Ke
+
+delta 21
+ccmZo-X=0i1oXbGh$XvnD%*xbg<3~Y807YU3FaQ7m
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 66f007f..cba6ed5 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-10-27 16:52+0800\n"
++"POT-Creation-Date: 2016-11-01 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 654fdef5fb6062236a449590b909fdf5dae24677..23730a5b74fc768dab57287392fd865ce93e68a9 100755
+GIT binary patch
+delta 21
+ccmZo-X=0i1oXb$xz)-=^)XKzo<3~Y807VT3C;$Ke
+
+delta 21
+ccmZo-X=0i1oXbGh$XvnD%*xbg<3~Y807YU3FaQ7m
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 66f007f..cba6ed5 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-10-27 16:52+0800\n"
++"POT-Creation-Date: 2016-11-01 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 39c2562..e8a7a87 100755
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -29,12 +29,14 @@
+             <div class="row">
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+-                        <li>
+-                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
+-                        </li>
+-                        <li>
+-                            <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+-                        </li>
++                        {% if obj.Name != 'Default'%}
++                            <li>
++                                <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Information" %}</a>
++                            </li>
++                            <li>
++                                <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
++                            </li>
++                        {% endif %}
+                         <li class="active">
+                             <a href="/frusergroup_devices?OId={{obj.OId}}" class="input-lg">{% trans "Device List" %}</a>
+                         </li>
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index fa87023..2a9246a 100755
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -29,7 +29,7 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li class="active">
+-                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Information" %}</a>
+                         </li>
+                         <li>
+                             <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index 8bb158c..6ff082e 100755
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -30,7 +30,7 @@
+                 <div class="col-lg-12">
+                     <ul class="nav nav-tabs navbar-nav">
+                         <li>
+-                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Imformation" %}</a>
++                            <a href="/frusergroup_edit?OId={{obj.OId}}" class="input-lg">{% trans "Information" %}</a>
+                         </li>
+                         <li class="active">
+                             <a href="/frusergroup_member?OId={{obj.OId}}" class="input-lg">{% trans "Member List" %}</a>
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index bcd96f9..f6e5d78 100755
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -91,7 +91,10 @@
+                                         <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' + row.Name + '")>{% trans "Delete" %}</button> \
+                                     </div>';
+                             else
+-                                return '';
++                                return ' \
++                                    <div align="center"> \
++                                        <button class="btn btn-default" onclick="location.href=\'/frusergroup_devices?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
++                                    </div>';
+                         }
+                     }
+                 ],
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index edecc444064834b6eef557a06237db8f9365c313..0ce6f2d39b96b650d180627500edf050b67a791a 100755
+GIT binary patch
+delta 6691
+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
+
+delta 6643
+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
+UlixhAap~d42f|8ATBcX|1Dytq9{>OV
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 863fac1..0b30b21 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-10-27 16:52+0800\n"
++"POT-Creation-Date: 2016-11-01 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -104,7 +104,7 @@ msgid "Device add"
+ msgstr "新增设备"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:171 templates/frusergroup_devices.html.py:144
++#: templates/device_list.html:171 templates/frusergroup_devices.html.py:146
+ #: templates/user_group_devices.html:144
+ msgid "Device"
+ msgstr "设备"
+@@ -141,7 +141,7 @@ msgstr "请输入正确的设备IP格式！使用数字与'.'"
+ #: templates/device_add.html:62 templates/device_edit.html.py:73
+ #: templates/device_frusergroups.html:50 templates/device_settings.html:306
+ #: templates/fruser_add.html.py:77 templates/fruser_edit.html:73
+-#: templates/frusergroup_add.html.py:45 templates/frusergroup_devices.html:53
++#: templates/frusergroup_add.html.py:45 templates/frusergroup_devices.html:55
+ #: templates/frusergroup_edit.html:62 templates/frusergroup_member.html:53
+ #: templates/role_add.html.py:50 templates/role_permission.html:37
+ #: templates/role_rename.html.py:44 templates/user_add.html:95
+@@ -190,9 +190,8 @@ msgid "Device Edit"
+ msgstr "设备修改"
+ 
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+-#: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
+-#: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++#: templates/user_group_devices.html:33 templates/user_group_edit.html:32
++#: templates/user_group_members.html:33
+ msgid "Imformation"
+ msgstr "一般"
+ 
+@@ -308,7 +307,7 @@ msgstr "建立新群组"
+ msgid "Search Group"
+ msgstr "搜寻群组"
+ 
+-#: templates/device_frusergroups.html:60 templates/frusergroup_devices.html:63
++#: templates/device_frusergroups.html:60 templates/frusergroup_devices.html:65
+ #: templates/frusergroup_member.html:63 templates/user_group_devices.html:63
+ #: templates/user_group_members.html:63
+ msgid "Add"
+@@ -334,8 +333,8 @@ msgid "Group"
+ msgstr "群组"
+ 
+ #: templates/device_frusergroups.html:167 templates/device_list.html.py:171
+-#: templates/fruser_list.html:207 templates/frusergroup_devices.html.py:170
+-#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:118
++#: templates/fruser_list.html:207 templates/frusergroup_devices.html.py:172
++#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:121
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+ #: templates/user_group_members.html:170 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+@@ -345,7 +344,7 @@ msgstr "您是否确认要删除"
+ msgid "from this device"
+ msgstr "设备"
+ 
+-#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:134
++#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:137
+ #: templates/user_group_list.html:133
+ msgid "Fail to delete group"
+ msgstr "删除群组失败"
+@@ -356,7 +355,7 @@ msgid "Fail to add group"
+ msgstr "新增群组失败"
+ 
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+-#: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
++#: templates/device_list.html:25 templates/frusergroup_devices.html.py:41
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:44 templates/role_permission.html:80
+ #: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+@@ -385,7 +384,8 @@ msgid "Reject"
+ msgstr "拒绝"
+ 
+ #: templates/device_list.html:117 templates/fruser_list.html.py:142
+-#: templates/frusergroups_list.html:90 templates/user_group_list.html.py:89
++#: templates/frusergroups_list.html:90 templates/frusergroups_list.html:96
++#: templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "编辑"
+ 
+@@ -399,7 +399,7 @@ msgstr "设定"
+ msgid "Fail to accept device"
+ msgstr "接受设备失败"
+ 
+-#: templates/device_list.html:188 templates/frusergroup_devices.html.py:188
++#: templates/device_list.html:188 templates/frusergroup_devices.html.py:190
+ #: templates/user_group_devices.html:188
+ msgid "Fail to delete device"
+ msgstr "删除设备失败"
+@@ -535,7 +535,7 @@ msgid ""
+ msgstr "使用者ID只能包含1到16码的英文、数字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:113 templates/frusergroup_devices.html.py:105
++#: templates/fruser_list.html:113 templates/frusergroup_devices.html.py:107
+ #: templates/frusergroup_member.html:105 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:105
+ #: templates/user_group_members.html:105 templates/user_list.html.py:89
+@@ -716,31 +716,36 @@ msgstr "FR设备管理"
+ msgid "FR User Group Edit"
+ msgstr "FR使用者群组修改"
+ 
+-#: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
++#: templates/frusergroup_devices.html:34 templates/frusergroup_edit.html:32
++#: templates/frusergroup_member.html:33
++msgid "Information"
++msgstr "一般"
++
++#: templates/frusergroup_devices.html:37 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+ #: templates/user_group_edit.html:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成员管理"
+ 
+-#: templates/frusergroup_devices.html:48 templates/user_group_devices.html:48
++#: templates/frusergroup_devices.html:50 templates/user_group_devices.html:48
+ msgid "Device list"
+ msgstr "设备管理"
+ 
+-#: templates/frusergroup_devices.html:57 templates/user_group_devices.html:57
++#: templates/frusergroup_devices.html:59 templates/user_group_devices.html:57
+ msgid "Add New Device"
+ msgstr "新增设备"
+ 
+-#: templates/frusergroup_devices.html:59 templates/user_group_devices.html:59
++#: templates/frusergroup_devices.html:61 templates/user_group_devices.html:59
+ msgid "Search Device"
+ msgstr "搜寻设备"
+ 
+-#: templates/frusergroup_devices.html:170
++#: templates/frusergroup_devices.html:172
+ #: templates/frusergroup_member.html:170 templates/user_group_devices.html:170
+ #: templates/user_group_list.html:116 templates/user_group_members.html:170
+ msgid "from this group"
+ msgstr "群组"
+ 
+-#: templates/frusergroup_devices.html:219
++#: templates/frusergroup_devices.html:221
+ #: templates/user_group_devices.html:219
+ msgid "Fail to add device"
+ msgstr "新增设备失败"
+@@ -795,7 +800,7 @@ msgstr "建立新群组"
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:118
++#: templates/frusergroups_list.html:121
+ msgid "group"
+ msgstr "群组"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index cb58697a1c15dab25ebfff669227a129667cca16..1b5b8d05f6615db2f58dd74a6ea84e8a345b3212 100755
+GIT binary patch
+delta 6691
+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
+
+delta 6643
+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
+S=QS=p*m!SPX-UiUDt`bY@{JP!
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index b434131..f803165 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-10-27 16:52+0800\n"
++"POT-Creation-Date: 2016-11-01 15:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -104,7 +104,7 @@ msgid "Device add"
+ msgstr "新增設備"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:171 templates/frusergroup_devices.html.py:144
++#: templates/device_list.html:171 templates/frusergroup_devices.html.py:146
+ #: templates/user_group_devices.html:144
+ msgid "Device"
+ msgstr "設備"
+@@ -141,7 +141,7 @@ msgstr "請輸入正確的設備IP格式！使用數字與'.'"
+ #: templates/device_add.html:62 templates/device_edit.html.py:73
+ #: templates/device_frusergroups.html:50 templates/device_settings.html:306
+ #: templates/fruser_add.html.py:77 templates/fruser_edit.html:73
+-#: templates/frusergroup_add.html.py:45 templates/frusergroup_devices.html:53
++#: templates/frusergroup_add.html.py:45 templates/frusergroup_devices.html:55
+ #: templates/frusergroup_edit.html:62 templates/frusergroup_member.html:53
+ #: templates/role_add.html.py:50 templates/role_permission.html:37
+ #: templates/role_rename.html.py:44 templates/user_add.html:95
+@@ -190,9 +190,8 @@ msgid "Device Edit"
+ msgstr "設備修改"
+ 
+ #: templates/device_edit.html:33 templates/device_frusergroups.html.py:33
+-#: templates/frusergroup_devices.html:33 templates/frusergroup_edit.html:32
+-#: templates/frusergroup_member.html:33 templates/user_group_devices.html:33
+-#: templates/user_group_edit.html:32 templates/user_group_members.html:33
++#: templates/user_group_devices.html:33 templates/user_group_edit.html:32
++#: templates/user_group_members.html:33
+ msgid "Imformation"
+ msgstr "一般"
+ 
+@@ -308,7 +307,7 @@ msgstr "建立新群組"
+ msgid "Search Group"
+ msgstr "搜尋群組"
+ 
+-#: templates/device_frusergroups.html:60 templates/frusergroup_devices.html:63
++#: templates/device_frusergroups.html:60 templates/frusergroup_devices.html:65
+ #: templates/frusergroup_member.html:63 templates/user_group_devices.html:63
+ #: templates/user_group_members.html:63
+ msgid "Add"
+@@ -334,8 +333,8 @@ msgid "Group"
+ msgstr "群組"
+ 
+ #: templates/device_frusergroups.html:167 templates/device_list.html.py:171
+-#: templates/fruser_list.html:207 templates/frusergroup_devices.html.py:170
+-#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:118
++#: templates/fruser_list.html:207 templates/frusergroup_devices.html.py:172
++#: templates/frusergroup_member.html:170 templates/frusergroups_list.html:121
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+ #: templates/user_group_members.html:170 templates/user_list.html.py:137
+ msgid "Confirm to delete"
+@@ -345,7 +344,7 @@ msgstr "您是否確認要刪除"
+ msgid "from this device"
+ msgstr "設備"
+ 
+-#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:134
++#: templates/device_frusergroups.html:186 templates/frusergroups_list.html:137
+ #: templates/user_group_list.html:133
+ msgid "Fail to delete group"
+ msgstr "刪除群組失敗"
+@@ -356,7 +355,7 @@ msgid "Fail to add group"
+ msgstr "新增群組失敗"
+ 
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+-#: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
++#: templates/device_list.html:25 templates/frusergroup_devices.html.py:41
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+ #: templates/menu.html.py:44 templates/role_permission.html:80
+ #: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+@@ -385,7 +384,8 @@ msgid "Reject"
+ msgstr "拒絕"
+ 
+ #: templates/device_list.html:117 templates/fruser_list.html.py:142
+-#: templates/frusergroups_list.html:90 templates/user_group_list.html.py:89
++#: templates/frusergroups_list.html:90 templates/frusergroups_list.html:96
++#: templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "編輯"
+ 
+@@ -399,7 +399,7 @@ msgstr "設定"
+ msgid "Fail to accept device"
+ msgstr "接受設備失敗"
+ 
+-#: templates/device_list.html:188 templates/frusergroup_devices.html.py:188
++#: templates/device_list.html:188 templates/frusergroup_devices.html.py:190
+ #: templates/user_group_devices.html:188
+ msgid "Fail to delete device"
+ msgstr "刪除設備失敗"
+@@ -535,7 +535,7 @@ msgid ""
+ msgstr "使用者ID只能包含1到16碼的英文、數字、'_'、'-'"
+ 
+ #: templates/fruser_add.html:46 templates/fruser_edit.html.py:43
+-#: templates/fruser_list.html:113 templates/frusergroup_devices.html.py:105
++#: templates/fruser_list.html:113 templates/frusergroup_devices.html.py:107
+ #: templates/frusergroup_member.html:105 templates/fruserlog_list.html:100
+ #: templates/user_add.html.py:48 templates/user_group_devices.html:105
+ #: templates/user_group_members.html:105 templates/user_list.html.py:89
+@@ -716,31 +716,36 @@ msgstr "FR設備管理"
+ msgid "FR User Group Edit"
+ msgstr "FR使用者群組修改"
+ 
+-#: templates/frusergroup_devices.html:36 templates/frusergroup_edit.html:35
++#: templates/frusergroup_devices.html:34 templates/frusergroup_edit.html:32
++#: templates/frusergroup_member.html:33
++msgid "Information"
++msgstr "一般"
++
++#: templates/frusergroup_devices.html:37 templates/frusergroup_edit.html:35
+ #: templates/frusergroup_member.html:36 templates/user_group_devices.html:36
+ #: templates/user_group_edit.html:35 templates/user_group_members.html:36
+ msgid "Member List"
+ msgstr "成員管理"
+ 
+-#: templates/frusergroup_devices.html:48 templates/user_group_devices.html:48
++#: templates/frusergroup_devices.html:50 templates/user_group_devices.html:48
+ msgid "Device list"
+ msgstr "設備管理"
+ 
+-#: templates/frusergroup_devices.html:57 templates/user_group_devices.html:57
++#: templates/frusergroup_devices.html:59 templates/user_group_devices.html:57
+ msgid "Add New Device"
+ msgstr "新增設備"
+ 
+-#: templates/frusergroup_devices.html:59 templates/user_group_devices.html:59
++#: templates/frusergroup_devices.html:61 templates/user_group_devices.html:59
+ msgid "Search Device"
+ msgstr "搜尋設備"
+ 
+-#: templates/frusergroup_devices.html:170
++#: templates/frusergroup_devices.html:172
+ #: templates/frusergroup_member.html:170 templates/user_group_devices.html:170
+ #: templates/user_group_list.html:116 templates/user_group_members.html:170
+ msgid "from this group"
+ msgstr "群組"
+ 
+-#: templates/frusergroup_devices.html:219
++#: templates/frusergroup_devices.html:221
+ #: templates/user_group_devices.html:219
+ msgid "Fail to add device"
+ msgstr "新增設備失敗"
+@@ -795,7 +800,7 @@ msgstr "建立新群組"
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:118
++#: templates/frusergroups_list.html:121
+ msgid "group"
+ msgstr "群組"
+ 
+-- 
+1.9.1
+

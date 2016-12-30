@@ -1,0 +1,329 @@
+From e6f4a7bbf80d531abed0e1e5246c5756255df646 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 11 Aug 2016 14:21:01 +0800
+Subject: [PATCH 228/443] In System Settings page, add Remote backup FTP
+ Setting PATH(D) item.
+
+---
+ api/models.py                  |  1 +
+ systembackup/.gitignore        |  2 +-
+ systembackup/br06backup.sh     | 13 +++++-----
+ systembackup/log/.gitignore    |  1 +
+ systemsettings/views.py        | 54 ++++++++++++++++++++++++++++++++----------
+ templates/system_settings.html | 22 +++++++++++------
+ 6 files changed, 66 insertions(+), 27 deletions(-)
+ create mode 100644 systembackup/log/.gitignore
+
+diff --git a/api/models.py b/api/models.py
+index cf653f6..071e04d 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -16,6 +16,7 @@ class Config(models.Model):
+         ('BackupLocal', 'BackupLocal'),
+         ('BackupRemoteHost', 'BackupRemoteHost'),
+         ('BackupRemotePort', 'BackupRemotePort'),
++        ('BackupRemotePath', 'BackupRemotePath'),
+         ('BackupRemoteAccount', 'BackupRemoteAccount'),
+         ('BackupRemotePassword', 'BackupRemotePassword'),
+         ('LogLimit', 'LogLimit'),
+diff --git a/systembackup/.gitignore b/systembackup/.gitignore
+index af254fd..1a8cb26 100644
+--- a/systembackup/.gitignore
++++ b/systembackup/.gitignore
+@@ -1,4 +1,4 @@
+ !.gitignore
+ crontab.new
+ backup.conf
+-log.conf
++picsave.conf
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 34be0e3..4185d99 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -9,10 +9,10 @@ else
+   echo "$PWD/systembackup/backup.conf not found."
+ fi
+ 
+-if [ -e $PWD/systembackup/log.conf ]; then
+-  . $PWD/systembackup/log.conf
++if [ -e $PWD/systembackup/picsave.conf ]; then
++  . $PWD/systembackup/picsave.conf
+ else
+-  echo "$PWD/systembackup/log.conf not found."
++  echo "$PWD/systembackup/picsave.conf not found."
+ fi
+ 
+ DATE=$(date +%F)
+@@ -40,6 +40,7 @@ echo "BackupTime_mins:$BackupTime_mins"
+ echo "BackupLocal:$BackupLocal"
+ echo "BackupRemoteHost:$BackupRemoteHost"
+ echo "BackupRemotePort:$BackupRemotePort"
++echo "BackupRemotePath:$BackupRemotePath"
+ echo "BackupRemoteAccount:$BackupRemoteAccount"
+ echo "BackupRemotePassword:$BackupRemotePassword"
+ echo "PicCreateSave:$PicCreateSave"
+@@ -129,9 +130,9 @@ if [ $ACTION = 'ok' ] || [ $ACTION = 'true' ]; then
+   if [ $BackupLocation = 'ftp' ] && [ $BackupMethod = 'Automatic' ]; then
+     echo "Uploading backup files to ftp..."
+     lftp $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword << EOF
+-cd SW1/BR06
+-mkdir bak/$DATE
+-cd bak/$DATE
++cd $BackupRemotePath
++mkdir backupDB/$DATE
++cd backupDB/$DATE
+ mput /opt/backup/$DATE/*
+ bye
+ EOF
+diff --git a/systembackup/log/.gitignore b/systembackup/log/.gitignore
+new file mode 100644
+index 0000000..f935021
+--- /dev/null
++++ b/systembackup/log/.gitignore
+@@ -0,0 +1 @@
++!.gitignore
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 6c504ac..b0592a1 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -116,6 +116,17 @@ except:
+ else:
+     print('default BackupRemotePort exist.')
+ 
++# BackupRemotePath
++try:
++    Config.objects.get(Name = 'BackupRemotePath').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupRemotePath', Value = 'SW1/BR06')
++        print('create default BackupRemotePath: SW1/BR06')
++    except:
++        print('can\'t create default BackupRemotePath: SW1/BR06')
++else:
++    print('default BackupRemotePath exist.')
+ 
+ # BackupRemoteAccount
+ try:
+@@ -274,6 +285,11 @@ def system_settings_views(request):
+         print('get BackupRemotePort fail.')
+ 
+     try:
++        BackupRemotePath = Config.objects.get(Name = 'BackupRemotePath').Value
++    except:
++        print('get BackupRemotePath fail.')
++
++    try:
+         BackupRemoteAccount = Config.objects.get(Name = 'BackupRemoteAccount').Value
+     except:
+         print('get BackupRemoteAccount fail.')
+@@ -324,6 +340,7 @@ def system_settings_views(request):
+                           'BackupLocal' : BackupLocal,
+                           'BackupRemoteHost' : BackupRemoteHost,
+                           'BackupRemotePort' : BackupRemotePort,
++                          'BackupRemotePath' : BackupRemotePath,
+                           'BackupRemoteAccount' : BackupRemoteAccount,
+                           'BackupRemotePassword' : BackupRemotePassword,
+                           'LogLimit' : LogLimit,
+@@ -349,13 +366,17 @@ def settings_system_backup(request):
+             Config.objects.filter(Name = 'BackupMethod').update(Value=BackupMethod)
+ 
+         backupdir = os.path.join(settings.BASE_DIR, 'systembackup')
+-        #print('backupdir :', backupdir)
++        print('backupdir :', backupdir)
++        backuplogdir = os.path.join(backupdir, 'log')
++        print('backuplogdir :', backuplogdir)
+         newcrontabfile = os.path.join(backupdir, 'crontab.new')
+-        #print('newcrontabfile :', newcrontabfile)
++        print('newcrontabfile :', newcrontabfile)
+         newbackupconfile = os.path.join(backupdir, 'backup.conf')
+-        #print('newbackupconfile :', newbackupconfile)
++        print('newbackupconfile :', newbackupconfile)
+         backupshfile = os.path.join(backupdir, 'br06backup.sh')
+-        #print('backupshfile :', backupshfile)
++        print('backupshfile :', backupshfile)
++        backuplogfile = os.path.join(backuplogdir, 'backup.log')
++        print('backuplogfile :', backuplogfile)
+ 
+         #newcrontabfile = 'crontab.new'
+         #newbackupconfile = 'backup.conf.new'
+@@ -451,6 +472,7 @@ def settings_system_backup(request):
+             BackupLocation=''
+             BackupRemoteHost=''
+             BackupRemotePort=''
++            BackupRemotePath=''
+             BackupRemoteAccount=''
+             BackupRemotePassword=''
+ 
+@@ -476,6 +498,11 @@ def settings_system_backup(request):
+                 if BackupRemotePort != '':
+                     Config.objects.filter(Name = 'BackupRemotePort').update(Value=BackupRemotePort)
+ 
++                BackupRemotePath = request.POST.get('BackupRemotePath', '')
++                print('BackupRemotePath :', BackupRemotePath)
++                if BackupRemotePath != '':
++                    Config.objects.filter(Name = 'BackupRemotePath').update(Value=BackupRemotePath)
++
+                 BackupRemoteAccount = request.POST.get('BackupRemoteAccount', '')
+                 print('BackupRemoteAccount :', BackupRemoteAccount)
+                 if BackupRemoteAccount != '':
+@@ -505,6 +532,7 @@ def settings_system_backup(request):
+             backupconf_content.append('BackupLocation={0}\n'.format(BackupLocation))
+             backupconf_content.append('BackupRemoteHost={0}\n'.format(BackupRemoteHost))
+             backupconf_content.append('BackupRemotePort={0}\n'.format(BackupRemotePort))
++            backupconf_content.append('BackupRemotePath={0}\n'.format(BackupRemotePath))
+             backupconf_content.append('BackupRemoteAccount={0}\n'.format(BackupRemoteAccount))
+             backupconf_content.append('BackupRemotePassword={0}\n'.format(BackupRemotePassword))
+             print(backupconf_content)
+@@ -563,12 +591,13 @@ def settings_system_backup(request):
+             os.system('cd {0} && {1}\n'.format(settings.BASE_DIR, backupshfile))
+ 
+         else:
+-            if BackupScheduling == 'Monthly':
+-                cmd = '{0} {1}\t{2} * *\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate, settings.BASE_DIR, backupshfile)
+-            else:
+-                cmd = '{0} {1}\t* * {2}\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate, settings.BASE_DIR, backupshfile)
++            #if BackupScheduling == 'Monthly':
++            #    cmd = '{0} {1}\t{2} * *\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate, settings.BASE_DIR, backupshfile)
++            #else:
++            #    cmd = '{0} {1}\t* * {2}\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate, settings.BASE_DIR, backupshfile)
++            cmd = '*/5 *\t* * *\troot\tcd {0} && {1} >> {2} 2>&1\n'.format(settings.BASE_DIR, backupshfile, backuplogfile)
+ 
+-            #print('cmd:'+cmd)
++            print('cmd:'+cmd)
+             if content2_idx != -1:
+                 content[content2_idx]=cmd
+             else:
+@@ -577,7 +606,7 @@ def settings_system_backup(request):
+         with open(newcrontabfile, mode='wt', encoding='utf-8') as f:
+             f.write(''.join(content))
+ 
+-        cpcmd = 'cp -f {0} {1}\n'.format(newcrontabfile, crontabfile)
++        #cpcmd = 'cp -f {0} {1}\n'.format(newcrontabfile, crontabfile)
+         #print('cpcmd:'+cpcmd)
+         #os.system('echo {0}|sudo -S {1}'.format('1', cpcmd))
+         #os.system('{0}'.format(cpcmd))
+@@ -649,17 +678,16 @@ def settings_system_log(request):
+ 
+         # logconf modify
+         backupdir = os.path.join(settings.BASE_DIR, 'systembackup')
+-        newlogconfile = os.path.join(backupdir, 'log.conf')
++        newpicsaveconfile = os.path.join(backupdir, 'picsave.conf')
+         #newlogconfile = 'log.conf.new'
+ 
+         logconf_content=[]
+         logconf_content.append('PicCreateSave={0}\n'.format(PicCreateSave))
+         logconf_content.append('PicFaceSave={0}\n'.format(PicFaceSave))
+         print(logconf_content)
+-        with open(newlogconfile, mode='wt', encoding='utf-8') as f:
++        with open(newpicsaveconfile, mode='wt', encoding='utf-8') as f:
+             f.write(''.join(logconf_content))
+ 
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+-
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 279f7b3..b90d68d 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -148,6 +148,9 @@
+                                             <!--{% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=20 placeholder="IP ADDRESS" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$">-->
+                                             {% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=25 placeholder="HOST NAME / IP ADDRESS">
+                                             {% trans "PORT" %}(P):<input type="text" id="BackupRemotePort" name="BackupRemotePort" maxlength=5 size=4 placeholder="21">
++                                            {% trans "PATH" %}(D):<input type="text" id="BackupRemotePath" name="BackupRemotePath" maxlength=256 size=20 placeholder="SW1/BR06">
++                                        </div>
++                                        <div class="col-md-12">
+                                             {% trans "USERNAME" %}(U):<input type="text" id="BackupRemoteAccount" name="BackupRemoteAccount" maxlength=20 size=20 placeholder="USERNAME">
+                                             {% trans "PASSWORD" %}(W):<input type="password" id="BackupRemotePassword" name="BackupRemotePassword" maxlength=20 size=20 placeholder="PASSWORD">
+                                             <input type="button" class="btn btn-info btn-sm" id="connect_test" name="connect_test" onclick="OnConnectTestClick()" value="{% trans "Connect Test" %}">
+@@ -278,6 +281,7 @@
+             var BackupLocation = (rftp_chk) ? 'ftp':'local';
+             var BackupRemoteHost = $('input[name=BackupRemoteHost]').val();
+             var BackupRemotePort = $('input[name=BackupRemotePort]').val();
++            var BackupRemotePath = $('input[name=BackupRemotePath]').val();
+             var BackupRemoteAccount = $('input[name=BackupRemoteAccount]').val();
+             var BackupRemotePassword = $('input[name=BackupRemotePassword]').val();
+ 
+@@ -312,6 +316,7 @@
+                     'rftp_chk': rftp_chk,
+                     'BackupRemoteHost': BackupRemoteHost,
+                     'BackupRemotePort': BackupRemotePort,
++                    'BackupRemotePath': BackupRemotePath,
+                     'BackupRemoteAccount': BackupRemoteAccount,
+                     'BackupRemotePassword': BackupRemotePassword,
+                 },
+@@ -379,6 +384,7 @@
+                 $('input[name="BackupLocal"]').val('{{BackupLocal}}');
+                 $('input[name="BackupRemoteHost"]').val('{{BackupRemoteHost}}');
+                 $('input[name="BackupRemotePort"]').val('{{BackupRemotePort}}');
++                $('input[name="BackupRemotePath"]').val('{{BackupRemotePath}}');
+                 $('input[name="BackupRemoteAccount"]').val('{{BackupRemoteAccount}}');
+                 $('input[name="BackupRemotePassword"]').val('{{BackupRemotePassword}}');
+             }
+@@ -398,10 +404,10 @@
+                 $("#rftp_chk").removeAttr("disabled");
+                 if ('{{BackupLocation}}' == 'ftp') {
+                     $('input[name="rftp_chk"]').prop('checked', true);
+-                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
+                 } else {
+                     $('input[name="rftp_chk"]').prop('checked', false);
+-                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
+                 }
+                 $('input[name="BackupScheduling"][value={{BackupScheduling}}]').prop('checked', true);
+                 $('input[name="BackupMonthlyDate"]').val('{{BackupMonthlyDate}}');
+@@ -412,6 +418,7 @@
+                 $('input[name="BackupLocal"]').val('{{BackupLocal}}');
+                 $('input[name="BackupRemoteHost"]').val('{{BackupRemoteHost}}');
+                 $('input[name="BackupRemotePort"]').val('{{BackupRemotePort}}');
++                $('input[name="BackupRemotePath"]').val('{{BackupRemotePath}}');
+                 $('input[name="BackupRemoteAccount"]').val('{{BackupRemoteAccount}}');
+                 $('input[name="BackupRemotePassword"]').val('{{BackupRemotePassword}}');
+             }
+@@ -438,10 +445,10 @@
+ 
+         $('#rftp_chk').change(function() {
+             if($(this).is(':checked')) {
+-                $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
++                $("#BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
+             }
+             else
+-                $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
++                $("#BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
+         });
+ 
+         $(document).ready(function() {
+@@ -450,7 +457,7 @@
+                 $("#BackupScheduling_Month, #BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
+                 $("#BackupScheduling_Week, #sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").attr("disabled", true);
+                 $("#BackupLocal").attr("disabled", true);
+-                $("#rftp_chk, #BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").attr("disabled", true);
++                $("#rftp_chk, #BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").attr("disabled", true);
+             }
+             else {
+                 $('input[name="BackupScheduling"][value={{BackupScheduling}}]').prop('checked', true);
+@@ -463,10 +470,10 @@
+ 
+                 if ('{{BackupLocation}}' == 'ftp') {
+                     $('input[name="rftp_chk"]').prop('checked', true);
+-                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
+                 } else {
+                     $('input[name="rftp_chk"]').prop('checked', false);
+-                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
+                 }
+             }
+ 
+@@ -523,6 +530,7 @@
+ 
+             $('input[name="BackupRemoteHost"]').val('{{BackupRemoteHost}}');
+             $('input[name="BackupRemotePort"]').val('{{BackupRemotePort}}');
++            $('input[name="BackupRemotePath"]').val('{{BackupRemotePath}}');
+             $('input[name="BackupRemoteAccount"]').val('{{BackupRemoteAccount}}');
+             $('input[name="BackupRemotePassword"]').val('{{BackupRemotePassword}}');
+ 
+-- 
+1.9.1
+

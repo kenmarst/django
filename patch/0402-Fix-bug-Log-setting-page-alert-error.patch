@@ -1,0 +1,339 @@
+From c226dcd952f841d69a090cb76d3af25c63f94b16 Mon Sep 17 00:00:00 2001
+From: Frank <frank_lin@tw.shuttle.com>
+Date: Tue, 6 Dec 2016 17:34:26 +0800
+Subject: [PATCH 402/443] Fix bug - Log setting page alert error.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |  10 +++----
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |  10 +++----
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 20967 -> 20967 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  38 ++++++++++++++-------------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 20967 -> 20967 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  38 ++++++++++++++-------------
+ templates/logsetting.html                    |  11 +++++---
+ 9 files changed, 57 insertions(+), 50 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 06d771bd20e9ff113e322923547d8e23b1395df9..55713bd0b8ecdd740041fc6c708bb50ce9c1b882 100755
+GIT binary patch
+delta 50
+zcmZo-X=0g>Aj1FzEI`Z*#7rQLYhHRzW^o3?^K}gqYx3C56b#L+jEpya6l4Sd?R5*3
+
+delta 50
+zcmZo-X=0g>Aj8bSz`z2;AixA7T=UX%GK(`9p0AxWu_lk*NWsw3%D`yjM?ppa?r#gA
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index b0e1aab..5c570a3 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-02 19:02+0800\n"
++"POT-Creation-Date: 2016-12-06 17:23+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:184
++#: br06/settings.py:171
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:185
++#: br06/settings.py:172
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:186
+-msgid "筒体中文"
++#: br06/settings.py:173
++msgid "简体中文"
+ msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 06d771bd20e9ff113e322923547d8e23b1395df9..55713bd0b8ecdd740041fc6c708bb50ce9c1b882 100755
+GIT binary patch
+delta 50
+zcmZo-X=0g>Aj1FzEI`Z*#7rQLYhHRzW^o3?^K}gqYx3C56b#L+jEpya6l4Sd?R5*3
+
+delta 50
+zcmZo-X=0g>Aj8bSz`z2;AixA7T=UX%GK(`9p0AxWu_lk*NWsw3%D`yjM?ppa?r#gA
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index b0e1aab..5c570a3 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-02 19:02+0800\n"
++"POT-Creation-Date: 2016-12-06 17:23+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:184
++#: br06/settings.py:171
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:185
++#: br06/settings.py:172
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:186
+-msgid "筒体中文"
++#: br06/settings.py:173
++msgid "简体中文"
+ msgstr "Simplified Chinese"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 8eab3618db31dccdfc835540fdc5fb47a60ec5e2..c4e35fd365d40dac58e667b6bb0f2a42e57477f8 100755
+GIT binary patch
+delta 22
+ecmaF9nDO~y#tnDO+07IT&8>`#H$OIKkpcj1LkKAV
+
+delta 22
+ecmaF9nDO~y#tnDO*^LwoEv*cUHa|9Jkpcj15eOsz
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 2c7528d..6a029d3 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-02 19:02+0800\n"
++"POT-Creation-Date: 2016-12-06 17:23+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -619,11 +619,11 @@ msgstr "姓名"
+ msgid "Input your name"
+ msgstr "请输入姓名"
+ 
+-#: templates/fruser_add.html:49 templates/frusergroup_add.html.py:41
+-#: templates/frusergroup_edit.html:58 templates/role_add.html.py:38
+-#: templates/role_rename.html:40 templates/user_add.html.py:51
+-#: templates/user_group_add.html:41 templates/user_group_edit.html.py:58
+-#: templates/user_update.html:52
++#: templates/fruser_add.html:49 templates/fruser_edit.html.py:46
++#: templates/frusergroup_add.html:41 templates/frusergroup_edit.html.py:58
++#: templates/role_add.html:38 templates/role_rename.html.py:40
++#: templates/user_add.html:51 templates/user_group_add.html.py:41
++#: templates/user_group_edit.html:58 templates/user_update.html.py:52
+ msgid ""
+ "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' "
+ "or '-'"
+@@ -678,6 +678,11 @@ msgstr "设备使用者新增失败"
+ msgid "Fruser Edit"
+ msgstr "修改用户资讯"
+ 
++#: templates/fruser_edit.html:46 templates/user_add.html.py:51
++#: templates/user_update.html:52
++msgid "Please input your name"
++msgstr "请输入姓名"
++
+ #: templates/fruser_edit.html:83 templates/fruser_list.html.py:126
+ msgid "RFID"
+ msgstr "RFID卡"
+@@ -686,11 +691,11 @@ msgstr "RFID卡"
+ msgid "FP"
+ msgstr "指纹辨识"
+ 
+-#: templates/fruser_edit.html:190
++#: templates/fruser_edit.html:192
+ msgid "Update fruser successfully"
+ msgstr "更新设备使用者成功"
+ 
+-#: templates/fruser_edit.html:193
++#: templates/fruser_edit.html:195
+ msgid "Fail to update fruser"
+ msgstr "更新设备使用者失败"
+ 
+@@ -921,11 +926,16 @@ msgstr "分隔符号"
+ msgid "Please select items."
+ msgstr "请选择栏位项目"
+ 
+-#: templates/logsetting.html:173
++#: templates/logsetting.html:157 templates/user_add.html.py:129
++#: templates/user_update.html:130
++msgid "Please input correct format"
++msgstr "请输入正确的格式"
++
++#: templates/logsetting.html:176
+ msgid "successfully"
+ msgstr "成功"
+ 
+-#: templates/logsetting.html:175
++#: templates/logsetting.html:178
+ msgid "Fail"
+ msgstr "失败"
+ 
+@@ -1394,10 +1404,6 @@ msgid ""
+ "The account can only contain 1 to 16 bit of English or Number or '_' or '-'"
+ msgstr "帐号只能包含1到16码的英文、数字、'_'、'-'"
+ 
+-#: templates/user_add.html:51 templates/user_update.html.py:52
+-msgid "Please input your name"
+-msgstr "请输入姓名"
+-
+ #: templates/user_add.html:57 templates/user_update.html.py:58
+ msgid "E-Mail address"
+ msgstr "电子信箱"
+@@ -1428,10 +1434,6 @@ msgstr "确认密码"
+ msgid "Role"
+ msgstr "角色"
+ 
+-#: templates/user_add.html:129 templates/user_update.html.py:130
+-msgid "Please input correct format"
+-msgstr "请输入正确的格式"
+-
+ #: templates/user_add.html:136 templates/user_update.html.py:137
+ msgid "Password does not match"
+ msgstr "密码不一致"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index e384f18948cf8f676ba2d1a389d5a2c1e1bf5020..6fbb0d63d5f9d709e47667e5d98a81374d806b29 100755
+GIT binary patch
+delta 22
+ecmaF9nDO~y#tnDO+07IT&8>`#H$OIKkpcj1LkKAV
+
+delta 22
+ecmaF9nDO~y#tnDO*^LwoEv*cUHa|9Jkpcj15eOsz
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index cd200bd..093deef 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-02 19:02+0800\n"
++"POT-Creation-Date: 2016-12-06 17:23+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -619,11 +619,11 @@ msgstr "姓名"
+ msgid "Input your name"
+ msgstr "請輸入姓名"
+ 
+-#: templates/fruser_add.html:49 templates/frusergroup_add.html.py:41
+-#: templates/frusergroup_edit.html:58 templates/role_add.html.py:38
+-#: templates/role_rename.html:40 templates/user_add.html.py:51
+-#: templates/user_group_add.html:41 templates/user_group_edit.html.py:58
+-#: templates/user_update.html:52
++#: templates/fruser_add.html:49 templates/fruser_edit.html.py:46
++#: templates/frusergroup_add.html:41 templates/frusergroup_edit.html.py:58
++#: templates/role_add.html:38 templates/role_rename.html.py:40
++#: templates/user_add.html:51 templates/user_group_add.html.py:41
++#: templates/user_group_edit.html:58 templates/user_update.html.py:52
+ msgid ""
+ "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' "
+ "or '-'"
+@@ -678,6 +678,11 @@ msgstr "設備使用者新增失敗"
+ msgid "Fruser Edit"
+ msgstr "修改用戶資訊"
+ 
++#: templates/fruser_edit.html:46 templates/user_add.html.py:51
++#: templates/user_update.html:52
++msgid "Please input your name"
++msgstr "請輸入姓名"
++
+ #: templates/fruser_edit.html:83 templates/fruser_list.html.py:126
+ msgid "RFID"
+ msgstr "RFID卡"
+@@ -686,11 +691,11 @@ msgstr "RFID卡"
+ msgid "FP"
+ msgstr "指紋辨識"
+ 
+-#: templates/fruser_edit.html:190
++#: templates/fruser_edit.html:192
+ msgid "Update fruser successfully"
+ msgstr "更新設備使用者成功"
+ 
+-#: templates/fruser_edit.html:193
++#: templates/fruser_edit.html:195
+ msgid "Fail to update fruser"
+ msgstr "更新設備使用者失敗"
+ 
+@@ -921,11 +926,16 @@ msgstr "分隔符號"
+ msgid "Please select items."
+ msgstr "請選擇欄位項目"
+ 
+-#: templates/logsetting.html:173
++#: templates/logsetting.html:157 templates/user_add.html.py:129
++#: templates/user_update.html:130
++msgid "Please input correct format"
++msgstr "請輸入正確的格式"
++
++#: templates/logsetting.html:176
+ msgid "successfully"
+ msgstr "成功"
+ 
+-#: templates/logsetting.html:175
++#: templates/logsetting.html:178
+ msgid "Fail"
+ msgstr "失敗"
+ 
+@@ -1394,10 +1404,6 @@ msgid ""
+ "The account can only contain 1 to 16 bit of English or Number or '_' or '-'"
+ msgstr "帳號只能包含1到16碼的英文、數字、'_'、'-'"
+ 
+-#: templates/user_add.html:51 templates/user_update.html.py:52
+-msgid "Please input your name"
+-msgstr "請輸入姓名"
+-
+ #: templates/user_add.html:57 templates/user_update.html.py:58
+ msgid "E-Mail address"
+ msgstr "電子信箱"
+@@ -1428,10 +1434,6 @@ msgstr "確認密碼"
+ msgid "Role"
+ msgstr "角色"
+ 
+-#: templates/user_add.html:129 templates/user_update.html.py:130
+-msgid "Please input correct format"
+-msgstr "請輸入正確的格式"
+-
+ #: templates/user_add.html:136 templates/user_update.html.py:137
+ msgid "Password does not match"
+ msgstr "密碼不一致"
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 736ada0..7cb85af 100755
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -149,13 +149,16 @@
+ 			});
+ 			var s = $("#select2").val()
+             symbol = symbol1;
+-            if ((symbol1 == 5 && (symbol2 == "") || (symbol2.length > 1)) || (symbol1 == undefined) || s == null) {
++            if (s == null) {
+                 alert("{% trans "Please select items." %}");
+                 return
+-            }
+-            if (symbol1 == 5) {
++            } else if (symbol1 == 5) {
++                if (symbol2.length != 1) {
++                    alert("{% trans "Please input correct format" %}");
++                    return
++                }
+                 var symbol = symbol2;
+-            }
++            } 
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+-- 
+1.9.1
+

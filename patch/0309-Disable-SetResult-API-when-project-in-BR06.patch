@@ -1,0 +1,25 @@
+From c37dfbeb744fa0bbcb202e7b53e32678d9ab23d4 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 6 Oct 2016 19:37:59 +0800
+Subject: [PATCH 309/443] Disable SetResult API when project in BR06.
+
+---
+ api/recognition.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 0f8c725..5ce58e8 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -288,6 +288,8 @@ def rfid_delete(request):
+ 
+ @csrf_exempt
+ def set_result(request):
++    if not settings.EN_4G:
++        return JsonResponse({"Result": "not a 4G server"})
+     if not request.method == 'POST':
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+     try:
+-- 
+1.9.1
+

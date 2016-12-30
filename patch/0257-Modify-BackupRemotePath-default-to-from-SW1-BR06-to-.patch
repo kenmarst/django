@@ -1,0 +1,40 @@
+From d4c97ac7fb18a6bc416fce8a78b05c89d9dd1f71 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 11:28:21 +0800
+Subject: [PATCH 257/443] Modify BackupRemotePath default to from 'SW1/BR06' to
+ 'BR06'.
+
+---
+ systemsettings/views.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index b0592a1..384719f 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -98,7 +98,7 @@ try:
+ except:
+     try:
+         Config.objects.create(Name = 'BackupRemoteHost', Value = '0.0.0.0')
+-        print('create default BackupRemoteHost: 00.0.0.0')
++        print('create default BackupRemoteHost: 0.0.0.0')
+     except:
+         print('can\'t create default BackupRemoteHost: 0.0.0.0')
+ else:
+@@ -121,10 +121,10 @@ try:
+     Config.objects.get(Name = 'BackupRemotePath').Name
+ except:
+     try:
+-        Config.objects.create(Name = 'BackupRemotePath', Value = 'SW1/BR06')
+-        print('create default BackupRemotePath: SW1/BR06')
++        Config.objects.create(Name = 'BackupRemotePath', Value = 'BR06')
++        print('create default BackupRemotePath: BR06')
+     except:
+-        print('can\'t create default BackupRemotePath: SW1/BR06')
++        print('can\'t create default BackupRemotePath: BR06')
+ else:
+     print('default BackupRemotePath exist.')
+ 
+-- 
+1.9.1
+

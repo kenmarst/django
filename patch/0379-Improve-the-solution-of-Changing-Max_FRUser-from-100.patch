@@ -1,0 +1,25 @@
+From 6e0312839e388774c28f958c161378b4e53920e2 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Wed, 30 Nov 2016 13:33:20 +0800
+Subject: [PATCH 379/443] Improve the solution of Changing Max_FRUser from
+ 10000 into 3000
+
+---
+ dashboard/views.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index b686005..03cfad8 100755
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -74,6 +74,7 @@ def dashboard_views(request):
+         syslog_limit = 200000
+ 
+     frusers_percent = Decimal(frusers_total_count) / Decimal(frusers_limit / 100)
++    frusers_percent = round (frusers_percent,1)
+     syslog_percent = Decimal(syslogs_total_count) / Decimal(int(syslog_limit) / 100)
+     syslog_percent = round(syslog_percent,1)
+ 
+-- 
+1.9.1
+

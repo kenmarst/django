@@ -1,0 +1,56 @@
+From 5e9f70a8c2ef1c017cdbc9d49d4e808e406ef5ac Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 3 Nov 2016 17:35:30 +0800
+Subject: [PATCH 347/443] Fix device state became connected.
+
+Bug fix - device state became connected after setting and editing.
+---
+ devices/views.py | 18 +++++-------------
+ 1 file changed, 5 insertions(+), 13 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index 887f224..09f0027 100755
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -139,7 +139,6 @@ def add_device(request):
+         if IP == '' or Devices.objects.filter(IP = IP).exists():
+             return JsonResponse(res_code[4])
+         Devices.objects.create(Name = Name, MAC = MAC, IP = IP)
+-
+         return JsonResponse(res_code[0])
+     except Exception as error:
+         print(error)
+@@ -163,17 +162,11 @@ def change_device_name(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        devices_name = Devices.objects.filter(Name = request.POST['Name'])
+-        devices_name_count = devices_name.count()
+-        if devices_name_count > 0:
+-            if request.POST['Name'] == "" :
+-                Devices.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'], State = 'Setting', UpdateDate = datetime.now())
+-                return JsonResponse(res_code[0])
+-            else:
+-                return JsonResponse(res_code[2])
+-        else:
+-            Devices.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'], State = 'Setting', UpdateDate = datetime.now())
+-            return JsonResponse(res_code[0])
++        Name = request.POST.get('Name', '')
++        if Name != '' and Devices.objects.filter(Name = Name).exists():
++            return JsonResponse(res_code[2])
++        Devices.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'], State = 'Setting')
++        return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+ 
+@@ -202,7 +195,6 @@ def settings_device(request):
+             FaceBioScore = request.POST['FaceBioScore'],
+             FingerBioScore = request.POST['FingerBioScore'],
+             Language = request.POST['Language'],
+-            UpdateDate = datetime.now()
+         )
+         return JsonResponse(res_code[0])
+     except:
+-- 
+1.9.1
+

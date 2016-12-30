@@ -1,0 +1,87 @@
+From 58e7360ff00035fcd78a29dc83cbca7bbed29a31 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Fri, 20 May 2016 14:33:11 +0800
+Subject: [PATCH 055/443] Add api/utility method to get local timezone setting
+ in HOST server, and set it to Django TIME_ZONE setting.
+
+---
+ api/utility.py   | 39 +++++++++++++++++++++++++++++++++++++++
+ br06/settings.py |  3 ++-
+ 2 files changed, 41 insertions(+), 1 deletion(-)
+
+diff --git a/api/utility.py b/api/utility.py
+index 93b336e..c2b690f 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -1,4 +1,6 @@
+ #-*-coding:utf-8-*-
++import os
++import re
+ from django.shortcuts import render
+ from django.shortcuts import render
+ from django.http import HttpResponseRedirect
+@@ -74,3 +76,40 @@ def md5(str):
+     from hashlib import md5
+     pwd = md5(str.encode('utf-8'))
+     return pwd.hexdigest()
++
++def get_localtimezone(_root='/'):
++    # Debian/Ubuntu distribution has a specific configuration files in '/etc/timezone'
++    # that contain the timezone name.
++    tzpath = os.path.join(_root, 'etc/timezone')
++    if os.path.exists(tzpath):
++        with open(tzpath, 'rb') as tzfile:
++            data = tzfile.read()
++            etctz = data.strip().decode()
++            return etctz
++
++    # Fedora/Redhat/CentOS distribution has a ZONE setting in '/etc/sysconfig/clock',
++    # OpenSUSE distribution has a TIMEZONE setting in '/etc/sysconfig/clock' and
++    # Gentoo distribution has a TIMEZONE setting in '/etc/conf.d/clock'
++    # We look through these files for a timezone:
++    zone_re = re.compile('\s*ZONE\s*=\s*\"')
++    timezone_re = re.compile('\s*TIMEZONE\s*=\s*\"')
++    end_re = re.compile('\"')
++
++    for filename in ('etc/sysconfig/clock', 'etc/conf.d/clock'):
++        tzpath = os.path.join(_root, filename)
++        if not os.path.exists(tzpath):
++            continue
++        with open(tzpath, 'rt') as tzfile:
++            data = tzfile.readlines()
++
++        for line in data:
++            # Look for the ZONE= setting.
++            match = zone_re.match(line)
++            if match is None:
++                # No ZONE= setting. Look for the TIMEZONE= setting.
++                match = timezone_re.match(line)
++            if match is not None:
++                # Some setting existed
++                line = line[match.end():]
++                etctz = line[:end_re.search(line).start()]
++                return etctz
+diff --git a/br06/settings.py b/br06/settings.py
+index b0414f3..3d84b88 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
+ """
+ 
+ import os
++from api.utility import get_localtimezone
+ 
+ # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+@@ -117,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
+ 
+ LANGUAGE_CODE = 'en-us'
+ 
+-TIME_ZONE = 'UTC'
++TIME_ZONE = get_localtimezone()
+ 
+ USE_I18N = True
+ 
+-- 
+1.9.1
+

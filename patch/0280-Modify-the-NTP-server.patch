@@ -1,0 +1,40 @@
+From be2d1e6ac4db65da2e0d474ec342feeeb2c4b185 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 14 Sep 2016 14:19:15 +0800
+Subject: [PATCH 280/443] Modify the NTP server
+
+Modify the NTP server to 118.163.81.61.
+---
+ api/models.py                  | 2 +-
+ templates/device_settings.html | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 939d454..2390800 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -223,7 +223,7 @@ class Devices(models.Model):
+     AccessDeniedR1Pulse = models.CharField(db_column = 'AccessDeniedR1Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
+     Timeout = models.CharField(db_column = 'Timeout', choices = devices_timeout, default = '10', max_length = 8, blank = True)
+     ScreenSaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, default = '5', max_length = 8, blank = True)
+-    NTP = models.CharField(db_column = 'NTP', default = 'time.stdtime.gov.tw', max_length = 256, blank = True, null = True)
++    NTP = models.CharField(db_column = 'NTP', default = '118.163.81.61', max_length = 256, blank = True, null = True)
+     Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, default = '(UTC) London, Dublin, Edinburgh, Lisbon', max_length = 256, blank = True)
+     Audio = models.CharField(db_column = 'Audio', choices = devices_audio, default = 'Enable', max_length = 8, blank = True)
+     FaceBioScore = models.CharField(db_column = 'FaceBioScore', choices = devices_bioscore, default = 'Low', max_length = 8, blank = True)
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index b923e34..c51f8d2 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -190,7 +190,7 @@
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">NTP Server :</label>
+                                         <div class="col-md-3">
+-                                            <input type="text" class="form-control" value="{{obj.NTP}}" placeholder="time.stdtime.gov.tw" name="NTP">
++                                            <input type="text" class="form-control" value="{{obj.NTP}}" placeholder="118.163.81.61" name="NTP">
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-- 
+1.9.1
+

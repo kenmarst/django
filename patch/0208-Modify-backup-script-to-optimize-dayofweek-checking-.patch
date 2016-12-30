@@ -1,0 +1,45 @@
+From 9049170eea142d44f3daa3db2fc1ec28dfe69a55 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 27 Jul 2016 14:56:59 +0800
+Subject: [PATCH 208/443] Modify backup script to optimize dayofweek checking
+ method.
+
+---
+ systembackup/br06backup.sh | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index f5a251a..e6775e2 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -3,8 +3,17 @@
+ PWD=$(pwd)
+ echo "PWD:$PWD"
+ 
+-. $PWD/systembackup/backup.conf
+-. $PWD/systembackup/log.conf
++if [ -e $PWD/systembackup/backup.conf ]; then
++  . $PWD/systembackup/backup.conf
++else
++  echo "$PWD/systembackup/backup.conf not found."
++fi
++
++if [ -e $PWD/systembackup/log.conf ]; then
++  . $PWD/systembackup/log.conf
++else
++  echo "$PWD/systembackup/log.conf not found."
++fi
+ 
+ DATE=$(date +%F)
+ DAYOFMONTH=$(date +%-d)
+@@ -72,6 +81,7 @@ if [ $BackupMethod = 'Automatic' ]; then
+     do
+       if [ $dow = $DAYOFWEEK ]; then
+         DAYMATCH="true"
++        break
+       fi
+     done
+   fi
+-- 
+1.9.1
+

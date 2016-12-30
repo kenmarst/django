@@ -1,0 +1,26 @@
+From f7b3d9e69f99969079d2a03cad9551bd41a637ac Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 1 Dec 2016 13:35:00 +0800
+Subject: [PATCH 383/443] Commit systembackup folder and ignore
+ crontab.template file
+
+---
+ systembackup/.gitignore | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ mode change 100755 => 100644 systembackup/.gitignore
+
+diff --git a/systembackup/.gitignore b/systembackup/.gitignore
+old mode 100755
+new mode 100644
+index 1a8cb26..f869f47
+--- a/systembackup/.gitignore
++++ b/systembackup/.gitignore
+@@ -1,4 +1,4 @@
+ !.gitignore
+-crontab.new
++crontab.template
+ backup.conf
+ picsave.conf
+-- 
+1.9.1
+

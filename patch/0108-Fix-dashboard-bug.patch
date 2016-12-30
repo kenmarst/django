@@ -1,0 +1,24 @@
+From 67e14ba83de737927e2d6c380e002719b88fa7d7 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Fri, 27 May 2016 17:48:11 +0800
+Subject: [PATCH 108/443] Fix dashboard bug.
+
+---
+ templates/dashboard.html | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 5db4962..8b157ba 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -125,7 +125,6 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
+-        <script src="{% static "jquery-1.11.1.min.js" %}"></script>
+         <script src="{% static "chart.min.js" %}"></script>
+         <script src="{% static "chart-data.js" %}"></script>
+         <script src="{% static "easypiechart.js" %}"></script>
+-- 
+1.9.1
+

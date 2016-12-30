@@ -1,0 +1,26 @@
+From b225c60c8449ed923b852bdfd588bf6400223cb4 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 14 Sep 2016 10:56:14 +0800
+Subject: [PATCH 279/443] Fix can not create the fruser group
+
+Bug fix - can not create the fruser group.
+---
+ frusergroups/views.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index c5c6468..6d116ef 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -70,7 +70,7 @@ def add_frusergroup(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        if Frusergroups.objects.all().count >= 20: # spec: Max 20 Groups
++        if Frusergroups.objects.all().count() >= 20: # spec: Max 20 Groups
+             return JsonResponse(res_code[1])
+         Frusergroups.objects.create(Name = request.POST['Name'])
+         return JsonResponse(res_code[0])
+-- 
+1.9.1
+

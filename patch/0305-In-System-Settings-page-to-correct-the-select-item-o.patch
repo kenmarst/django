@@ -1,0 +1,108 @@
+From b1b477655b25cfecb1e7b2a9214934968c4fd950 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Tue, 4 Oct 2016 16:47:09 +0800
+Subject: [PATCH 305/443] In System Settings page, to correct the select item
+ option value of BackupTime_hours and BackupTime_mins to match the backup
+ script TIMEHOUR and TIMEMIN syntax.
+
+---
+ systembackup/br06backup.sh     |  2 +-
+ templates/system_settings.html | 48 +++++++++++++++++++++---------------------
+ 2 files changed, 25 insertions(+), 25 deletions(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 4185d99..9ba2d98 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -121,7 +121,7 @@ if [ $ACTION = 'ok' ] || [ $ACTION = 'true' ]; then
+     $MONGODUMP -d $MONGODBS | $GZIP -9 > $FILE
+   fi
+ 
+-  if [ $PicCreateSave = 'true' ] || [ $PicFaceSave ='true' ]; then
++  if [ $PicCreateSave = 'true' ] || [ $PicFaceSave = 'true' ]; then
+     FILE="$LOCALBAKPATH/FruserPicBackup.$DATE-$TIME.tar.gz"
+     echo $FILE
+     tar czf $FILE ./$FRUSERPICDIR
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 72f607c..7105626 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -49,16 +49,16 @@
+                                         <input type="radio" value="Monthly" id="BackupScheduling_Month" name="BackupScheduling">{% trans "Every Month" %}
+                                         <input type="number" min="1" max="31" maxlength=2 size=1 id="BackupMonthlyDate" name="BackupMonthlyDate">{% trans "Day" %}, {% trans "Time" %}:
+                                         <select id="BackupMonthlyDate_hours" name="BackupMonthlyDate_hours">
+-                                            <option value="00">00</option>
+-                                            <option value="01">01</option>
+-                                            <option value="02">02</option>
+-                                            <option value="03">03</option>
+-                                            <option value="04">04</option>
+-                                            <option value="05">05</option>
+-                                            <option value="06">06</option>
+-                                            <option value="07">07</option>
+-                                            <option value="08">08</option>
+-                                            <option value="09">09</option>
++                                            <option value="0">00</option>
++                                            <option value="1">01</option>
++                                            <option value="2">02</option>
++                                            <option value="3">03</option>
++                                            <option value="4">04</option>
++                                            <option value="5">05</option>
++                                            <option value="6">06</option>
++                                            <option value="7">07</option>
++                                            <option value="8">08</option>
++                                            <option value="9">09</option>
+                                             <option value="10">10</option>
+                                             <option value="11">11</option>
+                                             <option value="12">12</option>
+@@ -76,8 +76,8 @@
+                                         </select>
+                                         <label>:</label>
+                                         <select id="BackupMonthlyDate_mins"  name="BackupMonthlyDate_mins">
+-                                            <option value="00">00</option>
+-                                            <option value="05">05</option>
++                                            <option value="0">00</option>
++                                            <option value="5">05</option>
+                                             <option value="10">10</option>
+                                             <option value="15">15</option>
+                                             <option value="20">20</option>
+@@ -102,16 +102,16 @@
+                                         <input type="checkbox" id="fri_chk" name="fri_chk" value="5">{% trans "Fri" %},
+                                         <input type="checkbox" id="sat_chk" name="sat_chk" value="6">{% trans "Sat" %}, Time:
+                                         <select id="BackupWeeklyDate_hours" name="BackupWeeklyDate_hours">
+-                                            <option value="00">00</option>
+-                                            <option value="01">01</option>
+-                                            <option value="02">02</option>
+-                                            <option value="03">03</option>
+-                                            <option value="04">04</option>
+-                                            <option value="05">05</option>
+-                                            <option value="06">06</option>
+-                                            <option value="07">07</option>
+-                                            <option value="08">08</option>
+-                                            <option value="09">09</option>
++                                            <option value="0">00</option>
++                                            <option value="1">01</option>
++                                            <option value="2">02</option>
++                                            <option value="3">03</option>
++                                            <option value="4">04</option>
++                                            <option value="5">05</option>
++                                            <option value="6">06</option>
++                                            <option value="7">07</option>
++                                            <option value="8">08</option>
++                                            <option value="9">09</option>
+                                             <option value="10">10</option>
+                                             <option value="11">11</option>
+                                             <option value="12">12</option>
+@@ -129,8 +129,8 @@
+                                         </select>
+                                         <label>:</label>
+                                         <select id="BackupWeeklyDate_mins"  name="BackupWeeklyDate_mins">
+-                                            <option value="00">00</option>
+-                                            <option value="05">05</option>
++                                            <option value="0">00</option>
++                                            <option value="5">05</option>
+                                             <option value="10">10</option>
+                                             <option value="15">15</option>
+                                             <option value="20">20</option>
+-- 
+1.9.1
+

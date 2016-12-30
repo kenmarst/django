@@ -1,0 +1,57 @@
+From e954b99c013cc9654ae03efe7b5a66a52edd8a39 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 21 Apr 2016 15:12:32 +0800
+Subject: [PATCH 006/443] Add Face Recognition API Face Check
+
+---
+ api/recognition.py | 34 ++++++++++++++++++++++++++++++----
+ 1 file changed, 30 insertions(+), 4 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 1271a33..288bcf5 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -135,10 +135,36 @@ def face_identify(request):
+ def face_check(request):
+     if request.method == 'POST':
+         try:
+-            """
+-            enter code
+-            """
+-            res = dict(result_success)
++            client_ip = request.META['REMOTE_ADDR']
++            from .models import Devices
++            ip_devices = Devices.objects.get(IP = client_ip)
++            if ip_devices.State != 'Proposed':
++                try:
++                    res_upload = json.loads(
++                        requests.post(
++                            'http://localhost:8800/storage/upload',
++                            files = {'image': (
++                                request.FILES['image'].name,
++                                request.FILES['image'].file,
++                                request.FILES['image'].content_type
++                            )}
++                        ).text
++                    )
++                    if res_upload['state'] == 1000:
++                        res_face_detect = json.loads(
++                                requests.post(
++                                    'http://localhost:8800/face/detection/detect',
++                                    data = {'img_id' : res_upload['img_id']}
++                                ).text
++                        )
++                        face_id = res_face_detect['faces'][0]['face_id']
++                        res = dict(result_success)
++                    else:
++                        res = dict(ChainMap(result_fail, fail_code999, fail_message))
++                except:
++                    res = dict(ChainMap(result_fail, fail_code999, fail_message))
++            else:
++                res = dict(ChainMap(result_fail, fail_code999, fail_message))
+         except:
+             res = dict(ChainMap(result_fail, fail_code999, fail_message))
+ 
+-- 
+1.9.1
+

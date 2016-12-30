@@ -1,0 +1,27 @@
+From a05eed0d372e159b3613db861de716778a92f644 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 6 Dec 2016 14:08:15 +0800
+Subject: [PATCH 401/443] Add FTP account for the project of br06.
+
+---
+ config.ini | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/config.ini b/config.ini
+index 4f22782..3a6f195 100755
+--- a/config.ini
++++ b/config.ini
+@@ -23,8 +23,8 @@ FTP_PATH =
+ FTP_FILE_NAME = update.json
+ FTP_HOST = ftp.tw.shuttle.com
+ FTP_PORT = 21
+-FTP_USER =
+-FTP_PW =
++FTP_USER = client.br06@swdesign
++FTP_PW = download
+ FTP_DEBUG_LEVEL = 0
+ 
+ [Face_score]
+-- 
+1.9.1
+

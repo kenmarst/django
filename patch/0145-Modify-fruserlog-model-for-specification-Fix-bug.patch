@@ -1,0 +1,128 @@
+From 3259591b6842a34f7374f66764d683af27940c1c Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 22 Jun 2016 17:24:01 +0800
+Subject: [PATCH 145/443] Modify fruserlog model for specification & Fix bug
+
+Modify fruserlog model.
+Bug fix - hide modal when frusers import complete in fruser_list.
+---
+ api/models.py                 | 15 ++++++++++-----
+ api/recognition.py            |  6 +++---
+ fruserlogs/views.py           |  7 +++----
+ templates/fruser_list.html    |  1 +
+ templates/fruserlog_list.html |  2 +-
+ 5 files changed, 18 insertions(+), 13 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 9dae776..4f6a412 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -414,8 +414,11 @@ class Frusergroupdevices(models.Model):
+ class Fruserlogs(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     LogDateTime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add =  True)
+-    FRUserOId = models.ForeignKey('Frusers', on_delete = models.DO_NOTHING, db_column = 'FRUserOId', max_length = 36, blank = True, null = True)
+-    DeviceOId = models.ForeignKey('Devices', on_delete = models.DO_NOTHING, db_column = 'DeviceOId', max_length = 36)
++    FRUserOId = models.CharField(db_column = 'FRUserOId', max_length = 36, blank = True, null = True)
++    FRUserId = models.CharField(db_column = 'FRUserId', max_length = 36, blank = True, null = True)
++    FRUserName = models.CharField(db_column = 'FRUserName', max_length = 36, blank = True, null = True)
++    DeviceOId = models.CharField(db_column = 'DeviceOId', max_length = 36)
++    DeviceName = models.CharField(db_column = 'DeviceName', max_length = 36)
+     LogContent = models.CharField(db_column = 'LogContent', default = '', max_length = 256, blank = True, null = True)
+ 
+     class Meta:
+@@ -429,9 +432,11 @@ class Fruserlogs(models.Model):
+         return dict(
+             Index = 0,
+             OId = self.OId,
+-            FRUserId = self.FRUserOId.FRUserId if self.FRUserOId else '',
+-            FRUserName = self.FRUserOId.Name if self.FRUserOId else '',
+-            DeviceOId = self.DeviceOId.Name,
++            FRUserOId = self.FRUserOId,
++            FRUserId = self.FRUserId,
++            FRUserName = self.FRUserName,
++            DeviceOId = self.DeviceOId,
++            DeviceName = self.DeviceName,
+             LogContent = self.LogContent,
+             LogDateTime = self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
+         )
+diff --git a/api/recognition.py b/api/recognition.py
+index ba5bb62..b4bd310 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -58,7 +58,7 @@ def face_verify(request):
+             else:
+                 raise Exception('Need accept')
+         except Exception as e:
+-            Fruserlogs.objects.create(DeviceOId = ip_device, LogContent = 'Face identify fail : %s' % str(e))
++            Fruserlogs.objects.create(DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face identify fail : %s' % str(e))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -109,7 +109,7 @@ def face_identify(request):
+                         for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+                             for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
+                                 if device.DeviceOId == ip_device:
+-                                    Fruserlogs.objects.create(FRUserOId = fruser, DeviceOId = ip_device, LogContent = 'Face identify pass')
++                                    Fruserlogs.objects.create(FRUserOId = fruser.OId, FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face identify pass')
+                                     return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
+ 
+                         raise Exception('There is no permission device')
+@@ -120,7 +120,7 @@ def face_identify(request):
+             else:
+                 raise Exception('Need accept')
+         except Exception as e:
+-            Fruserlogs.objects.create(DeviceOId = ip_device, LogContent = 'Face identify fail : %s' % str(e))
++            Fruserlogs.objects.create(DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Face identify fail : %s' % str(e))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 09814c9..d0a373d 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -30,13 +30,12 @@ def fruserlog_data(request):
+     search = request.GET.get('search', None)
+     offset = int(request.GET.get('offset', 0))
+     limit = int(request.GET.get('limit', 0))
+-    sort = {'FRUserId' : 'FRUserOId__FRUserId', 'FRUserName' : 'FRUserOId__Name', 'DeviceOId' : 'DeviceOId__Name', 'LogDateTime' : 'LogDateTime', 'LogContent' : 'LogContent'}
+     if request.GET.get('order', None) == 'asc':
+-        order = sort.get(request.GET.get('sort'), 'LogDateTime')
++        order = request.GET.get('sort', 'LogDateTime')
+     else:
+-        order = '-' + sort.get(request.GET.get('sort'), 'LogDateTime')
++        order = '-' + request.GET.get('sort', 'LogDateTime')
+     if search:
+-        fruserlogs = Fruserlogs.objects.filter(Q(FRUserOId__FRUserId__contains = search) | Q(FRUserOId__Name__contains = search) | Q(DeviceOId__Name__contains = search)).order_by(order)
++        fruserlogs = Fruserlogs.objects.filter(Q(FRUserId__contains = search) | Q(FRUserName__contains = search) | Q(DeviceName__contains = search)).order_by(order)
+     else:
+         fruserlogs = Fruserlogs.objects.order_by(order)
+     fruserlog_count = fruserlogs.count()
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 6cd47b1..fc02eaa 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -168,6 +168,7 @@
+                     contentType: false,
+                     success: function(data) {
+                         if (data.CODE == "0") {
++                            $('#ImportModal').modal("hide");
+                             $('#FruserList').bootstrapTable('refresh');
+                         } else if (data.CODE == "2") {
+                             alert("The file format is not correct");
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 9378960..19c732a 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -100,7 +100,7 @@
+                     title: '{% trans "Name" %}',
+                     sortable: true
+                 }, {
+-                    field: 'DeviceOId',
++                    field: 'DeviceName',
+                     title: '{% trans "Device Name" %}',
+                     sortable: true,
+                     //formatter: function(value, row, index) {
+-- 
+1.9.1
+

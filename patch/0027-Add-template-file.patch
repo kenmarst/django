@@ -1,0 +1,175 @@
+From 6780510231708486a08c53eba7b27cdd88d5dcdf Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 11 May 2016 16:22:33 +0800
+Subject: [PATCH 027/443] Add template file
+
+-Add device_add.html.
+-fix bug - device edit url error.
+---
+ br06/urls.py              |   2 +-
+ templates/device_add.html | 140 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 141 insertions(+), 1 deletion(-)
+ create mode 100644 templates/device_add.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 4a7c8d7..c7ddb57 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -36,7 +36,7 @@ urlpatterns = [
+ urlpatterns += [
+     url(r'^device_list/?$', device_list_view),
+     url(r'^device_add/?$', device_add_view),
+-    url(r'^device_settings/?$', device_edit_view),
++    url(r'^device_edit/?$', device_edit_view),
+     url(r'^device_settings/?$', device_settings_view),
+     url(r'^add_device/?$', add_device),
+     url(r'^delete_device/?$', delete_device),
+diff --git a/templates/device_add.html b/templates/device_add.html
+new file mode 100644
+index 0000000..f92a39c
+--- /dev/null
++++ b/templates/device_add.html
+@@ -0,0 +1,140 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>User List</title>
++
++    </head>l
++
++<body>
++	{% include 'menu.html' %}
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++		<div class="row">
++			<ol class="breadcrumb">
++				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++				<li class="active">Device add</li>
++			</ol>
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<h1 class="page-header">Device add</h1>
++			</div>
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<div class="panel panel-default">
++					<div class="panel-body">
++						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                            <div class="form-body">
++                                <div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">Device Name
++                                        <span class="required">*</span>
++                                    </label>
++                                    <div class="col-md-6">
++                                    	<div class="input-icon">
++                                        	<input type="text" class="form-control" placeholder="" name="name">
++                                        	<div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++                                    </div>
++                                </div>
++                                <div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">MAC-Address
++                                        <span class="required">*</span>
++                                    </label>
++                                    <div class="col-md-6">
++                                        <div class="input-icon">
++                                            <input type="text" class="form-control" placeholder="" name="mac">
++                                            <div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++                                    </div>
++                                </div>
++                                <div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">IP
++                                        <span class="required">*</span>
++                                    </label>
++                                    <div class="col-md-6">
++                                        <div class="input-icon">
++                                            <input type="text" class="form-control" placeholder="" name="ip">
++                                            <div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++                                    </div>
++                                </div>
++                            </div>
++                            <div class="form-actions">
++                                <div class="row">
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <a onclick="history.back()" type="reset" class="btn default">Back</a>
++                                        <a onclick="onSaveClick()" type="" class="btn green">Save</a>
++                                    </div>
++                                </div>
++                            </div>
++                        </form>
++					</div>
++				</div>
++			</div>
++		</div><!--/.row-->
++	</div><!--/.main-->
++
++	{% load static %}
++	<script>
++	//For getting CSRF token
++	function getCookie(name) {
++		var cookieValue = null;
++		if (document.cookie && document.cookie != '') {
++			var cookies = document.cookie.split(';');
++			for (var i = 0; i < cookies.length; i++) {
++				var cookie = jQuery.trim(cookies[i]);
++				// Does this cookie string begin with the name we want?
++				if (cookie.substring(0, name.length + 1) == (name + '=')) {
++					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++					break;
++				}
++			}
++		}
++		return cookieValue;
++	}
++
++	function onSaveClick(){
++		var name = $('input[name=name]').val();
++		var mac = $('input[name=mac]').val();
++		var ip = $('input[name=ip]').val();
++		if(!name || !mac || !ip){
++			alert("please enter correct information");
++			return
++		}
++		$.ajax({
++			type: 'post',
++			url: '/add_device/',
++			async: true,
++			dataType: 'json',
++			data: {
++				csrfmiddlewaretoken : getCookie('csrftoken'),
++				'Name': name,
++				'MAC': mac,
++				'IP': ip,
++			},
++			success: function(data) {
++				console.log("CODE = ",data.CODE);
++				if (data.CODE == "0") {
++					alert("Device add successfully");
++					location.href = '/device_list/';
++				} else {
++					alert("Fail to add device");
++				}
++			},
++			error: function(data) {
++				console.log('why nunu');
++			}
++		});
++	}
++	</script>
++</body>
++
++</html>
+-- 
+1.9.1
+

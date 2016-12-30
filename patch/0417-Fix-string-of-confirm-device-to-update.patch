@@ -1,0 +1,39 @@
+From a4485c0e3c3bc86e21f801acf60824a8d56fe512 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 14 Dec 2016 10:45:08 +0800
+Subject: [PATCH 417/443] Fix string of confirm device to update.
+
+---
+ templates/device_edit.html | 2 +-
+ templates/device_list.html | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 39fb5b8..b223d68 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -263,7 +263,7 @@
+         }
+ 
+         function update_device() {
+-            var ret = confirm('Confirm to upgrade the device?');
++            var ret = confirm('{% trans "Confirm to upgrade this device?" %}');
+ 
+             if(ret) {
+                 $.ajax({ 
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 16eb96f..3d30376 100755
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -196,7 +196,7 @@
+             }
+ 
+             function update_all_device() {
+-                var ret = confirm('Confirm to upgrade all the Devices?');
++                var ret = confirm('{% trans "Confirm to upgrade software of all the devices?" %}');
+ 
+                 if(ret) {
+                     $.ajax({
+-- 
+1.9.1
+

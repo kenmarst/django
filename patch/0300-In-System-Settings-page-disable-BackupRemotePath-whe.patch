@@ -1,0 +1,26 @@
+From 0097ef9c2c81658b30c2b7390ba05c6527de11ae Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Fri, 30 Sep 2016 14:33:17 +0800
+Subject: [PATCH 300/443] In System Settings page, disable BackupRemotePath
+ when clicking to choose BackupMethod Manually.
+
+---
+ templates/system_settings.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index f117cc7..72f607c 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -410,7 +410,7 @@
+                 $("#BackupScheduling_Month, #BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
+                 $("#BackupScheduling_Week, #sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").attr("disabled", true);
+                 $("#BackupLocal").attr("disabled", true);
+-                $("#rftp_chk, #BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").attr("disabled", true);
++                $("#rftp_chk, #BackupRemoteHost, #BackupRemotePort, #BackupRemotePath, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").attr("disabled", true);
+                 $('input[name="BackupScheduling"][value={{BackupScheduling}}]').prop('checked', true);
+                 $('input[name="BackupMonthlyDate"]').val('{{BackupMonthlyDate}}');
+                 $('select[name="BackupMonthlyDate_hours"]').val('{{BackupTime_hours}}');
+-- 
+1.9.1
+

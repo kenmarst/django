@@ -1,0 +1,39 @@
+From d39e0215b7c973f07f63a5861894522d3a4ad881 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Tue, 26 Apr 2016 15:02:42 +0800
+Subject: [PATCH 009/443] Fix bug - API connection check
+
+Fix case error of API connection check.
+---
+ api/connection.py  | 2 +-
+ api/recognition.py | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 29ca638..75da6c8 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -42,7 +42,7 @@ def get(request):
+                     'NTP' : devices.NTP, \
+                     'Timezone' : devices.Timezone, \
+                     'Audio' : devices.Audio, \
+-                    'BioScore' : devices.Bioscore, \
++                    'BioScore' : devices.BioScore, \
+                     'Language' : devices.Language \
+                 })))
+             except:
+diff --git a/api/recognition.py b/api/recognition.py
+index 9dc9871..184bc9d 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -88,6 +88,7 @@ def face_identify(request):
+                                         if device.DeviceOId == ip_device:
+                                             Fruserlogs.objects.create(FRUserOId = fruser, DeviceOId = ip_device, LogContent = 'Face identify pass')
+                                             return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
++
+                                 Fruserlogs.objects.create(DeviceOId = ip_device, LogContent = 'Face identify fail : There is no permission device')
+                                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'There is no permission device'})))
+                             except:
+-- 
+1.9.1
+

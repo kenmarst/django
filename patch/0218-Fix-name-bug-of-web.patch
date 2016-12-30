@@ -1,0 +1,25 @@
+From 3a49629916b499dff60dbed980f723461351f591 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 3 Aug 2016 11:08:03 +0800
+Subject: [PATCH 218/443] Fix name bug of web
+
+Bug fix - special name can not be passed as a parameter.
+---
+ templates/device_frusergroups.html | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 7374dc5..0cb11d2 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -101,6 +101,7 @@
+                     },
+                     {
+                         formatter: function(value, row) {
++                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
+                             return ' \
+                                 <div align="center"> \
+                                     <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>{% trans "Delete" %}</button> \
+-- 
+1.9.1
+

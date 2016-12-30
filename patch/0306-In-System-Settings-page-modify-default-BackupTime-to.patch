@@ -1,0 +1,32 @@
+From 238e148212ce497d0d52b0872d40417cbbf1770c Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 6 Oct 2016 16:48:59 +0800
+Subject: [PATCH 306/443] In System Settings page, modify default BackupTime to
+ 3:15 to match the select item option value of BackupTime_hours and
+ BackupTime_mins.
+
+---
+ systemsettings/views.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 15ad067..2b5928a 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -61,10 +61,10 @@ try:
+     Config.objects.get(Name = 'BackupTime').Name
+ except:
+     try:
+-        Config.objects.create(Name = 'BackupTime', Value = '03:00')
+-        print('create default BackupTime: 03:00')
++        Config.objects.create(Name = 'BackupTime', Value = '3:15')
++        print('create default BackupTime: 3:15')
+     except:
+-        print('can\'t create default BackupTime: 03:00')
++        print('can\'t create default BackupTime: 3:15')
+ else:
+     print('default BackupTime exist.')
+ 
+-- 
+1.9.1
+

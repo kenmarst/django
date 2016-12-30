@@ -1,0 +1,226 @@
+From 909c96c2df558fc283aa458144bf876db4d718b9 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Fri, 22 Jul 2016 16:14:50 +0800
+Subject: [PATCH 194/443] Modify backup rotation script using new day and time
+ checking algorithm. Note, must use new /etc/crontab setting
+
+---
+ systembackup/br06backup.sh | 84 +++++++++++++++++++++++++++++++++++++++-------
+ systemsettings/views.py    | 20 ++++++++++-
+ 2 files changed, 91 insertions(+), 13 deletions(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 38798d9..5992135 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -7,15 +7,27 @@ echo "PWD:$PWD"
+ . $PWD/systembackup/log.conf
+ 
+ DATE=$(date +%F)
++DAYOFMONTH=$(date +%-d)
++DAYOFWEEK=$(date +%u)
+ echo "DATE:$DATE"
++echo "DAYOFMONTH:$DAYOFMONTH"
++echo "DAYOFWEEK:$DAYOFWEEK"
+ 
+ DATE30=$(date +%F --date -30days)
+ echo "DATE30:$DATE30"
+ 
+ TIME=$(date +%H%M)
+-echo "TIME:$TIME"
++TIMEHOUR=$(date +%-H)
++TIMEMIN=$(date +%-M)
++echo "TIMEHOUR:$TIMEHOUR"
++echo "TIMEMIN:$TIMEMIN"
+ 
+ echo "BackupMethod:$BackupMethod"
++echo "BackupScheduling:$BackupScheduling"
++echo "BackupMonthlyDate:$BackupMonthlyDate"
++echo "BackupWeeklyDateSh:$BackupWeeklyDateSh"
++echo "BackupTime_hours:$BackupTime_hours"
++echo "BackupTime_mins:$BackupTime_mins"
+ echo "BackupLocal:$BackupLocal"
+ echo "BackupRemoteHost:$BackupRemoteHost"
+ echo "BackupRemotePort:$BackupRemotePort"
+@@ -32,29 +44,75 @@ MYSQL=$(which mysql)
+ MYSQLDUMP=$(which mysqldump)
+ MYSQLUSER="root"
+ MYSQLPASS="1"
++MONGODUMP=$(which mongodump)
+ LOCALBAKPATH="$BackupLocal/$DATE"
+ echo "LOCALBAKPATH:$LOCALBAKPATH"
+ FRUSERPICDIR="media/fruserpic"
+ BR06DIR="br06.git"
++DAYMATCH="false"
++TIMEMATCH="false"
++ACTION="false"
+ 
+-[ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
++if [ $BackupMethod = 'Manually' ]; then
++  ACTION="true"
++fi
++
++if [ $BackupMethod = 'Automatic' ]; then
++
++  if [ $BackupScheduling = 'Monthly' ]; then
++    echo "BackupScheduling:$BackupScheduling"
++    if [ $DAYOFMONTH = $BackupMonthlyDate ]; then
++      DAYMATCH="true"
++    fi
++  fi
++
++  if [ $BackupScheduling = 'Weekly' ]; then
++    echo "BackupScheduling:$BackupScheduling"
++    for dow in $BackupWeeklyDateSh
++    do
++      if [ $dow = $DAYOFWEEK ]; then
++        DAYMATCH="true"
++      fi
++    done
++  fi
++
++  if [ $TIMEHOUR = $BackupTime_hours ] && [ $TIMEMIN = $BackupTime_mins ]; then
++    TIMEMATCH="true"
++  fi
++fi
++
++echo "DAYMATCH:$DAYMATCH"
++echo "TIMEMATCH:$TIMEMATCH"
++echo "ACTION:$ACTION"
+ 
+-DBS=$($MYSQL -u $MYSQLUSER -p$MYSQLPASS -Bse 'show databases')
+-for db in $DBS
+-do
++if [ $ACTION = 'ok' ]; then
++
++  [ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
++
++  MYDBS=$($MYSQL -u $MYSQLUSER -p$MYSQLPASS -Bse 'show databases')
++  for db in $MYDBS
++  do
+     echo $db
+     FILE="$LOCALBAKPATH/$db.$DATE-$TIME.gz"
+     echo $FILE
+     $MYSQLDUMP -u $MYSQLUSER -p$MYSQLPASS --force $db | $GZIP -9 > $FILE
+-done
++  done
++
++  if [ $MONGODUMP != '' ]; then
++    MONGODBS="weblocal_db"
++    echo $MONGODBS
++    FILE="$LOCALBAKPATH/$MONGODBS.$DATE-$TIME.gz"
++    echo $FILE
++    $MONGODUMP -d $MONGODBS | $GZIP -9 > $FILE
++  fi
+ 
+-if [ $PicCreateSave = 'true' ] || [ $PicFaceSave ='true' ]; then
++  if [ $PicCreateSave = 'true' ] || [ $PicFaceSave ='true' ]; then
+     FILE="$LOCALBAKPATH/FruserPicBackup.$DATE-$TIME.tar.gz"
+     echo $FILE
+     tar czf $FILE ./$FRUSERPICDIR
+-fi
++  fi
+ 
+-if [ $BackupLocation = 'ftp' ] && [ $BackupMethod = 'Automatic' ]; then
++  if [ $BackupLocation = 'ftp' ] && [ $BackupMethod = 'Automatic' ]; then
+     echo "Uploading backup files to ftp..."
+     lftp $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword << EOF
+ cd SW1/BR06
+@@ -64,7 +122,9 @@ mput /opt/backup/$DATE/*
+ bye
+ EOF
+ 
+-echo "complete."
+-fi
++    echo "complete."
++  fi
+ 
+-$RM -rf $BackupLocal/$DATE30
++  $RM -rf $BackupLocal/$DATE30
++fi
++echo "=========================================================================="
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 44d25e1..6c504ac 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -387,43 +387,53 @@ def settings_system_backup(request):
+ 
+             if BackupScheduling == 'Weekly':
+                 BackupWeeklyDate = ''
++                BackupWeeklyDateSh = ''
+                 mon_chk = request.POST['mon_chk']
+                 print('mon_chk : ', mon_chk)
+                 if mon_chk == 'true':
+                     BackupWeeklyDate += '1,'
++                    BackupWeeklyDateSh += '1 '
+ 
+                 tue_chk = request.POST['tue_chk']
+                 print('tue_chk : ', tue_chk)
+                 if tue_chk == 'true':
+                     BackupWeeklyDate += '2,'
++                    BackupWeeklyDateSh += '2 '
+ 
+                 wed_chk = request.POST['wed_chk']
+                 print('wed_chk : ', wed_chk)
+                 if wed_chk == 'true':
+                     BackupWeeklyDate += '3,'
++                    BackupWeeklyDateSh += '3 '
+ 
+                 thu_chk = request.POST['thu_chk']
+                 print('thu_chk : ', thu_chk)
+                 if thu_chk == 'true':
+                     BackupWeeklyDate += '4,'
++                    BackupWeeklyDateSh += '4 '
+ 
+                 fri_chk = request.POST['fri_chk']
+                 print('fri_chk : ', fri_chk)
+                 if fri_chk == 'true':
+                     BackupWeeklyDate += '5,'
++                    BackupWeeklyDateSh += '5 '
+ 
+                 sat_chk = request.POST['sat_chk']
+                 print('sat_chk : ', sat_chk)
+                 if sat_chk == 'true':
+                     BackupWeeklyDate += '6,'
++                    BackupWeeklyDateSh += '6 '
+ 
+                 sun_chk = request.POST['sun_chk']
+                 print('sun_chk : ', sun_chk)
+                 if sun_chk == 'true':
+                     BackupWeeklyDate += '7,'
++                    BackupWeeklyDateSh += '7 '
+ 
+                 BackupWeeklyDate_len = len(BackupWeeklyDate)
++                BackupWeeklyDateSh_len = len(BackupWeeklyDateSh)
+                 BackupWeeklyDate = BackupWeeklyDate[:(BackupWeeklyDate_len-1)]
++                BackupWeeklyDateSh = BackupWeeklyDateSh[:(BackupWeeklyDateSh_len-1)]
+ 
+                 print('BackupWeeklyDate : ', BackupWeeklyDate)
+                 Config.objects.filter(Name = 'BackupWeeklyDate').update(Value=BackupWeeklyDate)
+@@ -483,6 +493,14 @@ def settings_system_backup(request):
+             backupconf_content=[]
+             print(backupconf_content)
+             backupconf_content.append('BackupMethod={0}\n'.format(BackupMethod))
++            backupconf_content.append('BackupScheduling={0}\n'.format(BackupScheduling))
++            if BackupScheduling == 'Monthly':
++                backupconf_content.append('BackupMonthlyDate={0}\n'.format(BackupMonthlyDate))
++            else:
++                backupconf_content.append('BackupWeeklyDateSh=\"{0}\"\n'.format(BackupWeeklyDateSh))
++
++            backupconf_content.append('BackupTime_hours={0}\n'.format(BackupTime_hours))
++            backupconf_content.append('BackupTime_mins={0}\n'.format(BackupTime_mins))
+             backupconf_content.append('BackupLocal={0}\n'.format(BackupLocal))
+             backupconf_content.append('BackupLocation={0}\n'.format(BackupLocation))
+             backupconf_content.append('BackupRemoteHost={0}\n'.format(BackupRemoteHost))
+@@ -562,7 +580,7 @@ def settings_system_backup(request):
+         cpcmd = 'cp -f {0} {1}\n'.format(newcrontabfile, crontabfile)
+         #print('cpcmd:'+cpcmd)
+         #os.system('echo {0}|sudo -S {1}'.format('1', cpcmd))
+-        os.system('{0}'.format(cpcmd))
++        #os.system('{0}'.format(cpcmd))
+ 
+         return JsonResponse(res_code[0])
+     except:
+-- 
+1.9.1
+

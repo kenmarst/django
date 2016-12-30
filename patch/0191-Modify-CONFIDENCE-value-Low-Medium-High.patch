@@ -1,0 +1,25 @@
+From bef08c0e0e18187f2ac71ead1ef151ab2c515063 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 21 Jul 2016 14:19:14 +0800
+Subject: [PATCH 191/443] Modify CONFIDENCE value : Low, Medium, High.
+
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 2ec9ec2..0c58411 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -171,7 +171,7 @@ LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ 
+ TCIT_IP = 'localhost:8800'
+ 
+-CONFIDENCE = {'Low':50, 'Medium':100, 'High':500}
++CONFIDENCE = {'Low':700, 'Medium':750, 'High':800}
+ EMAIL_HOST = 'webmail.tw.shuttle.com'
+ EMAIL_HOST_USER = 'fr_serivce'
+ EMAIL_HOST_PASSWORD = 'Pa0000'
+-- 
+1.9.1
+

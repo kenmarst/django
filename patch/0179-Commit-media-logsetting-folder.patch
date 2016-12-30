@@ -1,0 +1,20 @@
+From 76ce6bf84ecdb449053004fd0b307db30b2d04e0 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 14 Jul 2016 11:41:45 +0800
+Subject: [PATCH 179/443] Commit media/logsetting folder
+
+---
+ media/logsetting/.gitignore | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 media/logsetting/.gitignore
+
+diff --git a/media/logsetting/.gitignore b/media/logsetting/.gitignore
+new file mode 100644
+index 0000000..f935021
+--- /dev/null
++++ b/media/logsetting/.gitignore
+@@ -0,0 +1 @@
++!.gitignore
+-- 
+1.9.1
+

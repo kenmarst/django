@@ -1,0 +1,26 @@
+From 512e55b7526c2b7a9bc234945a3922eb54932440 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 15:13:25 +0800
+Subject: [PATCH 260/443] Fix FaceVerify API: remove FRUserId from retrun
+ success.
+
+---
+ api/recognition.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 1ef3d11..0f8c725 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -66,7 +66,7 @@ def face_verify(request):
+                                         for j in i.GroupOId.frusergroupdevices_set.filter(GroupOId = i.GroupOId.OId):
+                                             #print(j.DeviceOId.IP)
+                                             if ip_device.IP == j.DeviceOId.IP:
+-                                                return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
++                                                return JsonResponse(result_pass)
+                                     raise Exception('No accept device in frusergroup')
+                                 else:
+                                     raise Exception('Confidence level error')
+-- 
+1.9.1
+

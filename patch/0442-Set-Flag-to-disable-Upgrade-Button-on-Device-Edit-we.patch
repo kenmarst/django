@@ -1,0 +1,144 @@
+From 246709075fc79a1b21f2c016845f4bcb327ab335 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 30 Dec 2016 11:23:49 +0800
+Subject: [PATCH 442/443] Set Flag to disable Upgrade Button on Device Edit
+ web.
+
+---
+ devices/views.py           | 46 +++++++++++++++++++++++++++++++---------------
+ templates/device_edit.html | 14 +++++++++-----
+ 2 files changed, 40 insertions(+), 20 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index d970991..7b61aaf 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -6,8 +6,10 @@ from api.models import Devices, Frusergroups, Frusergroupdevices, Config
+ from datetime import datetime
+ from login.views import check_login, check_login_redirect
+ from django.db.models import Q
+-import json
++import json, os
+ from django.views.decorators.csrf import csrf_exempt
++from django.conf import settings
++from api.utility import new_version_check
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}, {"CODE": "4"}, {"CODE": "5"}]
+ permission = 'permission_device'
+@@ -39,6 +41,13 @@ def device_list_data(request):
+             devices = Devices.objects.order_by(order)
+         device_count = devices.count()
+         devices = [device.as_json() for device in devices[offset : offset + limit]]
++        DeviceVersion_New = Config.objects.get(Name = 'NewDeviceVersion').Value[1:].split('.')
++        index = 0
++        for device in devices:
++            device['Upgrade'] = True if new_version_check(DeviceVersion_New, device['Version'][1:].split('.'), 'Device') else False
++            index += 1
++            device['Index'] = index
++
+         return JsonResponse({'total': device_count, 'rows': devices})
+     except:
+         return JsonResponse({'total': 0, 'rows': []})
+@@ -57,10 +66,24 @@ def device_edit_view(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
++        device = Devices.objects.get(OId = request.GET['OId'])
++        update_file = os.path.join(settings.UPDATE_DIR, settings.FTP_FILE_NAME)
++
++        DeviceVersion_New = Config.objects.get(Name = 'NewDeviceVersion').Value[1:].split('.')
++        DeviceVersion = device.Version[1:].split('.')
++
++        if device.Version == '' or \
++           device.State == 'Upgrade' or \
++           not os.path.exists(update_file) or \
++           not new_version_check(DeviceVersion_New, DeviceVersion, 'Device'):
++            Flag = False
++        else:
++            Flag = True
++
+         return render(request, 'device_edit.html', {
+             'active': 'device_edit',
+-            'obj': Devices.objects.get(OId = request.GET['OId']).as_json(),
+-            'NewDeviceVersion': Config.objects.get(Name = 'NewDeviceVersion').Value
++            'obj': device.as_json(),
++            'upgrade_flag': Flag
+         })
+     except:
+         return render(request, 'registration/not_found.html')
+@@ -253,11 +276,10 @@ def update_all_device(request):
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+         devices = Devices.objects.all()
+-        device_conf = Config.objects.get(Name = 'NewDeviceVersion')
++        DeviceVersion_New = Config.objects.get(Name = 'NewDeviceVersion').Value[1:].split('.')
+         for device in devices:
+-            if int(''.join(device.Version[1:].split('.'))) < int(''.join(device_conf.Value[1:].split('.'))):
+-                device.State = 'Upgrade'
+-                device.save()
++            if new_version_check(DeviceVersion_New, device.Version[1:].split('.'), 'Device'):
++                Devices.objects.filter(OId = device.OId).update(State = 'Upgrade')
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+@@ -267,13 +289,7 @@ def update_device(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+     try:
+-        device = Devices.objects.get(OId = request.POST['OId'])
+-        device_conf = Config.objects.get(Name = 'NewDeviceVersion')
+-        if int(''.join(device.Version[1:].split('.'))) < int(''.join(device_conf.Value[1:].split('.'))):
+-            device.State = 'Upgrade'
+-            device.save()
+-            return JsonResponse(res_code[0])
+-        else:
+-            return JsonResponse(res_code[2])
++        Devices.objects.filter(OId = request.POST['OId']).update(State = 'Upgrade')
++        return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 62ad03c..0c46bf2 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -204,9 +204,9 @@
+                                         <label class="col-md-3 control-label">{% trans "Software Version" %} :</label>
+                                         <label class="col-md-6 control-label">
+                                             <p class="text-left">{{obj.Version}}
+-                                                {% if NewDeviceVersion != obj.Version %}
+-                                                    (<em>{% trans "There is a newer version can be upgraded." %}</em>)
+-                                                    <a onclick="update_device()">
++                                                {% if upgrade_flag %}
++                                                    (<em id="device_version" >{% trans "There is a newer version can be upgraded." %}</em>)
++                                                    <a onclick="update_device(this)">
+                                                         <em>{% trans "Click here to upgrade" %}</em>
+                                                     </a>
+                                                 {% endif %}
+@@ -255,8 +255,8 @@
+             });
+         }
+ 
+-        {% if NewDeviceVersion != obj.Version %}
+-            function update_device() {
++        {% if upgrade_flag %}
++            function update_device(obj) {
+                 var ret = confirm('{% trans "Confirm to upgrade this device?" %}');
+ 
+                 if(ret) {
+@@ -273,9 +273,13 @@
+                         success: function(data) {
+                             if (data.CODE == "0") {
+                                 alert("{% trans "Device will upgrade" %}");
++                                $(obj).html('');
++                                $('#device_version').html('{% trans "Upgrading" %}')
+                             } else if (data.CODE == "1") {
++                                $(obj).html('');
+                                 alert("{% trans "Fail to upgrade device" %}");
+                             } else if (data.CODE == "2") {
++                                $(obj).html('');
+                                 alert("{% trans "There is no need to upgrade the version" %}");
+                             }
+                         }
+-- 
+1.9.1
+

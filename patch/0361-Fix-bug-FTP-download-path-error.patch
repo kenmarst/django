@@ -1,0 +1,26 @@
+From f32b1c2f0363fcc356cd0bf6da9499f4108e17ed Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 18 Nov 2016 15:40:41 +0800
+Subject: [PATCH 361/443] Fix bug: FTP download path error.
+
+---
+ api/cron.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 7c7ddeb..2ecf8e6 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -89,7 +89,8 @@ def FTP_download_file(localpath, filepath, filename, ftphost, ftpport, ftpuser,
+ 
+         bufsize = 1024
+         ftp.cwd(filepath)
+-        file_handler = open(localpath + filename, 'wb').write # local
++        localfile = os.path.join(localpath, filename)
++        file_handler = open(localfile, 'wb').write # local
+         ftp.retrbinary('RETR %s' % os.path.basename(filename),file_handler,bufsize)
+ 
+         ftp.quit()
+-- 
+1.9.1
+

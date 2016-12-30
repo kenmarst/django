@@ -1,0 +1,558 @@
+From f9383711fc0c31c3a779755a1451eed1c1906c28 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 12 Jul 2016 11:45:24 +0800
+Subject: [PATCH 169/443] Modify system log & Modify api function and bug
+
+Modify system log content.
+Add user add API function:
+    Check the duplicate RFIDCard.
+Bug fix:
+  -  user update API return when RFIDCard is owner's.
+  -  user add & user update value error of Age column.
+  -  user update API update group not correct.
+---
+ api/face.py |  82 +++++++++++++++---------------
+ api/user.py | 162 +++++++++++++++++++++++++++++++++++-------------------------
+ 2 files changed, 138 insertions(+), 106 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 2e0f05f..8435761 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -16,57 +16,59 @@ true = 'true'
+ @csrf_exempt
+ def add(request):
+     if request.method == 'POST':
+-        if request.META['REMOTE_ADDR'] == '127.0.0.1':
+-            logContent = 'Local IP access'
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Face Add', request_IP = request_IP)
++        if request_IP == '127.0.0.1':
++            logContent = '{message_head}Request access'.format(message_head = message_head)
+             Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+-        elif Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+-            logContent = 'Device IP accept'
++        elif Devices.objects.get(IP = request_IP).State != 'Proposed':
++            logContent = '{message_head}Request access'.format(message_head = message_head)
+             Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+         else :
+-            logContent = 'Need accept'
++            logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+             try:
+                 print("Writing system log...")
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             except Exception as error:
+                 print(str(error))
+-                logContent = str(error)
++                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         try:
+             # check FRUserId
+-            fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
++            fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId', ''))
+             #1. Update load face img to TCIT and get Image Id
+             res_upload = sendImg(request)
+-            image_id = res_upload['img_id']
++            image_id = res_upload.get('img_id', '')
+             #print('image_id : ', image_id)
+-            if not res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                logContent = TCIT_res_state[res_upload['state']]
++            if not res_upload.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
++                logContent = '{message_head}TCIT[Storage Upload] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_upload.get('state', '')])
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #2. Through TCIT to recognize face, then get Face Id
+             res_face_detect = TCIT_API("/face/detection/detect/", data = {'img_id' : image_id})
+-            if len(res_face_detect['faces']) != 1:
+-                logContent = 'face detect error'
++            if len(res_face_detect.get('faces', '')) != 1:
++                logContent = '{message_head}TCIT[Face Detection] error'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                if res_face_detect['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                    face_id = res_face_detect['faces'][0]['face_id']
++                if res_face_detect.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
++                    face_id = res_face_detect.get('faces', '')[0].get('face_id', '')
+                     #print('face_id : ', face_id)
+                 else:
+-                    logContent = TCIT_res_state[res_face_detect['state']]
++                    logContent = '{message_head}TCIT[Face Detection] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_face_detect.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #3. Call TCIT Add Face to Person
+             if not fruser.PersonId:
+                 res_personid = TCIT_API('/face/person/create/', data = {'face_id': face_id})
+-                if res_personid['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                if res_personid.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     #print('person_id', res_personid['person_id'])
+-                    person_id = res_personid['person_id']
++                    person_id = res_personid.get('person_id')
+                     fruser.PersonId = person_id
+                     fruser.UpdateDate = datetime.now()
+                     fruser.save()
+                 else:
+-                    logContent = "/faec/person/create/" + TCIT_res_state[res_personid['state']]
++                    logContent = '{message_head}TCIT[Create Person] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_personid.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+                 person_id = fruser.PersonId
+@@ -74,15 +76,15 @@ def add(request):
+                     '/face/person/update/add/',
+                     data = {'person_id' : person_id, 'face_id': face_id}
+                 )
+-                if not res_face_personadd['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                    logContent = "/face/person/update/add/" + TCIT_res_state[res_face_personadd['state']]
++                if not res_face_personadd.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
++                    logContent = '{message_head}TCIT[Add Face to Person] error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_face_personadd.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #4 get img from device and save
+-            if request.META['REMOTE_ADDR'] == '127.0.0.1':
+-                if fruser.Face1 == settings.PIC_DIR + request.FILES['image'].name:
++            if request_IP == '127.0.0.1':
++                if fruser.Face1 == settings.PIC_DIR + request.FILES.get('image').name:
+                     Frusers.objects.filter(OId = fruser.OId).update(FaceID1 = face_id, UpdateDate = datetime.now())
+-                if fruser.Face2 == settings.PIC_DIR + request.FILES['image'].name:
++                if fruser.Face2 == settings.PIC_DIR + request.FILES.get('image').name:
+                     Frusers.objects.filter(OId = fruser.OId).update(FaceID2 = face_id, UpdateDate = datetime.now())
+             else:
+                 if Config.objects.get(Name = 'PicFaceSave').Value == true:
+@@ -99,7 +101,7 @@ def add(request):
+                             FaceDir
+                         ),
+                         'wb+'
+-                    ).write(request.FILES['image'].file.getvalue())
++                    ).write(request.FILES.get('image', '').file.getvalue())
+ 
+                     #Fruser update
+                     if not fruser.Face1:
+@@ -117,7 +119,7 @@ def add(request):
+             return JsonResponse(result_success)
+         except Exception as error:
+             print(str(error))
+-            logContent = str(error)
++            logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         finally:
+             try:
+@@ -125,7 +127,7 @@ def add(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                logContent = str(error)
++                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -133,13 +135,15 @@ def add(request):
+ @csrf_exempt
+ def delete(request):
+     if request.method == 'POST':
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'Face Delete', request_IP = request_IP)
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId'}
+             if all(k in req for k in req_key) and all(req.values()):
+-                ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
++                ip_devices = Devices.objects.get(IP = request_IP)
+                 if ip_devices.State != 'Proposed':
+-                    fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
++                    fruser = Frusers.objects.get(FRUserId = req.get('FRUserId', ''))
+                     res = json.loads(
+                         requests.post(
+                             'http://' + settings.TCIT_IP + '/face/person/update/remove',
+@@ -151,7 +155,7 @@ def delete(request):
+                             }
+                         ).text
+                     )
+-                    if res['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                    if res.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1)):
+                             os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1))
+                         if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face2)):
+@@ -165,20 +169,20 @@ def delete(request):
+                         fruser.FaceID2 = ''
+                         fruser.FaceID3 = ''
+                         fruser.save()
+-                        logContent = 'Face Delete Successfully'
++                        logContent = '{message_head}Face Delete Successfully'.format(message_head = message_head)
+                         return JsonResponse({'Result' : logContent})
+                     else:
+-                        logContent = 'Face remove error'
++                        logContent = '{message_head}Face remove error'.format(message_head = message_head)
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                 else:
+-                    logContent = 'Need accept'
++                    logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                logContent = 'Request parameter error'
++                logContent = '{message_head}Request parameter error'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         except Exception as error:
+             print(str(error))
+-            logContent = str(error)
++            logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         finally:
+             try:
+@@ -186,7 +190,7 @@ def delete(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                logContent = str(error)
++                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -198,24 +202,24 @@ def list(request):
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId', 'FaceIndex'}
+             if all(k in req for k in req_key) and all(req.values()):
+-                ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
++                ip_devices = Devices.objects.get(IP = request.META.get('REMOTE_ADDR', ''))
+                 if ip_devices.State != 'Proposed':
+                     fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
+                     if (fruser.Face1=="") and (fruser.Face2=="") and (fruser.Face3==""):
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
+-                    if fruser.Face1 and req['FaceIndex'] == 1:
++                    if fruser.Face1 and req.get('FaceIndex', '') == 1:
+                         img_1 = open(os.path.join(
+                                     settings.MEDIA_PAR_DIR,
+                                     fruser.Face1
+                                 ), 'rb')
+                         return HttpResponse(img_1.read(), content_type="image/jpg")
+-                    if fruser.Face2 and req['FaceIndex'] == 2:
++                    if fruser.Face2 and req.get('FaceIndex', '') == 2:
+                         img_2 = open(os.path.join(
+                                     settings.MEDIA_PAR_DIR,
+                                     fruser.Face2
+                                 ), 'rb')
+                         return HttpResponse(img_2.read(), content_type="image/jpg")
+-                    if fruser.Face3 and req['FaceIndex'] == 3:
++                    if fruser.Face3 and req.get('FaceIndex', '') == 3:
+                         img_3 = open(os.path.join(
+                                     settings.MEDIA_PAR_DIR,
+                                     fruser.Face3
+diff --git a/api/user.py b/api/user.py
+index b12e573..775c93b 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
+ from .utility import TCIT_API, TCIT_res_state
+ from datetime import datetime
+ from django.conf import settings
++from django.db.models import Q
+ import os
+ 
+ result_success = {'Result' : 'Success'}
+@@ -17,14 +18,26 @@ message_method_error = {'Message' : 'method error'}
+ @csrf_exempt
+ def add(request):
+     if request.method == 'POST':
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'User Add', request_IP = request_IP)
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFIDCard', 'State', 'Groups'}
+             if all(k in req for k in req_key):
+-                if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                if Devices.objects.get(IP = request_IP).State != 'Proposed':
++                    if req['RFIDCard'] != '':
++                        frusers = Frusers.objects.filter(RFIDCard = req['RFIDCard'])
++                        if frusers.exists():
++                            exist_FRUserIds = ','.join([i.FRUserId for i in frusers])
++                            logContent = '{message_head}RFIDCard present in FRUserIds : {exist_FRUserIds}'.format(message_head = message_head, exist_FRUserIds = exist_FRUserIds)
++                            return JsonResponse(dict(ChainMap(
++                                result_fail,
++                                fail_code999,
++                                {'Message' : logContent},
++                            )))
+                     try:
+                         Frusers.objects.get(FRUserId = req['FRUserId'])
+-                        logContent = "Frusers Fail to create: This Frusers already exists"
++                        logContent = '{message_head}Frusers fail to create cause by fruser already exists'.format(message_head = message_head)
+                         print(logContent)
+                         return JsonResponse({'Result' :logContent})
+                     except ObjectDoesNotExist:
+@@ -33,26 +46,30 @@ def add(request):
+                             FRUserId = req['FRUserId'],
+                             Name = req['Name'],
+                             Gender = req['Gender'],
+-                            Age = req['Age'] if not req['Age'] == "" else None,
++                            Age = req['Age'],
+                             RFIDCard = req['RFIDCard'],
+                             State = req['State']
+                         )
+                         for i in req['Groups']:
+-                            Frusergroupmember.objects.create(
+-                                FRUserOId = Frusers.objects.get(FRUserId = req['FRUserId']),
+-                                GroupOId = Frusergroups.objects.get(OId = i['OId'])
+-                            )
+-                        logContent = "Frusers Create Successfully"
++                            if i.get('OId', '') and i.get('Name', ''):
++                                Frusergroupmember.objects.create(
++                                    FRUserOId = Frusers.objects.get(FRUserId = req['FRUserId']),
++                                    GroupOId = Frusergroups.objects.get(OId = i['OId'])
++                                )
++                            else:
++                                logContent = '{message_head}Add group error cause by parameter not correct'.format(message_head = message_head)
++                                Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++                        logContent = '{message_head}Frusers create successfully'.format(message_head = message_head)
+                         return JsonResponse(result_success)
+                 else:
+-                    logContent = 'Need accept'
++                    logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                logContent = 'Request parameter error'
++                logContent = '{message_head}Request parameter error'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         except Exception as error:
+             print(str(error))
+-            logContent = str(error)
++            logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+         finally:
+             try:
+@@ -60,64 +77,70 @@ def add(request):
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+ @csrf_exempt
+ def update(request):
+     if request.method == 'POST':
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'User Update', request_IP = request_IP)
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFIDCard', 'State', 'Groups'}
+-            if all(k in req for k in req_key):
+-                if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
+-                    frusers = Frusers.objects.filter(RFIDCard = req['RFIDCard'])
+-                    if frusers.exists():
+-                        logContent = 'RFIDCard already exists'
+-                        return JsonResponse(dict(ChainMap(
+-                            result_fail,
+-                            fail_code999,
+-                            {'Message' : logContent},
+-                            {'FRUsers':[{
+-                                'FRUserId' : i.FRUserId
+-                            } for i in frusers]}
+-                        )))
++            if Devices.objects.get(IP = request_IP).State != 'Proposed':
++                if all(k in req for k in req_key):
++                    if req['RFIDCard'] != '':
++                        frusers = Frusers.objects.filter(RFIDCard = req['RFIDCard']).exclude(FRUserId = req['FRUserId'])
++                        if frusers.exists():
++                            exist_FRUserIds = ','.join([i.FRUserId for i in frusers])
++                            logContent = '{message_head}RFIDCard present in FRUserIds : {exist_FRUserIds}'.format(message_head = message_head, exist_FRUserIds = exist_FRUserIds)
++                            return JsonResponse(dict(ChainMap(
++                                result_fail,
++                                fail_code999,
++                                {'Message' : logContent},
++                            )))
+                     fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
+-                    Frusers.objects.filter(OId = fruser.OId).update(
+-                        Name = req['Name'],
+-                        Gender = req['Gender'],
+-                        Age = req['Age'] if not req['Age'] == "" else None,
+-                        RFIDCard = req['RFIDCard'],
+-                        State = req['State'],
+-                        UpdateDate = datetime.now()
+-                    )
++                    fruser.Name = req['Name']
++                    fruser.Gender = req['Gender']
++                    fruser.Age = req['Age']
++                    fruser.RFIDCard = req['RFIDCard']
++                    fruser.State = req['State']
++                    fruser.save()
+ 
+                     print('Groups update')
++                    delete_fruser = Frusergroupmember.objects.filter(FRUserOId = fruser)
+                     for i in req['Groups']:
+-                        if i['OId'] and i['Name']:
++                        if i.get('OId', '') and i.get('Name', ''):
+                             group = Frusergroups.objects.get(OId = i['OId'])
+-                            if not Frusergroupmember.objects.filter(FRUserOId = fruser).filter(GroupOId = group).exists():
+-                                    Frusergroupmember.objects.create(FRUserOId = fruser, GroupOId = group)
+-                    logContent = "FRUser Update Successfully"
++                            Frusergroupmember.objects.get_or_create(FRUserOId = fruser, GroupOId = group)
++                            delete_fruser = delete_fruser.exclude(GroupOId = group)
++                        else:
++                            logContent = '{message_head}Update group error cause by parameter not correct'.format(message_head = message_head)
++                            Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++                    delete_fruser.delete()
++                    logContent = '{message_head}FRUser update successfully'.format(message_head = message_head)
+                     return JsonResponse(result_success)
+                 else:
+-                    logContent = 'Need accept'
++                    logContent = '{message_head}Request parameter error'.format(message_head = message_head)
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                logContent = 'Request parameter error'
++                logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         except Exception as error:
+             print(str(error))
+-            logContent = str(error)
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++            logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         finally:
+             try:
+                 print("Writing system log...")
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+@@ -127,15 +150,11 @@ def delete_fruser(id):
+         # delete personid from TCIT
+         if fruser.PersonId:
+             res_personid_delete = TCIT_API('/face/person/delete/', data = {'person_id' : fruser.PersonId})
+-            if res_personid_delete['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++            if res_personid_delete.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
+                 fruser.PersonId = ''
+                 fruser.save()
+             else:
+-                return dict(ChainMap(
+-                    result_fail,
+-                    fail_code999,
+-                    {'Message' : TCIT_res_state[res_personid_delete['state']]}
+-                ))
++                return {'Message' : TCIT_res_state[res_personid_delete.get('state', '')]}
+         # delet img
+         if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1)):
+             os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face1))
+@@ -144,25 +163,28 @@ def delete_fruser(id):
+         if os.path.isfile(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3)):
+             os.remove(os.path.join(settings.MEDIA_PAR_DIR, fruser.Face3))
+         fruser.delete()
+-        return dict({'Message': 'success'})# The Message is for logContent
++        return {'Message' : 'success'}# The Message is for logContent
+     except Exception as error:
+         print(str(error))
+-        return dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)}))
++        return {'Message' : str(error)}
+ 
+ @csrf_exempt
+ def delete(request):
+     if request.method == 'POST':
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'User Delete', request_IP = request_IP)
+         try:
+             # from server
+-            if request.META['REMOTE_ADDR'] == '127.0.0.1':
++            if request_IP == '127.0.0.1':
+                 res_delete = delete_fruser(request.POST.get('FRUserId'))
+                 logContent = res_delete['Message']
+                 if logContent == 'success':
+                     return JsonResponse(result_success)
+                 else:
+-                    return JsonResponse(res_delete)
++                    logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = logContent)
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             # from device
+-            elif Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++            elif Devices.objects.get(IP = request_IP).State != 'Proposed':
+                 req = json.loads(request.body.decode('utf-8'))
+                 req_key = {'FRUserId'}
+                 if all(k in req for k in req_key) and all(req.values()):
+@@ -171,45 +193,49 @@ def delete(request):
+                     if logContent == 'success':
+                         return JsonResponse(result_success)
+                     else:
+-                        return JsonResponse(res_delete)
++                        logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = logContent)
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                 else:
+-                    logContent = 'Request parameter error'
++                    logContent = '{message_head}Request parameter error'.format(message_head = message_head)
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                logContent = 'Need accept'
++                logContent = '{message_head}Device is proposed'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         except Exception as error:
+             print(str(error))
+-            logContent = str(error) + 'Exception'
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++            logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         finally:
+             try:
+                 print("Writing system log..." + logContent)
+                 Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
+             except Exception as error:
+                 print(str(error))
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++                logContent = '{message_head}System Log create error cause by {error}'.format(message_head = message_head, error = str(error))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+ @csrf_exempt
+ def list(request):
+     if request.method == 'POST':
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'User List', request_IP = request_IP)
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'Field', 'Keyword', 'FlipPage'}
+             if all(k in req for k in req_key) and all(req.values()):
+-                if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                if Devices.objects.get(IP = request_IP).State != 'Proposed':
+ 
+                     #print('Field : ', req['Field'], 'Keyword : ',req['Keyword'])
+ 
+-                    FlipPage = ( int( req['FlipPage'] ) - 1 ) * 5
++                    FlipPage = (int(req['FlipPage']) - 1) * 5
+                     numbers = Frusers.objects.filter(**{req['Field'] + '__contains' : req['Keyword']}).count()
+ 
+                     return JsonResponse(dict(ChainMap(result_success, {
+                         'Numbers' : numbers,
+-                        'CurrentPage' : int ( req['FlipPage'] ),
+-                        'TotalPage' : int ( numbers / 5  ) + 1,
++                        'CurrentPage' : int(req['FlipPage']),
++                        'TotalPage' : int(numbers / 5) + 1,
+                         'Users' : [{
+                             'FRUserId' : i.FRUserId,
+                             'Name' : i.Name,
+@@ -223,15 +249,17 @@ def list(request):
+                                 ).values('OId', 'Name')
+                             ]
+                         } for i in Frusers.objects.filter(**{req['Field'] + '__contains' : req['Keyword']}) \
+-                        [ FlipPage : FlipPage + 5 ] ] # ex:[ 0 : 5 ] => 5 frusers / 1 page
++                        [FlipPage : FlipPage + 5]] # ex:[ 0 : 5 ] => 5 frusers / 1 page
+                     })))
+                 else:
+-                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
++                    logContent = '{message_head}Device is proposed'.format(message_head = message_head)
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                logContent = 'Request parameter error'
++                logContent = '{message_head}Request parameter error'.format(message_head = message_head)
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         except Exception as error:
+             print(str(error))
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++            logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+-- 
+1.9.1
+

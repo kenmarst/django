@@ -1,0 +1,35 @@
+From 43c32dafff7ecdc06f3b5527d115721b83d337f9 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 31 May 2016 16:55:11 +0800
+Subject: [PATCH 117/443] fixed error - "fixed login issue "CSRF token missing
+ or incorrect.""
+
+---
+ login/views.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/login/views.py b/login/views.py
+index f4a376f..710c39e 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -11,7 +11,7 @@ from .apps import br06_token_generator, encrypt, decrypt
+ from django.core.mail import send_mail
+ from django.views.generic import *
+ from datetime import datetime
+-from django.views.decorators.csrf import csrf_br
++from django.views.decorators.csrf import csrf_protect
+ import time, json
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -75,7 +75,7 @@ def setSessionPermission(request):
+         print('session permission error', e)
+ 
+ 
+-@csrf_br
++@csrf_protect
+ def login(request):
+     if request.method == "POST":
+         check_result = json.loads(check_user(request))
+-- 
+1.9.1
+

@@ -1,0 +1,26 @@
+From 637f717ca41f81ea921c1b8c78b0665711b4107b Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 3 Nov 2016 15:32:51 +0800
+Subject: [PATCH 346/443] Disable the user group function of web.
+
+---
+ templates/menu.html | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/templates/menu.html b/templates/menu.html
+index ebb5fac..38995bc 100755
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -34,7 +34,9 @@
+             <ul class="children collapse" id="sub-item-1">
+                 <li><a class="" href="/dashboard"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Dashboard" %} </a></li>
+                 <li><a class="" href="/user_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User List" %} </a></li>
++                <!--
+                 <li><a class="" href="/user_group_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User Group List" %} </a></li>
++                -->
+                 <li><a class="" href="/role_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Role and Permission" %} </a></li>
+                 <li><a class="" href="/system_settings"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg> {% trans "Settings" %} </a></li>
+             </ul>
+-- 
+1.9.1
+

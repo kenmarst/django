@@ -1,0 +1,188 @@
+From e2a9cd67582c5329ae081202e327cd001a44e2e2 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 6 May 2016 17:27:20 +0800
+Subject: [PATCH 023/443] Change TCIT_res_str function to dict
+
+Change function to dict
+Change name TCIT_res_str to TCIT_res_state
+Change state of value to TCIT_res_state
+---
+ api/face.py        | 20 ++++++++++----------
+ api/recognition.py | 20 ++++++++++----------
+ api/utility.py     | 11 ++++++++---
+ 3 files changed, 28 insertions(+), 23 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 08571a2..9016a3e 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
+ from .models import Devices, Frusers, Systemlogs, Config
+ from django.views.decorators.csrf import csrf_exempt
+ from django.conf import settings
+-from .utility import sendImg, getImg, TCIT_API, TCIT_res_str
++from .utility import sendImg, getImg, TCIT_API, TCIT_res_state
+ from datetime import datetime
+ 
+ result_success = {'Result' : 'Success'}
+@@ -38,8 +38,8 @@ def add(request):
+             res_upload = sendImg(request)
+             image_id = res_upload['img_id']
+             print('image_id : ', image_id)
+-            if not res_upload['state'] == 1000:
+-                logContent = TCIT_res_str(res_upload['state'])
++            if not res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                logContent = TCIT_res_state[res_upload['state']]
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #2. Through TCIT to recognize face, then get Face Id
+@@ -48,21 +48,21 @@ def add(request):
+                 logContent = 'face detect error'
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                if res_face_detect['state'] == 1000:
++                if res_face_detect['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     face_id = res_face_detect['faces'][0]['face_id']
+                     print('face_id : ', face_id)
+                 else:
+-                    logContent = TCIT_res_str(res_face_detect['state'])
++                    logContent = TCIT_res_state[res_face_detect['state']]
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             #3. Call TCIT Add Face to Person
+             if not fruser.PersonId:
+                 res_personid = TCIT_API('/face/person/create/', data = {'face_id': face_id})
+-                if res_personid['state'] == 1000:
++                if res_personid['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     print('person_id', res_personid['person_id'])
+                     personId = res_personid['person_id']
+                 else:
+-                    logContent = "/faec/person/create/" + TCIT_res_str(res_personid['state'])
++                    logContent = "/faec/person/create/" + TCIT_res_state[res_personid['state']]
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+                 personId = fruser.PersonId
+@@ -70,11 +70,11 @@ def add(request):
+                     '/face/person/update/add/',
+                     data = {'person_id' : personId, 'face_id': face_id}
+             )
+-            if not res_face_personadd['state'] == 1000:
++            if not res_face_personadd['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                 Frusers.objects.filter(OId = fruser.OId).update(
+                         PersonId = personId,
+                 )
+-                logContent = "/face/person/update/add/" + TCIT_res_str(res_face_personadd['state'])
++                logContent = "/face/person/update/add/" + TCIT_res_state[res_face_personadd['state']]
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+ 
+             print("res_face_personadd",res_face_personadd)
+@@ -145,7 +145,7 @@ def delete(request):
+                             }
+                         ).text
+                     )
+-                    if res['state'] == 1000:
++                    if res['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         logContent = 'Face Delete Successfully'
+                         return JsonResponse({'Message' :logContent})
+                     else:
+diff --git a/api/recognition.py b/api/recognition.py
+index c9b77d1..e5f71bf 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -4,7 +4,7 @@ import json, requests
+ from collections import ChainMap
+ from django.http import JsonResponse
+ from django.views.decorators.csrf import csrf_exempt
+-from .utility import TCIT_API, sendImg, TCIT_res_str
++from .utility import TCIT_API, sendImg, TCIT_res_state
+ from .models import Devices, Frusers, Systemlogs, Fruserlogs, Frusergroupmember, Frusergroupdevices
+ from django.conf import settings
+ 
+@@ -26,17 +26,17 @@ def face_verify(request):
+                     # get img id
+                     res_upload = sendImg(request)
+                     print(res_upload)#
+-                    if res_upload['state'] == 1000:
++                    if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         img_id = res_upload['img_id']
+                         # get face id
+                         res_face_detect = TCIT_API("/face/detection/detect/", data = {'img_id' : img_id})
+-                        if res_face_detect['state'] == 1000:
++                        if res_face_detect['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                             face_id = res_face_detect['faces'][0]['face_id']
+                             print('face_id', face_id)#
+                             # face_id and person_id verify
+                             res_face_verify = TCIT_API("/face/person/verify", data = {'person_id' : fruser.PersonId, 'face_id': face_id})
+                             print(res_face_verify)#
+-                            if res_face_verify['state'] == 1000:
++                            if res_face_verify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                                 print(res_face_verify['confidence'])#
+                                 if res_face_verify['confidence'] > settings.CONFIDENCE:#
+                                     for i in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+@@ -49,11 +49,11 @@ def face_verify(request):
+                                 else:
+                                     raise Exception('Confidence level error')
+                             else:
+-                                raise Exception(TCIT_res_str(res_face_verify['state']))
++                                raise Exception(TCIT_res_state[res_face_verify['state']])
+                         else:
+-                            raise Exception(TCIT_res_str(res_face_detect['state']))
++                            raise Exception(TCIT_res_state[res_face_detect['state']])
+                     else:
+-                        raise Exception(TCIT_res_str(res_upload['state']))
++                        raise Exception(TCIT_res_state[res_upload['state']])
+                 else:
+                     raise Exception('No PersonId')
+             else:
+@@ -83,7 +83,7 @@ def face_identify(request):
+                     )}
+                 )
+ 
+-                if res_upload['state'] == 1000:
++                if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     res_face_detect = TCIT_API(
+                         '/face/detection/detect',
+                         data = {'img_id' : res_upload['img_id']}
+@@ -98,7 +98,7 @@ def face_identify(request):
+                             data = {'group_id' : group, 'face_id' : face_id}
+                         )
+ 
+-                        if res_group_identify['state'] == 1000:
++                        if res_group_identify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                             for person in res_group_identify['persons']:
+                                 if person['similarity'] >= similarity:
+                                     similarity = person['similarity']
+@@ -144,7 +144,7 @@ def face_check(request):
+                         request.FILES['image'].content_type
+                     )}
+                 )
+-                if res_upload['state'] == 1000:
++                if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     res_face_detect = TCIT_API(
+                         '/face/detection/detect',
+                         data = {'img_id' : res_upload['img_id']}
+diff --git a/api/utility.py b/api/utility.py
+index 2482a90..93b336e 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -35,9 +35,14 @@ def TCIT_API(url_query,data):
+     return json_obj
+ '''
+ 
+-def TCIT_res_str(code):
+-    TCIT_res_code = {1000: "STATE_SUCCESSFUL", 3000: "STATE_FAIL", 3001: "STATE_REQUEST_METHOD_ERROR",3002:"STATE_PARAMETER_ERROR",3003:"STATE_PROCESS_ERROR"}
+-    return TCIT_res_code[code]
++TCIT_res_state = {
++    1000: "STATE_SUCCESSFUL",
++    3000: "STATE_FAIL",
++    3001: "STATE_REQUEST_METHOD_ERROR",
++    3002:"STATE_PARAMETER_ERROR",
++    3003:"STATE_PROCESS_ERROR",
++    "STATE_SUCCESSFUL" : 1000
++}
+ 
+ def sendImg(request):
+     try:
+-- 
+1.9.1
+

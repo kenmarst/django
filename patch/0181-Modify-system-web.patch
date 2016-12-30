@@ -1,0 +1,41 @@
+From 7e2c28211699e4229181e754aff01d7ca88fefba Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 14 Jul 2016 15:13:15 +0800
+Subject: [PATCH 181/443] Modify system web
+
+Add word "Instantly backup after clicking save".
+Modify BackupMethod alert.
+---
+ templates/system_settings.html | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 9635901..1232e8d 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -34,7 +34,8 @@
+                             <form role="form">
+                                 <div class = "form-group form-inline" >
+                                     <div class="radio">
+-                                        <label><input type="radio" value="Manually" id="BackupMethod_Manually" name="BackupMethod">{% trans "Manually" %}</label>
++                                        <label><input type="radio" value="Manually" id="BackupMethod_Manually" name="BackupMethod">
++                                            {% trans "Manually" %} <font size="-1" color="gray">({% trans "Instantly backup after clicking save" %})</font></label>
+                                     </div>
+                                     <div></div>
+                                     <div class="radio">
+@@ -315,7 +316,11 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Backup setting successfully");
++                        if (BackupMethod == "Manually") {
++                            alert("Backup successfully");
++                        } else {
++                            alert("Backup setting successfully");
++                        }
+                         location.href = '/system_settings/';
+                     } else {
+                         alert("Fail to setting Backup");
+-- 
+1.9.1
+

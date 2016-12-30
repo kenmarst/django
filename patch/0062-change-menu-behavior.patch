@@ -1,0 +1,196 @@
+From 24db1ed2ed33048b21d53db284a4faad0c4f8d5e Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Mon, 23 May 2016 10:39:27 +0800
+Subject: [PATCH 062/443] change menu behavior
+
+---
+ templates/logsetting.html |   5 +-
+ templates/menu.html       | 144 ++++++++++++++++++++++++++--------------------
+ 2 files changed, 84 insertions(+), 65 deletions(-)
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 5ab555f..83c24f5 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -131,10 +131,7 @@
+ 		</div><!--/.row-->	
+ 	</div><!--/.main-->
+ 
+-	{% load static %}
+-	<script src="{% static "md5.js" %}"></script>
+-    <script src="{% static "jquery-1.11.1.min.js" %}"></script>
+-	<script>
++    <script>
+ 	$(function () {
+       $("#add").click(function () {
+ 	    var $option = $("#select1 option:selected");  
+diff --git a/templates/menu.html b/templates/menu.html
+index d57b92d..965aa6c 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -33,79 +33,101 @@
+ 	<form role="search">
+ 		<div class="form-group">
+ 			<!-- <input type="text" class="form-control" placeholder="Search"> -->
+-		</div>
++	        </div>
+ 	</form>
+ 	<ul class="nav menu">
+ 		<li class="parent ">
+-				<a href="#">
+-					<span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System
+-				</a>
+-				{% if request.get_full_path = "/user_list" %}
+-				  <ul class="children collapse in" id="sub-item-1">
+-				{% else %}
+-                  <ul class="children collapse" id="sub-item-1">
+-			    {%endif %}
+-					<li>
+-						<a class="" href="/dashboard">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Dashboard
+-						</a>
+-					</li>
+-					<li>
+-						<a class="" href="/user_list">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> User List
+-						</a>
+-					</li>
+-					<li>
+-						<a class="" href="/user_group_list">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Group List
+-						</a>
+-					</li>
+-					<li>
+-						<a class="" href="/role_list">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Role & Permission
+-						</a>
+-					</li>
+-                    <li>
+-						<a class="" href="#">
+-							<svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg>  Setting
+-						</a>
+-					</li>
+-				</ul>
+-			</li>
++			<a href="">
++			    <span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System
++			</a>
++            <ul class="children collapse" id="sub-item-1">
++                <li>
++			    	<a class="" href="/dashboard">
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Dashboard
++					</a>
++				</li>
++			    <li>
++				    <a class="" href="/user_list">
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> User List
++				    </a>
++			    </li>
++			        <li>
++				    <a class="" href="/user_group_list">
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Group List
++				    </a>
++			    </li>
++			    <li>
++				    <a class="" href="/role_list">
++				    <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Role & Permission
++				    </a>
++			    </li>
++                <li>
++		            <a class="" href="#">
++		            <svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg>  Setting
++		            </a>
++		        </li>
++             </ul>
++		</li>
+         <li name="device_list"><a href="/device_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> Device List</a></li>
+         <li name="fruser_list"><a href="/fruser_list"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser List</a></li>
+         <li name="fruser_group"><a href="/fruser_group"><svg class="glyph stroked app window with content"><use xlink:href="#stroked-app-window-with-content"/></svg> FRUser Group</a></li>
+-         <li class="parent ">
+-				<a href="#">
+-					<span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log
++        <li class="parent ">
++		    <a href="">
++			   <span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log
++		    </a>
++		    <ul class="children collapse" id="sub-item-3">
++			<li>
++				<a class="" href="/fruserlog_list">
++				     <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> FRUser Log List
+ 				</a>
+-				{% if request.get_full_path = "/fruserlog_list" or request.get_full_path = "/systemlog_list" or request.get_full_path = "/logsetting"%}
+-				  <ul class="children collapse in" id="sub-item-3">
+-				{% else %}
+-				  <ul class="children collapse" id="sub-item-3">
+-				{% endif %}
+-					<li>
+-						<a class="" href="/fruserlog_list">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> FRUser Log List
+-						</a>
+-					</li>
+-                    <li>
+-						<a class="" href="/systemlog_list">
+-							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> System Log List
+-						</a>
+-					</li>
+-                    <li>
+-						<a class="" href="/logsetting">
+-							<svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg> Log Setting
+-						</a>
+-					</li>
+-				</ul>
+ 			</li>
++            <li>
++				<a class="" href="/systemlog_list">
++				      <svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> System Log List
++     			</a>
++			 </li>
++             <li>
++				<a class="" href="/logsetting">
++				      <svg class="glyph stroked gear"><use xlink:href="#stroked-gear"/></svg> Log Setting
++				</a>
++			 </li>
++			 </ul>
++		</li>
+ 		<li role="presentation" class="divider"></li>
+ 		<li><a href="/logout"><svg class="glyph stroked cancel"><use xlink:href="#stroked-cancel"/></svg> Log Out</a></li>
+ 	</ul>
+ 	<script>
+-		$('li[name='+'{{active}}'+']').addClass("active")
++                 $(document).ready(function() {
++                   var systemlink = [ "/user_list", "/user_add/", "/user_group_list", "/role_list", "/user_group_add/","/role_add/","/dashboard/"];
++                   var loglink = ["/fruserlog_list","/systemlog_list","/logsetting"];
++
++                   jQuery.each(systemlink, function() {
++                       if($(location).attr('pathname') ==this){
++                           $('#sub-item-1').collapse('show');
++                       }
++	           });
++               
++                   jQuery.each(loglink, function() {
++                       if($(location).attr('pathname') ==this){
++                            $('#sub-item-3').collapse('show');
++                       }
++                  });
++                
++                   $('#sub-item-1').collapse({'toggle': false});
++                   $('#sub-item-3').collapse({'toggle': false});
++                   
++                })
++
++	        $("#sub-item-1").on("shown.bs.collapse", function() {
++			$("#sub-item-3").collapse('hide');
++
++	       })
++
++	        $("#sub-item-3").on("shown.bs.collapse", function() {
++                        $("#sub-item-1").collapse('hide');
++                   
++	        })
++                        
+ 	</script>
+ 	<a class="navbar-fixed-bottom" href="http://MediaLoot.com" style=" color:white"> Theme from MediaLoot</a>
+ </div><!--/.sidebar-->
+-- 
+1.9.1
+

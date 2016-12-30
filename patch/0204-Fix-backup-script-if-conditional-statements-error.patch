@@ -1,0 +1,25 @@
+From 372ca8b5485dffcd29f9dc20243e5871c6489fda Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Tue, 26 Jul 2016 13:29:17 +0800
+Subject: [PATCH 204/443] Fix backup script, "if" conditional statements error.
+
+---
+ systembackup/br06backup.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 2343f8f..f5a251a 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -89,7 +89,7 @@ echo "DAYMATCH:$DAYMATCH"
+ echo "TIMEMATCH:$TIMEMATCH"
+ echo "ACTION:$ACTION"
+ 
+-if [ $ACTION = 'ok' || $ACTION = 'true' ]; then
++if [ $ACTION = 'ok' ] || [ $ACTION = 'true' ]; then
+ 
+   [ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
+ 
+-- 
+1.9.1
+

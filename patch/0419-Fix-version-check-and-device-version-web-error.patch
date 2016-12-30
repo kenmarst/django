@@ -1,0 +1,118 @@
+From 74b4faf1e8689698b7d0815de65a2c4135d158f0 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 14 Dec 2016 17:55:44 +0800
+Subject: [PATCH 419/443] Fix version check and device version web error.
+
+Bug fix
+  -  device version check error when first run.
+  -  device version information error of web.
+  -  cannot read the json value in downloads.
+---
+ api/cron.py                | 16 ++++++++--------
+ api/models.py              |  1 +
+ downloads/views.py         |  4 ++--
+ templates/device_edit.html |  4 ++--
+ 4 files changed, 13 insertions(+), 12 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 58b7c4c..3d4834e 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -91,8 +91,8 @@ def FTP_download_file(localpath, filepath, filename, ftphost, ftpport, ftpuser,
+         bufsize = 1024
+         ftp.cwd(filepath)
+         localfile = os.path.join(localpath, filename)
+-        file_handler = open(localfile, 'wb').write # local
+-        ftp.retrbinary('RETR %s' % os.path.basename(filename),file_handler,bufsize)
++        with open(localfile, 'wb') as file_handler: # local
++            ftp.retrbinary('RETR %s' % os.path.basename(filename), file_handler.write, bufsize)
+ 
+         ftp.quit()
+     except Exception as error:
+@@ -114,24 +114,24 @@ def chk_new_version():
+         new_version_date = data['Server']['Version'].split('.')[-1]
+         version_date = settings.VERSION.split('.')[-1]
+ 
+-        print('update check: [Server VERSION]: [new]:' + new_version_date + ' [now]:' + version_date)
++        print('update check: [Server VERSION]: [new]: {0} [now]: {1}'.format(new_version_date, version_date))
+ 
+         # check version
+         if new_version_date > version_date:
+             print('update check: Server has new version to update.')
+             Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': new_version_date})
+         else:
+-            print('update check: There hadn\'t new server version to update.')
++            print('update check: There is no new server version to update.')
+             Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': settings.VERSION})
+ 
+         """ Device update check"""
+         # check version
+         device_conf = Config.objects.get(Name = 'NewDeviceVersion')
+-        DeviceVersion_New = ''.join( data['Device']['Version'][1:].split('.') ) # get from update file
+-        DeviceVersion = ''.join( device_conf.Value[1:].split('.') ) # from database
+-        print('update check: [Device VERSION]: [new]: ' + DeviceVersion_New + ' [now]: ' + DeviceVersion)
++        DeviceVersion_New = ''.join(data['Device']['Version'][1:].split('.')) # get from update file
++        DeviceVersion = ''.join(device_conf.Value[1:].split('.')) or 0 # from database
++        print('update check: [Device VERSION]: [new]: {0} [now]: {1}'.format(DeviceVersion_New, DeviceVersion))
+         if not int(DeviceVersion_New) > int(DeviceVersion):
+-            print('update check: There hadn\'t new device version to update.')
++            print('update check: There is no new device version to update.')
+             return
+ 
+         # download file
+diff --git a/api/models.py b/api/models.py
+index e7d5d4d..aa5620b 100755
+--- a/api/models.py
++++ b/api/models.py
+@@ -258,6 +258,7 @@ class Devices(models.Model):
+             State = self.State,
+             MAC = self.MAC,
+             IP = self.IP,
++            Version = self.Version,
+             Type = self.Type,
+             Model = self.Model,
+             WelcomeR0Action = self.WelcomeR0Action,
+diff --git a/downloads/views.py b/downloads/views.py
+index 58ae303..f9c39a1 100755
+--- a/downloads/views.py
++++ b/downloads/views.py
+@@ -10,12 +10,12 @@ def device_update(request):
+         update_json = os.path.join(settings.UPDATE_DIR, settings.FTP_FILE_NAME)
+         with open(update_json) as data_json:
+             data = json.load(data_json)
+-        device_update_file = os.path.join(settings.UPDATE_DIR, data['Device']['file'])
++        device_update_file = os.path.join(settings.UPDATE_DIR, data['Device']['File'])
+         print(device_update_file)
+ 
+         upgrade_file = open(device_update_file, 'rb')
+         response = HttpResponse(upgrade_file, content_type = 'application/octet-stream')
+-        response['Content-Disposition'] = 'attachment; filename=%s' % (data['Device']['file'])
++        response['Content-Disposition'] = 'attachment; filename=%s' % (data['Device']['File'])
+         response['Content-Length'] = os.path.getsize(device_update_file)
+         return response
+ 
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index b223d68..34eced7 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -196,7 +196,7 @@
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">{% trans "Software Version" %} :</label>
+                                         <label class="col-md-6 control-label">
+-                                            <p class="text-left">v1.0.0.9
++                                            <p class="text-left">{{obj.Version}}
+                                                 <a onclick="update_device()">
+                                                     (<em>{% trans "There is a newer version can be upgraded." %}</em>)
+                                                     {% trans "Upgrade here" %}
+@@ -266,7 +266,7 @@
+             var ret = confirm('{% trans "Confirm to upgrade this device?" %}');
+ 
+             if(ret) {
+-                $.ajax({ 
++                $.ajax({
+                     type: 'post',
+                     traditional: true,
+                     url: '/update_device/',
+-- 
+1.9.1
+

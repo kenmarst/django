@@ -1,0 +1,62 @@
+From d6782c5cf761c7c116ec94147c0b63ba60136084 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 9 Sep 2016 13:28:01 +0800
+Subject: [PATCH 270/443] Add the group created maximum of fruser import
+
+Add the group created maximum of fruser import and modify function.
+---
+ frusers/views.py | 23 ++++++++++++++++-------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 84ee7bb..6c17752 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -108,10 +108,21 @@ def import_fruser(request):
+             import_success = 0
+             import_fail = 0
+             for row in csv.DictReader(csvfile):
++                fail = False
+                 fruser, result = Frusers.objects.get_or_create(FRUserId = row['FRUserId'])
+                 for group in row['Group'].split(', '):
+                     if group != 'Default':
+-                        group = Frusergroups.objects.get_or_create(Name = group)[0]
++                        try:
++                            group = Frusergroups.objects.get(Name = group)
++                        except:
++                            if Frusergroups.objects.count() >= 20:
++                                Systemlogs.objects.create(
++                                    Category = 'System',
++                                    LogContent = 'Import frusers[FRUserId : {0}] : Add FRUser to group {1} fail cause by: The number of the group reached the maximum'.format(row['FRUserId'], group)
++                                )
++                                fail = True
++                                continue
++                            group = Frusergroups.objects.create(Name = group)
+                         Frusergroupmember.objects.get_or_create(GroupOId = group, FRUserOId = fruser)
+                 if result:
+                     fruser.Name = row['Name']
+@@ -141,17 +152,15 @@ def import_fruser(request):
+                                             Category = 'System',
+                                             LogContent = 'Import frusers[FRUserId : {0}] : Add face "{1}" fail, response message: {2}'.format(row['FRUserId'], Face, res['Message'])
+                                         )
+-                                        import_fail += 1
+-                                        break
++                                        fail = True
+                             else:
+                                 Systemlogs.objects.create(
+                                     Category = 'System',
+                                     LogContent = 'Import frusers[FRUserId : {0}] : Add face "{1}" fail cause by: photo not exists'.format(row['FRUserId'], Face)
+                                 )
+-                                import_fail += 1
+-                                break
+-                    else:
+-                        import_success += 1
++                                fail = True
++                if fail:
++                    import_fail += 1
+                 else:
+                     import_success += 1
+         raise Exception(0)
+-- 
+1.9.1
+

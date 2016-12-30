@@ -1,0 +1,538 @@
+From 3f90c57cbbb7965137ca47f264b2af69f45b6abf Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 20 Apr 2016 19:22:04 +0800
+Subject: [PATCH 005/443] Change case of models
+
+Use hump to change all case of model.
+---
+ api/connection.py  |  44 +++++------
+ api/group.py       |   4 +-
+ api/models.py      | 216 ++++++++++++++++++++++++++---------------------------
+ api/recognition.py |  34 ++++-----
+ 4 files changed, 149 insertions(+), 149 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 49437b2..4158731 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -18,15 +18,15 @@ def check(request):
+             if all(k in req for k in req_key) and all(req.values()):
+                 try:
+                     from api.models import Devices
+-                    devices = Devices.objects.get(ip = client_ip)
++                    devices = Devices.objects.get(IP = client_ip)
+ 
+-                    if devices.state == 'Proposed':
++                    if devices.State == 'Proposed':
+                         res = dict({'Result':0})
+-                    elif devices.state == 'Approved':
++                    elif devices.State == 'Approved':
+                         res = dict({'Result':1})
+-                    elif devices.state == 'Setting':
++                    elif devices.State == 'Setting':
+                         res = dict({'Result':2})
+-                    elif devices.state == 'Getting':
++                    elif devices.State == 'Getting':
+                         res = dict({'Result':3})
+                     else:
+                         res = dict(ChainMap(result_fail, fail_code999, fail_message))
+@@ -50,17 +50,17 @@ def get(request):
+             if all(k in req for k in req_key) and all(req.values()):
+                 try:
+                     from api.models import Devices
+-                    devices = Devices.objects.get(ip = client_ip)
++                    devices = Devices.objects.get(IP = client_ip)
+ 
+                     res = dict(ChainMap(result_success, {
+-                        'Welcome' : devices.welcome,
+-                        'AccessDenied' : devices.accessdenied,
+-                        'ScreenSaver' : devices.screensaver,
+-                        'NTP' : devices.ntp,
+-                        'Timezone' : devices.timezone,
+-                        'Audio' : devices.audio,
+-                        'BioScore' : devices.bioscore,
+-                        'Language' : devices.language
++                        'Welcome' : devices.Welcome,
++                        'AccessDenied' : devices.AccessDenied,
++                        'ScreenSaver' : devices.ScreenSaver,
++                        'NTP' : devices.NTP,
++                        'Timezone' : devices.Timezone,
++                        'Audio' : devices.Audio,
++                        'BioScore' : devices.Bioscore,
++                        'Language' : devices.Language
+                     }))
+                 except:
+                     res = dict(ChainMap(result_fail, fail_code999, fail_message))
+@@ -82,14 +82,14 @@ def set(request):
+             if all(k in req for k in req_key) and all(req.values()):
+                 try:
+                     from api.models import Devices
+-                    Devices.objects.filter(ip = client_ip).update(welcome = req['Welcome'])
+-                    Devices.objects.filter(ip = client_ip).update(accessdenied = req['AccessDenied'])
+-                    Devices.objects.filter(ip = client_ip).update(screensaver = req['ScreenSaver'])
+-                    Devices.objects.filter(ip = client_ip).update(ntp = req['NTP'])
+-                    Devices.objects.filter(ip = client_ip).update(timezone = req['Timezone'])
+-                    Devices.objects.filter(ip = client_ip).update(audio = req['Audio'])
+-                    Devices.objects.filter(ip = client_ip).update(bioscore = req['BioScore'])
+-                    Devices.objects.filter(ip = client_ip).update(language = req['Language'])
++                    Devices.objects.filter(IP = client_ip).update(Welcome = req['Welcome'])
++                    Devices.objects.filter(IP = client_ip).update(AccessDenied = req['AccessDenied'])
++                    Devices.objects.filter(IP = client_ip).update(ScreenSaver = req['ScreenSaver'])
++                    Devices.objects.filter(IP = client_ip).update(NTP = req['NTP'])
++                    Devices.objects.filter(IP = client_ip).update(Timezone = req['Timezone'])
++                    Devices.objects.filter(IP = client_ip).update(Audio = req['Audio'])
++                    Devices.objects.filter(IP = client_ip).update(BioScore = req['BioScore'])
++                    Devices.objects.filter(IP = client_ip).update(Language = req['Language'])
+ 
+                     res = dict(result_success)
+                 except:
+diff --git a/api/group.py b/api/group.py
+index 28da879..982510c 100644
+--- a/api/group.py
++++ b/api/group.py
+@@ -14,12 +14,12 @@ def list(request):
+     frusergroups = []
+     if request.method == 'POST':
+         try:
+-            ip_devices = Devices.objects.get(ip = request.META['REMOTE_ADDR'])
++            ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
+             if ip_devices.State != 'Proposed':
+                 groups = Frusergroups.objects.all()
+                 if groups:
+                     for i in groups:
+-                        frusergroups.append({'Oid':i.Oid, 'Name':i.Name})
++                        frusergroups.append({'Oid':i.OId, 'Name':i.Name})
+                     return JsonResponse(dict(ChainMap(result_success, {
+                         'Number':len(groups),
+                         'Groups':frusergroups
+diff --git a/api/models.py b/api/models.py
+index 0e9c3b9..083496b 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -21,17 +21,17 @@ class Config(models.Model):
+             ('PicCreateSave', 'PicCreateSave'),
+             ('PicFaceSave', 'PicFaceSave'),
+     )
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    name = models.CharField(db_column = 'Name', choices = config_name, unique = True, max_length = 32)
+-    value = models.CharField(db_column = 'Value', max_length = 512)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    Name = models.CharField(db_column = 'Name', choices = config_name, unique = True, max_length = 32)
++    Value = models.CharField(db_column = 'Value', max_length = 512)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'config'
+ 
+     def __str__(self):
+-        return '%s (%s)' % (self.name, self.oid)
++        return '%s (%s)' % (self.Name, self.OId)
+ 
+ 
+ class Role(models.Model):
+@@ -39,18 +39,18 @@ class Role(models.Model):
+             ('System', 'System'),
+             ('User', 'User'),
+     )
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+-    sort = models.IntegerField(db_column = 'Sort')
+-    category = models.CharField(db_column = 'Category', choices = role_category, default = 'User', max_length = 68)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
++    Sort = models.IntegerField(db_column = 'Sort')
++    Category = models.CharField(db_column = 'Category', choices = role_category, default = 'User', max_length = 68)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'role'
+ 
+     def __str__(self):
+-        return '%s (%s)' % (self.name, self.oid)
++        return '%s (%s)' % (self.Name, self.OId)
+ 
+ 
+ class Acl(models.Model):
+@@ -58,18 +58,18 @@ class Acl(models.Model):
+             ('Enable', 'Enable'),
+             ('Disable', 'Disable'),
+     )
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    functionname = models.CharField(db_column = 'FunctionName', max_length = 32)
+-    roleoid = models.ForeignKey('Role', on_delete = models.CASCADE, db_column = 'RoleOId', max_length = 36)
+-    acl = models.CharField(db_column = 'ACL', choices = acl_acl, default = 'Enable', max_length = 8)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    FunctionName = models.CharField(db_column = 'FunctionName', max_length = 32)
++    RoleOId = models.ForeignKey('Role', on_delete = models.CASCADE, db_column = 'RoleOId', max_length = 36)
++    ACL = models.CharField(db_column = 'ACL', choices = acl_acl, default = 'Enable', max_length = 8)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'acl'
+ 
+     def __str__(self):
+-        return '%s (%s)' % (self.functionname, self.oid)
++        return '%s (%s)' % (self.FunctionName, self.OId)
+ 
+ 
+ class Devices(models.Model):
+@@ -137,85 +137,85 @@ class Devices(models.Model):
+             ('zh-cn', 'zh-cn'),
+             ('zh-tw', 'zh-tw'),
+     )
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+-    state = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
+-    mac = models.CharField(db_column = 'MAC', max_length = 32, blank = True, null = True)
+-    ip = models.GenericIPAddressField(db_column = 'IP', max_length = 32, blank = True, null = True)
+-    welcome = models.CharField(db_column = 'Welcome', choices = devices_welcome, max_length = 8, blank = True, null = True)
+-    accessdenied = models.CharField(db_column = 'AccessDenied', choices = devices_accessdenied, max_length = 8, blank = True, null = True)
+-    screensaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, max_length = 8, blank = True, null = True)
+-    ntp = models.CharField(db_column = 'NTP', max_length = 256, blank = True, null = True)
+-    timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, max_length = 8, blank = True, null = True)
+-    audio = models.CharField(db_column = 'Audio', choices = devices_audio, max_length = 8, blank = True, null = True)
+-    bioscore = models.CharField(db_column = 'BioScore', choices = devices_bioscore, max_length = 8, blank = True, null = True)
+-    language = models.CharField(db_column = 'Language', choices = devices_language, max_length = 8, blank = True, null = True)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
++    State = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
++    MAC = models.CharField(db_column = 'MAC', max_length = 32, blank = True, null = True)
++    IP = models.GenericIPAddressField(db_column = 'IP', max_length = 32, blank = True, null = True)
++    Welcome = models.CharField(db_column = 'Welcome', choices = devices_welcome, max_length = 8, blank = True, null = True)
++    AccessDenied = models.CharField(db_column = 'AccessDenied', choices = devices_accessdenied, max_length = 8, blank = True, null = True)
++    ScreenSaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, max_length = 8, blank = True, null = True)
++    NTP = models.CharField(db_column = 'NTP', max_length = 256, blank = True, null = True)
++    Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, max_length = 8, blank = True, null = True)
++    Audio = models.CharField(db_column = 'Audio', choices = devices_audio, max_length = 8, blank = True, null = True)
++    BioScore = models.CharField(db_column = 'BioScore', choices = devices_bioscore, max_length = 8, blank = True, null = True)
++    Language = models.CharField(db_column = 'Language', choices = devices_language, max_length = 8, blank = True, null = True)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'devices'
+ 
+     def __str__(self):
+-        return '%s (%s)' % (self.name, self.oid)
++        return '%s (%s)' % (self.Name, self.OId)
+ 
+ 
+ class Users(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    account = models.CharField(db_column = 'Account', unique = True, max_length = 255)
+-    password = models.CharField(db_column = 'Password', max_length = 64)
+-    name = models.CharField(db_column = 'Name', max_length = 32, blank = True, null = True)
+-    email = models.EmailField(db_column = 'Email', max_length = 256, blank = True, null = True)
+-    roleoid = models.ForeignKey(Role, on_delete = models.CASCADE, db_column = 'RoleOId', max_length = 36)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    Account = models.CharField(db_column = 'Account', unique = True, max_length = 255)
++    Password = models.CharField(db_column = 'Password', max_length = 64)
++    Name = models.CharField(db_column = 'Name', max_length = 32, blank = True, null = True)
++    Email = models.EmailField(db_column = 'Email', max_length = 256, blank = True, null = True)
++    RoleOId = models.ForeignKey(Role, on_delete = models.CASCADE, db_column = 'RoleOId', max_length = 36)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'users'
+ 
+     def __str__(self):
+-        return '%s (%s)' % (self.account, self.oid)
++        return '%s (%s)' % (self.Account, self.OId)
+ 
+ 
+ class Usergroups(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'usergroups'
+ 
+     def __str__(self):
+-        return '%s (%s)' % (self.name, self.oid)
++        return '%s (%s)' % (self.Name, self.OId)
+ 
+ 
+ class Usergroupmember(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    groupoid = models.ForeignKey('Usergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
+-    useroid = models.ForeignKey('Users', on_delete = models.CASCADE, db_column = 'UserOId', max_length = 36)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    GroupOId = models.ForeignKey('Usergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
++    UserOId = models.ForeignKey('Users', on_delete = models.CASCADE, db_column = 'UserOId', max_length = 36)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'usergroupmember'
+ 
+     def __str__(self):
+-        return '%s %s' % (self.groupoid, self.useroid)
++        return '%s %s' % (self.GroupOId, self.UserOId)
+ 
+ 
+ class Usergroupdevices(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    groupoid = models.ForeignKey('Usergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
+-    deviceoid = models.ForeignKey('Devices', on_delete = models.CASCADE, db_column = 'DeviceOId', max_length = 36)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    GroupOId = models.ForeignKey('Usergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
++    DeviceOId = models.ForeignKey('Devices', on_delete = models.CASCADE, db_column = 'DeviceOId', max_length = 36)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'usergroupdevices'
+ 
+     def __str__(self):
+-        return '%s %s' % (self.groupoid, self.deviceoid)
++        return '%s %s' % (self.GroupOId, self.DeviceOId)
+ 
+ 
+ class Frusers(models.Model):
+@@ -227,84 +227,84 @@ class Frusers(models.Model):
+             ('Enable', 'Enable'),
+             ('Disable', 'Disable'),
+     )
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    fruserid = models.CharField(db_column = 'FRUserId', max_length = 16)
+-    name = models.CharField(db_column = 'Name', max_length = 32, blank = True, null = True)
+-    gender = models.CharField(db_column = 'Gender', choices = frusers_gender, max_length = 8, blank = True, null = True)
+-    age = models.IntegerField(db_column = 'Age', blank = True, null = True)
+-    personid = models.CharField(db_column = 'PersonId', max_length = 32, blank = True, null = True)
+-    face1 = models.CharField(db_column = 'Face1', max_length = 256, blank = True, null = True)
+-    face2 = models.CharField(db_column = 'Face2', max_length = 256, blank = True, null = True)
+-    face3 = models.CharField(db_column = 'Face3', max_length = 256, blank = True, null = True)
+-    faceid1 = models.CharField(db_column = 'FaceID1', max_length = 32, blank = True, null = True)
+-    faceid2 = models.CharField(db_column = 'FaceID2', max_length = 32, blank = True, null = True)
+-    faceid3 = models.CharField(db_column = 'FaceID3', max_length = 32, blank = True, null = True)
+-    rfidcard = models.CharField(db_column = 'RFIDCard', max_length = 16, blank = True, null = True)
+-    state = models.CharField(db_column = 'State', choices = frusers_state, default = 'Enable', max_length = 8)
+-    disablecauses = models.CharField(db_column = 'DisableCauses', max_length = 256, blank = True, null = True)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    FRUserId = models.CharField(db_column = 'FRUserId', max_length = 16)
++    Name = models.CharField(db_column = 'Name', max_length = 32, blank = True, null = True)
++    Gender = models.CharField(db_column = 'Gender', choices = frusers_gender, max_length = 8, blank = True, null = True)
++    Age = models.IntegerField(db_column = 'Age', blank = True, null = True)
++    PersonId = models.CharField(db_column = 'PersonId', max_length = 32, blank = True, null = True)
++    Face1 = models.CharField(db_column = 'Face1', max_length = 256, blank = True, null = True)
++    Face2 = models.CharField(db_column = 'Face2', max_length = 256, blank = True, null = True)
++    Face3 = models.CharField(db_column = 'Face3', max_length = 256, blank = True, null = True)
++    FaceID1 = models.CharField(db_column = 'FaceID1', max_length = 32, blank = True, null = True)
++    FaceID2 = models.CharField(db_column = 'FaceID2', max_length = 32, blank = True, null = True)
++    FaceID3 = models.CharField(db_column = 'FaceID3', max_length = 32, blank = True, null = True)
++    RFIDCard = models.CharField(db_column = 'RFIDCard', max_length = 16, blank = True, null = True)
++    State = models.CharField(db_column = 'State', choices = frusers_state, default = 'Enable', max_length = 8)
++    DisableCauses = models.CharField(db_column = 'DisableCauses', max_length = 256, blank = True, null = True)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'frusers'
+ 
+     def __str__(self):
+-        return '%s %s (%s)' % (self.fruserid, self.name, self.oid)
++        return '%s %s (%s)' % (self.FRUserId, self.Name, self.OId)
+ 
+ 
+ class Frusergroups(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'frusergroups'
+ 
+     def __str__(self):
+-        return '%s (%s)' % (self.name, self.oid)
++        return '%s (%s)' % (self.Name, self.OId)
+ 
+ 
+ class Frusergroupmember(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    groupoid = models.ForeignKey('Frusergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
+-    fruseroid = models.ForeignKey('Frusers', on_delete = models.CASCADE, db_column = 'FRUserOId', max_length = 36)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    GroupOId = models.ForeignKey('Frusergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
++    FRUserOId = models.ForeignKey('Frusers', on_delete = models.CASCADE, db_column = 'FRUserOId', max_length = 36)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'frusergroupmember'
+ 
+     def __str__(self):
+-        return '%s %s' % (self.groupoid, self.fruseroid)
++        return '%s %s' % (self.GroupOId, self.FRUserOId)
+ 
+ 
+ class Frusergroupdevices(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    groupoid = models.ForeignKey('Frusergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
+-    deviceoid = models.ForeignKey('Devices', on_delete = models.CASCADE, db_column = 'DeviceOId', max_length = 36)
+-    createdate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+-    updatedate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    GroupOId = models.ForeignKey('Frusergroups', on_delete = models.CASCADE, db_column = 'GroupOId', max_length = 36)
++    DeviceOId = models.ForeignKey('Devices', on_delete = models.CASCADE, db_column = 'DeviceOId', max_length = 36)
++    CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
++    UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'frusergroupdevices'
+ 
+     def __str__(self):
+-        return '%s %s' % (self.groupoid, self.deviceoid)
++        return '%s %s' % (self.GroupOId, self.DeviceOId)
+ 
+ 
+ class Fruserlogs(models.Model):
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    logdatetime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add =  True)
+-    fruseroid = models.ForeignKey('Frusers', on_delete = models.DO_NOTHING, db_column = 'FRUserOId', max_length = 36, blank = True, null = True)
+-    deviceoid = models.ForeignKey('Devices', on_delete = models.DO_NOTHING, db_column = 'DeviceOId', max_length = 36)
+-    logcontent = models.CharField(db_column = 'LogContent', max_length = 256, blank = True, null = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    LogDateTime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add =  True)
++    FRUserOId = models.ForeignKey('Frusers', on_delete = models.DO_NOTHING, db_column = 'FRUserOId', max_length = 36, blank = True, null = True)
++    DeviceOId = models.ForeignKey('Devices', on_delete = models.DO_NOTHING, db_column = 'DeviceOId', max_length = 36)
++    LogContent = models.CharField(db_column = 'LogContent', max_length = 256, blank = True, null = True)
+ 
+     class Meta:
+         db_table = 'fruserlogs'
+ 
+     def __str__(self):
+-        return '%s %s' % (self.fruseroid,  self.deviceoid)
++        return '%s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
+ 
+ 
+ class Systemlogs(models.Model):
+@@ -314,13 +314,13 @@ class Systemlogs(models.Model):
+             ('User', 'User'),
+             ('FRUser', 'FRUser'),
+     )
+-    oid = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+-    logdatetime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add = True)
+-    category = models.CharField(db_column = 'Category', choices = systemlogs_category, max_length = 8)
+-    logcontent = models.CharField(db_column = 'LogContent', max_length = 256, blank = True, null = True)
++    OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
++    LogDateTime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add = True)
++    Category = models.CharField(db_column = 'Category', choices = systemlogs_category, max_length = 8)
++    LogContent = models.CharField(db_column = 'LogContent', max_length = 256, blank = True, null = True)
+ 
+     class Meta:
+         db_table = 'systemlogs'
+ 
+     def __str__(self):
+-        return '%s %s' % (self.category, self.logdatetime)
++        return '%s %s' % (self.Category, self.LogDateTime)
+diff --git a/api/recognition.py b/api/recognition.py
+index 987b4e5..1271a33 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -34,14 +34,14 @@ def face_identify(request):
+         from .models import Devices, Frusers, Fruserlogs
+         class end_procedure:
+             def __init__(self, response, fruseroid = None, deviceoid = None, logcontent = None):
+-                Fruserlogs.objects.create(fruseroid = fruseroid, deviceoid = deviceoid, logcontent = logcontent)
++                Fruserlogs.objects.create(FRUserOId = fruseroid, DeviceOId = deviceoid, LogContent = logcontent)
+                 self.ret = JsonResponse(response)
+ 
+         try:
+             client_ip = request.META['REMOTE_ADDR']
+-            ip_device = Devices.objects.get(ip = client_ip)
++            ip_device = Devices.objects.get(IP = client_ip)
+ 
+-            if ip_device.state != 'Proposed':
++            if ip_device.State != 'Proposed':
+                 try:
+                     res_upload = json.loads(
+                         requests.post(
+@@ -81,13 +81,13 @@ def face_identify(request):
+ 
+                         if person_id != None:
+                             try:
+-                                fruser = Frusers.objects.get(personid = person_id)
++                                fruser = Frusers.objects.get(PersonId = person_id)
+ 
+-                                for member in fruser.frusergroupmember_set.filter(fruseroid=fruser.oid):
+-                                    for device in member.groupoid.frusergroupdevices_set.filter(groupoid=member.groupoid):
+-                                        if device.deviceoid == ip_device:
++                                for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
++                                    for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
++                                        if device.DeviceOId == ip_device:
+                                             return end_procedure(
+-                                                response = dict(ChainMap(result_pass, {'FRUserId':fruser.fruserid})),
++                                                response = dict(ChainMap(result_pass, {'FRUserId':fruser.FRUserId})),
+                                                 fruseroid = fruser,
+                                                 deviceoid = ip_device,
+                                                 logcontent = 'Face identify pass'
+@@ -155,14 +155,14 @@ def rfid_verify(request):
+             if all(k in req for k in req_key) and all(req.values()):
+                 try:
+                     from .models import Devices
+-                    ip_device = Devices.objects.get(ip = client_ip)
+-                    if ip_device.state != 'Proposed':
++                    ip_device = Devices.objects.get(IP = client_ip)
++                    if ip_device.State != 'Proposed':
+                         from .models import Frusers
+-                        fruser = Frusers.objects.get(rfidcard = req['RFIDCard'])
+-                        for member in fruser.frusergroupmember_set.filter(fruseroid=fruser.oid):
+-                            for device in member.groupoid.frusergroupdevices_set.filter(groupoid=member.groupoid):
+-                                if device.deviceoid == ip_device:
+-                                    return JsonResponse(dict(ChainMap(result_pass, {'FRUserId':fruser.fruserid})))
++                        fruser = Frusers.objects.get(RFIDCard = req['RFIDCard'])
++                        for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
++                            for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
++                                if device.DeviceOId == ip_device:
++                                    return JsonResponse(dict(ChainMap(result_pass, {'FRUserId':fruser.FRUserId})))
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, fail_message)))
+                     else:
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, fail_message)))
+@@ -184,9 +184,9 @@ def rfid_check(request):
+             if all(k in req for k in req_key) and all(req.values()):
+                 try:
+                     from .models import Devices
+-                    if Devices.objects.get(ip = client_ip).state != 'Proposed':
++                    if Devices.objects.get(IP = client_ip).State != 'Proposed':
+                         from .models import Frusers
+-                        Frusers.objects.get(rfidcard = req['RFIDCard'])
++                        Frusers.objects.get(RFIDCard = req['RFIDCard'])
+                         return JsonResponse(dict(result_success))
+                     else:
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, fail_message)))
+-- 
+1.9.1
+

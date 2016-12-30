@@ -1,0 +1,121 @@
+From ce46b13ac387ab74c99714896ef1b9a8b21cb66d Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Fri, 27 May 2016 17:08:54 +0800
+Subject: [PATCH 106/443] Add permission detect function to system settings.
+
+---
+ systemsettings/views.py        |  2 ++
+ templates/menu.html            |  6 +++---
+ templates/system_settings.html | 45 ++----------------------------------------
+ 3 files changed, 7 insertions(+), 46 deletions(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 0b42bcd..1711957 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -8,5 +8,7 @@ from django.http import HttpResponseRedirect
+ def settings_views(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+ 
+     return render_to_response('system_settings.html', locals())
+diff --git a/templates/menu.html b/templates/menu.html
+index d35cdd9..10d0409 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -28,7 +28,7 @@
+ <div id="sidebar-collapse" class="col-sm-3 col-lg-2 sidebar">
+ 	<form role="search"><div class="form-group"></div></form>
+ 	<ul class="nav menu">
+-        {% ifequal request.session.permission_system "Enable" %}
++		{% ifequal request.session.permission_system "Enable" %}
+ 	    <li class="parent ">
+ 			<a href="#"><span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked desktop"><use xlink:href="#stroked-desktop"/></svg> {% trans "System" %} </span></a>
+             <ul class="children collapse" id="sub-item-1">
+@@ -36,7 +36,7 @@
+                 <li><a class="" href="/user_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User List" %} </a></li>
+                 <li><a class="" href="/user_group_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User Group List" %} </a></li>
+                 <li><a class="" href="/role_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Role and Permission" %} </a></li>
+-                <li><a class="" href="/system_settings"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg> {% trans "Setting" %} </a></li>
++                <li><a class="" href="/system_settings"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg> {% trans "Settings" %} </a></li>
+             </ul>
+         </li>
+         {% endifequal %}
+@@ -65,7 +65,7 @@
+ 
+     <script>
+         $(document).ready(function() {
+-            var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_update",
++            var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_update", "/system_settings/",
+                                 "/user_group_list", "/user_group_add/", "/user_group_edit", "/user_group_members", "/user_group_devices",
+                                 "/role_list", "/role_add/", "/role_rename", "/role_permission/"];
+             var loglink = ["/fruserlog_list", "/systemlog_list", "/logsetting"];
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index bf49f3b..922d0da 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -14,8 +14,8 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/system_settings"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Settings</li>
++                  <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                  <li class="active">Settings</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+@@ -186,48 +186,7 @@
+ 
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+-            var $DeviceList = $('#DeviceList');
+-            var $FRList = $('#FRList');
+ 
+-            $DeviceList.bootstrapTable({
+-                columns: [
+-                {
+-                    field: 'Index',
+-                    title: 'No.',
+-                },
+-                {
+-                    field: 'Name',
+-                    title: 'Device Name',
+-                },
+-                {
+-                    field: 'UpdateDate',
+-                    title: 'Latest Sync Time',
+-                }
+-                ],
+-                    data: {{devices|safe}}
+-            });
+-
+-            $FRList.bootstrapTable({
+-                columns: [
+-                {
+-                    field: 'Index',
+-                    title: 'No.',
+-                },
+-                {
+-                    field: 'FRUserId',
+-                    title: 'FRUserID',
+-                },
+-                {
+-                    field: 'Name',
+-                    title: 'Device Name',
+-                },
+-                {
+-                    field: 'UpdateDate',
+-                    title: 'Latest Sync Time',
+-                }
+-                ],
+-                    data: {{frusers|safe}}
+-            });
+         </script>
+     </body>
+ </html>
+-- 
+1.9.1
+

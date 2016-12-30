@@ -1,0 +1,66 @@
+From db14020edf0c26dd4188443e9420c4b8a42228fd Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 2 Dec 2016 13:59:45 +0800
+Subject: [PATCH 387/443] 4G checksum key add to settings.
+
+---
+ api/cron.py        | 2 +-
+ api/recognition.py | 2 +-
+ api/user.py        | 2 +-
+ br06/settings.py   | 1 +
+ 4 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 590abd8..4c1be15 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -15,7 +15,7 @@ def QE_4G(sync_time):
+                 settings.QE_4G,
+                 data = json.dumps({
+                     'sync_time': sync_time,
+-                    'checksum': md5(sync_time + "#Qut0yV84VRfVVaet%")
++                    'checksum': md5(sync_time + settings.KEY_4G)
+                 }).encode('utf8'),
+                 headers = {'Content-Type': 'application/json'}
+             ).text
+diff --git a/api/recognition.py b/api/recognition.py
+index d34b0c6..405867d 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -361,7 +361,7 @@ def set_result(request):
+                             "device_name": ip_device.Name,
+                             "device_ip": request_IP,
+                             "device_mac": ip_device.MAC,
+-                            "checksum": md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
++                            "checksum": md5(req['FRUserId'] + settings.KEY_4G)
+                         }).encode('utf8'),
+                         headers = {'Content-Type': 'application/json'}
+                 ).text)
+diff --git a/api/user.py b/api/user.py
+index 793caa6..22701a0 100755
+--- a/api/user.py
++++ b/api/user.py
+@@ -50,7 +50,7 @@ def add(request):
+                                     settings.LO_4G,
+                                     data = json.dumps({
+                                         'account': req['FRUserId'],
+-                                        'checksum': md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
++                                        'checksum': md5(req['FRUserId'] + settings.KEY_4G)
+                                     }).encode('utf8'),
+                                     headers = {'Content-Type': 'application/json'}
+                                 ).text)
+diff --git a/br06/settings.py b/br06/settings.py
+index 05e112a..acc7890 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -232,6 +232,7 @@ SE_4G = 1 # 4G return status: success
+ LO_4G = 'http://4g.shuttle.com/daily/LoginApi/face'
+ RE_4G = 'http://4g.shuttle.com/daily/importApi/UserFaceLoginRecord/add'
+ QE_4G = 'http://4g.shuttle.com/daily/loginApi/faceQuery'
++KEY_4G = "#Qut0yV84VRfVVaet%"
+ 
+ # Crontab: 4G user update, br06 new version
+ CRON_LOG_DIR = os.path.join(BR06_LOG_DIR, 'cronlog')
+-- 
+1.9.1
+

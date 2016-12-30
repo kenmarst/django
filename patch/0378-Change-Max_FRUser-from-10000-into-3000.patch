@@ -1,0 +1,25 @@
+From f2e3a525519bbd9154acb5e484c75945b1b2e539 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Wed, 30 Nov 2016 13:09:05 +0800
+Subject: [PATCH 378/443] Change Max_FRUser from 10000 into 3000
+
+---
+ dashboard/views.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 9bb5c7b..b686005 100755
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -65,7 +65,7 @@ def dashboard_views(request):
+ 
+     frusers_total_count = Frusers.objects.count()
+     syslogs_total_count = Systemlogs.objects.count()
+-    frusers_limit = 10000
++    frusers_limit = 3000
+ 
+     try:
+         syslog_limit = Config.objects.get(Name = 'LogLimit').Value
+-- 
+1.9.1
+

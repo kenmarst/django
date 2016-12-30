@@ -1,0 +1,55 @@
+From a8dea8787ef9fbaed3628915a566f95d5b8ec9aa Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 31 Aug 2016 16:23:07 +0800
+Subject: [PATCH 247/443] Fix requests post: add headers
+
+---
+ api/recognition.py | 3 ++-
+ api/user.py        | 3 ++-
+ br06/settings.py   | 2 +-
+ 3 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index b9a05cc..0d5dd5f 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -321,7 +321,8 @@ def get_result(request):
+                             "account": req['FRUserId'],
+                             "login_time": str(int(time.time())),# Unix Timestamp
+                             "checksum": md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
+-                        }).encode('utf8')
++                        }).encode('utf8'),
++                        headers = {'Content-Type': 'application/json'}
+                 ).text)
+                 #print(res_4G)
+                 if res_4G['status'] == settings.SE_4G:#
+diff --git a/api/user.py b/api/user.py
+index 7920dec..d695e73 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -49,7 +49,8 @@ def add(request):
+                                     data = json.dumps({
+                                         'account': req['FRUserId'],
+                                         'checksum': md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
+-                                    }).encode('utf8')
++                                    }).encode('utf8'),
++                                    headers = {'Content-Type': 'application/json'}
+                                 ).text)
+                             #print(res_4G)
+                         if not res_4G['status'] == settings.SE_4G:
+diff --git a/br06/settings.py b/br06/settings.py
+index 176c3c7..b38e774 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -191,7 +191,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+ SESSION_COOKIE_AGE = 86400 # sec
+ 
+ # 4G   
+-EN_4G = 0# Enable 4Gapi in UserAdd
++EN_4G = 0 # Enable 4Gapi in UserAdd
+ SE_4G = 1 # 4G return status: success
+ LO_4G = 'http://61.247.173.118/daily/LoginApi/face'
+ RE_4G = 'http://61.247.173.118/daily/importApi/UserFaceLoginRecord/add'
+-- 
+1.9.1
+

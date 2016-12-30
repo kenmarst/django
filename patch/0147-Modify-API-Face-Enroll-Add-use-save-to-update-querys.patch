@@ -1,0 +1,89 @@
+From 596e21f5b8aec3b029696587bf32ac8461060a47 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 23 Jun 2016 10:53:02 +0800
+Subject: [PATCH 147/443] Modify API Face Enroll Add : use save() to update
+ queryset.
+
+---
+ api/face.py | 37 +++++++++++++++++--------------------
+ 1 file changed, 17 insertions(+), 20 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index cb0b3a5..6330f22 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -38,7 +38,7 @@ def add(request):
+             #1. Update load face img to TCIT and get Image Id
+             res_upload = sendImg(request)
+             image_id = res_upload['img_id']
+-            print('image_id : ', image_id)
++            #print('image_id : ', image_id)
+             if not res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                 logContent = TCIT_res_state[res_upload['state']]
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+@@ -51,7 +51,7 @@ def add(request):
+             else:
+                 if res_face_detect['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     face_id = res_face_detect['faces'][0]['face_id']
+-                    print('face_id : ', face_id)
++                    #print('face_id : ', face_id)
+                 else:
+                     logContent = TCIT_res_state[res_face_detect['state']]
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+@@ -60,20 +60,19 @@ def add(request):
+             if not fruser.PersonId:
+                 res_personid = TCIT_API('/face/person/create/', data = {'face_id': face_id})
+                 if res_personid['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                    print('person_id', res_personid['person_id'])
+-                    personId = res_personid['person_id']
+-                    Frusers.objects.filter(OId = fruser.OId).update(
+-                        PersonId = personId,
+-                        UpdateDate = datetime.now()
+-                    )
++                    #print('person_id', res_personid['person_id'])
++                    person_id = res_personid['person_id']
++                    fruser.PersonId = person_id,
++                    fruser.UpdateDate = datetime.now()
++                    fruser.save()
+                 else:
+                     logContent = "/faec/person/create/" + TCIT_res_state[res_personid['state']]
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                personId = fruser.PersonId
++                person_id = fruser.PersonId
+                 res_face_personadd = TCIT_API(
+                     '/face/person/update/add/',
+-                    data = {'person_id' : personId, 'face_id': face_id}
++                    data = {'person_id' : person_id, 'face_id': face_id}
+                 )
+                 if not res_face_personadd['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                     logContent = "/face/person/update/add/" + TCIT_res_state[res_face_personadd['state']]
+@@ -104,17 +103,15 @@ def add(request):
+ 
+                     #Fruser update
+                     if not fruser.Face1:
+-                        Frusers.objects.filter(OId = fruser.OId).update(
+-                                Face1 = FaceDir,
+-                                FaceID1 = face_id,
+-                                UpdateDate = datetime.now()
+-                        )
++                        fruser.Face1 = FaceDir,
++                        fruser.FaceID1 = face_id,
++                        fruser.UpdateDate = datetime.now()
++                        fruser.save()
+                     else:
+-                        Frusers.objects.filter(OId = fruser.OId).update(
+-                                Face2 = FaceDir,
+-                                FaceID2 = face_id,
+-                                UpdateDate = datetime.now()
+-                        )
++                        fruser.Face2 = FaceDir,
++                        fruser.FaceID2 = face_id,
++                        fruser.UpdateDate = datetime.now()
++                        fruser.save()
+ 
+             # return
+             return JsonResponse(result_success)
+-- 
+1.9.1
+

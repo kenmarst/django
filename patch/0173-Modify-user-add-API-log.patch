@@ -1,0 +1,26 @@
+From a75f134848df549e0ebfe858af5852a295e062f6 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 12 Jul 2016 14:09:53 +0800
+Subject: [PATCH 173/443] Modify user add API log
+
+Modify user add API fail log.
+---
+ api/user.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/user.py b/api/user.py
+index 10a1485..e030b74 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -39,7 +39,7 @@ def add(request):
+                         Frusers.objects.get(FRUserId = req['FRUserId'])
+                         logContent = '{message_head}Frusers fail to create cause by fruser already exists'.format(message_head = message_head)
+                         print(logContent)
+-                        return JsonResponse({'Result' :logContent})
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                     except ObjectDoesNotExist:
+                         print("Creating new account now.")
+                         Frusers.objects.create(
+-- 
+1.9.1
+

@@ -1,0 +1,62 @@
+From a9395767f691f37402bf382d9c0a4eafd563f455 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 4 Aug 2016 11:24:15 +0800
+Subject: [PATCH 222/443] Modify finger API : when State = Enable the Fruser
+ can
+
+---
+ api/fingerprint.py | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index 85f5e04..d2b4d3a 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -24,7 +24,7 @@ def verify(request):
+                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                 check = s.connect((HOST, PORT))
+                 if (check == None):
+-                    fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
++                    fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+ 
+                     FingerDir = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_verify.bmp'])
+ 
+@@ -56,7 +56,7 @@ def verify(request):
+                 raise Exception('Need accept')
+         except Exception as error:
+             print(str(error))
+-            Fruserlogs.objects.create(DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Finger verify fail : %s' % str(error))
++            Fruserlogs.objects.create(DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Finger verify error : %s' % str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -72,7 +72,7 @@ def add(request):
+                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                 check = s.connect((HOST, PORT))
+                 if (check == None):
+-                    fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
++                    fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+                     FingerDir_1 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register1.bmp'])
+                     FingerDir_2 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register2.bmp'])
+                     FingerPath1 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_1))
+@@ -125,7 +125,7 @@ def add(request):
+                 raise Exception('Need accept')
+         except Exception as error:
+             print(str(error))
+-            Systemlogs.objects.create(LogContent = 'Finger add fail : %s' % str(error))
++            Systemlogs.objects.create(LogContent = 'Finger add error : %s' % str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+@@ -188,7 +188,7 @@ def check(request):
+                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                 check = s.connect((HOST, PORT))
+                 if (check == None):
+-                    fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
++                    fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+                     FingerDir = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_verify.bmp'])
+ 
+                     open(
+-- 
+1.9.1
+

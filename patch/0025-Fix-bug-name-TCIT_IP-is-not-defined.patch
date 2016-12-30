@@ -1,0 +1,25 @@
+From 9a6c825a35f4b14b4afaef45c6661f8306b0ea2e Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 9 May 2016 13:58:54 +0800
+Subject: [PATCH 025/443] Fix bug - name 'TCIT_IP' is not defined"
+
+---
+ api/face.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/face.py b/api/face.py
+index 9016a3e..f479b99 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -136,7 +136,7 @@ def delete(request):
+                     frusers = Frusers.objects.get(FRUserId = req['FRUserId'])
+                     res = json.loads(
+                         requests.post(
+-                            'http://' + TCIT_IP + '/face/person/update/remove',
++                            'http://' + settings.TCIT_IP + '/face/person/update/remove',
+                             data={
+                                 'person_id':frusers.PersonId,
+                                 'face_id':frusers.FaceID1,
+-- 
+1.9.1
+

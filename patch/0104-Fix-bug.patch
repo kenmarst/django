@@ -1,0 +1,40 @@
+From 8e72b2e817c540fe53541b2c2765b53bb69d2576 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Fri, 27 May 2016 15:25:43 +0800
+Subject: [PATCH 104/443] Fix bug.
+
+---
+ dashboard/views.py | 2 +-
+ login/views.py     | 3 +--
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index be5f386..f269be1 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -70,7 +70,7 @@ def dashboard_views(request):
+         syslog_limit = Config.objects.get(Name = 'LogLimit').Value
+     except:
+         Config.objects.create(Name = 'LogLimit', Value = '200000')
+-        syslog_limit = 20000
++        syslog_limit = 200000
+ 
+     frusers_percent = frusers_total_count / frusers_limit
+     syslog_percent = syslogs_total_count / int(syslog_limit)
+diff --git a/login/views.py b/login/views.py
+index d4df77c..e9c2f1b 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -22,8 +22,7 @@ def check_user(request):
+     password = md5(request.POST.get('password', ''))
+     data = request.POST
+     response = data.get('g-recaptcha-response')
+-    #if checkRecaptcha(response,SECRET_KEY):
+-    if 1 == 1:
++    if checkRecaptcha(response,SECRET_KEY):
+         try:
+             obj = Users.objects.get(Email = mail, Password = password)
+             # set session
+-- 
+1.9.1
+

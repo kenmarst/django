@@ -1,0 +1,42 @@
+From 4e2b501fb26d5fb5e88b3a2f788f1c2788fc8cfa Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 18 May 2016 10:55:24 +0800
+Subject: [PATCH 041/443] modify drop-down menu behavior
+
+---
+ templates/menu.html | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/templates/menu.html b/templates/menu.html
+index 9f4b3ab..d86f7b2 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -40,7 +40,11 @@
+ 				<a href="#">
+ 					<span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> System
+ 				</a>
+-				<ul class="children collapse" id="sub-item-1">
++				{% if request.get_full_path = "/user_list" %}
++				  <ul class="children collapse in" id="sub-item-1">
++				{% else %}
++                  <ul class="children collapse" id="sub-item-1">
++			    {%endif %}
+ 					<li>
+ 						<a class="" href="/user_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> User List
+@@ -70,7 +74,11 @@
+ 				<a href="#">
+ 					<span data-toggle="collapse" href="#sub-item-3"><svg class="glyph stroked chevron-down"><use xlink:href="#stroked-chevron-down"></use></svg></span> Log
+ 				</a>
+-				<ul class="children collapse" id="sub-item-3">
++				{% if request.get_full_path = "/fruserlog_list" or request.get_full_path = "/systemlog_list" or request.get_full_path = "/logsetting"%}
++				  <ul class="children collapse in" id="sub-item-3">
++				{% else %}
++				  <ul class="children collapse" id="sub-item-3">
++				{% endif %}
+ 					<li>
+ 						<a class="" href="/fruserlog_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> FRUser Log List
+-- 
+1.9.1
+

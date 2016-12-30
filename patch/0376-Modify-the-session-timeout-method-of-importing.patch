@@ -1,0 +1,175 @@
+From 121ea1b937e214297b4133a579b63fe777ed907e Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 28 Nov 2016 17:59:19 +0800
+Subject: [PATCH 376/443] Modify the session timeout method of importing.
+
+---
+ frusers/views.py           |  2 ++
+ templates/fruser_list.html | 85 ++++++++++++++++++++++++----------------------
+ templates/menu.html        | 11 +++---
+ 3 files changed, 54 insertions(+), 44 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 5389a50..457b61c 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -96,6 +96,7 @@ def import_fruser(request):
+         return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
++        request.session.set_expiry(0)
+         import_success = 0
+         import_fail = 0
+         if not 'file' in request.FILES:
+@@ -183,6 +184,7 @@ def import_fruser(request):
+         try:
+             os.remove(zipfile_dir)
+             os.remove(csvdir)
++            request.session.set_expiry(request.session.get_expiry_age())
+         finally:
+             try:
+                 return JsonResponse(dict(ChainMap(res_code[int(e.__str__())], {'import_success' : import_success, 'import_fail' : import_fail})))
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 0f86e07..b819e6f 100755
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -33,7 +33,7 @@
+                             {% if not EN_4G %}
+                                 <div id="ImExport">
+                                     <button class="btn btn-default" onclick="location.href='/fruser_add'">{% trans "Create FR User" %}</button>
+-                                    <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal">{% trans "Import" %}</button>
++                                    <button class="btn btn-default" data-toggle="modal" data-target="#ImportModal" data-backdrop="static" data-keyboard="false">{% trans "Import" %}</button>
+                                     <button class="btn btn-default" onclick="location.href='/export_fruser'">{% trans "Export" %}</button>
+                                 </div>
+                             {% endif %}
+@@ -49,9 +49,6 @@
+                 <div class="modal-dialog">
+                     <div class="modal-content">
+                         <div class="modal-header">
+-                            <button class="close" data-dismiss="modal">
+-                                <span aria-hidden="true">&times;</span>
+-                            </button>
+                             <h4 class="modal-title">{% trans "Import Fruser" %}</h4>
+                         </div>
+                         <div class="modal-body">
+@@ -62,7 +59,7 @@
+                             </form>
+                         </div>
+                         <div class="modal-footer">
+-                            <button class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
++                            <button id="ImportFruserClose" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+                             <button id="ImportFruser" class="btn btn-default" onclick="ImportFruser()">{% trans "Upload" %}</button>
+                         </div>
+                     </div>
+@@ -202,43 +199,51 @@
+ 
+             {% if not EN_4G %}
+                 function ImportFruser() {
+-                    var data = new FormData($('#ImportForm')[0]);
+-                    data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
++                    if ($('#ImportFile').val()) {
++                        var data = new FormData($('#ImportForm')[0]);
++                        data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+ 
+-                    $('#ImportFormBody').html('\
+-                        <div class="col-sm-offset-1">\
+-                            {% trans "Please do not leave this page and wait for uploading!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
+-                        </div>\
+-                    ');
+-                    $('#ImportFruser').prop('disabled', true);
+-                    $.ajax({
+-                        type: 'post',
+-                        traditional: true,
+-                        url: '/import_fruser/',
+-                        async: true,
+-                        cache: false,
+-                        data: data,
+-                        processData: false,
+-                        contentType: false,
+-                        success: function(data) {
+-                            console.log(data.CODE);
+-                            if (data.CODE == "0") {
+-                                alert("Import End!\nSuccess : " + data.import_success + "\nFailure : " + data.import_fail);
+-                                $('#ImportModal').modal("hide");
+-                            } else if (data.CODE == "2") {
+-                                alert("{% trans "The file format is not correct!" %}");
+-                            } else if (data.CODE == "3") {
+-                                alert("{% trans "Please wait for uploading!" %}");
+-                            } else {
+-                                alert("{% trans "Fail to import fruser!" %}");
++                        $('#ImportFormBody').html('\
++                            <div class="col-sm-offset-1">\
++                                {% trans "Please do not leave this page and wait for uploading!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
++                            </div>\
++                        ');
++                        $('#ImportFruser').prop('disabled', true);
++                        $('#ImportFruserClose').prop('disabled', true);
++                        clearTimeout(timeoutVar);
++                        $.ajax({
++                            type: 'post',
++                            traditional: true,
++                            url: '/import_fruser/',
++                            async: true,
++                            cache: false,
++                            data: data,
++                            processData: false,
++                            contentType: false,
++                            success: function(data) {
++                                console.log(data.CODE);
++                                if (data.CODE == "0") {
++                                    alert("Import End!\nSuccess : " + data.import_success + "\nFailure : " + data.import_fail);
++                                    $('#ImportModal').modal("hide");
++                                } else if (data.CODE == "2") {
++                                    alert("{% trans "The file format is not correct!" %}");
++                                } else if (data.CODE == "3") {
++                                    alert("{% trans "Please wait for uploading!" %}");
++                                } else {
++                                    alert("{% trans "Fail to import fruser!" %}");
++                                }
++                                timeoutVar = timeoutStart();
++                                $('#FruserList').bootstrapTable('refresh');
++                                $('#ImportFormBody').html('<input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">');
++                                $('#ImportFruser').prop('disabled', false);
++                                $('#ImportFruserClose').prop('disabled', false);
++                            },
++                            error: function(data) {
+                             }
+-                            $('#FruserList').bootstrapTable('refresh');
+-                            $('#ImportFormBody').html('<input id="ImportFile" class="col-sm-offset-1" type="file" name="file" title="Select File">');
+-                            $('#ImportFruser').prop('disabled', false);
+-                        },
+-                        error: function(data) {
+-                        }
+-                    });
++                        });
++                    } else {
++                        alert("{% trans "Please choose a file!" %}");
++                    }
+                 }
+ 
+                 function delete_fruser(OId, Name) {
+diff --git a/templates/menu.html b/templates/menu.html
+index 55f7283..df687b2 100755
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -66,10 +66,13 @@
+     </ul>
+ 
+     <script>
+-        setTimeout(function() {
+-            alert("{% trans "Longin timeout!" %}");
+-            location.href = '/';
+-        }, {{ request.session.get_expiry_age }} * 1000);
++        function timeoutStart() { 
++            return setTimeout(function() {
++                alert("{% trans "Longin timeout!" %}");
++                location.href = '/';
++            }, {{ request.session.get_expiry_age }} * 1000);
++        }
++        timeoutVar = timeoutStart();
+ 
+         $(document).ready(function() {
+             var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_update", "/system_settings/",
+-- 
+1.9.1
+

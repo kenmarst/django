@@ -1,0 +1,123 @@
+From 5cb4fcd9d2b1323278a6dc2f225a47481e1f2401 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Thu, 12 May 2016 09:20:37 +0800
+Subject: [PATCH 029/443] add /log/system log list/expot button to export csv
+ file
+
+---
+ br06/urls.py                  |  3 ++-
+ systemlogs/views.py           | 46 +++++++++++++++++++++++++++++++++++++++++++
+ templates/systemlog_list.html |  8 ++++++++
+ 3 files changed, 56 insertions(+), 1 deletion(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 314d825..c1f20f7 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -18,7 +18,7 @@ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_list_view, user_setting, login, logout, change_passwd
+ from frusers.views import fruser_list_view
+-from systemlogs.views import systemlog_list_view
++from systemlogs.views import systemlog_list_view,systemlog_export
+ from fruserlogs.views import fruserlog_list_view,fruserlog_export
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, add_device, delete_device
+ 
+@@ -30,6 +30,7 @@ urlpatterns = [
+     url(r'^setting/?$', user_setting),
+     url(r'^fruser_list/?$', fruser_list_view),
+     url(r'^systemlog_list/?$', systemlog_list_view),
++    url(r'^systemlog_export/?$',systemlog_export),
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_export/?$',fruserlog_export),
+ ]
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 325f85f..4690c3c 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -7,6 +7,8 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csr
+ from api.models import Users, Frusers, Systemlogs
+ import json
+ import urllib
++import datetime,types
++import csv
+ 
+ # Create your views here.
+ # b = SysLog.objects.get(id="28")
+@@ -25,3 +27,47 @@ def systemlog_list_view(request):
+         x['Index'] = index+1
+         index += 1
+     return render(request, 'systemlog_list.html', {'active': "systemlog_list", 'obj': result})
++
++@csrf_exempt
++def systemlog_export(request):
++    #data2=[{'symbol':'!','val0':'Category','val1':'LogContent', 'val2':'LogDateTime'}]
++    #with open('systemlogssetting.json', 'w') as outfile:
++    #  json.dump(data2, outfile)
++    try:
++     with open('systemlogssetting.json') as f:
++      data=f.read()
++      json_data=json.loads(data)
++      symbol=json_data[0]['symbol']
++      header=[]
++      for i in range(0,len(json_data[0])-1):
++        field = "val"+str(i)
++        header.append(json_data[0][field])
++
++    except:
++      header=['Category','LogContent','LogDateTime']
++      symbol="!"
++
++    #json_data=json.loads(data)
++    #symbol=json_data[0]['symbol']
++    #header=[]
++    #for i in range(0,len(json_data[0])-1):
++    #  field = "val"+str(i)
++    #  header.append(json_data[0][field])
++
++    response = HttpResponse(content_type='text/csv')
++    response['Content-Disposition'] = 'attachment; filename=systemlog-export-%s.csv' % (
++                        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'),
++                    )
++
++    writer = csv.writer(response)
++
++    obj = Systemlogs.objects.all()
++
++    writer.writerow([symbol.join([i for i in header])])
++
++    result = [res.as_json() for res in obj]
++    for x in result:
++       writer.writerow([symbol.join([x[i] for i in header])])
++
++    return response
++
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index 5ecd68e..f08cbaf 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -29,6 +29,9 @@
+ 			<div class="col-lg-12">
+ 				<h1 class="page-header">System Log List</h1>
+ 			</div>
++                         <div class="col-lg-12">
++                              <button onClick="onExportClick()" class="btn green pull-right"  value="">Export</button>
++                        <div>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+@@ -110,6 +113,11 @@
+ 		$(window).on('resize', function () {
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
++                 function onExportClick(){
++                 //alert("export");
++                 window.location.href = "/systemlog_export/"  
++        }
++
+ 	</script>
+ </body>
+ 
+-- 
+1.9.1
+

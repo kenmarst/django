@@ -1,0 +1,113 @@
+From b8a940cb52853b0121b1b81976b4cf32e96922bf Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 19 May 2016 14:42:32 +0800
+Subject: [PATCH 050/443] Modify user web language
+
+Change language to English
+Account, Name, Password, Confirm password, Role
+---
+ templates/user_add.html    | 10 +++++-----
+ templates/user_update.html | 10 +++++-----
+ 2 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 079daa4..ef4b29e 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -35,7 +35,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+ 					                        <i style="color: red;">*</i>
+-					                        帳號名稱
++                                            Account
+                                         </label>
+                                         <div class="col-md-6">
+                                                 <input type="text" class="form-control" placeholder="" name="account">
+@@ -44,7 +44,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            姓名
++                                            Name
+                                         </label>
+                                         <div class="col-md-6">
+                                                 <input type="text" class="form-control" placeholder="" name="name">
+@@ -63,7 +63,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            密碼
++                                            Password
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="password">
+@@ -71,7 +71,7 @@
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            確認密碼
++                                            Confirm password
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="confirm">
+@@ -80,7 +80,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            角色
++                                            Role
+                                         </label>
+                                         <div class="col-md-6">
+                                             <select class="form-control" name="role">
+diff --git a/templates/user_update.html b/templates/user_update.html
+index 29df75b..636475f 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -34,7 +34,7 @@
+                                 <div class="form-body">
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            帳號名稱
++                                            Account
+                                         </label>
+                                         <label class="col-md-3 control-label">
+                                             <p class="text-left" >{{obj.Account}}</p>
+@@ -43,7 +43,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            姓名
++                                            Name
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input class="form-control" placeholder="" name="Name" value="{{obj.Name}}" AutoComplete="Off">
+@@ -60,7 +60,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label"> 
+                                             <i style="color: red;">*</i>
+-                                            密碼
++                                            Password
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="password">
+@@ -68,7 +68,7 @@
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+-                                            確認密碼
++                                            Confirm password
+                                         </label>
+                                         <div class="col-md-6">
+                                             <input type="password" class="form-control" placeholder="" name="confirm">
+@@ -77,7 +77,7 @@
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label">
+                                             <i style="color: red;">*</i>
+-                                            角色
++                                            Role
+                                         </label>
+                                         <div class="col-md-6">
+                                             <select class="form-control" name="role">
+-- 
+1.9.1
+

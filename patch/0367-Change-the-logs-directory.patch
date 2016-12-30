@@ -1,0 +1,52 @@
+From 6e08efb449efcc9b325f73bab57be9f952a5a848 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 22 Nov 2016 17:45:20 +0800
+Subject: [PATCH 367/443] Change the logs directory.
+
+---
+ br06/settings.py                       | 2 +-
+ {media/log => logs}/.gitignore         | 0
+ {media/log => logs}/cronlog/.gitignore | 0
+ media/log/.gitignore => logs/debug.log | 0
+ 4 files changed, 1 insertion(+), 1 deletion(-)
+ copy {media/log => logs}/.gitignore (100%)
+ mode change 100644 => 100755
+ rename {media/log => logs}/cronlog/.gitignore (100%)
+ mode change 100644 => 100755
+ rename media/log/.gitignore => logs/debug.log (100%)
+ mode change 100644 => 100755
+
+diff --git a/br06/settings.py b/br06/settings.py
+index e47ffa0..1465137 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
+ LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO # Python logger level: debug, info, warning, error, critical
+ logging.basicConfig(level = LOGGING_LEVEL)
+ logger.debug('Enable debug mode')
+-BR06_LOG_DIR = os.path.join(MEDIA_DIR, 'log')
++BR06_LOG_DIR = os.path.join(BASE_DIR, 'log')
+ LOGGING = {
+     'version': 1,
+     'disable_existing_loggers': False,
+diff --git a/media/log/.gitignore b/logs/.gitignore
+old mode 100644
+new mode 100755
+similarity index 100%
+copy from media/log/.gitignore
+copy to logs/.gitignore
+diff --git a/media/log/cronlog/.gitignore b/logs/cronlog/.gitignore
+old mode 100644
+new mode 100755
+similarity index 100%
+rename from media/log/cronlog/.gitignore
+rename to logs/cronlog/.gitignore
+diff --git a/media/log/.gitignore b/logs/debug.log
+old mode 100644
+new mode 100755
+similarity index 100%
+rename from media/log/.gitignore
+rename to logs/debug.log
+-- 
+1.9.1
+

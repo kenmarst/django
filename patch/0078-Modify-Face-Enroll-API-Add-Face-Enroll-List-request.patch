@@ -1,0 +1,46 @@
+From 09c6f02cb83f1ab613ccbbafc42ceba21ad02993 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 25 May 2016 14:26:45 +0800
+Subject: [PATCH 078/443] Modify Face Enroll API : Add Face Enroll List request
+
+Add Face Enroll List request : FaceIndex
+There has three Indexes of face image in "FaceIndex" of API request
+---
+ api/face.py | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 9aa2bfa..40af5a8 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -175,22 +175,23 @@ def list(request):
+     if request.method == 'POST':
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'FRUserId'}
++            req_key = {'FRUserId', 'FaceIndex'}
+             if all(k in req for k in req_key) and all(req.values()):
+                 ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
+                 if ip_devices.State != 'Proposed':
+                     fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
+                     if (fruser.Face1=="") and (fruser.Face2=="") and (fruser.Face3==""):
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
+-                    if fruser.Face1:
++                    if fruser.Face1 and req['FaceIndex'] == 1:
+                         img_1 = open(fruser.Face1, 'rb')
+                         return HttpResponse(img_1.read(), content_type="image/jpg")
+-                    if fruser.Face2:
++                    if fruser.Face2 and req['FaceIndex'] == 2:
+                         img_2 = open(fruser.Face2, 'rb')
+                         return HttpResponse(img_2.read(), content_type="image/jpg")
+-                    if fruser.Face3:
++                    if fruser.Face3 and req['FaceIndex'] == 3:
+                         img_3 = open(fruser.Face3, 'rb')
+                         return HttpResponse(img_3.read(), content_type="image/jpg")
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
+                 else:
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+             else:
+-- 
+1.9.1
+

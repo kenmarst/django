@@ -1,0 +1,36 @@
+From 65909e4f09ede719e465ac1695910c1acd74e9c0 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Tue, 24 May 2016 19:12:15 +0800
+Subject: [PATCH 075/443] In Dashboard, add 'View Detail' href link.
+
+---
+ templates/dashboard.html | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 7a11aac..210bee3 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -51,6 +51,9 @@
+                                         <div class="panel-body">
+                                             <label>Device Count: {{device_total_count}} (online : {{device_online_count}} / offline : {{device_offline_count}} / proposed : {{device_proposed_count}})</label>
+                                             <table id="DeviceList"></table>
++                                            <div class="text-right">
++                                                <a href="/device_list">View Detail</a>
++                                            </div>
+                                         </div>
+                                     </div>
+                                 </div>
+@@ -60,6 +63,9 @@
+                                         <div class="panel-body">
+                                             <label>FR User Count: {{frusers_total_count}}</label>
+                                             <table id="FRList"></table>
++                                            <div class="text-right">
++                                                <a href="/fruser_list">View Detail</a>
++                                            </div>
+                                         </div>
+                                     </div>
+                                 </div>
+-- 
+1.9.1
+

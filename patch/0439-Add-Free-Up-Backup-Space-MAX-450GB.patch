@@ -1,0 +1,115 @@
+From 3b4b446f884ea76c39ce9c1aff6f52e3e96e63f8 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 28 Dec 2016 11:10:29 +0800
+Subject: [PATCH 439/443] Add "Free Up Backup Space", MAX: 450GB.
+
+MAX Backup Space is 450GB.
+Add "free up space function" in backup script.
+Fix "Manualbackup" cannot remove '/opt/backup/$DATE': Permission denied.
+---
+ systembackup/br06backup.sh | 62 +++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 61 insertions(+), 1 deletion(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 8eeaa58..eb6fb11 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -1,5 +1,12 @@
+ #!/bin/bash
+ 
++DEBUG=1
++debug() {
++    if [ $1 = 1 ]; then
++        echo $2
++    fi
++}
++
+ PWD=$(pwd)
+ 
+ if [ -e $PWD/systembackup/backup.conf ]; then
+@@ -24,6 +31,10 @@ TIMEMIN=$(date +%-M)
+ 
+ GZIP=$(which gzip)
+ RM=$(which rm)
++DU=$(which du)
++LS=$(which ls)
++EXPR=$(which expr)
++HEAD=$(which head)
+ 
+ MYSQL=$(which mysql)
+ MYSQLDUMP=$(which mysqldump)
+@@ -49,6 +60,22 @@ DAYMATCH="false"
+ TIMEMATCH="false"
+ ACTION="false"
+ 
++# default MAX space: 450GB
++BackupMaxSize_bytes=`echo "450*1024*1024*1024" | bc`
++
++# backup space check log
++CKSPSTART_LOG="Backup Space Check Start"
++CKSPEND_LOG="Backup Space Check Done"
++FREEUP_LOG="Free up the backup sapce..."
++SUFFICIENT_LOG="Has sufficent free backup sapce"
++NOBAKFILES="There is no backup files"
++G_BYTES=`echo '1024^3' | bc`
++BAKMAXSIZE_LOG="$(echo "scale=1; $BackupMaxSize_bytes / $G_BYTES" | bc -l)G"
++BAKSP_GB_LOG="`$DU -hs $BackupLocal | cut -f1`"
++# backup space files size
++BAKLOCALFILE_EARLIEST="$BackupLocal/`$LS $BackupLocal | $HEAD -1`"
++BAKSP_BYTES="`$DU -hsb $BackupLocal | cut -f1`"
++
+ logdump()
+ {
+   echo "PWD:$PWD"
+@@ -79,6 +106,24 @@ logdump()
+   echo "DAYMATCH:$DAYMATCH"
+   echo "TIMEMATCH:$TIMEMATCH"
+   echo "ACTION:$ACTION"
++
++  echo "BackupMaxSize_bytes:$BackupMaxSize_bytes"
++}
++
++# free the backup space
++remove_bakcup_files() {
++    until [ $BAKSP_BYTES -lt $BackupMaxSize_bytes ]
++    do
++        if [ $BAKLOCALFILE_EARLIEST = $BackupLocal"/" ] || [ ! -d $BackupLocal ]; then
++            echo $NOBAKFILES
++            break
++        fi
++        debug $DEBUG "Remove the earliest backup file: $BAKLOCALFILE_EARLIEST"
++        $RM -rf $BAKLOCALFILE_EARLIEST
++        BAKLOCALFILE_EARLIEST="$BackupLocal/`$LS $BackupLocal | $HEAD -1`"
++        BAKSP_BYTES="`$DU -hsb $BackupLocal | cut -f1`"
++        debug $DEBUG "Total used: `$DU -hs $BackupLocal | cut -f1`"
++    done
+ }
+ 
+ if [ $BackupMethod = 'Manually' ]; then
+@@ -119,7 +164,22 @@ if [ $ACTION = 'Manually' ] || [ $ACTION = 'Automatic' ]; then
+   echo "$MYSQLCMD ('$(uuidgen -t)',sysdate(6),'$CATEGORY','$ACTION $BAKSTARTLOG');" | $MYSQLCONNECT
+   logdump
+ 
+-  [ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
++  # backup space check start
++  echo "$CKSPSTART_LOG"
++  debug $DEBUG "$BackupLocal $BAKSP_BYTES bytes = $BAKSP_GB_LOG"
++
++  if [ $BAKSP_BYTES -ge $BackupMaxSize_bytes ]; then
++    debug $DEBUG "[The size of $BackupLocal: $BAKSP_GB_LOG] is over than [max backup space: $BAKMAXSIZE_LOG]"
++    echo $FREEUP_LOG
++    remove_bakcup_files
++  else
++    echo $SUFFICIENT_LOG
++  fi
++
++  echo $CKSPEND_LOG
++  # backup space check end
++
++  [ ! -d "$LOCALBAKPATH" ] && mkdir -p -m 777 "$LOCALBAKPATH"
+ 
+   MYDBS=$($MYSQL -u $MYSQLUSER -p$MYSQLPASS -Bse 'show databases')
+   for db in $MYDBS
+-- 
+1.9.1
+

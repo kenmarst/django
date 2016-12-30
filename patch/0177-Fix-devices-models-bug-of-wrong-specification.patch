@@ -1,0 +1,26 @@
+From 84f3a16c3781964399e6201571b3aaf6bd5014d1 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 13 Jul 2016 16:25:17 +0800
+Subject: [PATCH 177/443] Fix devices models bug of wrong specification
+
+Bug fix - length wrong of the column 'Models' in devices models.
+---
+ api/models.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/models.py b/api/models.py
+index 9348c69..1921110 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -177,7 +177,7 @@ class Devices(models.Model):
+     State = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
+     MAC = models.CharField(db_column = 'MAC', default = '', max_length = 32, blank = True, null = True)
+     IP = models.GenericIPAddressField(db_column = 'IP', default = '', max_length = 32, blank = True, null = True)
+-    Model = models.CharField(db_column = 'Model', choices = devices_model, default = 'FR', max_length = 8, blank = True)
++    Model = models.CharField(db_column = 'Model', choices = devices_model, default = 'FR', max_length = 10, blank = True)
+     WelcomeR0Action = models.CharField(db_column = 'WelcomeR0Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
+     WelcomeR0Pulse = models.CharField(db_column = 'WelcomeR0Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
+     WelcomeR1Action = models.CharField(db_column = 'WelcomeR1Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
+-- 
+1.9.1
+

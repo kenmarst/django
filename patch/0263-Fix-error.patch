@@ -1,0 +1,25 @@
+From d8284d7d88da1cb1eeee39c953cf557e794af041 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 19:04:23 +0800
+Subject: [PATCH 263/443] Fix error.
+
+---
+ frusergroups/views.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index 7ca8171..eaec953 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -80,7 +80,7 @@ def add_frusergroup(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        if Frusergroups.objects.all().count >= 20 # spec: Max 20 Groups
++        if Frusergroups.objects.all().count >= 20: # spec: Max 20 Groups
+             return JsonResponse(res_code[1])
+         Frusergroups.objects.create(Name = request.POST['Name'])
+         return JsonResponse(res_code[0])
+-- 
+1.9.1
+

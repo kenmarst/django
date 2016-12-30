@@ -1,0 +1,39 @@
+From db8b62b3041311bd52bc6126c8cf957d96926a6d Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 21 Sep 2016 10:08:05 +0800
+Subject: [PATCH 287/443] In System Settings page, add a FTP remote path
+ confirm alert, if remote path is empty.
+
+---
+ templates/system_settings.html | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index b1cc63f..6046a8e 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -302,9 +302,18 @@
+                 }
+             }
+ 
+-            while (BackupRemotePath.startsWith("/")) {
+-                var res = BackupRemotePath.replace("/", "");
+-                BackupRemotePath = res;
++            if (BackupLocation == 'ftp') {
++                while (BackupRemotePath.startsWith("/") || BackupRemotePath.startsWith(" ")) {
++                    var res = BackupRemotePath.replace("/", "");
++                    BackupRemotePath = res;
++                    res = BackupRemotePath.replace(" ", "");
++                    BackupRemotePath = res;
++                }
++
++                if (BackupRemotePath == "") {
++                    alert("{% trans "Must input correct FTP remote path!" %}");
++                    return;
++                }
+             }
+ 
+             $.ajax({
+-- 
+1.9.1
+

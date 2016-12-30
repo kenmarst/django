@@ -1,0 +1,67 @@
+From ce371eb4fd5114c9ab08c1503ff4a28b95ab55d5 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Thu, 26 May 2016 10:29:39 +0800
+Subject: [PATCH 094/443] fix log message sorting bug
+
+---
+ fruserlogs/views.py           | 2 +-
+ systemlogs/views.py           | 2 +-
+ templates/fruserlog_list.html | 2 +-
+ templates/systemlog_list.html | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 1e633a4..0e259d1 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -12,7 +12,7 @@ def fruserlog_list_view(request):
+         return HttpResponseRedirect("/")
+     if request.session['permission_log'] == 'Disable':
+         return HttpResponseRedirect("/home")
+-    obj = Fruserlogs.objects.all()
++    obj = Fruserlogs.objects.all().order_by('LogDateTime')
+     result = [res.as_json() for res in obj]
+     index = 0
+     for x in result:
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index ccde807..da0f640 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -16,7 +16,7 @@ def systemlog_list_view(request):
+         return HttpResponseRedirect("/")
+     if request.session['permission_log'] == 'Disable':
+         return HttpResponseRedirect("/home")
+-    obj = Systemlogs.objects.all()
++    obj = Systemlogs.objects.all().order_by('LogDateTime')
+     # result = json.dumps(serializers.serialize("json", User.objects.all()))
+     result = [res.as_json() for res in obj]
+     index = 0
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 53a81b8..bab4f3d 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -74,7 +74,7 @@
+                 toolbar: '#logexport',
+                 pageSize: 10,
+                 pageList: [10, 25, 50, 100],
+-                sortName: 'Name',
++                sortName: 'Index',
+                 sortOrder: 'asc',
+ 			columns: [{
+ 				field: 'Index',
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index be63b65..b3a29ba 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -61,7 +61,7 @@
+             toolbar: '#logexport',
+             pageSize: 10,
+             pageList: [10, 25, 50, 100],
+-            sortName: 'Name',
++            sortName: 'Index',
+             sortOrder: 'asc',
+ 			columns: [{
+ 				field: 'Index',
+-- 
+1.9.1
+

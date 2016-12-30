@@ -1,0 +1,26 @@
+From a7bb02cb7d5547819043b125a3ddc8ef3f2da8e7 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 28 Jun 2016 17:35:17 +0800
+Subject: [PATCH 154/443] Change admin url pattern
+
+Change url pattern of admin web.
+---
+ br06/urls.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index fd3a424..1d35b91 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -33,7 +33,7 @@ from django.conf import settings
+ 
+ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+-    url(r'^admin/', admin.site.urls),
++    url(r'^shuttle_admin/', admin.site.urls),
+     url(r'^logsetting/?$', logsetting),
+     url(r'^dashboard/$', dashboard_views),
+     url(r'^home/$', home_view),
+-- 
+1.9.1
+

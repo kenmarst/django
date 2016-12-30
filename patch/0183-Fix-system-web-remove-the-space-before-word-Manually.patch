@@ -1,0 +1,30 @@
+From 1065b8bf4ffb3e3b7c901e29e53317843476fe7a Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 14 Jul 2016 15:56:39 +0800
+Subject: [PATCH 183/443] Fix system web : remove the space before word
+ "Manually"
+
+---
+ templates/system_settings.html | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 8f1a3d3..279f7b3 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -34,8 +34,10 @@
+                             <form role="form">
+                                 <div class = "form-group form-inline" >
+                                     <div class="radio">
+-                                        <label><input type="radio" value="Manually" id="BackupMethod_Manually" name="BackupMethod">
+-                                            {% trans "Manually" %} <font size="-1" color="gray">({% trans "Instantly backup after clicking save" %})</font></label>
++                                        <label>
++                                            <input type="radio" value="Manually" id="BackupMethod_Manually" name="BackupMethod">{% trans "Manually" %}
++                                            <font size="-1" color="gray">({% trans "Instantly backup after clicking save" %})</font>
++                                        </label>
+                                     </div>
+                                     <div></div>
+                                     <div class="radio">
+-- 
+1.9.1
+

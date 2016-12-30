@@ -1,0 +1,31 @@
+From 63cd7366daccf95fa1fa68e34c5162becd20038d Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 2 Aug 2016 14:14:47 +0800
+Subject: [PATCH 214/443] Add timezone except function
+
+Add timezone except function for command does not exist.
+---
+ api/utility.py | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/api/utility.py b/api/utility.py
+index 66f55b0..cf9a6d7 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -79,7 +79,10 @@ def md5(str):
+ def get_localtimezone():
+     # linux use timedatectl to get system time info
+     # that contain the timezone name.
+-    timezone = os.popen('timedatectl | grep Time | grep -i zone').readlines()[0]
+-    timezone = timezone[timezone.find(':') + 1:].lstrip()
+-    timezone = timezone[:timezone.find(' ')]
++    try:
++        timezone = os.popen('timedatectl | grep Time | grep -i zone').readlines()[0]
++        timezone = timezone[timezone.find(':') + 1:].lstrip()
++        timezone = timezone[:timezone.find(' ')]
++    except:
++        timezone = 'UTC'
+     return timezone
+-- 
+1.9.1
+

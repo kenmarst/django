@@ -1,0 +1,27 @@
+From 847364ce13b95426729b14af94be6754e1434ec2 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 12 Sep 2016 19:24:10 +0800
+Subject: [PATCH 276/443] Fix picture save bug
+
+Bug fix - Picture will save no matter what the picture setting is true
+or false.
+---
+ api/face.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/face.py b/api/face.py
+index 430f01e..158b205 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -114,7 +114,7 @@ def add(request):
+                 if fruser.Face2 == settings.PIC_DIR + request.FILES.get('image').name:
+                     Frusers.objects.filter(OId = fruser.OId).update(FaceID2 = face_id, UpdateDate = datetime.now())
+             else:
+-                if Config.objects.get(Name = 'PicFaceSave').Value == true:
++                if Config.objects.get(Name = 'PicCreateSave').Value == true:
+                     FaceDir = ''.join([
+                         settings.PIC_DIR,
+                         request.POST.get('FRUserId'),
+-- 
+1.9.1
+

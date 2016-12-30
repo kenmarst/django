@@ -1,0 +1,26 @@
+From 2564edf38ba0d75edf405c97b72381834a999d27 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 23 Aug 2016 15:45:23 +0800
+Subject: [PATCH 234/443] Renamed shell.sh to start.sh and change the path to
+ fingerprinterd folder.
+
+---
+ shell.sh => fingerprinterd/start.sh | 1 -
+ 1 file changed, 1 deletion(-)
+ rename shell.sh => fingerprinterd/start.sh (73%)
+
+diff --git a/shell.sh b/fingerprinterd/start.sh
+similarity index 73%
+rename from shell.sh
+rename to fingerprinterd/start.sh
+index 1e9295b..789c23c 100755
+--- a/shell.sh
++++ b/fingerprinterd/start.sh
+@@ -1,4 +1,3 @@
+ #!/bin/bash
+-service httpd restart
+ pkill -f FingerprintService
+ ./FingerprintService
+-- 
+1.9.1
+

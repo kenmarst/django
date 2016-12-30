@@ -1,0 +1,749 @@
+From 2a606d156d6cda03f9ef56b6d2b873333f466b33 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 26 May 2016 11:24:06 +0800
+Subject: [PATCH 095/443] Add internationalization (i18n) to dashboard.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/dashboard.html                     |  43 +++++-----
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 6732 -> 7418 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 113 ++++++++++++++++++++-------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 6732 -> 7418 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 113 ++++++++++++++++++++-------
+ 9 files changed, 196 insertions(+), 77 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index b37811288fd011a6b3b22af226cf24bd7de51fb5..221ede34c6af5f8d8a31c21c1b72e0d88b5f3fcf 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irq}X(9p`rVB<$YMgTS|1(pB+
+
+delta 18
+ZcmZo-X=0i1irrMf(89{Zc;iPwMgTT*1)%@{
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index de3f2f4..113c5e6 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 18:43+0800\n"
++"POT-Creation-Date: 2016-05-26 11:20+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index b37811288fd011a6b3b22af226cf24bd7de51fb5..b235e01fa57f1cfcbd3b6fb3447a72e405f4e925 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irq}X(9p`za^puqMgTTa1)cx^
+
+delta 18
+ZcmZo-X=0i1irrMf(89{Zc;iPwMgTT*1)%@{
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index de3f2f4..35375f8 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 18:43+0800\n"
++"POT-Creation-Date: 2016-05-26 11:19+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 741cd6a..be30b5d 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Dashboard</title>
++        <title>{% trans "Dashboard" %}</title>
+     </head>
+ 
+     <body>
+@@ -15,41 +16,41 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">Dashboard</li>
++                    <li class="active">{% trans "Dashboard" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Dashboard</small></h1>
++                    <h1 class="page-header"><small>{% trans "Dashboard" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+-                        <div class="panel-heading">System Info</div>
++                        <div class="panel-heading">{% trans "System Info" %}</div>
+                         <div class="panel-body">
+                             <dl class="dl-horizontal">
+-                                <dt>System Uptime</dt>
++                                <dt>{% trans "System Uptime" %}</dt>
+                                 <dd>{{uptime_days}} days, {{uptime_hms}}</dd>
+-                                <dt>Disk Usage</dt>
++                                <dt>{% trans "Disk Usage" %}</dt>
+                                 <dd>{{disk_used}} / {{ disk_total }} ({{disk_stat_percent}}%)</dd>
+-                                <dt>Memory Usage</dt>
++                                <dt>{% trans "Memory Usage" %}</dt>
+                                 <dd>{{used_mem}} / {{total_mem}} ({{mem_stat_percent}}%)</dd>
+-                                <dt>FR User Count</dt>
++                                <dt>{% trans "FR User Count" %}</dt>
+                                 <dd>{{frusers_total_count}} / {{frusers_limit}}</dd>
+-                                <dt>System Log Count</dt>
++                                <dt>{% trans "System Log Count" %}</dt>
+                                 <dd>{{Syslogs_total_count}} / {{syslog_limit}}</dd>
+-                                <dt>System Current Time</dt>
++                                <dt>{% trans "System Current Time" %}</dt>
+                                 <dd>{{now}} ({{tz}})</dd>
+                             </dl>
+                             <div class="row">
+                                 <div class="col-md-6 col-lg-6">
+                                     <div class="panel panel-default" style="background-color:lavender;">
+-                                        <div class="panel-heading">Device Info</div>
++                                        <div class="panel-heading">{% trans "Device Info" %}</div>
+                                         <div class="panel-body">
+-                                            <label>Device Count: {{device_total_count}} (online : {{device_online_count}} / offline : {{device_offline_count}} / proposed : {{device_proposed_count}})</label>
++                                            <label>{% trans "Device Count" %}: {{device_total_count}} (online : {{device_online_count}} / offline : {{device_offline_count}} / {% trans "proposed" %} : {{device_proposed_count}})</label>
+                                             <table id="DeviceList"></table>
+                                             <div class="text-right">
+                                                 <a href="/device_list">View Detail</a>
+@@ -59,9 +60,9 @@
+                                 </div>
+                                 <div class="col-md-6 col-lg-6">
+                                     <div class="panel panel-default" style="background-color:lavenderblush;">
+-                                        <div class="panel-heading">FR Users Info</div>
++                                        <div class="panel-heading">{% trans "FR Users Info" %}</div>
+                                         <div class="panel-body">
+-                                            <label>FR User Count: {{frusers_total_count}}</label>
++                                            <label>{% trans "FR User Count" %}: {{frusers_total_count}}</label>
+                                             <table id="FRList"></table>
+                                             <div class="text-right">
+                                                 <a href="/fruser_list">View Detail</a>
+@@ -85,15 +86,15 @@
+                 columns: [
+                 {
+                     field: 'Index',
+-                    title: 'No.',
++                    title: '{% trans "No." %}',
+                 },
+                 {
+                     field: 'Name',
+-                    title: 'Device Name',
++                    title: '{% trans "Device Name" %}',
+                 },
+                 {
+                     field: 'UpdateDate',
+-                    title: 'Latest Sync Time',
++                    title: '{% trans "Latest Update Time" %}',
+                 }
+                 ],
+                     data: {{devices|safe}}
+@@ -103,19 +104,19 @@
+                 columns: [
+                 {
+                     field: 'Index',
+-                    title: 'No.',
++                    title: '{% trans "No." %}',
+                 },
+                 {
+                     field: 'FRUserId',
+-                    title: 'User ID',
++                    title: '{% trans "User ID" %}',
+                 },
+                 {
+                     field: 'Name',
+-                    title: 'User Name',
++                    title: '{% trans "User Name" %}',
+                 },
+                 {
+                     field: 'UpdateDate',
+-                    title: 'Latest Sync Time',
++                    title: '{% trans "Latest Update Time" %}',
+                 }
+                 ],
+                     data: {{frusers|safe}}
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index b339fad226d466e1ab6b6f6010a0c1de76e6a2c4..5e3adfeaa0a87f97adfb9f5a6ad8630a2efdd904 100644
+GIT binary patch
+delta 3464
+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
+O)*9~E9vpkci2nkhp5)^I
+
+delta 2786
+zcmZA2e@vBC9LMp)l^-fUu3mzR-m5}tsiCGoa+L(bR1EO9Xo3osiX~*A#-?7~+$tN>
+zdPHh&$#m1rOmocC=H{~H)@tHEH5z5Ltl4HQoBcy$>;1X+OMi5BKlgQ>^ZYpHInTMz
+z?T>s_7`+on>~NGe5+-+tICl!qrSL^59`0N+Mo>*<7{Eoyp>7>!;08>`CfnYFiEO`x
+zI{yd`#ZDZ7U2&uCB9&AcZlE7;nRief{edGffrE5nCeq|4;4qwSMo=A<n~PD$Eki!8
+z*4%2gqTfZG+fPLY9<d$AQ5~JZY`lWHa1ZK^zQH8y!xi|G?Jr7;&p-)kz>Dz_tVP|(
+z4)dV3cVZg-yK}1GRlaoMP2`%c7d0byQB(I2N8tc!072$k10Q2fLY-HDnwe76BdS0>
+zx+>eh%B;tzPS{RGch-jLXdlvtdmVjv6m_9a)N#jA1L#5>e;Px00mtB%n2EpPQXIg|
+zSj|GwOkOgtWibD`<IiZ&RDX@?;6CaO9+>~2W+I6%4LA$caUQCpDX8=2qNcnY>C>%2
+z-N<Itc`c~^qNo{p+t2*#LhsR_3!Fra@C<4I=WY86@^RPA9vsc~52%6nqdFML!ihZ+
+z)b%DIV|P<g9hV@7x@vQM)OIwXI^2)C&>_^oj@kAJ)RcdK+wdYjj$y8<JDHDqRF$ZX
+zmhh$H>&-1#mcXM%-Qamvq>NsoqA9v&4PV&yZPZA=H-ESN17;%gt_!51&JUR5%zV`O
+z5wpTvYc|G>x;84hz?-(?m~Ed%b<k~oV(p)rx6D5Cp82=wV<G6eelv`W-A%Ub5=_?b
+zzrq@pVhsn>#dfetQLFlz*^7FX4>5>Cvf}$gNRyj|d|aiqH=vH+XYK9QehPJC*VV4y
+z|4nQ74mIMR%|ESuz)WPN#ira0pzdfC>b!h2V*3}M)>M^QW9{|kR*dR`&DOBX+>5&K
+zL9-Lp!C8C;FXM9TN1b2AbZGxdvmSMR6KekfYk$M+Fi!@Ve;s(i8g3vr>v~Wp{$ktr
+zZND!k-jN@*xWcxbk2*eLmYEC9YSaK%*>(e}-^Lu~UzI&H<l$k|zu-mG3AfBX)KuO>
+zb^MpL`*<H~z<$(PnTWdHJZoQR+uKm*?X~T8)b+ZeRMt^Bi~OWrGH(^#NzfdN8puR*
+zrdf*ooLw~;EP6Cs$XIJwgIa)35_PV!KF)vNT7Pa1SwdzLz324;8Z0GL^iH2-4O_8|
+zl#(iI6Lmy)G+0(qd77*wYsqf1k-SKrBP!f;G&bG4;@hqn%LtF#%_BQVJ!v7eL}g~2
+z*iVk9;O5(Qlermr$+^{JGSS;{3fVx4Nh6s?c9LxU{>!PT==tfDsn_mcSxkkQcH^z#
+zDb(v%uihs}E~z0ZFO%tH2AN7K$p4G}6I5DBA$eZ&ujjAQK<1K4@+i@BSJ8q}d5kQK
+z)tq}3S6E#vBl%<;d5OG0RF)H7h_RyeHG$+2{X0%16`S~qkOJ}w*-i$_a4L(4R(KK7
+z!dyyx<Tau)i#$sfbl0U$OYq)JOY=TT+vtVTcY5!q@Ak%L9QHoXnBJY>uksD8Y~GSv
+z+1S$Rb&R~67^^e{dcE?@O({jWGm2*y7Ic4@In0-Q_xkx?k6!h@&D!KG$&S7g%<^uB
+zQoR1`LtbBSgf}9X6x;qd*zT>)nbUnDXR^=B38j01P_OqOl<mz3hrKD`bKZ~P(f<P6
+C*7b`3
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 2cd176a..7720661 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 18:43+0800\n"
++"POT-Creation-Date: 2016-05-26 11:20+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,6 +17,80 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
++#: templates/dashboard.html:10 templates/dashboard.html.py:19
++#: templates/dashboard.html:25 templates/menu.html.py:35
++msgid "Dashboard"
++msgstr "系统仪表板"
++
++#: templates/dashboard.html:32
++msgid "System Info"
++msgstr "系统资讯"
++
++#: templates/dashboard.html:35
++msgid "System Uptime"
++msgstr "开机多久时间"
++
++#: templates/dashboard.html:37
++msgid "Disk Usage"
++msgstr "硬碟使用空间"
++
++#: templates/dashboard.html:39
++msgid "Memory Usage"
++msgstr "RAM 使用量"
++
++#: templates/dashboard.html:41 templates/dashboard.html.py:65
++msgid "FR User Count"
++msgstr "建档总人数"
++
++#: templates/dashboard.html:43
++msgid "System Log Count"
++msgstr "Log笔数"
++
++#: templates/dashboard.html:45
++msgid "System Current Time"
++msgstr "系统当地时间"
++
++#: templates/dashboard.html:51
++msgid "Device Info"
++msgstr "设备资讯"
++
++#: templates/dashboard.html:53
++msgid "Device Count"
++msgstr "设备总数量"
++
++#: templates/dashboard.html:53
++msgid "proposed"
++msgstr "待审数"
++
++#: templates/dashboard.html:63
++msgid "FR Users Info"
++msgstr "网站使用者资讯"
++
++#: templates/dashboard.html:89 templates/dashboard.html.py:107
++#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
++#: templates/role_list.html:72 templates/systemlog_list.html.py:68
++#: templates/user_list.html:68
++msgid "No."
++msgstr "编号"
++
++#: templates/dashboard.html:93 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:65
++#: templates/fruserlog_list.html:93
++msgid "Device Name"
++msgstr "设备名称"
++
++#: templates/dashboard.html:97 templates/dashboard.html.py:119
++msgid "Latest Update Time"
++msgstr "最后更新时间"
++
++#: templates/dashboard.html:111
++msgid "User ID"
++msgstr "工号"
++
++#: templates/dashboard.html:115
++msgid "User Name"
++msgstr "姓名"
++
+ #: templates/device_add.html:8 templates/device_add.html.py:18
+ msgid "Device Add"
+ msgstr "新增设备"
+@@ -31,11 +105,6 @@ msgstr "新增设备"
+ msgid "Device"
+ msgstr "设备"
+ 
+-#: templates/device_add.html:39 templates/device_edit.html.py:53
+-#: templates/device_list.html:65 templates/fruserlog_list.html.py:93
+-msgid "Device Name"
+-msgstr "设备名称"
+-
+ #: templates/device_add.html:64 templates/device_edit.html.py:75
+ #: templates/device_settings.html:150 templates/frusergroup_add.html.py:47
+ #: templates/frusergroup_edit.html:64 templates/user_group_add.html.py:47
+@@ -47,9 +116,9 @@ msgstr "关闭"
+ #: templates/device_settings.html:151 templates/frusergroup_add.html.py:48
+ #: templates/frusergroup_edit.html:65 templates/logsetting.html.py:124
+ #: templates/role_add.html:62 templates/role_permission.html.py:38
+-#: templates/role_rename.html:50 templates/user_add.html.py:98
++#: templates/role_rename.html:50 templates/user_add.html.py:97
+ #: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+-#: templates/user_setting.html:119 templates/user_update.html.py:95
++#: templates/user_setting.html:119 templates/user_update.html.py:94
+ msgid "Save"
+ msgstr "储存"
+ 
+@@ -103,7 +172,7 @@ msgstr "设备使用者群组管理"
+ #: templates/device_frusergroups.html:87 templates/device_list.html.py:99
+ #: templates/frusergroups_list.html:72 templates/role_list.html.py:105
+ #: templates/user_group_devices.html:89 templates/user_group_list.html:72
+-#: templates/user_group_members.html:89 templates/user_list.html.py:100
++#: templates/user_group_members.html:89 templates/user_list.html.py:101
+ msgid "Delete"
+ msgstr "删除"
+ 
+@@ -219,7 +288,7 @@ msgstr "搜寻设备"
+ #: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
+ #: templates/fruserlog_list.html.py:89 templates/user_add.html:48
+ #: templates/user_group_devices.html.py:82
+-#: templates/user_group_members.html:82 templates/user_list.html.py:78
++#: templates/user_group_members.html:82 templates/user_list.html.py:79
+ #: templates/user_setting.html:54 templates/user_update.html.py:47
+ msgid "Name"
+ msgstr "姓名"
+@@ -253,12 +322,6 @@ msgstr "设备使用者群组管理"
+ msgid "Create new group"
+ msgstr "建立新群组"
+ 
+-#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+-#: templates/role_list.html:72 templates/systemlog_list.html.py:68
+-#: templates/user_list.html:67
+-msgid "No."
+-msgstr "编号"
+-
+ #: templates/frusergroups_list.html:64 templates/user_group_list.html.py:64
+ msgid "Users"
+ msgstr "使用者"
+@@ -276,7 +339,7 @@ msgstr "汇出"
+ msgid "FRUserId"
+ msgstr "工号"
+ 
+-#: templates/fruserlog_list.html:100 templates/user_list.html.py:86
++#: templates/fruserlog_list.html:100 templates/user_list.html.py:87
+ msgid "CreateDate"
+ msgstr "创立时间"
+ 
+@@ -308,10 +371,6 @@ msgstr "分隔符号"
+ msgid "System"
+ msgstr "系统"
+ 
+-#: templates/menu.html:35
+-msgid "Dashboard"
+-msgstr "系统仪表板"
+-
+ #: templates/menu.html:37 templates/user_group_list.html.py:10
+ #: templates/user_group_list.html:18 templates/user_group_list.html.py:24
+ msgid "User Group List"
+@@ -432,8 +491,8 @@ msgid "Sort"
+ msgstr "排序"
+ 
+ #: templates/role_add.html:61 templates/role_permission.html.py:37
+-#: templates/role_rename.html:49 templates/user_add.html.py:97
+-#: templates/user_setting.html:118 templates/user_update.html.py:94
++#: templates/role_rename.html:49 templates/user_add.html.py:96
++#: templates/user_setting.html:118 templates/user_update.html.py:93
+ msgid "Back"
+ msgstr "返回"
+ 
+@@ -504,7 +563,7 @@ msgstr "日期时间"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:71
++#: templates/user_add.html:39 templates/user_list.html.py:72
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帐号"
+@@ -522,7 +581,7 @@ msgstr "密码"
+ msgid "Confirm password"
+ msgstr "确认密码"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:82
++#: templates/user_add.html:84 templates/user_list.html.py:83
+ #: templates/user_update.html:81
+ msgid "Role"
+ msgstr "角色"
+@@ -555,11 +614,11 @@ msgstr "群组成员管理"
+ msgid "Create new account"
+ msgstr "建立新帐号"
+ 
+-#: templates/user_list.html:91
++#: templates/user_list.html:92
+ msgid "UpdateDate"
+ msgstr "更新时间"
+ 
+-#: templates/user_list.html:96 templates/user_setting.html.py:66
++#: templates/user_list.html:97 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "电子信箱"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 1d2f6ce2779ed39f5424bc71d16aefe7e2cbb570..c867e09b2873b507014cbdce9ea841d725f21504 100644
+GIT binary patch
+delta 3465
+zcmZ9OeNfd^8pjXlqWK1*kVNQ3V?*04DlJ7z0y7e+L~~uTM7SdB%0;*u^y2je#MCD1
+zDlKK}R;FTUCP@a9u1zmCmen7bS-I^F_g-wawq~rRnyEhDdmo*qXMW$`=bY!9^E~I}
+zcMrUC&5siTr;~ecaac3D7|rVK+yS_;FE4C<f9Dcl8SDcW!DLtid%-nu5Nw76VT;wb
+zLqfTBsPPA(LLP=m@Mw$y_b~+?_XV#+_?<CfKrB%z9E^W7)WBTW4;H}-;2dKaRHDVk
+zTBv>vkjFLhQl3YQPevJVuFV_=peAqxYTyUv{}d{54@`wWSbGx7Rl;<rm5zjefS1A&
+zc)7K&f;?`Wu?1>D+u>01yABH4(qqQcYM}lNB$rEIe<`{lQ1wix0Arz6GzDtnMNnIO
+zCrpE0s0jt27Sv?i1U2pn7|<5(q@W4B2z92fL!I?esE+R&KQ;D1P2?=p%Hznc#0gOT
+zL>Lb*hKe@=s^2K631vg|ADid`E}g=)I5J=f90HfZ+h7x12v0z5^<>ULEP&d9=}<>9
+z4=RBlYC#RgHISk1A*h8s36;1FD$o8T_Fn_v#Gx%e2DR0nL#^a1sDVF0CG5jXJCg<#
+zC=+V@7^sO|0X2c~R-XcuXc|<UQb;IQ2{p0$00kvnXO0$l5%nEVD?0);@Fdh3c0(on
+zKV<jaS;*shaefMzV$6c_kAs@<G^mN)YMcudH&9MNEAg459_ox5;a}l;cq#lADo_T?
+z(b;A}CCG*vKM`tNzOfKai6bG@&TL|P#mAs__8+l&z&&S<{ZK17Y<w@)!TsA9Hhu}C
+zAD=NUB~~8<H9p;VnK9Qm-B=1WesQ$U`PZ9c9n=iB7`K}L8K}Vfto|?KyT((-i1Dm3
+zj`LHZLB@2*Cc126uKfD_7gJE;QaRuPI0yR7{}$8)jzj%gP8)xO`UX-jbdJYm@lyL_
+z$mY1Ykh!>OW23b{4mGX=2GrpVYxo3eBHu&#f42J2VX=v&8?&MMjWbSyT3No;?=a3Y
+ze+AUS?lCq(ee{nE<M*#X+i>XX++o}Y<?l2eF&;I(XFLIw_%q|zP>FhR{oM$Y;7nKo
+z6>kSr`yOLw8vCyRZ&`;^*6<(WSH_>9`t{|vsQ~FvJCqF-_<E~Pwf0iuBB-NVX7whh
+z{*M}416KH_aVJ!Qy;kpnO8lDnKZM$;|C;}Q#$Sxdd;poWXF>frp9U4L!nhP_{0gXv
+z1=d-^-=S9YEaY)ryp;GOs2P6&)&7mu`w(62gP;OsT0I9UK>;j<#ZWiiZm2k2#@8Sd
+z3%Iu_Xuye>!+mc25^{gIyO695-HmcoF`H!cKwVO@CRB(1hW?DMMx&5&)S^Npt3bWU
+zf8HiqNw?f@Z8#O?a^CW-q}x$8IR>`^&PBSWtI<`c3Z1hDDE!GPGmQ<(&$ku*Iq3S-
+zoqP|v9%;K|`jY3P*{B)mPpY<jDv}kUdbAqdiO$&s3R!3t`U{$eZb!0f(F_z_Kj+}C
+zL37Y}q|0F>;(l@Wp*5%&U5B{Nqvr{tgQvr>=rTFXmKzttRY-p)a?ujB4Dqc-FRaTI
+zg74|P<x%pZo6(i#y%p-i)5j#cAB{m%&>g4*$u2=P(NgSHVC6;dHgqq_M1Mp+v=Di<
+zgas7hk!)HF(f19!^@YpEp_S++q^or)8iC5uXmkr|L~GGG(_cmXQ^TDUwMyRE=nB>H
+z%FDeqewWvt*KcH8M!s)ZwcizZmsgd0JyR>H&X)_T7y5#g{TKBssH$7+nO#>_=?xz5
+zzr42w1Sbwy)gPa?w$2mncW}U?gUkHhI=^RjO$7zdtg0p6;LQVb2F&m-@zplO#<$lG
+zERG+YzpS>_TkVf_aU~6Pe(#cKkaOiCU!^BHtKgx;VF|Nq{0enE@#WOQ0;iOoqN+N7
+ztW;b^(}PJT`_|O@YJ7Fxis1ag6@A8ga&ji-OlUtg_=5ORk%O;>w;Vjv{IKiUwI{T?
+zwfpei@a9*n($n7Dvul0u)Q|<qk*A)IJiV>^)x(j^yCQ9!XIg^6+@Y%yLtUNW-J1#0
+z-PuW;U|C8=@Z`|-DUpu-k>^@t-FsFxS)j6%-O1stD?^7ihM#yT+_Ep+x>|wyrA`_+
+zGjE0`)}6VuPfZ;YUl`fa5!z~fT%^4#a^S^S9LE+!_N*nJxw|_zba!<`URrr(W1~CM
+zvLW2IEwugd?pK;D!F|I%9u<1|*`C&I?spT5?0qV-X{`(G42Cv66x^7W5nP-0d_w3@
+NQ|N`Z;Mj|X{|Y8J<U;@e
+
+delta 2786
+zcmZA2eN5F=9LMp)l?RoFs}NlDUKLXd2sH(ht0WkvVt`Nhl%j$KVhNc~v8fj~x60<U
+zej+uuWV-2Qra5M6V`JHJYc=$r8jZ4A)@-wu&HkaW_5R%Zr9V2mpZhw$^LsewcYf#o
+z?m+mfqR5@}_;yEWB_VQmm~&_FLK0t;;*riJVi?s_hUvH%In=GkG~9%#*lgSTFrMwV
+zQ0E`R;n;zrurp@FU8a&u!wvLfuXzX6(H}S(<2XnsW*|*&GLFFMW*F5`xw!;&+;ZgO
+zHkez@UFdfa=h~>~z+<-KB&wrxn1$C+7ruqMqi-+)`*9`yWcz2O#AcubHQ*)q2yQ^#
+z$PV+6wRd0&{ksdQ;B~%q;!Wh5t`9XMcTrRK5XaykY5)P|TLT|w=AzCkM9oYo>Je3-
+z9$l5~UuD)|L?>*gqC0Cvb#wsf!@Z6^JdV0h2kN+!r~!1Mjz5b*yoBTMOU%IEa2XC_
+z16H$8G?Q1%?lk6Kcl;R*n(D7n9o$FV!2|Oj)J!Dsr2%K6I-ZE?C?9p+Jk*qzBYnEH
+zs2gcOowpO!Uj#KHZ~K{lUFba;bb-^T5uQU0;G%6`Lq4v@yoF=g{sA@c0aOR0Svb*0
+zg1TNVGIlo=)o}@OsH-+NMr=njs>3$ag$|<zcEYw#p{D!;+=iF&aSU-)-N^#fqpC!8
+zw3II$UuQOASsafVb%PgKkuq|Hil(UB8osdY+o+L#Z~kuk2hDiqT^C43ou6(_Fbh!U
+zhs_Feo!JyK;##Tb0&m)m6SjR8)j^l}iM4-f_L}|XJ@aqV$3oC`{bmRmyUVlf5=_+Z
+zzrq@p;TjI8jqYHTqE>ac*@t?T4>5qlGGqILNRyk5d|aiq*Q1U<VC_e&{S4~HdepAp
+z|4nQ74mIMR%|ESu(2QrLMW@_MN8QmF)OiJF*!C|(t*I(=jkVXATQQ;wwpha+b3f|B
+zhs+LC2j}q_yoxJu0Cj#9)1mz}W*zGMX4L+J*8YasZk`S>|2puJHQYdM*4;v#_=|1d
+zxBb5CSVw-;;tJVz0qXd$S!OOWt5E}7W!v?rew(tHe^vI;FcFWU{sk|iPUtoJQB!#j
+z)$w1}?&E!|0sB#FWeVzg^R2zcwzr|q+i%-PP}l2>P+3pqJo1xviM&;GCjoOjY9Le0
+znPw^Sb9U8asOZr&lJVBC7PSDMB<fscV~qd4wf@{(vXsmrde7?xG*n8c=$)Qx4O_95
+zl#(iI6SYKlG*nhmd79Lab!0EuOkO0<5f$z^5}ocnv2E9aWrWA==93+yj_f2Gh|0_u
+z(VrYo!7Z@uX0ri#$+^`ekLc}~Pd1Ta(nO|_-6TuD|8goSdVYFk>a{ymmQZ1)-6U&x
+z3ibNctM>_#L)H+Lm&tT8gG?nA<o`wg2`alt5qVzoujj8)Pv((I@+i@BSJ8q}d5kQI
+z)|`74S6W>xCk12zd5OG0R8|mPh|!|;HJMB#`gfc{Dz@+yCWYh`vYiZ-kyI8Ft?*ey
+z3v(Iqk=KaIZ1OBw*j1Z6EzWy4CB^$FWwRGd-R-@fy4RbOcGUYkZF*OnzsfhfvZXPn
+zvT5fouYL5@_-Lg*z0WJp*pf6WXGZayqQb5ZGe-Cl@Ah2$_4sw~+st~eI;-uSK&E#)
+znB)y)9rpSIqr6dpgy{Cifg|4P?73a1vh#dib}-dT5B7Nvf?3{-P{_*<UGRPkjr|wg
+Cll6)K
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 980ebbf..9b42f2d 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 18:43+0800\n"
++"POT-Creation-Date: 2016-05-26 11:19+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,6 +17,80 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
++#: templates/dashboard.html:10 templates/dashboard.html.py:19
++#: templates/dashboard.html:25 templates/menu.html.py:35
++msgid "Dashboard"
++msgstr "系統儀表板"
++
++#: templates/dashboard.html:32
++msgid "System Info"
++msgstr "系統資訊"
++
++#: templates/dashboard.html:35
++msgid "System Uptime"
++msgstr "開機多久時間"
++
++#: templates/dashboard.html:37
++msgid "Disk Usage"
++msgstr "硬碟使用空間"
++
++#: templates/dashboard.html:39
++msgid "Memory Usage"
++msgstr "RAM 使用量"
++
++#: templates/dashboard.html:41 templates/dashboard.html.py:65
++msgid "FR User Count"
++msgstr "建檔總人數"
++
++#: templates/dashboard.html:43
++msgid "System Log Count"
++msgstr "Log筆數"
++
++#: templates/dashboard.html:45
++msgid "System Current Time"
++msgstr "系統當地時間"
++
++#: templates/dashboard.html:51
++msgid "Device Info"
++msgstr "設備資訊"
++
++#: templates/dashboard.html:53
++msgid "Device Count"
++msgstr "設備總數量"
++
++#: templates/dashboard.html:53
++msgid "proposed"
++msgstr "待審數"
++
++#: templates/dashboard.html:63
++msgid "FR Users Info"
++msgstr "網站使用者資訊"
++
++#: templates/dashboard.html:89 templates/dashboard.html.py:107
++#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
++#: templates/role_list.html:72 templates/systemlog_list.html.py:68
++#: templates/user_list.html:68
++msgid "No."
++msgstr "編號"
++
++#: templates/dashboard.html:93 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:65
++#: templates/fruserlog_list.html:93
++msgid "Device Name"
++msgstr "設備名稱"
++
++#: templates/dashboard.html:97 templates/dashboard.html.py:119
++msgid "Latest Update Time"
++msgstr "最後更新時間"
++
++#: templates/dashboard.html:111
++msgid "User ID"
++msgstr "工號"
++
++#: templates/dashboard.html:115
++msgid "User Name"
++msgstr "姓名"
++
+ #: templates/device_add.html:8 templates/device_add.html.py:18
+ msgid "Device Add"
+ msgstr "新增設備"
+@@ -31,11 +105,6 @@ msgstr "新增設備"
+ msgid "Device"
+ msgstr "設備"
+ 
+-#: templates/device_add.html:39 templates/device_edit.html.py:53
+-#: templates/device_list.html:65 templates/fruserlog_list.html.py:93
+-msgid "Device Name"
+-msgstr "設備名稱"
+-
+ #: templates/device_add.html:64 templates/device_edit.html.py:75
+ #: templates/device_settings.html:150 templates/frusergroup_add.html.py:47
+ #: templates/frusergroup_edit.html:64 templates/user_group_add.html.py:47
+@@ -47,9 +116,9 @@ msgstr "關閉"
+ #: templates/device_settings.html:151 templates/frusergroup_add.html.py:48
+ #: templates/frusergroup_edit.html:65 templates/logsetting.html.py:124
+ #: templates/role_add.html:62 templates/role_permission.html.py:38
+-#: templates/role_rename.html:50 templates/user_add.html.py:98
++#: templates/role_rename.html:50 templates/user_add.html.py:97
+ #: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+-#: templates/user_setting.html:119 templates/user_update.html.py:95
++#: templates/user_setting.html:119 templates/user_update.html.py:94
+ msgid "Save"
+ msgstr "儲存"
+ 
+@@ -103,7 +172,7 @@ msgstr "設備使用者群組管理"
+ #: templates/device_frusergroups.html:87 templates/device_list.html.py:99
+ #: templates/frusergroups_list.html:72 templates/role_list.html.py:105
+ #: templates/user_group_devices.html:89 templates/user_group_list.html:72
+-#: templates/user_group_members.html:89 templates/user_list.html.py:100
++#: templates/user_group_members.html:89 templates/user_list.html.py:101
+ msgid "Delete"
+ msgstr "刪除"
+ 
+@@ -219,7 +288,7 @@ msgstr "搜尋設備"
+ #: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
+ #: templates/fruserlog_list.html.py:89 templates/user_add.html:48
+ #: templates/user_group_devices.html.py:82
+-#: templates/user_group_members.html:82 templates/user_list.html.py:78
++#: templates/user_group_members.html:82 templates/user_list.html.py:79
+ #: templates/user_setting.html:54 templates/user_update.html.py:47
+ msgid "Name"
+ msgstr "姓名"
+@@ -253,12 +322,6 @@ msgstr "設備使用者群組管理"
+ msgid "Create new group"
+ msgstr "建立新群組"
+ 
+-#: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+-#: templates/role_list.html:72 templates/systemlog_list.html.py:68
+-#: templates/user_list.html:67
+-msgid "No."
+-msgstr "編號"
+-
+ #: templates/frusergroups_list.html:64 templates/user_group_list.html.py:64
+ msgid "Users"
+ msgstr "使用者"
+@@ -276,7 +339,7 @@ msgstr "匯出"
+ msgid "FRUserId"
+ msgstr "工號"
+ 
+-#: templates/fruserlog_list.html:100 templates/user_list.html.py:86
++#: templates/fruserlog_list.html:100 templates/user_list.html.py:87
+ msgid "CreateDate"
+ msgstr "創立時間"
+ 
+@@ -308,10 +371,6 @@ msgstr "分隔符號"
+ msgid "System"
+ msgstr "系統"
+ 
+-#: templates/menu.html:35
+-msgid "Dashboard"
+-msgstr "系統儀表板"
+-
+ #: templates/menu.html:37 templates/user_group_list.html.py:10
+ #: templates/user_group_list.html:18 templates/user_group_list.html.py:24
+ msgid "User Group List"
+@@ -432,8 +491,8 @@ msgid "Sort"
+ msgstr "排序"
+ 
+ #: templates/role_add.html:61 templates/role_permission.html.py:37
+-#: templates/role_rename.html:49 templates/user_add.html.py:97
+-#: templates/user_setting.html:118 templates/user_update.html.py:94
++#: templates/role_rename.html:49 templates/user_add.html.py:96
++#: templates/user_setting.html:118 templates/user_update.html.py:93
+ msgid "Back"
+ msgstr "返回"
+ 
+@@ -504,7 +563,7 @@ msgstr "日期時間"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:71
++#: templates/user_add.html:39 templates/user_list.html.py:72
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帳號"
+@@ -522,7 +581,7 @@ msgstr "密碼"
+ msgid "Confirm password"
+ msgstr "確認密碼"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:82
++#: templates/user_add.html:84 templates/user_list.html.py:83
+ #: templates/user_update.html:81
+ msgid "Role"
+ msgstr "角色"
+@@ -555,11 +614,11 @@ msgstr "群組成員管理"
+ msgid "Create new account"
+ msgstr "建立新帳號"
+ 
+-#: templates/user_list.html:91
++#: templates/user_list.html:92
+ msgid "UpdateDate"
+ msgstr "更新時間"
+ 
+-#: templates/user_list.html:96 templates/user_setting.html.py:66
++#: templates/user_list.html:97 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "電子信箱"
+ 
+-- 
+1.9.1
+

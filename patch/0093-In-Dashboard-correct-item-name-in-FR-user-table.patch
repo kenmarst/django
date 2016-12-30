@@ -1,0 +1,30 @@
+From f10c0a478a5c0b705b885231926faf3fc8221e56 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 25 May 2016 19:18:11 +0800
+Subject: [PATCH 093/443] In Dashboard, correct item name in FR user table.
+
+---
+ templates/dashboard.html | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 1f6935a..741cd6a 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -107,11 +107,11 @@
+                 },
+                 {
+                     field: 'FRUserId',
+-                    title: 'FRUserID',
++                    title: 'User ID',
+                 },
+                 {
+                     field: 'Name',
+-                    title: 'Device Name',
++                    title: 'User Name',
+                 },
+                 {
+                     field: 'UpdateDate',
+-- 
+1.9.1
+

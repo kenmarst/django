@@ -1,0 +1,146 @@
+From fb131c85285956fc52ee952791bba628af1183cb Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 17:07:15 +0800
+Subject: [PATCH 166/443] Modify backup time hours and mins value.
+
+---
+ templates/system_settings.html | 60 +++++++++++++++++++++---------------------
+ 1 file changed, 30 insertions(+), 30 deletions(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 1beb4a8..9635901 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -46,16 +46,16 @@
+                                         <input type="radio" value="Monthly" id="BackupScheduling_Month" name="BackupScheduling">{% trans "Every Month" %}
+                                         <input type="text" maxlength=2 size=1 id="BackupMonthlyDate" name="BackupMonthlyDate">{% trans "Day" %}, {% trans "Time" %}:
+                                         <select id="BackupMonthlyDate_hours" name="BackupMonthlyDate_hours">
+-                                            <option value="00">00</option>
+-                                            <option value="01">01</option>
+-                                            <option value="02">02</option>
+-                                            <option value="03">03</option>
+-                                            <option value="04">04</option>
+-                                            <option value="05">05</option>
+-                                            <option value="06">06</option>
+-                                            <option value="07">07</option>
+-                                            <option value="08">08</option>
+-                                            <option value="09">09</option>
++                                            <option value="0">00</option>
++                                            <option value="1">01</option>
++                                            <option value="2">02</option>
++                                            <option value="3">03</option>
++                                            <option value="4">04</option>
++                                            <option value="5">05</option>
++                                            <option value="6">06</option>
++                                            <option value="7">07</option>
++                                            <option value="8">08</option>
++                                            <option value="9">09</option>
+                                             <option value="10">10</option>
+                                             <option value="11">11</option>
+                                             <option value="12">12</option>
+@@ -73,8 +73,8 @@
+                                         </select>
+                                         <label>:</label>
+                                         <select id="BackupMonthlyDate_mins"  name="BackupMonthlyDate_mins">
+-                                            <option value="00">00</option>
+-                                            <option value="05">05</option>
++                                            <option value="0">00</option>
++                                            <option value="5">05</option>
+                                             <option value="10">10</option>
+                                             <option value="15">15</option>
+                                             <option value="20">20</option>
+@@ -99,16 +99,16 @@
+                                         <input type="checkbox" id="fri_chk" name="fri_chk" value="5">{% trans "Fri" %},
+                                         <input type="checkbox" id="sat_chk" name="sat_chk" value="6">{% trans "Sat" %}, Time:
+                                         <select id="BackupWeeklyDate_hours" name="BackupWeeklyDate_hours">
+-                                            <option value="00">00</option>
+-                                            <option value="01">01</option>
+-                                            <option value="02">02</option>
+-                                            <option value="03">03</option>
+-                                            <option value="04">04</option>
+-                                            <option value="05">05</option>
+-                                            <option value="06">06</option>
+-                                            <option value="07">07</option>
+-                                            <option value="08">08</option>
+-                                            <option value="09">09</option>
++                                            <option value="0">00</option>
++                                            <option value="1">01</option>
++                                            <option value="2">02</option>
++                                            <option value="3">03</option>
++                                            <option value="4">04</option>
++                                            <option value="5">05</option>
++                                            <option value="6">06</option>
++                                            <option value="7">07</option>
++                                            <option value="8">08</option>
++                                            <option value="9">09</option>
+                                             <option value="10">10</option>
+                                             <option value="11">11</option>
+                                             <option value="12">12</option>
+@@ -126,8 +126,8 @@
+                                         </select>
+                                         <label>:</label>
+                                         <select id="BackupWeeklyDate_mins"  name="BackupWeeklyDate_mins">
+-                                            <option value="00">00</option>
+-                                            <option value="05">05</option>
++                                            <option value="0">00</option>
++                                            <option value="5">05</option>
+                                             <option value="10">10</option>
+                                             <option value="15">15</option>
+                                             <option value="20">20</option>
+@@ -283,7 +283,7 @@
+                 alert("Must select one week day!");
+                 return;
+             }
+-            
++
+             $.ajax({
+                 type: 'post',
+                 traditional: true,
+@@ -379,7 +379,7 @@
+         });
+ 
+         $('#BackupMethod_Automatic').click(function() {
+-            if($(this).is(':enabled')) { 
++            if($(this).is(':enabled')) {
+                 $("#BackupScheduling_Month").removeAttr("disabled");
+                 $("#BackupScheduling_Week").removeAttr("disabled");
+                 if ('{{BackupScheduling}}' == 'Monthly') {
+@@ -412,7 +412,7 @@
+         });
+ 
+         $('#BackupScheduling_Month').click(function() {
+-            if($(this).is(':enabled')) { 
++            if($(this).is(':enabled')) {
+                 $("#sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").attr("disabled", true);
+                 $("#BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").removeAttr("disabled");
+                 $('input[name="BackupMonthlyDate"]').val('{{BackupMonthlyDate}}');
+@@ -422,7 +422,7 @@
+         });
+ 
+         $('#BackupScheduling_Week').click(function() {
+-            if($(this).is(':enabled')) { 
++            if($(this).is(':enabled')) {
+                 $("#BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
+                 $("#sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").removeAttr("disabled");
+                 $('select[name="BackupWeeklyDate_hours"]').val('{{BackupTime_hours}}');
+@@ -431,7 +431,7 @@
+         });
+ 
+         $('#rftp_chk').change(function() {
+-            if($(this).is(':checked')) { 
++            if($(this).is(':checked')) {
+                 $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
+             }
+             else
+@@ -454,7 +454,7 @@
+                 else {
+                     $("#BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
+                 }
+-                
++
+                 if ('{{BackupLocation}}' == 'ftp') {
+                     $('input[name="rftp_chk"]').prop('checked', true);
+                     $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
+-- 
+1.9.1
+

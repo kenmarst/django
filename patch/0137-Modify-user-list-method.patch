@@ -1,0 +1,224 @@
+From e7787019c51be4a7430d779c8719ec34445c77df Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 21:01:18 +0800
+Subject: [PATCH 137/443] Modify user list method
+
+Modify user list method for large data load.
+---
+ br06/urls.py             |  5 ++-
+ templates/user_list.html | 97 +++++++++++++++++++++++++-----------------------
+ user/views.py            | 39 +++++++++++++++----
+ 3 files changed, 85 insertions(+), 56 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 3e2e53d..8a0fffe 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -16,7 +16,7 @@ Including another URLconf
+ from django.conf.urls import url, include
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+-from user.views import user_setting, user_list_view, user_add_view, user_update_view, add_user, update_user, delete_user
++from user.views import user_setting, user_list_view, user_list_data, user_add_view, user_update_view, add_user, update_user, delete_user
+ from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser, fruser_data
+ from systemlogs.views import systemlog_list_view, systemlog_export, systemlog_data
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_data
+@@ -34,7 +34,6 @@ from django.conf import settings
+ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^admin/', admin.site.urls),
+-    url(r'^user_setting/?$', user_setting),
+     url(r'^logsetting/?$', logsetting),
+     url(r'^system_settings/$', settings_views),
+     url(r'^dashboard/$', dashboard_views),
+@@ -63,7 +62,9 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
++    url(r'^user_setting/?$', user_setting),
+     url(r'^user_list/?$', user_list_view),
++    url(r'^user_list_data/?$', user_list_data),
+     url(r'^user_add/?$', user_add_view),
+     url(r'^user_update/?$', user_update_view),
+     url(r'^add_user/?$', add_user),
+diff --git a/templates/user_list.html b/templates/user_list.html
+index a4739ca..0f271fd 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -60,57 +60,62 @@
+ 	    }
+ 	</script>
+ 	<script>
+-		// var dataSet = {{test|safe}};
+-		var index
+-		var dataSet = {{obj|safe}};
++		var index;
+         $('#userList').bootstrapTable({
++            url: '/user_list_data',
+             search: true,
+             pagination: true,
++            toolbar: '#new_acc',
+             pageSize: 10,
+-            pageList: [10, 25, 50, 100],
+-            sortName: 'Index',
+-            //sortOrder: 'desc',
++            sortName: 'Account',
+             sortOrder: 'asc',
+-            toolbar:'#new_acc',
+-			columns: [{
+-				field: 'Index',
+-				title: '{% trans "No." %}',
+-				sortable: true,
+-			},{
+-				field: 'Account',
+-				title: '{% trans "Account" %}',
+-				sortable: true,
+-                formatter: function(value, row) {
+-                    return '<a href="/user_update?OId=' + row.OId + '"  >'+ value +'</a>';
++            sidePagination: 'server',
++            queryParams: function(params) {
++                return {
++                    limit: params.limit,
++                    offset: params.offset,
++                    search: params.search,
++                    sort: params.sort,
++                    order: params.order,
++                };
++            },
++			columns: [
++                {
++                    field: 'Index',
++                    title: '{% trans "No." %}'
++                }, {
++                    field: 'Account',
++                    title: '{% trans "Account" %}',
++                    sortable: true,
++                    formatter: function(value, row) {
++                        return '<a href="/user_update?OId=' + row.OId + '"  >'+ value +'</a>';
++                    }
++                }, {
++                    field: 'Name',
++                    title: '{% trans "Name" %}',
++                    sortable: true
++                }, {
++                    field: 'Email',
++                    title: '{% trans "Email" %}',
++                    sortable: true
++                }, {
++                    field: 'RoleOId',
++                    title: '{% trans "Role" %}',
++                    sortable: true
++                }, {
++                    field: 'CreateDate',
++                    title: '{% trans "CreateDate" %}',
++                    sortable: true
++                }, {
++                    field: 'UpdateDate',
++                    title: '{% trans "UpdateDate" %}',
++                    sortable: true
++                }, {
++                    formatter: function(value, row) {
++                        return '<button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
++                    }
+                 }
+-			}, {
+-				field: 'Name',
+-				title: '{% trans "Name" %}',
+-				sortable: true
+-			}, {
+-				field: 'RoleOId',
+-				title: '{% trans "Role" %}',
+-				sortable: true
+-			},{
+-				field: 'CreateDate',
+-				title: '{% trans "CreateDate" %}',
+-				sortable: true
+-			},
+-			{
+-				field: 'UpdateDate',
+-				title: '{% trans "UpdateDate" %}',
+-				sortable: true
+-			},
+-			{
+-				field: 'Email',
+-				title: '{% trans "Email" %}',
+-				sortable: true
+-            },{
+-                formatter: function(value, row) {
+-                               return '<button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
+-				}
+-			}],
+-			data: dataSet
++            ],
+ 		});
+ 
+         //For getting CSRF token
+@@ -148,7 +153,7 @@
+                 success: function(data) {
+                     //console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+-                        location.reload();
++                        $('#userList').bootstrapTable('refresh');
+                     } else if (data.CODE == "2") {
+                         alert("Admin is can't be deleted");
+                     } else if (data.CODE == "3") {
+diff --git a/user/views.py b/user/views.py
+index 1cae555..4ed6c83 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -6,6 +6,7 @@ from api.models import Users, Role, Acl
+ from api.utility import md5
+ from datetime import datetime
+ from login.views import check_login
++from django.db.models import Q
+ import json
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+@@ -30,14 +31,36 @@ def user_list_view(request):
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+-    obj = Users.objects.all()
+-    # result = json.dumps(serializers.serialize("json", User.objects.all()))
+-    result = [res.as_json() for res in obj]
+-    index = 0
+-    for x in result:
+-        x['Index'] = index+1
+-        index += 1
+-    return render(request, 'user_list.html', {'active': "user_list", 'obj': result})
++    return render(request, 'user_list.html', {'active': "user_list"})
++
++def user_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        sort = {'Account' : 'Account', 'Name' : 'Name', 'RoleOId' : 'RoleOId__Name', 'CreateDate' : 'CreateDate', 'UpdateDate' : 'UpdateDate', 'Email' : 'Email'}
++        if request.GET.get('order', None) == 'asc':
++            order = sort.get(request.GET.get('sort'), 'Account')
++        else:
++            order = '-' + sort.get(request.GET.get('sort'), 'Account')
++        if search:
++            users = Users.objects.filter(Q(Account__contains = search) | Q(Name__contains = search) | Q(RoleOId__Name__contains = search) | Q(Email__contains = search)).order_by(order)
++        else:
++            users = Users.objects.order_by(order)
++        user_count = users.count()
++        users = [user.as_json() for user in users[offset : offset + limit]]
++        index = offset
++        for user in users:
++            user['Index'] = index + 1
++            index += 1
++        return JsonResponse({'total': user_count, 'rows': users})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
+ 
+ def user_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+-- 
+1.9.1
+

@@ -1,0 +1,44 @@
+From cfdfa8b4a0deb8c4d8c2228bbfbe4cc4ee77e74a Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Wed, 21 Sep 2016 16:35:06 +0800
+Subject: [PATCH 290/443] Fix Bug1515: automatically logout issue.
+
+---
+ login/views.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/login/views.py b/login/views.py
+index dc9669a..850393b 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -125,14 +125,19 @@ def checkRecaptcha(response, secretkey):
+ # res_code[2]: repeat login: go to login page
+ # res_code[3]: permission error: go to home page
+ def check_login(request, permission):
++    timeout = request.session.get_expiry_age()
+     try:
+         if request.session['LoginIP'] != Users.objects.get(Email = request.session['Email']).LoginIP:
++            request.session.flush()
+             return json.dumps(res_code[2])
+         elif request.session[permission] == 'Disable':
++            request.session.set_expiry(timeout)
+             return json.dumps(res_code[3])
+         else:
++            request.session.set_expiry(timeout)
+             return json.dumps(res_code[0])
+     except Exception as e:
++        request.session.flush()
+         return json.dumps(res_code[1])
+ 
+ 
+@@ -140,7 +145,6 @@ def check_login_redirect(request, code):
+     if code == "1":
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9996"})
+     elif code == "2":
+-        request.session.flush()
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif code == "3":
+         return HttpResponseRedirect("/home")
+-- 
+1.9.1
+

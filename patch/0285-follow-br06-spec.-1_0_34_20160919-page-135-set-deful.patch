@@ -1,0 +1,26 @@
+From ba5a612e23f9b8edc301976bb05ee708648ec106 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Tue, 20 Sep 2016 13:49:10 +0800
+Subject: [PATCH 285/443] follow br06 spec.(1_0_34_20160919) page 135 ,set
+ defult separator to "TAB".
+
+---
+ logsetting/views.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/logsetting/views.py b/logsetting/views.py
+index 10e939d..0deaa1e 100644
+--- a/logsetting/views.py
++++ b/logsetting/views.py
+@@ -11,7 +11,7 @@ import csv, json, os
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_log'
+ default_header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
+-default_symbol="comma"
++default_symbol="tab"
+ 
+ def logsetting_view(request):
+     login_request = json.loads(check_login(request, permission))
+-- 
+1.9.1
+

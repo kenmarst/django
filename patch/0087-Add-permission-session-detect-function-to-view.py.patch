@@ -1,0 +1,407 @@
+From 7aab202df3a66c04ad0f8322d8bf166a4c64b029 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Wed, 25 May 2016 17:56:44 +0800
+Subject: [PATCH 087/443] Add permission session detect function to view.py
+
+---
+ dashboard/views.py    |  2 ++
+ devices/views.py      | 10 ++++++++++
+ frusergroups/views.py | 10 ++++++++++
+ fruserlogs/views.py   | 25 ++++++++++---------------
+ logsetting/views.py   | 19 +++++++++----------
+ role/views.py         |  8 ++++++++
+ systemlogs/views.py   | 15 +++++----------
+ user/views.py         |  6 ++++++
+ usergroups/views.py   | 10 ++++++++++
+ 9 files changed, 70 insertions(+), 35 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 95dd5a9..e056ec1 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -31,6 +31,8 @@ def _bytes2human(n):
+ def dashboard_views(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+ 
+     food1 = { 'name':'cake', 'price':60, 'comment':'good', 'is_spicy':False }
+     food2 = { 'name':'candy', 'price':100, 'comment':'not bad', 'is_spicy':True }
+diff --git a/devices/views.py b/devices/views.py
+index 4848e71..dc8b3d1 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -9,6 +9,8 @@ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ def device_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_device'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Devices.objects.all()
+         devices = [res.as_json() for res in obj]
+@@ -23,6 +25,8 @@ def device_list_view(request):
+ def device_add_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_device'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         return render(request, 'device_add.html', {'active': 'device_add'})
+     except:
+@@ -31,6 +35,8 @@ def device_add_view(request):
+ def device_edit_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_device'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         return render(request, 'device_edit.html', {'active': 'device_edit', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -39,6 +45,8 @@ def device_edit_view(request):
+ def device_settings_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_device'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -47,6 +55,8 @@ def device_settings_view(request):
+ def device_frusergroups_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_device'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Frusergroupdevices.objects.filter(DeviceOId = Devices.objects.get(OId = request.GET['OId']))
+         devicegroups = [res.GroupOId.as_json() for res in obj]
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index aeaf018..62f4d14 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -8,6 +8,8 @@ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ def frusergroups_list(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_frusergroup'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Frusergroups.objects.all()
+         groups = [res.as_json() for res in obj]
+@@ -24,6 +26,8 @@ def frusergroups_list(request):
+ def frusergroup_add_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_frusergroup'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         return render(request, 'frusergroup_add.html')
+     except:
+@@ -50,6 +54,8 @@ def add_frusergroup(request):
+ def frusergroup_edit_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_frusergroup'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         FRUserGroupsList = Frusergroups.objects.get(OId = request.GET['OId']).as_json()
+         return render(request, 'frusergroup_edit.html', {'active': 'frusergroup_edit', 'obj': FRUserGroupsList})
+@@ -68,6 +74,8 @@ def change_frusergroup_name(request):
+ def frusergroup_member_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_frusergroup'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Frusergroupmember.objects.filter(GroupOId = Frusergroups.objects.get(OId = request.GET['OId']))
+         members = [res.FRUserOId.as_json() for res in obj]
+@@ -115,6 +123,8 @@ def delete_frusergroup_member(request):
+ def frusergroup_devices_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_frusergroup'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Frusergroupdevices.objects.filter(GroupOId = Frusergroups.objects.get(OId = request.GET['OId']))
+         groupdevices = [res.DeviceOId.as_json() for res in obj]
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 482971e..1e633a4 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -1,22 +1,18 @@
+ from django.shortcuts import render
+-from django.http import HttpResponseRedirect
+-from django.http import JsonResponse
+-from django.http import HttpResponse
++from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+ from api.models import Fruserlogs, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
+ from django.conf import settings
+ import datetime,types
+-import csv
+-import json
+-
+-# Create your views here.
++import csv, json
+ 
+ def fruserlog_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_log'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     obj = Fruserlogs.objects.all()
+-    # result = json.dumps(serializers.serialize("json", User.objects.all()))
+     result = [res.as_json() for res in obj]
+     index = 0
+     for x in result:
+@@ -42,7 +38,7 @@ def fruserlog_export(request):
+       symbol=json_data[0]['symbol']
+       if(len(symbol)>1):
+         symbol=symbolcover[symbol]
+-           
++
+       header=[]
+       for i in range(0,len(json_data[0])-1):
+         field = "val"+str(i)
+@@ -50,16 +46,16 @@ def fruserlog_export(request):
+             header.append(json_data[0][field])
+     except:
+       header=['FRUserName','LogDateTime','DeviceOId', 'LogContent']
+-      symbol="!" 
+-    
+-    print(header)  
++      symbol="!"
++
++    print(header)
+     #json_data=json.loads(data)
+     #symbol=json_data[0]['symbol']
+     #header=[]
+     #for i in range(0,len(json_data[0])-1):
+     #  field = "val"+str(i)
+     #  header.append(json_data[0][field])
+-    
++
+     response = HttpResponse(content_type='text/csv')
+     response['Content-Disposition'] = 'attachment; filename=fruserlog-export-%s.csv' % (
+                         datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'),
+@@ -74,6 +70,5 @@ def fruserlog_export(request):
+     result = [res.as_json() for res in obj]
+     for x in result:
+        writer.writerow([symbol.join([x[i] for i in header])])
+-   
+-    return response
+ 
++    return response
+diff --git a/logsetting/views.py b/logsetting/views.py
+index c037070..4a36810 100644
+--- a/logsetting/views.py
++++ b/logsetting/views.py
+@@ -7,28 +7,27 @@ from api.models import Fruserlogs, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
+ from django.conf import settings
+ import datetime,types
+-import csv
+-import json
+-
+-# Create your views here.
++import csv, json
+ 
+ def logsetting(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++
++    if request.session['permission_log'] == 'Disable':
++        return HttpResponseRedirect("/home")
++
+     if request.method == "POST":
+       symbol = request.POST.get('separator', '')
+       data = request.POST.getlist('fields','')
+-      
++
+       s='[{\"symbol\":'+'\"'+symbol+'\",'
+       for i in range(0,len(data)):
+         s+='\"val'+str(i)+'\":\"'+data[i]+'\"'
+         if(i < len(data)-1):
+           s+=','
+-      s+='}]'     
+-     
++      s+='}]'
++
+       file = open(settings.STATICFILES_DIRS[5]+'logssetting.json', 'w', encoding = 'UTF-8')
+       file.write(s)
+-            
+-      #print(s)
+-    return render(request, 'logsetting.html', {'CODE':""})
+ 
++    return render(request, 'logsetting.html', {'CODE':""})
+diff --git a/role/views.py b/role/views.py
+index a2d0213..49c8150 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -63,6 +63,8 @@ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ def role_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+ 
+     obj = Role.objects.all()
+     result = [res.as_json() for res in obj]
+@@ -77,6 +79,8 @@ def role_list_view(request):
+ def role_permission_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+ 
+     #[{'permission_system': 'Enable',
+     #  'role_name': 'Admin(default)',
+@@ -96,11 +100,15 @@ def role_permission_view(request):
+ def role_add_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     return render(request, 'role_add.html')
+ 
+ def role_rename_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     return render(request, 'role_rename.html', {'obj': {'OId': request.GET['OId']}})
+ 
+ 
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 4445715..ccde807 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -1,17 +1,11 @@
+ from django.shortcuts import render
+-from django.http import HttpResponseRedirect
+-from django.http import JsonResponse
+-from django.http import HttpResponse
++from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
+ from api.models import Users, Frusers, Systemlogs
+ from django.conf import settings
+-import json
+-import urllib
+-import datetime,types
+-import csv
++import json, urllib, datetime, types, csv
+ 
+-# Create your views here.
+ # b = SysLog.objects.get(id="28")
+ # b.delete()
+ # b = SysLog.objects.get(id="29")
+@@ -20,6 +14,8 @@ import csv
+ def systemlog_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_log'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     obj = Systemlogs.objects.all()
+     # result = json.dumps(serializers.serialize("json", User.objects.all()))
+     result = [res.as_json() for res in obj]
+@@ -54,7 +50,7 @@ def systemlog_export(request):
+         field = "val"+str(i)
+         if(json_data[0][field] != 'FRUserId' and json_data[0][field] != 'FRUserName' and json_data[0][field] != 'DeviceOId'): #hardcoding need to fix
+             header.append(json_data[0][field])
+-    
++
+     except:
+       header=['Category','LogContent','LogDateTime']
+       symbol="!"
+@@ -82,4 +78,3 @@ def systemlog_export(request):
+        writer.writerow([symbol.join([x[i] for i in header])])
+ 
+     return response
+-
+diff --git a/user/views.py b/user/views.py
+index e813c4b..b44294a 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -14,6 +14,8 @@ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ def user_setting(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Users.objects.get(OId=request.session['OId'])
+         return render(request, 'user_setting.html', {'active': "setting", 'obj': obj})
+@@ -24,6 +26,8 @@ def user_setting(request):
+ def user_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     obj = Users.objects.all()
+     # result = json.dumps(serializers.serialize("json", User.objects.all()))
+     result = [res.as_json() for res in obj]
+@@ -36,6 +40,8 @@ def user_list_view(request):
+ def user_add_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     return render(request, 'user_add.html', { 'Roles': Role.objects.all() } )
+ 
+ def user_update_view(request):
+diff --git a/usergroups/views.py b/usergroups/views.py
+index 9f94ca8..fee30d7 100644
+--- a/usergroups/views.py
++++ b/usergroups/views.py
+@@ -9,6 +9,8 @@ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ def user_group_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Usergroups.objects.all()
+         groups = [res.as_json() for res in obj]
+@@ -25,6 +27,8 @@ def user_group_list_view(request):
+ def user_group_add_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         return render(request, 'user_group_add.html', {'active': 'user_group_add'})
+     except:
+@@ -33,6 +37,8 @@ def user_group_add_view(request):
+ def user_group_edit_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         return render(request, 'user_group_edit.html', {'active': 'user_group_edit', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -41,6 +47,8 @@ def user_group_edit_view(request):
+ def user_group_members_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Usergroupmember.objects.filter(GroupOId = Usergroups.objects.get(OId = request.GET['OId']))
+         members = [res.UserOId.as_json() for res in obj]
+@@ -63,6 +71,8 @@ def user_group_members_view(request):
+ def user_group_devices_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_system'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Usergroupdevices.objects.filter(GroupOId = Usergroups.objects.get(OId = request.GET['OId']))
+         groupdevices = [res.DeviceOId.as_json() for res in obj]
+-- 
+1.9.1
+

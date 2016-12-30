@@ -1,0 +1,78 @@
+From d3b902262762e1a10d3edd2d3c4113841ee56975 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 25 May 2016 19:08:35 +0800
+Subject: [PATCH 092/443] Modify button and table sort on user web
+
+Change "save" and "back" button in web : UserAdd, UserUpdate
+Change table default sort on web UserList: Name to "Index", Order to "asc"
+---
+ templates/user_add.html    | 10 ++++++----
+ templates/user_list.html   |  5 +++--
+ templates/user_update.html | 10 ++++++----
+ 3 files changed, 15 insertions(+), 10 deletions(-)
+
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 659744e..5a63899 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -91,12 +91,14 @@
+                                             </select>
+                                         </div>
+                                     </div>
++                                    <div class="form-actions">
++                                        <div class="col-md-offset-3 col-md-9">
++                                            <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                                            <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                        </div>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="history.back()">{% trans "Back" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 25d06e5..6be6ad8 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -59,8 +59,9 @@
+             pagination: true,
+             pageSize: 10,
+             pageList: [10, 25, 50, 100],
+-            sortName: 'Name',
+-            sortOrder: 'desc',
++            sortName: 'Index',
++            //sortOrder: 'desc',
++            sortOrder: 'asc',
+             toolbar:'#new_acc',
+ 			columns: [{
+ 				field: 'Index',
+diff --git a/templates/user_update.html b/templates/user_update.html
+index a3f1d62..c6dd88f 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -88,12 +88,14 @@
+                                             </select>
+                                         </div>
+                                     </div>
++                                    <div class="form-actions">
++                                        <div class="col-md-offset-3 col-md-3">
++                                            <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                                            <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                        </div>
++                                    </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-offset-3 col-md-3 pull-right">
+-                                <button class="btn btn-default" onclick="history.back()">{% trans "Back" %}</button>
+-                                <button class="btn btn-default" onclick="onSaveClick()">{% trans "Save" %}</button>
+-                            </div>
+                         </div>
+                     </div>
+                 </div>
+-- 
+1.9.1
+

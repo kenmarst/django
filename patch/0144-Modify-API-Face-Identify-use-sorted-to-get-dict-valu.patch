@@ -1,0 +1,82 @@
+From 9b6feefa7f0ad0c23cb0e2c767f6a6f7bae01357 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 22 Jun 2016 10:22:56 +0800
+Subject: [PATCH 144/443] Modify API Face Identify : use sorted to get dict
+ value.
+
+---
+ api/recognition.py | 31 +++++++++++++++----------------
+ 1 file changed, 15 insertions(+), 16 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 98c4196..ba5bb62 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
+ from .utility import TCIT_API, sendImg, TCIT_res_state
+ from .models import Devices, Frusers, Systemlogs, Fruserlogs, Frusergroupmember, Frusergroupdevices
+ from django.conf import settings
++from operator import itemgetter
+ 
+ result_success = {'Result' : 'Success'}
+ result_pass = {'Result' : 'Pass'}
+@@ -65,42 +66,40 @@ def face_verify(request):
+ @csrf_exempt
+ def face_identify(request):
+     if request.method == 'POST':
+-        from .models import Devices, Frusers, Fruserlogs
+-
+         try:
+             client_ip = request.META['REMOTE_ADDR']
+             ip_device = Devices.objects.get(IP = client_ip)
+ 
+             if ip_device.State != 'Proposed':
+-                res_upload = TCIT_API(
+-                    '/storage/upload',
+-                    files = {'image' : (
+-                        request.FILES['image'].name,
+-                        request.FILES['image'].file,
+-                        request.FILES['image'].content_type
+-                    )}
+-                )
++                person_id = None
++                # TCIT : upload and get img_id
++                res_upload =  sendImg(request)
+ 
+                 if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++                    # TCIT : post img_id to get face_id
+                     res_face_detect = TCIT_API(
+                         '/face/detection/detect',
+                         data = {'img_id' : res_upload['img_id']}
+                     )
+                     face_id = res_face_detect['faces'][0]['face_id']
+ 
++                    # TCIT : identify person and face in group
+                     for group in TCIT_API('/face/query/group_list')['groups']:
+-                        person_id = None
+-                        similarity = settings.CONFIDENCE
+                         res_group_identify = TCIT_API(
+                             '/face/group/identify',
+                             data = {'group_id' : group, 'face_id' : face_id}
+                         )
+ 
+                         if res_group_identify['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+-                            for person in res_group_identify['persons']:
+-                                if person['similarity'] >= similarity:
+-                                    similarity = person['similarity']
+-                                    person_id = person['person_id']
++                            # sort persons and get max similarity
++                            person = sorted(
++                                res_group_identify['persons'],
++                                key = itemgetter('similarity'),
++                            )[len(res_group_identify['persons'])-1]
++                            if person['similarity'] >= settings.CONFIDENCE:
++                                person_id = person['person_id']
++                            else:
++                                raise Exception("Similarity is too low")
+                         else:
+                             raise Exception('Request TCIT error')
+ 
+-- 
+1.9.1
+

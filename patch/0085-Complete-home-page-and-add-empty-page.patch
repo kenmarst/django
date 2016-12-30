@@ -1,0 +1,305 @@
+From 7867271b472f1614961d69c36ce2a9d3aa795b0a Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Wed, 25 May 2016 17:03:12 +0800
+Subject: [PATCH 085/443] Complete home page and add empty page.
+
+    1. complete home page and add empty page.
+    2. set all page #stroked-home link to home.
+---
+ br06/urls.py                       |  4 +++-
+ login/views.py                     | 10 +++++++++-
+ templates/dashboard.html           |  2 +-
+ templates/device_add.html          |  2 +-
+ templates/device_edit.html         |  2 +-
+ templates/device_frusergroups.html |  2 +-
+ templates/device_list.html         |  2 +-
+ templates/empty.html               |  2 ++
+ templates/frusergroup_add.html     |  2 +-
+ templates/frusergroup_devices.html |  2 +-
+ templates/frusergroup_edit.html    |  2 +-
+ templates/frusergroup_member.html  |  2 +-
+ templates/frusergroups_list.html   |  2 +-
+ templates/home.html                | 17 +++++++++++++++--
+ templates/user_group_add.html      |  2 +-
+ templates/user_group_devices.html  |  2 +-
+ templates/user_group_edit.html     |  2 +-
+ templates/user_group_list.html     |  2 +-
+ templates/user_group_members.html  |  2 +-
+ 19 files changed, 44 insertions(+), 19 deletions(-)
+ create mode 100644 templates/empty.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 387575e..ecebaae 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -26,7 +26,7 @@ from devices.views import device_list_view, device_add_view, device_edit_view, d
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, add_frusergroup_device, delete_frusergroup_device
+-from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView, login_i18n
++from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView, login_i18n, home_view, empty_view
+ 
+ 
+ urlpatterns = [
+@@ -40,6 +40,8 @@ urlpatterns = [
+     url(r'^fruserlog_export/?$',fruserlog_export),
+     url(r'^logsetting/?$',logsetting),
+     url(r'^dashboard/$', dashboard_views),
++    url(r'^home/$', home_view),
++    url(r'^empty/$', empty_view),
+ ]
+ 
+ urlpatterns += [
+diff --git a/login/views.py b/login/views.py
+index f1e501f..c07ae56 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -80,7 +80,7 @@ def login(request):
+             logContent= request.session['Name']+' login success.'
+             Systemlogs.objects.create(Category="User", LogContent = logContent)
+             setSessionPermission(request)
+-            return HttpResponseRedirect("/user_list")
++            return HttpResponseRedirect("/home")
+         elif check_result["CODE"] == "1":
+             return render(request, 'login.html', {'Result':"Fail",'Code': "9998","Message":"reCAPTCHA validation failed"})
+         elif check_result["CODE"] == "2":
+@@ -198,3 +198,11 @@ def ResetPasswordRequestView(request):
+ 
+ def login_i18n(request):
+     return render(request, 'login_i18n.html')
++
++
++def home_view(request):
++    return render(request, 'home.html')
++
++
++def empty_view(request):
++    return render(request, 'empty.html')
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 210bee3..6c4a611 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/dashboard"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">Dashboard</li>
+                 </ol>
+             </div><!--/.row-->
+diff --git a/templates/device_add.html b/templates/device_add.html
+index a859b02..f7c7555 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">{% trans "Device Add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 845d371..2cd1365 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "Device Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index c5f28f3..3669f70 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "Device Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 652b11d..218ca95 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -15,7 +15,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/device_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">{% trans "Device List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+diff --git a/templates/empty.html b/templates/empty.html
+new file mode 100644
+index 0000000..f6742a6
+--- /dev/null
++++ b/templates/empty.html
+@@ -0,0 +1,2 @@
++{% include 'commons_js.html' %}
++{% include 'menu.html' %}
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index d65f024..2a9e04a 100644
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -13,7 +13,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">{% trans "FR User Group Add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+diff --git a/templates/frusergroup_devices.html b/templates/frusergroup_devices.html
+index 7a363cf..100e95f 100644
+--- a/templates/frusergroup_devices.html
++++ b/templates/frusergroup_devices.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "FR User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index d5bb007..719a1e1 100644
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -13,7 +13,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "FR User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+diff --git a/templates/frusergroup_member.html b/templates/frusergroup_member.html
+index c9505c0..632d076 100644
+--- a/templates/frusergroup_member.html
++++ b/templates/frusergroup_member.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "FR User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+diff --git a/templates/frusergroups_list.html b/templates/frusergroups_list.html
+index 82be674..a6556d5 100644
+--- a/templates/frusergroups_list.html
++++ b/templates/frusergroups_list.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/fruser_group"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">{% trans "FR User Group List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+diff --git a/templates/home.html b/templates/home.html
+index 8e4c31c..f413933 100644
+--- a/templates/home.html
++++ b/templates/home.html
+@@ -1,2 +1,15 @@
+-{{name}}
+-{{mail}}
++<script type="text/javascript">
++  if ('{{ request.session.permission_system }}' == 'Enable') {
++    location.href = '/dashboard/';
++  } else if ('{{ request.session.permission_device }}' == 'Enable') {
++    location.href = '/device_list/';
++  } else if ('{{ request.session.permission_fruserlist }}' == 'Enable') {
++    location.href = '/fruser_list/';
++  } else if ('{{ request.session.permission_frusergroup }}' == 'Enable') {
++    location.href = '/fruser_group/';
++  } else if ('{{ request.session.permission_log }}' == 'Enable') {
++    location.href = '/fruserlog_list/';
++  } else {
++    location.href = '/empty/';
++  }
++</script>
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index 002e34d..da02e85 100644
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -13,7 +13,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">{% trans "User Group Add" %}</li>
+                 </ol>
+             </div><!--/.row-->
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index 7bb6690..33e6cb8 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index 3660b51..e40d52e 100644
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -13,7 +13,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index dceff05..70284bd 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">{% trans "User Group List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index 68d03fd..bef8717 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/user_group_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li>{% trans "User Group Edit" %}</li>
+                     <li class="active">{{obj.Name}}</li>
+                 </ol>
+-- 
+1.9.1
+

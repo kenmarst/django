@@ -1,0 +1,42 @@
+From 56f67c17cce7510d6f94b7a4f654bbaa58e6517f Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Mon, 25 Jul 2016 16:53:30 +0800
+Subject: [PATCH 200/443] Modify backup rotation script to execute backup rule.
+
+---
+ systembackup/br06backup.sh | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 5992135..2343f8f 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -54,7 +54,7 @@ TIMEMATCH="false"
+ ACTION="false"
+ 
+ if [ $BackupMethod = 'Manually' ]; then
+-  ACTION="true"
++  ACTION="ok"
+ fi
+ 
+ if [ $BackupMethod = 'Automatic' ]; then
+@@ -81,11 +81,15 @@ if [ $BackupMethod = 'Automatic' ]; then
+   fi
+ fi
+ 
++if [ $DAYMATCH = 'true' ] && [ $TIMEMATCH = 'true' ]; then
++  ACTION="true"
++fi
++
+ echo "DAYMATCH:$DAYMATCH"
+ echo "TIMEMATCH:$TIMEMATCH"
+ echo "ACTION:$ACTION"
+ 
+-if [ $ACTION = 'ok' ]; then
++if [ $ACTION = 'ok' || $ACTION = 'true' ]; then
+ 
+   [ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
+ 
+-- 
+1.9.1
+

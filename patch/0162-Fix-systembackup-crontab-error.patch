@@ -1,0 +1,132 @@
+From c38c1fc9fa0f5979e3896cee5c8eb2fd4b9ad3f3 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 14:11:31 +0800
+Subject: [PATCH 162/443] Fix systembackup crontab error
+
+---
+ systembackup/br06backup.sh |  4 ++--
+ systemsettings/views.py    | 42 ++++++++++++++++++++++++++++++++----------
+ 2 files changed, 34 insertions(+), 12 deletions(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 0c17f61..a43ce33 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -43,13 +43,13 @@ do
+     echo $db
+     FILE="$LOCALBAKPATH/$db.$DATE-$TIME.gz"
+     echo $FILE
+-    #$MYSQLDUMP -u $MYSQLUSER -p$MYSQLPASS --force $db | $GZIP -9 > $FILE
++    $MYSQLDUMP -u $MYSQLUSER -p$MYSQLPASS --force $db | $GZIP -9 > $FILE
+ done
+ 
+ if [ $PicCreateSave = '1' ] || [ $PicFaceSave ='1' ]; then
+     FILE="$LOCALBAKPATH/FruserPicBackup.$DATE-$TIME.tar.gz"
+     echo $FILE
+-    tar czf $FILE ./$BR06DIR/$FRUSERPICDIR
++    tar czf $FILE ../$FRUSERPICDIR
+ fi
+ 
+ if [ $BackupLocation = 'ftp' ]; then
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index f031189..96358e4 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -421,6 +421,13 @@ def settings_system_backup(request):
+                 BackupTime = BackupWeeklyDate_hours + ':' + BackupWeeklyDate_mins
+                 Config.objects.filter(Name = 'BackupTime').update(Value=BackupTime)
+ 
++            BackupLocal=''
++            BackupLocation=''
++            BackupRemoteHost=''
++            BackupRemotePort=''
++            BackupRemoteAccount=''
++            BackupRemotePassword=''
++
+             BackupLocal = request.POST.get('BackupLocal', '')
+             print('BackupLocal :', BackupLocal)
+             if BackupLocal != '':
+@@ -458,9 +465,13 @@ def settings_system_backup(request):
+ 
+ 
+             backupdir = os.path.join(settings.BASE_DIR, 'systembackup')
++            #print('backupdir :', backupdir)
+             newcrontabfile = os.path.join(backupdir, 'crontab.new')
++            #print('newcrontabfile :', newcrontabfile)
+             newbackupconfile = os.path.join(backupdir, 'backup.conf')
++            #print('newbackupconfile :', newbackupconfile)
+             backupshfile = os.path.join(backupdir, 'br06backup.sh')
++            #print('backupshfile :', backupshfile)
+ 
+             #newcrontabfile = 'crontab.new'
+             #newbackupconfile = 'backup.conf.new'
+@@ -468,6 +479,7 @@ def settings_system_backup(request):
+ 
+             # backupconf modify
+             backupconf_content=[]
++            print(backupconf_content)
+             backupconf_content.append('BackupLocal={0}\n'.format(BackupLocal))
+             backupconf_content.append('BackupLocation={0}\n'.format(BackupLocation))
+             backupconf_content.append('BackupRemoteHost={0}\n'.format(BackupRemoteHost))
+@@ -484,9 +496,15 @@ def settings_system_backup(request):
+             with open(crontabfile, 'r') as f:
+                 content = f.readlines()
+ 
++            #print('content:')
++            #print(content)
++
++
+             content1 = [line for line in content if line.find("br06backup.sh") < 0]
+             content2 = [line for line in content if line.find("br06backup.sh") >= 0]
+-            content2_idx = content.index(content2[0])
++            content2_idx = -1
++            if content2 != []:
++                content2_idx = content.index(content2[0])
+ 
+             #print('content2_idx:{0}'.format(content2_idx))
+             #print('content1:')
+@@ -495,28 +513,32 @@ def settings_system_backup(request):
+             #print(content2)
+ 
+             if BackupMethod == 'Manually':
+-                if content2 != []:
+-                    print('old content2:'+ content2[0])
++                if content2_idx != -1:
++                    #print('old content2:'+ content2[0])
+                     content2[0] = '#'+ content2[0]
+-                    print('new content2:'+ content2[0])
++                    #print('new content2:'+ content2[0])
+                     content[content2_idx]=content2[0]
+ 
+                 os.system('{0}\n'.format(backupshfile))
+ 
+             else:
+                 if BackupScheduling == 'Monthly':
+-                    cmd = '{0} {1}\t{2} * *\troot\t/var/www/br06/systembackup/br06backup.sh >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate)
+-                    print('cmd:'+cmd)
+-                    content[content2_idx]=cmd
++                    cmd = '{0} {1}\t{2} * *\troot\t{3} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate, backupshfile)
+                 else:
+-                    cmd = '{0} {1}\t* * {2}\troot\t/var/www/br06/systembackup/br06backup.sh >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate)
+-                    print('cmd:'+cmd)
++                    cmd = '{0} {1}\t* * {2}\troot\t{3} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate, backupshfile)
++
++                #print('cmd:'+cmd)
++                if content2_idx != -1:
+                     content[content2_idx]=cmd
++                else:
++                    content.append(cmd)
+ 
+             with open(newcrontabfile, mode='wt', encoding='utf-8') as f:
+                 f.write(''.join(content))
+ 
+-            os.system('mv {0} {1}\n'.format(newcrontabfile, crontabfile))
++            cpcmd = 'cp -f {0} {1}\n'.format(newcrontabfile, crontabfile)
++            #print('cpcmd:'+cpcmd)
++            os.system('echo {0}|sudo -S {1}'.format('1', cpcmd))
+ 
+         return JsonResponse(res_code[0])
+     except:
+-- 
+1.9.1
+

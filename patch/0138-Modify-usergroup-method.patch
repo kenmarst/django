@@ -1,0 +1,505 @@
+From 6c2fe86e1b02af2ff4821e7cd50e349f572758f1 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Fri, 17 Jun 2016 12:38:05 +0800
+Subject: [PATCH 138/443] Modify usergroup method
+
+Modify usergroup method for large data load.
+---
+ br06/urls.py                      |   7 +-
+ templates/user_group_devices.html |  45 ++++++----
+ templates/user_group_list.html    |  18 ++--
+ templates/user_group_members.html |  45 ++++++----
+ usergroups/views.py               | 169 +++++++++++++++++++++++++++++---------
+ 5 files changed, 208 insertions(+), 76 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 8a0fffe..13e6f90 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -24,7 +24,7 @@ from logsetting.views import logsetting
+ from systemsettings.views import settings_views
+ from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+-from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
++from usergroups.views import user_group_list_view, user_group_list_data, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_members_list_data, user_group_members_add_data, user_group_devices_view, user_group_devices_list_data, user_group_devices_add_data, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_list_data, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, frusergroups_list_data, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, frusergroup_member_list_data, frusergroup_member_add_data, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, frusergroup_devices_list_data, frusergroup_devices_add_data, add_frusergroup_device, delete_frusergroup_device
+ from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView, login_i18n, home_view, empty_view
+@@ -86,10 +86,15 @@ urlpatterns += [
+ 
+ urlpatterns += [
+     url(r'^user_group_list/?$', user_group_list_view),
++    url(r'^user_group_list_data/?$', user_group_list_data),
+     url(r'^user_group_add/?$', user_group_add_view),
+     url(r'^user_group_edit/?$', user_group_edit_view),
+     url(r'^user_group_members/?$', user_group_members_view),
++    url(r'^user_group_members_list_data/?$', user_group_members_list_data),
++    url(r'^user_group_members_add_data/?$', user_group_members_add_data),
+     url(r'^user_group_devices/?$', user_group_devices_view),
++    url(r'^user_group_devices_list_data/?$', user_group_devices_list_data),
++    url(r'^user_group_devices_add_data/?$', user_group_devices_add_data),
+     url(r'^add_user_group/?$', add_user_group),
+     url(r'^change_user_group_name/?$', change_user_group_name),
+     url(r'^delete_user_group/?$', delete_user_group),
+diff --git a/templates/user_group_devices.html b/templates/user_group_devices.html
+index f5e0240..c1b195a 100644
+--- a/templates/user_group_devices.html
++++ b/templates/user_group_devices.html
+@@ -79,12 +79,23 @@
+             var $DeviceAdd = $('#DeviceAdd');
+ 
+             $DeviceList.bootstrapTable({
++                url: '/user_group_devices_list_data',
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Name',
+@@ -100,14 +111,26 @@
+                         }
+                     }
+                 ],
+-                data: {{groupdevices|safe}}
+             });
+ 
+             $DeviceAdd.bootstrapTable({
++                url: '/user_group_devices_add_data',
+                 search: true,
++                pagination: true,
+                 pageSize: 10,
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         checkbox: true
+@@ -118,7 +141,6 @@
+                         sortable: true
+                     }
+                 ],
+-                data: {{devices|safe}}
+             });
+ 
+ 
+@@ -156,11 +178,8 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                $DeviceAdd.bootstrapTable('append', data);
+-                                $DeviceList.bootstrapTable('remove', {
+-                                    field: 'OId',
+-                                    values: [data.OId]
+-                                });
++                                $DeviceList.bootstrapTable('refresh');
++                                $DeviceAdd.bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete device");
+                             }
+@@ -190,14 +209,8 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            $DeviceList.bootstrapTable('append', $.map(
+-                                $DeviceAdd.bootstrapTable('getSelections'),
+-                                function (row) {return row}
+-                            ));
+-                            $DeviceAdd.bootstrapTable('remove', {
+-                                field: 'OId',
+-                                values: DeviceOIds
+-                            });
++                            $DeviceList.bootstrapTable('refresh');
++                            $DeviceAdd.bootstrapTable('refresh');
+                         } else {
+                             alert("Fail to add device");
+                         }
+diff --git a/templates/user_group_list.html b/templates/user_group_list.html
+index aac851b..e18942b 100644
+--- a/templates/user_group_list.html
++++ b/templates/user_group_list.html
+@@ -49,18 +49,27 @@
+         </script>
+         <script>
+             $('#GroupList').bootstrapTable({
++                url: '/user_group_list_data',
+                 search: true,
+                 pagination: true,
+                 toolbar: '#AddGroup',
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+-                sortName: 'Index',
++                sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Index',
+                         title: '{% trans "No" %}',
+-                        sortable: true
+                     },
+                     {
+                         field: 'Name',
+@@ -82,7 +91,6 @@
+                         }
+                     }
+                 ],
+-                data: {{obj|safe}}
+             });
+ 
+             //For getting CSRF token
+@@ -119,7 +127,7 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                location.reload();
++                                $('#GroupList').bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete group");
+                             }
+diff --git a/templates/user_group_members.html b/templates/user_group_members.html
+index 73e6c02..57f817d 100644
+--- a/templates/user_group_members.html
++++ b/templates/user_group_members.html
+@@ -79,12 +79,23 @@
+             var $MemberAdd = $('#MemberAdd');
+ 
+             $MemberList.bootstrapTable({
++                url: '/user_group_members_list_data',
+                 search: true,
+                 pagination: true,
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Name',
+@@ -100,14 +111,26 @@
+                         }
+                     }
+                 ],
+-                data: {{members|safe}}
+             });
+ 
+             $MemberAdd.bootstrapTable({
++                url: '/user_group_members_add_data',
+                 search: true,
++                pagination: true,
+                 pageSize: 10,
+                 sortName: 'Name',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order,
++                        OId: {{obj|safe}}.OId
++                    };
++                },
+                 columns: [
+                     {
+                         checkbox: true
+@@ -118,7 +141,6 @@
+                         sortable: true
+                     }
+                 ],
+-                data: {{users|safe}}
+             });
+ 
+ 
+@@ -157,11 +179,8 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                $MemberAdd.bootstrapTable('append', data);
+-                                $MemberList.bootstrapTable('remove', {
+-                                    field: 'OId',
+-                                    values: [data.OId]
+-                                });
++                                $MemberList.bootstrapTable('refresh');
++                                $MemberAdd.bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete user");
+                             }
+@@ -191,14 +210,8 @@
+                     },
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            $MemberList.bootstrapTable('append', $.map(
+-                                $MemberAdd.bootstrapTable('getSelections'),
+-                                function (row) {return row}
+-                            ));
+-                            $MemberAdd.bootstrapTable('remove', {
+-                                field: 'OId',
+-                                values: UserOIds
+-                            });
++                            $MemberList.bootstrapTable('refresh');
++                            $MemberAdd.bootstrapTable('refresh');
+                         } else {
+                             alert("Fail to add user");
+                         }
+diff --git a/usergroups/views.py b/usergroups/views.py
+index 7af5009..38ce5fe 100644
+--- a/usergroups/views.py
++++ b/usergroups/views.py
+@@ -1,10 +1,10 @@
+ from django.shortcuts import render
+-
+ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Users, Usergroups, Usergroupmember, Usergroupdevices
+ from datetime import datetime
+ from login.views import check_login
++from django.db.models import Q, Count
+ import json
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -17,18 +17,39 @@ def user_group_list_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Usergroups.objects.all()
+-        groups = [res.as_json() for res in obj]
+-        index = 0
+-        for group in groups:
+-            group['Index'] = index+1
+-            group['UserNumber'] = len(Usergroupmember.objects.filter(GroupOId = Usergroups.objects.get(OId = group['OId'])))
+-            index += 1
+-
+-        return render(request, 'user_group_list.html', {'active': 'user_group_list', 'obj': groups})
++        return render(request, 'user_group_list.html', {'active': 'user_group_list'})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
++def user_group_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            usergroups = Usergroups.objects.filter(Q(Name__contains = search)).annotate(UserNumber = Count('usergroupmember')).order_by(order)
++        else:
++            usergroups = Usergroups.objects.annotate(UserNumber = Count('usergroupmember')).order_by(order)
++        usergroup_count = usergroups.count()
++        usergroups = [usergroup.as_json() for usergroup in usergroups[offset : offset + limit]]
++        index = offset
++        for usergroup in usergroups:
++            usergroup['Index'] = index + 1
++            index += 1
++            usergroup['UserNumber'] = Usergroupmember.objects.filter(GroupOId__OId = usergroup['OId']).count()
++        return JsonResponse({'total': usergroup_count, 'rows': usergroups})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
+ def user_group_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+@@ -58,49 +79,121 @@ def user_group_members_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Usergroupmember.objects.filter(GroupOId = Usergroups.objects.get(OId = request.GET['OId']))
+-        members = [res.UserOId.as_json() for res in obj]
+-        index = 0
+-        for member in members:
+-            member['Index'] = index+1
+-            index += 1
++        return render(request, 'user_group_members.html', {'active': 'user_group_members', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json()})
++    except:
++        return render(request, 'registration/not_found.html')
+ 
+-        obj_all = Users.objects.all()
+-        users = [res_all.as_json() for res_all in obj_all if res_all not in [res.UserOId for res in obj]]
+-        index = 0
+-        for user in users:
+-            user['Index'] = index+1
+-            index += 1
++def user_group_members_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            members = Users.objects.filter(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            members = Users.objects.filter(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        member_count = members.count()
++        members = [member.as_json() for member in members[offset : offset + limit]]
+ 
+-        return render(request, 'user_group_members.html', {'active': 'user_group_members', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json(), 'members': members, 'users': users})
++        return JsonResponse({'total': member_count, 'rows': members})
+     except:
+-        return render(request, 'registration/not_found.html')
++        return JsonResponse({'total': 0, 'rows': []})
+ 
+-def user_group_devices_view(request):
++def user_group_members_add_data(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        obj = Usergroupdevices.objects.filter(GroupOId = Usergroups.objects.get(OId = request.GET['OId']))
+-        groupdevices = [res.DeviceOId.as_json() for res in obj]
+-        index = 0
+-        for device in groupdevices:
+-            device['Index'] = index+1
+-            index += 1
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            users = Users.objects.exclude(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            users = Users.objects.exclude(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        user_count = users.count()
++        users = [user.as_json() for user in users[offset : offset + limit]]
+ 
+-        obj_all = Devices.objects.all()
+-        devices = [res_all.as_json() for res_all in obj_all if res_all not in [res.DeviceOId for res in obj]]
+-        index = 0
+-        for device in devices:
+-            device['Index'] = index+1
+-            index += 1
++        return JsonResponse({'total': user_count, 'rows': users})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
+ 
+-        return render(request, 'user_group_devices.html', {'active': 'user_group_devices', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json(), 'groupdevices': groupdevices, 'devices': devices})
++def user_group_devices_view(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        return render(request, 'user_group_devices.html', {'active': 'user_group_devices', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
++def user_group_devices_list_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            groupdevices = Devices.objects.filter(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            groupdevices = Devices.objects.filter(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        groupdevice_count = groupdevices.count()
++        groupdevices = [groupdevice.as_json() for groupdevice in groupdevices[offset : offset + limit]]
++
++        return JsonResponse({'total': groupdevice_count, 'rows': groupdevices})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
++def user_group_devices_add_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('order', None) == 'asc':
++            order = request.GET.get('sort', 'Name')
++        else:
++            order = '-' + request.GET.get('sort', 'Name')
++        if search:
++            devices = Devices.objects.exclude(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++        else:
++            devices = Devices.objects.exclude(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
++        device_count = devices.count()
++        devices = [device.as_json() for device in devices[offset : offset + limit]]
++
++        return JsonResponse({'total': device_count, 'rows': devices})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
+ def add_user_group(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+-- 
+1.9.1
+

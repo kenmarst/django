@@ -1,0 +1,34 @@
+From 3dd75c2d2f89ec1d97b57786ffeb4b1c0a840403 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 30 Nov 2016 19:27:27 +0800
+Subject: [PATCH 382/443] Modify connection check of API for new Spec.
+
+---
+ api/connection.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index f16a238..1428491 100755
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -15,13 +15,13 @@ def check(request):
+         try:
+             client_ip = request.META['REMOTE_ADDR']
+             from api.models import Devices
+-            devices = Devices.objects.filter(IP = client_ip)
++            devices = Devices.objects.filter(MAC = request.POST.get('MAC', ''))
+             if devices.count() == 1:
+-                states = {'Proposed' : 0, 'Approved' : 1, 'Online' : 1, 'Offline' : 1, 'Setting' : 2, 'Getting': 3}
+-                devices.update(UpdateDate = datetime.now())
++                states = {'Proposed' : 0, 'Approved' : 1, 'Online' : 1, 'Offline' : 1, 'Setting' : 2, 'Getting' : 3, 'Upgrade' : 4}
++                devices.update(IP = client_ip, UpdateDate = datetime.now())
+                 return JsonResponse({'Result' : states[devices[0].State]})
+             elif devices.count() == 0:
+-                Devices.objects.create(Name = 'Default' + client_ip, IP = client_ip)
++                Devices.objects.create(Name = request.POST.get('Name', ''), MAC = request.POST.get('MAC', ''), IP = client_ip)
+                 return JsonResponse({'Result' : 0})
+             raise Exception('Duplicate IP address conflicts, please check the number of devices in the server.')
+         except Exception as e:
+-- 
+1.9.1
+

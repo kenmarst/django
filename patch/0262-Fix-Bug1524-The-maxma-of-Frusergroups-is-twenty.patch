@@ -1,0 +1,29 @@
+From 1952c7b2dafbfe4b24826bce61aabf73eb27b0bc Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 17:14:01 +0800
+Subject: [PATCH 262/443] Fix Bug1524: The maxma of Frusergroups is twenty.
+
+Bugzilla: Bug 1524
+The maxma of Frusergroups is twenty in Spec.
+Limit the maxma at front end.
+Block off to add Frusergroups, if there more than twenty groups.
+---
+ frusergroups/views.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index 032e7b0..7ca8171 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -80,6 +80,8 @@ def add_frusergroup(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
++        if Frusergroups.objects.all().count >= 20 # spec: Max 20 Groups
++            return JsonResponse(res_code[1])
+         Frusergroups.objects.create(Name = request.POST['Name'])
+         return JsonResponse(res_code[0])
+     except:
+-- 
+1.9.1
+

@@ -1,0 +1,742 @@
+From 9a0c31a6d5c0f9fd52b9c1415371623e1df06832 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Thu, 19 May 2016 16:42:04 +0800
+Subject: [PATCH 052/443] Complete Role wed function and Modify dufault role.
+
+---
+ api/models.py               |  10 +++
+ br06/urls.py                |  11 ++++
+ role/__init__.py            |   0
+ role/admin.py               |   3 +
+ role/apps.py                |   5 ++
+ role/migrations/__init__.py |   0
+ role/models.py              |   3 +
+ role/tests.py               |   3 +
+ role/views.py               | 119 ++++++++++++++++++++++++++++++++++
+ templates/menu.html         |   2 +-
+ templates/role_add.html     | 128 ++++++++++++++++++++++++++++++++++++
+ templates/role_list.html    | 154 ++++++++++++++++++++++++++++++++++++++++++++
+ templates/role_rename.html  | 120 ++++++++++++++++++++++++++++++++++
+ user/views.py               |  44 -------------
+ 14 files changed, 557 insertions(+), 45 deletions(-)
+ create mode 100644 role/__init__.py
+ create mode 100644 role/admin.py
+ create mode 100644 role/apps.py
+ create mode 100644 role/migrations/__init__.py
+ create mode 100644 role/models.py
+ create mode 100644 role/tests.py
+ create mode 100644 role/views.py
+ create mode 100644 templates/role_add.html
+ create mode 100644 templates/role_list.html
+ create mode 100644 templates/role_rename.html
+
+diff --git a/api/models.py b/api/models.py
+index bd813a1..a77da71 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -54,6 +54,16 @@ class Role(models.Model):
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+ 
++    def as_json(self):
++        return dict(
++            Index = 0,
++            OId=self.OId,
++            Name=self.Name,
++            Sort=self.Sort,
++            Category=self.Category,
++            CreateDate=self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
++            UpdateDate=self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++        )
+ 
+ class Acl(models.Model):
+     acl_acl = (
+diff --git a/br06/urls.py b/br06/urls.py
+index 942f5cc..abe8ad2 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -23,6 +23,7 @@ from fruserlogs.views import fruserlog_list_view, fruserlog_export
+ from logsetting.views import logsetting
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
++from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role
+ 
+ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+@@ -47,6 +48,16 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
++    url(r'^role_list/?$', role_list_view),
++    url(r'^role_add/?$', role_add_view),
++    url(r'^role_rename/?$', role_rename_view),
++    url(r'^role_permission/?$', role_permission_view),
++    url(r'^rename_role/?$', rename_role),
++    url(r'^add_role/?$', add_role),
++    url(r'^delete_role/?$', delete_role),
++]
++
++urlpatterns += [
+     url(r'^user_group_list/?$', user_group_list_view),
+     url(r'^user_group_add/?$', user_group_add_view),
+     url(r'^user_group_edit/?$', user_group_edit_view),
+diff --git a/role/__init__.py b/role/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/role/admin.py b/role/admin.py
+new file mode 100644
+index 0000000..8c38f3f
+--- /dev/null
++++ b/role/admin.py
+@@ -0,0 +1,3 @@
++from django.contrib import admin
++
++# Register your models here.
+diff --git a/role/apps.py b/role/apps.py
+new file mode 100644
+index 0000000..a0ddabd
+--- /dev/null
++++ b/role/apps.py
+@@ -0,0 +1,5 @@
++from django.apps import AppConfig
++
++
++class RoleConfig(AppConfig):
++    name = 'role'
+diff --git a/role/migrations/__init__.py b/role/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/role/models.py b/role/models.py
+new file mode 100644
+index 0000000..71a8362
+--- /dev/null
++++ b/role/models.py
+@@ -0,0 +1,3 @@
++from django.db import models
++
++# Create your models here.
+diff --git a/role/tests.py b/role/tests.py
+new file mode 100644
+index 0000000..7ce503c
+--- /dev/null
++++ b/role/tests.py
+@@ -0,0 +1,3 @@
++from django.test import TestCase
++
++# Create your tests here.
+diff --git a/role/views.py b/role/views.py
+new file mode 100644
+index 0000000..ef98cfc
+--- /dev/null
++++ b/role/views.py
+@@ -0,0 +1,119 @@
++from django.shortcuts import render
++from django.http import HttpResponseRedirect, JsonResponse
++from api.models import Users, Role, Acl
++from datetime import datetime
++from br06.settings import *
++
++# create default role: admin, users.
++try:
++    Role.objects.get(Name = 'Admin(default)').Name
++except:
++    print('create default role: admin')
++    Role.objects.create(Name = 'Admin(default)', Sort = '1', Category = 'System')
++    Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++    Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++    Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++    Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++    Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++else:
++    print('default role "admin" exist.')
++
++try:
++    Role.objects.get(Name = 'Users(default)').Name
++except:
++    print('create default role: users')
++    Role.objects.create(Name = 'Users(default)', Sort = '2', Category = 'System')
++    Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++    Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++    Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++    Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++    Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++else:
++    print('default role "users" exist.')
++
++# create and update default account: admin.
++try:
++    Users.objects.get(Account = 'admin').Account
++except:
++    print('create default account: admin')
++    Users.objects.create(Account = 'admin', Password = ADMIN_PASSWORD, Name = 'admin',
++                         Email = ADMIN_MAIL, RoleOId = Role.objects.get(Name = 'Admin(default)'))
++else:
++    print('default account "admin" exist.')
++    if Users.objects.get(Account = 'admin').Email != ADMIN_MAIL:
++        print('update admin email.')
++        Users.objects.filter(Account = 'admin').update(Email = ADMIN_MAIL)
++
++    if Users.objects.get(Account = 'admin').Password != ADMIN_PASSWORD:
++        print('update admin password.')
++        Users.objects.filter(Account = 'admin').update(Password = ADMIN_PASSWORD)
++
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++
++def role_list_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++
++    obj = Role.objects.all()
++    result = [res.as_json() for res in obj]
++
++    index = 0
++    for x in result:
++        x['Index'] = index+1
++        index += 1
++
++    return render(request, 'role_list.html', {'active': "role_list", 'obj': result})
++
++def role_add_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    return render(request, 'role_add.html')
++
++def role_rename_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    return render(request, 'role_rename.html', {'active': "role_rename", 'obj': {'OId': request.GET['OId']}})
++
++def role_permission_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    return render(request, 'role_permission.html')
++
++def add_role(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Role.objects.create(Name = request.POST['Name'], Sort = request.POST['Sort'], Category = request.POST['Category'])
++
++        Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = request.POST['Name']), ACL = 'Disable')
++
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def rename_role(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        if Role.objects.get(OId = request.POST['OId']).Category == 'System':
++            return JsonResponse(res_code[0])
++        Role.objects.filter(OId = request.POST['OId']).update(Name = request.POST['Name'], UpdateDate = datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
++        return JsonResponse(res_code[1])
++    except:
++        return JsonResponse(res_code[2])
++
++def delete_role(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        if Role.objects.get(OId = request.POST['OId']).Category == 'System':
++            return JsonResponse(res_code[0])
++        Role.objects.filter(OId = request.POST['OId']).delete()
++        Acl.objects.filter(RoleOId = request.POST['OId']).delete()
++        return JsonResponse(res_code[1])
++    except:
++        return JsonResponse(res_code[2])
+diff --git a/templates/menu.html b/templates/menu.html
+index 572b529..cdd13e7 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -56,7 +56,7 @@
+ 						</a>
+ 					</li>
+ 					<li>
+-						<a class="" href="#">
++						<a class="" href="/role_list">
+ 							<svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> Role & Permission
+ 						</a>
+ 					</li>
+diff --git a/templates/role_add.html b/templates/role_add.html
+new file mode 100644
+index 0000000..9ff2074
+--- /dev/null
++++ b/templates/role_add.html
+@@ -0,0 +1,128 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Role List</title>
++    </head>
++
++<body>
++	{% include 'menu.html' %}
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++		<div class="row">
++			<ol class="breadcrumb">
++				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++				<li class="active">Role add</li>
++			</ol>
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<h1 class="page-header">Create New Role</h1>
++			</div>
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<div class="panel panel-default">
++					<div class="panel-body">
++						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                            <div class="form-body">
++                                <div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">Role Name
++                                        <span class="required">*</span>
++                                    </label>
++                                    <div class="col-md-6">
++                                    	<div class="input-icon">
++                                        	<input type="text" class="form-control" placeholder="" name="name">
++                                        	<div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++                                    </div>
++                                </div>
++                                <div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">Sort
++                                        <span class="required">*</span>
++                                    </label>
++                                    <div class="col-md-6">
++                                        <div class="input-icon">
++                                            <input type="text" class="form-control" placeholder="" name="sort">
++                                            <div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++                                    </div>
++                                </div>
++                            </div>
++                            <div class="form-actions">
++                                <div class="row">
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <a onclick="history.back()" type="reset" class="btn default">Back</a>
++                                        <a onclick="onSaveClick()" type="" class="btn green">Save</a>
++                                    </div>
++                                </div>
++                            </div>
++                        </form>
++					</div>
++				</div>
++			</div>
++		</div><!--/.row-->
++	</div><!--/.main-->
++
++	{% load static %}
++	<script>
++
++	function getCookie(name) {
++		var cookieValue = null;
++		if (document.cookie && document.cookie != '') {
++			var cookies = document.cookie.split(';');
++			for (var i = 0; i < cookies.length; i++) {
++				var cookie = jQuery.trim(cookies[i]);
++				if (cookie.substring(0, name.length + 1) == (name + '=')) {
++					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++					break;
++				}
++			}
++		}
++		return cookieValue;
++	}
++
++	function onSaveClick(){
++		var name = $('input[name=name]').val();
++		var sort = $('input[name=sort]').val();
++        var category = 'User'
++		if(!name || !sort){
++			alert("please enter correct information");
++			return
++		}
++		$.ajax({
++			type: 'post',
++			url: '/add_role/',
++			async: true,
++			dataType: 'json',
++			data: {
++				csrfmiddlewaretoken : getCookie('csrftoken'),
++				'Name': name,
++				'Sort': sort,
++				'Category': category,
++			},
++
++			success: function(data) {
++				console.log("CODE = ",data.CODE);
++				if (data.CODE == "0") {
++					alert("Role add successfully");
++					location.href = '/role_list/';
++				} else {
++					alert("Fail to add Role");
++				}
++			},
++
++			error: function(data) {
++				console.log('why nunu');
++			}
++		});
++	}
++	</script>
++</body>
++
++</html>
+diff --git a/templates/role_list.html b/templates/role_list.html
+new file mode 100644
+index 0000000..f2b3cd5
+--- /dev/null
++++ b/templates/role_list.html
+@@ -0,0 +1,154 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<title>Role List</title>
++</head>
++
++<body>
++	{% include 'menu.html' %}
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++		<div class="row">
++			<ol class="breadcrumb">
++				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++				<li class="active">Role List</li>
++			</ol>
++		</div><!--/.row-->
++		
++		<div class="row">
++			<div class="col-lg-12">
++				<h1 class="page-header">Role List</h1>
++			</div>
++			<div class="col-lg-12">
++                <button class="btn green pull-right" onclick="location.href='/role_add/'" value="">Create new Role</button>
++			<div>
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<div class="panel panel-default">
++					<div class="panel-body">
++                        <table id="roleList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="false" data-select-item-l="toolbar1" data-paginati    on="true" data-page-size=10 data-page-list="[10, 25, 50, 100]" data-sort-name="name" data-sort-order="desc">
++						</table>
++					</div>
++				</div>
++			</div>
++		</div><!--/.row-->	
++	</div><!--/.main-->
++
++	<script src="{% static "chart.min.js" %}"></script>
++	<script src="{% static "chart-data.js" %}"></script>
++	<script src="{% static "easypiechart.js" %}"></script>
++	<script src="{% static "easypiechart-data.js" %}"></script>
++	<script src="{% static "bootstrap-datepicker.js" %}"></script>
++	<script src="{% static "bootstrap-table.js" %}"></script>
++	<script>
++		var index
++		var dataSet = {{obj|safe}};
++		console.log(dataSet);
++		$('#roleList').bootstrapTable({
++			columns: [{
++				field: 'Index',
++				title: 'No.',
++				sortable: true,
++			},{
++				field: 'Name',
++				title: 'Role Name',
++				sortable: true
++			},{
++				field: 'Sort',
++				title: 'Sort',
++				sortable: true
++			},{
++				field: 'Category',
++				title: 'Category',
++				sortable: true
++			},{
++				field: 'CreateDate',
++				title: 'Create Date',
++				sortable: true
++			},{
++				field: 'UpdateDate',
++				title: 'Update Date',
++				sortable: true
++			},{
++                formatter: function(value, row) {
++                    return ' \
++                <div class="row" align="center"> \
++                    <button class="btn green" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">Rename</button> \
++                    <button class="btn green" onclick=role_delete("' + row.OId + '")>Delete</button> \
++                </div>';
++                }
++			}],
++			data: dataSet
++		});
++
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function role_delete(OId) {
++            var ret = confirm('Confirm to delete this Role?');
++            console.log(ret);
++            if (ret) {
++                $.ajax({
++                        type: 'post',
++                        url: '/delete_role/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : getCookie('csrftoken'),
++                            'OId': OId
++                        },
++
++                        success: function(data) {
++                            console.log("CODE = ",data.CODE);
++                            if (data.CODE == "0") {
++                                alert("Default role can't delete")
++                            } else if (data.CODE == "1") {
++                                location.reload();
++                            } else {
++                                alert("Fail to delete role");
++                            }
++                        },
++
++                        error: function(data) {
++                            console.log('why nunu');
++                        }
++                    });
++            }
++        }
++
++
++		!function ($) {
++			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
++				$(this).find('em:first').toggleClass("glyphicon-minus");	  
++			}); 
++			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
++		}(window.jQuery);
++
++		$(window).on('resize', function () {
++		  if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
++		})
++		$(window).on('resize', function () {
++		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
++		})
++	</script>	
++</body>
++
++</html>
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+new file mode 100644
+index 0000000..572fd85
+--- /dev/null
++++ b/templates/role_rename.html
+@@ -0,0 +1,120 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Role Rename</title>
++
++    </head>l
++
++<body>
++	{% include 'menu.html' %}
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++		<div class="row">
++			<ol class="breadcrumb">
++				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++				<li class="active">Role Rename</li>
++			</ol>
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<h1 class="page-header">Role Rename</h1>
++			</div>
++		</div><!--/.row-->
++
++		<div class="row">
++			<div class="col-lg-12">
++				<div class="panel panel-default">
++					<div class="panel-body">
++						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                            <div class="form-body">
++                                <div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">New Name
++                                        <span class="required">*</span>
++                                    </label>
++                                    <div class="col-md-6">
++                                    	<div class="input-icon">
++                                        	<input type="text" class="form-control" placeholder="" name="name">
++                                        	<div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++                                    </div>
++                                </div>
++                            </div>
++                            <div class="form-actions">
++                                <div class="row">
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <a onclick="history.back()" type="reset" class="btn default">Back</a>
++                                        <a onclick="onSaveClick()" type="" class="btn green">Save</a>
++                                    </div>
++                                </div>
++                            </div>
++                        </form>
++					</div>
++				</div>
++			</div>
++		</div><!--/.row-->
++	</div><!--/.main-->
++
++	{% load static %}
++	<script>
++
++	function getCookie(name) {
++		var cookieValue = null;
++		if (document.cookie && document.cookie != '') {
++			var cookies = document.cookie.split(';');
++			for (var i = 0; i < cookies.length; i++) {
++				var cookie = jQuery.trim(cookies[i]);
++				if (cookie.substring(0, name.length + 1) == (name + '=')) {
++					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++					break;
++				}
++			}
++		}
++		return cookieValue;
++	}
++
++	function onSaveClick(){
++		var name = $('input[name=name]').val();
++		var sort = $('input[name=sort]').val();
++        console.log({{obj|safe}}.OId);
++		if(!name){
++			alert("please enter correct information");
++			return
++		}
++		$.ajax({
++			type: 'post',
++			url: '/rename_role/',
++			async: true,
++			dataType: 'json',
++			data: {
++				csrfmiddlewaretoken : getCookie('csrftoken'),
++                'OId': {{obj|safe}}.OId,
++				'Name': name,
++				'Sort': sort,
++			},
++
++			success: function(data) {
++				console.log("CODE = ",data.CODE);
++				if (data.CODE == "0") {
++                    alert("Default role can't rename")
++					location.href = '/role_list/';
++				} else if (data.CODE == "1"){
++					alert("Role Rename successfully");
++					location.href = '/role_list/';
++				} else {
++					alert("Fail to rename Role");
++				}
++			},
++
++			error: function(data) {
++				console.log('why nunu');
++			}
++		});
++	}
++	</script>
++</body>
++
++</html>
+diff --git a/user/views.py b/user/views.py
+index 5c3271f..179c508 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -20,50 +20,6 @@ from user.apps import br06_token_generator, encrypt, decrypt
+ 
+ import time, urllib, json, hashlib
+ 
+-# create default role: admin, users.
+-try:
+-    Role.objects.get(Name = 'admin').Name
+-except:
+-    print('create default role: admin')
+-    Role.objects.create(Name = 'admin', Sort = '1', Category = 'System')
+-    Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'admin'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = 'admin'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'admin'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'admin'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'admin'), ACL = 'Enable')
+-else:
+-    print('default role "admin" exist.')
+-
+-try:
+-    Role.objects.get(Name = 'users').Name
+-except:
+-    print('create default role: users')
+-    Role.objects.create(Name = 'users', Sort = '2', Category = 'System')
+-    Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'users'), ACL = 'disable')
+-    Acl.objects.create(FunctionName = 'premission_device', RoleOId = Role.objects.get(Name = 'users'), ACL = 'disable')
+-    Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'users'), ACL = 'disable')
+-    Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'users'), ACL = 'disable')
+-    Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'users'), ACL = 'disable')
+-else:
+-    print('default role "users" exist.')
+-
+-# create and update default account: admin.
+-try:
+-    Users.objects.get(Account = 'admin').Account
+-except:
+-    print('create default account: admin')
+-    Users.objects.create(Account = 'admin', Password = ADMIN_PASSWORD, Name = 'admin',
+-                         Email = ADMIN_MAIL, RoleOId = Role.objects.get(Name = 'admin'))
+-else:
+-    print('default account "admin" exist.')
+-    if Users.objects.get(Account = 'admin').Email != ADMIN_MAIL:
+-        print('update admin email.')
+-        Users.objects.filter(Account = 'admin').update(Email = ADMIN_MAIL)
+-
+-    if Users.objects.get(Account = 'admin').Password != ADMIN_PASSWORD:
+-        print('update admin password.')
+-        Users.objects.filter(Account = 'admin').update(Password = ADMIN_PASSWORD)
+-
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ timedelta = 10 # set expired time.(minutes)
+ key = 15
+-- 
+1.9.1
+

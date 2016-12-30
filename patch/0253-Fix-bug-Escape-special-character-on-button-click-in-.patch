@@ -1,0 +1,26 @@
+From 90db0d76d54f0e414692743a38204cd6526846a5 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 2 Sep 2016 15:38:06 +0800
+Subject: [PATCH 253/443] Fix bug: Escape special character on button click in
+ Web
+
+---
+ templates/fruser_list.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 0cadca9..1560a4d 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -125,7 +125,7 @@
+                     },
+                     {
+                         formatter: function(value, row) {
+-                            row.Name = row.Name.replace(/"/g, "&#92;&#34;").replace(/ /g, "&#160;");
++                            row.Name = row.Name.replace(/"/g, "&#34;").replace(/ /g, "&#160;").replace(/>/g, "&#62;").replace(/</g, "&#60;");
+                             return ' \
+                                 <div align="center"> \
+                                     <button class="btn btn-default" onclick="location.href=\'/fruser_edit?OId=' + row.OId + '\'">{% trans "Edit" %}</button> \
+-- 
+1.9.1
+

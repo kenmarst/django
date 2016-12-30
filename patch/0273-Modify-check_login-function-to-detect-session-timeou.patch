@@ -1,0 +1,1422 @@
+From 4c1db340f6a8fcbebfd58d47fea1bb54b7119288 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Mon, 12 Sep 2016 17:48:44 +0800
+Subject: [PATCH 273/443] Modify check_login function to detect session timeout
+ issue.
+
+---
+ br06/settings.py        |   2 +-
+ dashboard/views.py      |  12 ++---
+ devices/views.py        |  94 +++++++++++++-----------------------
+ frusergroups/views.py   | 106 ++++++++++++++---------------------------
+ fruserlogs/views.py     |  24 ++++------
+ frusers/views.py        |  51 +++++++++-----------
+ login/views.py          |  28 +++++++----
+ logsetting/views.py     |  17 +++----
+ role/views.py           |  58 ++++++++---------------
+ systemlogs/views.py     |  24 ++++------
+ systemsettings/views.py |  28 ++++-------
+ templates/login.html    |   3 ++
+ user/views.py           |  58 ++++++++++-------------
+ usergroups/views.py     | 123 +++++++++++++++++++++---------------------------
+ 14 files changed, 253 insertions(+), 375 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 8184dcb..7a81f8d 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -188,7 +188,7 @@ EMAIL_TIMEOUT = 120
+ DEFAULT_FROM_EMAIL = 'fr_serivce@tw.shuttle.com'
+ 
+ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+-SESSION_COOKIE_AGE = 86400 # sec
++SESSION_COOKIE_AGE = 10800 # sec
+ 
+ # 4G
+ EN_4G = 0 # Enable 4Gapi in UserAdd
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 6d75aa2..62c6070 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -4,13 +4,14 @@ from datetime import timedelta, datetime
+ from time import gmtime, strftime
+ from api.utility import get_localtimezone
+ from api.models import Config, Systemlogs, Frusers, Devices
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ import psutil, json
+ from decimal import Decimal
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_system'
+ 
++
+ def _bytes2human(n):
+     # http://code.activestate.com/recipes/578019
+     # >>> bytes2human(10000)
+@@ -27,12 +28,11 @@ def _bytes2human(n):
+             return '%.1f %s' % (value, s)
+     return "%sB" % n
+ 
++
+ def dashboard_views(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     food1 = { 'name':'cake', 'price':60, 'comment':'good', 'is_spicy':False }
+     food2 = { 'name':'candy', 'price':100, 'comment':'not bad', 'is_spicy':True }
+diff --git a/devices/views.py b/devices/views.py
+index 7850782..97a31af 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -4,19 +4,17 @@ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Frusergroups, Frusergroupdevices
+ from datetime import datetime
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.db.models import Q
+ import json
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_device'
+ 
+ def device_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'device_list.html', {'active': 'device_list'})
+     except:
+@@ -24,10 +22,8 @@ def device_list_view(request):
+ 
+ def device_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -48,10 +44,8 @@ def device_list_data(request):
+ 
+ def device_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'device_add.html', {'active': 'device_add'})
+     except:
+@@ -59,10 +53,8 @@ def device_add_view(request):
+ 
+ def device_edit_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'device_edit.html', {'active': 'device_edit', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -70,10 +62,8 @@ def device_edit_view(request):
+ 
+ def device_settings_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -81,10 +71,8 @@ def device_settings_view(request):
+ 
+ def device_frusergroups_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'device_frusergroups.html', {'active': 'device_frusergroups', 'obj': Devices.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -92,10 +80,8 @@ def device_frusergroups_view(request):
+ 
+ def device_frusergroups_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -117,10 +103,8 @@ def device_frusergroups_list_data(request):
+ 
+ def device_frusergroups_add_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -142,10 +126,8 @@ def device_frusergroups_add_data(request):
+ 
+ def add_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Devices.objects.create(Name = request.POST['Name'], MAC = request.POST['MAC'], IP = request.POST['IP'])
+         return JsonResponse(res_code[0])
+@@ -154,10 +136,8 @@ def add_device(request):
+ 
+ def accept_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
+             State = 'Approved',
+@@ -169,10 +149,8 @@ def accept_device(request):
+ 
+ def change_device_name(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
+             Name = request.POST['Name'],
+@@ -185,10 +163,8 @@ def change_device_name(request):
+ 
+ def settings_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
+             State = 'Setting',
+@@ -217,10 +193,8 @@ def settings_device(request):
+ 
+ def delete_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Devices.objects.get(OId = request.POST['OId']).delete()
+         return JsonResponse(res_code[0])
+@@ -229,10 +203,8 @@ def delete_device(request):
+ 
+ def add_frusergroupdevice(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         GroupOIds = [Frusergroups.objects.get(OId = GroupOId) for GroupOId in request.POST.getlist('GroupOIds')]
+         DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
+@@ -244,10 +216,8 @@ def add_frusergroupdevice(request):
+ 
+ def delete_frusergroupdevice(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index eaec953..c5c6468 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -3,19 +3,17 @@ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Frusergroups, Frusergroupmember, Frusergroupdevices, Devices, Frusers
+ from datetime import datetime
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.db.models import Q, Count
+ import json
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_frusergroup'
+ 
+ def frusergroups_list(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'frusergroups_list.html', {'active': 'frusergroups_list'})
+     except:
+@@ -23,10 +21,8 @@ def frusergroups_list(request):
+ 
+ def frusergroups_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -52,10 +48,8 @@ def frusergroups_list_data(request):
+ 
+ def frusergroup_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'frusergroup_add.html')
+     except:
+@@ -63,10 +57,8 @@ def frusergroup_add_view(request):
+ 
+ def delete_frusergroup(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Frusergroups.objects.filter(OId = request.POST['OId']).delete()
+         return JsonResponse(res_code[0])
+@@ -75,10 +67,8 @@ def delete_frusergroup(request):
+ 
+ def add_frusergroup(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         if Frusergroups.objects.all().count >= 20: # spec: Max 20 Groups
+             return JsonResponse(res_code[1])
+@@ -89,10 +79,8 @@ def add_frusergroup(request):
+ 
+ def frusergroup_edit_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         FRUserGroupsList = Frusergroups.objects.get(OId = request.GET['OId']).as_json()
+         return render(request, 'frusergroup_edit.html', {'active': 'frusergroup_edit', 'obj': FRUserGroupsList})
+@@ -101,10 +89,8 @@ def frusergroup_edit_view(request):
+ 
+ def change_frusergroup_name(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Frusergroups.objects.filter(OId = request.POST['OId']).update(
+             Name = request.POST['Name'],
+@@ -116,10 +102,8 @@ def change_frusergroup_name(request):
+ 
+ def frusergroup_member_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'frusergroup_member.html', {'active': 'frusergroup_member', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -127,10 +111,8 @@ def frusergroup_member_view(request):
+ 
+ def frusergroup_member_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -154,10 +136,8 @@ def frusergroup_member_list_data(request):
+ 
+ def frusergroup_member_add_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -181,10 +161,8 @@ def frusergroup_member_add_data(request):
+ 
+ def add_frusergroup_member(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         FRUserOIds = [Frusers.objects.get(OId = FRUserOId) for FRUserOId in request.POST.getlist('UserOIds')]
+@@ -196,10 +174,8 @@ def add_frusergroup_member(request):
+ 
+ def delete_frusergroup_member(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         FRUserOId = Frusers.objects.get(OId = request.POST['FRUserOId'])
+@@ -210,10 +186,8 @@ def delete_frusergroup_member(request):
+ 
+ def frusergroup_devices_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         return render(request, 'frusergroup_devices.html', {'active': 'frusergroup_devices', 'obj': Frusergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -221,10 +195,8 @@ def frusergroup_devices_view(request):
+ 
+ def frusergroup_devices_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -246,10 +218,8 @@ def frusergroup_devices_list_data(request):
+ 
+ def frusergroup_devices_add_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -271,10 +241,8 @@ def frusergroup_devices_add_data(request):
+ 
+ def add_frusergroup_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOIds = [Devices.objects.get(OId = DeviceOId) for DeviceOId in request.POST.getlist('DeviceOIds')]
+@@ -286,10 +254,8 @@ def add_frusergroup_device(request):
+ 
+ def delete_frusergroup_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         GroupOId = Frusergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index beec21f..00f3035 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -4,29 +4,27 @@ from django.core.exceptions import ObjectDoesNotExist
+ from api.models import Fruserlogs, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
+ from django.conf import settings
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.db.models import Q
+ import datetime,types
+ import csv, json, os
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_log'
+ 
+ def fruserlog_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     return render(request, 'fruserlog_list.html', {'active': "fruserlog_list"})
+ 
+ @csrf_exempt
+ def fruserlog_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     search = request.GET.get('search', None)
+     offset = int(request.GET.get('offset', 0))
+     limit = int(request.GET.get('limit', 0))
+@@ -49,10 +47,8 @@ def fruserlog_data(request):
+ @csrf_exempt
+ def fruserlog_export(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     symbolcover = {'tab' : '\t', 'comma' : ',', 'dot' : '.', 'space' : ' '}
+ 
+diff --git a/frusers/views.py b/frusers/views.py
+index 6c17752..36ac292 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -4,7 +4,7 @@ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+ from api.models import *
+ from datetime import datetime
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.conf import settings
+ from django.db.models import Q
+ import csv, zipfile, tempfile, os, sys, json, requests
+@@ -14,10 +14,9 @@ permission = 'permission_fruserlist'
+ 
+ def fruser_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         return render(request, 'fruser_list.html', {'active': 'fruser_list'})
+     except:
+@@ -25,10 +24,9 @@ def fruser_list_view(request):
+ 
+ def fruser_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -64,10 +62,9 @@ def fruser_data(request):
+ 
+ def fruser_edit_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         fruser = Frusers.objects.get(OId = request.GET['OId']).as_json()
+         fruser['Age'] = fruser['Age'] or ''
+@@ -80,10 +77,9 @@ def fruser_edit_view(request):
+ 
+ def import_fruser(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         if not 'file' in request.FILES:
+             raise Exception(3)
+@@ -177,10 +173,9 @@ def import_fruser(request):
+ 
+ def export_fruser(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         mediadir = settings.MEDIA_DIR
+         csvdir = os.path.join(mediadir, 'frusers.csv')
+@@ -222,10 +217,9 @@ def export_fruser(request):
+ 
+ def update_fruser(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         Frusers.objects.filter(OId = request.POST['OId']).update(
+             Gender = request.POST['Gender'],
+@@ -239,10 +233,9 @@ def update_fruser(request):
+ 
+ def delete_fruser(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         res = json.loads(requests.post(
+             'http://127.0.0.1:' + request.META['SERVER_PORT'] + '/api/user/delete',
+diff --git a/login/views.py b/login/views.py
+index b6aed96..dc9669a 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -14,7 +14,7 @@ from datetime import datetime
+ from django.views.decorators.csrf import csrf_exempt
+ import time, json
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ timedelta = 10 # set expired time.(minutes)
+ key = 15
+ 
+@@ -120,22 +120,30 @@ def checkRecaptcha(response, secretkey):
+         return False
+ 
+ 
+-# res_code[0]: logout: go to login page
+-# res_code[1]: permission error: go to home page
+-# res_code[2]: nothing
++# res_code[0]: nothing
++# res_code[1]: login timeout: go to login page
++# res_code[2]: repeat login: go to login page
++# res_code[3]: permission error: go to home page
+ def check_login(request, permission):
+     try:
+         if request.session['LoginIP'] != Users.objects.get(Email = request.session['Email']).LoginIP:
+-            request.session.flush()
+-            return json.dumps(res_code[0])
++            return json.dumps(res_code[2])
+         elif request.session[permission] == 'Disable':
+-            return json.dumps(res_code[1])
++            return json.dumps(res_code[3])
+         else:
+-            return json.dumps(res_code[2])
++            return json.dumps(res_code[0])
+     except Exception as e:
+-        print ('check_login error', e)
++        return json.dumps(res_code[1])
++
++
++def check_login_redirect(request, code):
++    if code == "1":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9996"})
++    elif code == "2":
+         request.session.flush()
+-        return json.dumps(res_code[0])
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif code == "3":
++        return HttpResponseRedirect("/home")
+ 
+ 
+ def logout(request):
+diff --git a/logsetting/views.py b/logsetting/views.py
+index 14ccd9a..920c841 100644
+--- a/logsetting/views.py
++++ b/logsetting/views.py
+@@ -4,19 +4,18 @@ from django.core.exceptions import ObjectDoesNotExist
+ from api.models import Fruserlogs, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
+ from django.conf import settings
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ import datetime,types
+ import csv, json, os
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_log'
+ 
+ def logsetting_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         return render(request, 'logsetting.html')
+     except:
+@@ -24,10 +23,8 @@ def logsetting_view(request):
+ 
+ def settinglog(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+         logsettingdir = os.path.join(settings.LOGSETTING_DIR, 'logsetting.json')
+diff --git a/role/views.py b/role/views.py
+index 6d7bfe7..8d56c01 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -5,7 +5,7 @@ from datetime import datetime
+ from br06.settings import *
+ from collections import ChainMap
+ from datetime import datetime
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.db.models import Q
+ import json
+ 
+@@ -62,24 +62,20 @@ else:
+             UpdateDate = datetime.now()
+         )
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_system'
+ 
+ 
+ def role_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     return render(request, 'role_list.html')
+ 
+ def role_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -104,10 +100,8 @@ def role_list_data(request):
+ 
+ def role_permission_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     #[{'permission_system': 'Enable',
+     #  'role_name': 'Admin(default)',
+@@ -126,27 +120,21 @@ def role_permission_view(request):
+ 
+ def role_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     return render(request, 'role_add.html')
+ 
+ def role_rename_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     return render(request, 'role_rename.html', {'obj': {'OId': request.GET['OId']}})
+ 
+ 
+ def permission_save(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Acl.objects.filter(
+             OId = Acl.objects.get(
+@@ -163,10 +151,8 @@ def permission_save(request):
+ 
+ def add_role(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         Role.objects.create(Name = request.POST['Name'], Sort = request.POST['Sort'], Category = request.POST['Category'])
+         for x in PERMISSION:
+@@ -177,10 +163,8 @@ def add_role(request):
+ 
+ def rename_role(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         if Role.objects.get(OId = request.POST['OId']).Category == 'System':
+             return JsonResponse(res_code[0])
+@@ -194,10 +178,8 @@ def rename_role(request):
+ 
+ def delete_role(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+     try:
+         if Role.objects.get(OId = request.POST['OId']).Category == 'System':
+             return JsonResponse(res_code[0])
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 8e1d542..122919b 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -4,28 +4,26 @@ from django.core.exceptions import ObjectDoesNotExist
+ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
+ from api.models import Users, Frusers, Systemlogs
+ from django.conf import settings
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.db.models import Q
+ import json, urllib, datetime, types, csv, os
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_log'
+ 
+ def systemlog_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     return render(request, 'systemlog_list.html', {'active': "systemlog_list"})
+ 
+ @csrf_exempt
+ def systemlog_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     search = request.GET.get('search', None)
+     offset = int(request.GET.get('offset', 0))
+     limit = int(request.GET.get('limit', 0))
+@@ -48,10 +46,8 @@ def systemlog_data(request):
+ @csrf_exempt
+ def systemlog_export(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     symbolcover = {'tab' : '\t', 'comma' : ',', 'dot' : '.', 'space' : ' '}
+ 
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 384719f..15ad067 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -1,7 +1,7 @@
+ from django.shortcuts import render, render_to_response
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Config
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ import json
+ import os
+ from ftplib import FTP
+@@ -201,15 +201,13 @@ except:
+ else:
+     print('default PicFaceSave exist.')
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_system'
+ 
+ def system_settings_views(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+         BackupMethod = Config.objects.get(Name = 'BackupMethod').Value
+@@ -354,10 +352,8 @@ def system_settings_views(request):
+ 
+ def settings_system_backup(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+         BackupMethod = request.POST.get('BackupMethod', 'n/a')
+@@ -618,10 +614,8 @@ def settings_system_backup(request):
+ 
+ def settings_system_connect_test(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+         BackupRemoteHost = request.POST.get('BackupRemoteHost', '')
+@@ -652,10 +646,8 @@ def settings_system_connect_test(request):
+ 
+ def settings_system_log(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
+         LogLimit = request.POST.get('LogLimit', '')
+diff --git a/templates/login.html b/templates/login.html
+index ec7c75a..332a6d1 100644
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -66,5 +66,8 @@
+ 	} else if (code == "9997") {
+ 		location.href = '/';
+ 		alert("Repeat Sign-in, Logout!");
++	} else if (code == "9996") {
++		location.href = '/';
++		alert("Login Expired! Please Login Again.");
+ 	}
+ </script>
+diff --git a/user/views.py b/user/views.py
+index e01f13f..027d29c 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -5,7 +5,7 @@ from django.core import serializers
+ from api.models import Users, Role, Acl
+ from api.utility import md5
+ from datetime import datetime
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.db.models import Q
+ import json
+ 
+@@ -14,10 +14,9 @@ permission = 'permission_system'
+ 
+ def user_setting(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         obj = Users.objects.get(OId=request.session['OId'])
+         return render(request, 'user_setting.html', {'active': "setting", 'obj': obj})
+@@ -27,18 +26,16 @@ def user_setting(request):
+ # User List
+ def user_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     return render(request, 'user_list.html', {'active': "user_list"})
+ 
+ def user_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -64,18 +61,16 @@ def user_list_data(request):
+ 
+ def user_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     return render(request, 'user_add.html', { 'Roles': Role.objects.all() } )
+ 
+ def user_update_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         user = Users.objects.get(OId = request.GET['OId']).as_json()
+         return render(
+@@ -89,10 +84,9 @@ def user_update_view(request):
+ 
+ def add_user(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         Users.objects.create(
+             Account = request.POST['Account'],
+@@ -109,10 +103,9 @@ def add_user(request):
+ 
+ def update_user(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         if request.POST['Account'] == 'admin':
+             return JsonResponse(res_code[2])
+@@ -130,10 +123,9 @@ def update_user(request):
+ 
+ def delete_user(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         if request.POST['Account'] == 'admin' :
+             return JsonResponse(res_code[2])
+diff --git a/usergroups/views.py b/usergroups/views.py
+index 38ce5fe..4d11ea9 100644
+--- a/usergroups/views.py
++++ b/usergroups/views.py
+@@ -3,19 +3,18 @@ from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Devices, Users, Usergroups, Usergroupmember, Usergroupdevices
+ from datetime import datetime
+-from login.views import check_login
++from login.views import check_login, check_login_redirect
+ from django.db.models import Q, Count
+ import json
+ 
+-res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
++res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_system'
+ 
+ def user_group_list_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         return render(request, 'user_group_list.html', {'active': 'user_group_list'})
+     except:
+@@ -23,10 +22,9 @@ def user_group_list_view(request):
+ 
+ def user_group_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -52,10 +50,9 @@ def user_group_list_data(request):
+ 
+ def user_group_add_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         return render(request, 'user_group_add.html', {'active': 'user_group_add'})
+     except:
+@@ -63,10 +60,9 @@ def user_group_add_view(request):
+ 
+ def user_group_edit_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         return render(request, 'user_group_edit.html', {'active': 'user_group_edit', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -74,10 +70,9 @@ def user_group_edit_view(request):
+ 
+ def user_group_members_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         return render(request, 'user_group_members.html', {'active': 'user_group_members', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -85,10 +80,9 @@ def user_group_members_view(request):
+ 
+ def user_group_members_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -110,10 +104,9 @@ def user_group_members_list_data(request):
+ 
+ def user_group_members_add_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -135,10 +128,9 @@ def user_group_members_add_data(request):
+ 
+ def user_group_devices_view(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         return render(request, 'user_group_devices.html', {'active': 'user_group_devices', 'obj': Usergroups.objects.get(OId = request.GET['OId']).as_json()})
+     except:
+@@ -146,10 +138,9 @@ def user_group_devices_view(request):
+ 
+ def user_group_devices_list_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -171,10 +162,9 @@ def user_group_devices_list_data(request):
+ 
+ def user_group_devices_add_data(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         search = request.GET.get('search', None)
+         offset = int(request.GET.get('offset', 0))
+@@ -196,10 +186,9 @@ def user_group_devices_add_data(request):
+ 
+ def add_user_group(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         Usergroups.objects.create(Name = request.POST['Name'])
+         return JsonResponse(res_code[0])
+@@ -208,10 +197,9 @@ def add_user_group(request):
+ 
+ def change_user_group_name(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         Usergroups.objects.filter(OId = request.POST['OId']).update(
+             Name = request.POST['Name'],
+@@ -223,10 +211,9 @@ def change_user_group_name(request):
+ 
+ def delete_user_group(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         Usergroups.objects.get(OId = request.POST['OId']).delete()
+         return JsonResponse(res_code[0])
+@@ -235,10 +222,9 @@ def delete_user_group(request):
+ 
+ def add_user_group_member(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
+         UserOIds = [Users.objects.get(OId = UserOId) for UserOId in request.POST.getlist('UserOIds')]
+@@ -250,10 +236,9 @@ def add_user_group_member(request):
+ 
+ def delete_user_group_member(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
+         UserOId = Users.objects.get(OId = request.POST['UserOId'])
+@@ -264,10 +249,9 @@ def delete_user_group_member(request):
+ 
+ def add_user_group_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOIds = [Devices.objects.get(OId = DeviceOId) for DeviceOId in request.POST.getlist('DeviceOIds')]
+@@ -279,10 +263,9 @@ def add_user_group_device(request):
+ 
+ def delete_user_group_device(request):
+     login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
+     try:
+         GroupOId = Usergroups.objects.get(OId = request.POST['GroupOId'])
+         DeviceOId = Devices.objects.get(OId = request.POST['DeviceOId'])
+-- 
+1.9.1
+

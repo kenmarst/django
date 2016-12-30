@@ -1,0 +1,29 @@
+From 741f398febf4b94458fa63d0f5280b213a4bf6c9 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 13:33:03 +0800
+Subject: [PATCH 258/443] Remove "Theme from MediaLoot" ads at menu bottom
+ page.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+(BZ #1506)
+BR06 Server - Server 網頁下方有隱藏廣告連結
+---
+ templates/menu.html | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/templates/menu.html b/templates/menu.html
+index 49dbee1..ebb5fac 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -89,6 +89,4 @@
+             $("#sub-item-1").collapse('hide');
+         })
+     </script>
+-
+-	<a class="navbar-fixed-bottom" href="http://MediaLoot.com" style=" color:white"> Theme from MediaLoot</a>
+ </div>
+-- 
+1.9.1
+

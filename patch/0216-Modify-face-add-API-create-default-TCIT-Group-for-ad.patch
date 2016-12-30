@@ -1,0 +1,55 @@
+From 125e090ea63d417d3dd752616f7322b1f324a0f9 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 2 Aug 2016 16:04:59 +0800
+Subject: [PATCH 216/443] Modify face add API : create default TCIT Group for
+ add PersonId.
+
+---
+ api/face.py | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/api/face.py b/api/face.py
+index 1b31cc8..5b5528b 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -12,6 +12,25 @@ result_fail = {'Result' : 'Fail'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
+ true = 'true'
++#create default group in TCIT
++try:
++    res_groupList = TCIT_API("/face/query/group_list")
++    if res_groupList.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
++        if res_groupList.get('groups', ''):
++            TCIT_Group = res_groupList['groups'][0]
++            print('default TCIT group exist.')
++        else:
++            res_groupCreate = TCIT_API("/face/group/create/")
++            if res_groupCreate.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
++                if res_groupCreate.get('group_id', ''):
++                    TCIT_Group = res_groupCreate['group_id']
++                    print('create default TCIT group')
++            else:
++                print('TCIT_group create error.')
++    else:
++        print('TCIT group list error.')
++except Exception as error:
++    print('can\'t create default group in TCIT : ', str(error))
+ 
+ @csrf_exempt
+ def add(request):
+@@ -67,6 +86,11 @@ def add(request):
+                     fruser.PersonId = person_id
+                     fruser.UpdateDate = datetime.now()
+                     fruser.save()
++                    # Add Person to Group in TCIT
++                    res_groupAdd = TCIT_API('/face/group/update/add', data = {'person_id': person_id, 'group_id': TCIT_Group})
++                    if not res_groupAdd.get('state', '') == TCIT_res_state["STATE_SUCCESSFUL"]:
++                        logContent = '{message_head}TCIT[Add Person to Group] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_groupAdd.get('state', '')])
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                 else:
+                     logContent = '{message_head}TCIT[Create Person] Error cause by {TCIT_res}'.format(message_head = message_head, TCIT_res = TCIT_res_state[res_personid.get('state', '')])
+                     return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+-- 
+1.9.1
+

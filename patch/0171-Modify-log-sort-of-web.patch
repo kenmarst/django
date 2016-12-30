@@ -1,0 +1,40 @@
+From 5043f816da0ddf2d1c1e47f32870390c40c2c770 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 12 Jul 2016 13:27:35 +0800
+Subject: [PATCH 171/443] Modify log sort of web
+
+Modify log datetime sort of web.
+---
+ templates/fruserlog_list.html | 2 +-
+ templates/systemlog_list.html | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 19c732a..cfa484c 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -76,7 +76,7 @@
+             toolbar: '#logexport',
+             pageSize: 10,
+             sortName: 'LogDateTime',
+-            sortOrder: 'asc',
++            sortOrder: 'desc',
+             sidePagination: 'server',
+             queryParams: function(params) {
+                 return {
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index ba47f17..66c752f 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -64,7 +64,7 @@
+             toolbar: '#logexport',
+             pageSize: 10,
+             sortName: 'LogDateTime',
+-            sortOrder: 'asc',
++            sortOrder: 'desc',
+             sidePagination: 'server',
+             queryParams: function(params) {
+                 return {
+-- 
+1.9.1
+

@@ -1,0 +1,503 @@
+From 578611ec022adf1476b11c9127b7f9e57e815c67 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 14 Nov 2016 15:54:26 +0800
+Subject: [PATCH 356/443] Update of auto redirect to login function.
+
+When login timeout, web page will alert and auto redirect to login function.
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 19687 -> 19941 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  26 +++++++++++++++++++++-----
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 19687 -> 19941 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  26 +++++++++++++++++++++-----
+ templates/login.html                         |  13 ++++++++-----
+ templates/menu.html                          |   5 +++++
+ 10 files changed, 57 insertions(+), 17 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index f8c404d4e2097c8ee1ad8739deb345cee0e21a57..1a77b8848f97a2912859b16fefd277237bf4e314 100755
+GIT binary patch
+delta 19
+acmZo-X=0i1lEctM!O+yo)L`RBK}G;OAO*|-
+
+delta 19
+acmZo-X=0i1lEc76!O+6W)NtcRK}G;OF$K>6
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 6d54394..ed096be 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-04 18:51+0800\n"
++"POT-Creation-Date: 2016-11-14 15:50+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index f8c404d4e2097c8ee1ad8739deb345cee0e21a57..1a77b8848f97a2912859b16fefd277237bf4e314 100755
+GIT binary patch
+delta 19
+acmZo-X=0i1lEctM!O+yo)L`RBK}G;OAO*|-
+
+delta 19
+acmZo-X=0i1lEc76!O+6W)NtcRK}G;OF$K>6
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 6d54394..ed096be 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-04 18:51+0800\n"
++"POT-Creation-Date: 2016-11-14 15:50+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 6611531ff930c7976213426b541a79bd52043569..7a3e5d43dfbd2538b6dd67a672320a4d5e6fb3d2 100755
+GIT binary patch
+delta 7338
+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
+
+delta 7088
+zcmZYC3w(}sAII_kX6G%<G>1(#Y?ukdX67`Tkz)>(P)bDNky8rgno26IJP%Wns7Oj_
+zZIY&vLiC8rA?H(CM3O_LgFfH;`gy&2UeERNyWjuQ^*>$z>%Qmsf}o1|LEgc*kYdMG
+z5ae7f>=fl(3F*<-sMNV;iOz*#2402P7>=E>8ur3Uco$a2k*IbLSpG4qFUC;H=VK%;
+z!Vu>?x12;33f@BgxpjP0#r>F$KcOa8i;oCwjkPfkRX&6dbvzAY@lmrF)$gmQe&53w
+z+=1%<2u3r$yFfxS54zU5t1%W6Fxm2LFphk8REL961C7NRI33wE_dIH4OU;$2omqqG
+z?*sE2)Q+B$jPEXyPzOOQOEZkYXsl_bni*z0)I__Y?i*m`!!R&0)T5b>TKRLRM^=Vv
+zzZSKSP3URmdq^+`_q`dG6nHi+1+}$ls2MlKewbzDPogF|8`bd(sDYND+ONc5eAirq
+zIvZ=vElKRZX7UXMI&UXYTYcG#OZLlCQ9F}^>Yxj1VmG162ci188?`f2P-o>y)WYVV
+z7FvQFI=2qvaYM4_Z`nQyH1H|&GOEM4I{sFsptiOR*2ErI9fu>E=BA+z)k0LqCFUm7
+z!VXyd&t_O%zuyFpgl^2Rf&$CmYWcC2pNZ;t0cvYYP!oC&HKEO@!*<N-D^QQ*N7N(w
+z4YhNj_5Ay*qIS?rAfblIs6&%(`8?DP^h9mh?dCAl1V*Ad9E&+P4K>gj)O{OJk775b
+zU<K;!h#{k$u7)hgb7>?hQP2T(c=Aylbw_p3AN87zuzVq^{cH@uxu|D7A2qR;QTH!5
+zSE0_x$Eg0lK&^ZiR?_>wpM(y_VPul-j9E3+xt8QxVKR<JZFLc9$ChCTzJnTIH3s9S
+zs0nVe`p?bn7)tq0RQ)~-W_)*uL?1kgT1m_Le#h<1Jk*wTLDdgL9loL18K<J&^Yy6H
+zeh_u0{y;s7*apsJVqN5)yM>S5Scsl({E~z`joBF4kQ0u1H~^nPeS@7q?NCUX|JB<N
+zbzcFheh6v;4`MPtkJ_<v)Y;mJYIh2UV|XL>U$4iQMt;R37)t&{)YdM+a9oa2Sc2M#
+zwWw#j4I^+LhT*rU`+q<UeAddN)9rOeEieT&q1)2ge+@Lz8cfDW^0Ulh)FE7i(YO+I
+z7|T(w;||nTpF};=zfk=JH}+3`IP%K7#;Aq%!WbNifw#xAf@v5{#Vk}u&!Seo0QC%C
+zvHU93ia$UNv=O!P&r$b%g<8NaD?f~yU<IoG-!Tfquk*h@yf_kCVLjB0T3Eg#Y65*w
+z&ujo{%O+xXoQ0fMw;LzmpO}K<n)v1OFq!;X9Eb;y<K?oO`rnv$V3OW{k3>Hz79nli
+zIixRFx0ydsZ`8_OK&^N&Y6q5@Z(03nt1q|mb$Au+HltR)8<X)EYC$0xdXzl>Bof+^
+zY}8ifqXz1RmGK6wf`jpD9BUR@`E1lqy^PxW*Ud82z#pO}yv6cgqYmjI<@Np_C!rOd
+zMRjxmb$b6at2cLU6!{F)7A{1!+kpDQ*^05a9W}utr~%HR`uPR5peil=`>LT9TpK+-
+z(=-yDF&Ft`$jwBRFF|cpIcf#FFfen}gpXqkp0M(Z<{y|F#N_z;4D2Z1K5EwumG6&n
+zI5?C2SHU=I@BnHBGt6RC{ZexUs-sfNue1CnREIk(Ux7ND=TSe;30ZzWtx>OUE~@>2
+zEcRamjHW;xPcREn6DdNS>V;Om9(Ch3%OAyf@@G)(LtFXZi1Da=hS|~VV-7*xH_juW
+zfoEF9T+1&(ZE*?eD|QuXC10W@{FC_$>i)k_14i@prhKB=(9AUR%o|MaR!fXDC!tpO
+zh&c~6;Bw2qjT+z+b34``e*m?ji>UT7t^IaYQTb%-j}0vE`Fid#D=0#}E^{rv7&Xu`
+zvkbMuk1_D0Wu8X8rja@RuVM{UeKXWoZV%MNhM4zbP4Y#UsP}&v33c#Epn$JX)Qo>b
+z-FN}DBhhXA^4h3;s+nze$3)5pTYidJgz9H8YNy_{@@>lN{Xc3Aez%G$ZT*f?Py^+n
+zZtREZXtdQoY~?Sa+O0<I&=$+@MYTVTiCC$ff2NX9?dzeZ23c0o1JyxqRQVmKhLbG+
+z1Zrm%nXjTA(VM7t?^}MW<@ci6pGF<#^OpY=)&J#o?0+v3@$LPF!%)v`6lx-csF}~U
+z`W2{wO3jT{zQ;Ul<rS#=FPTvt{D~%@Cepx6@4)_R1x>A>Eh?XD_C)=N3`DKuZu4GL
+zN0Tf+1^J`KO-KIbaBrY~#CD;+KSFZ-g`}bSD?s(v&m*B9je%A$%p7HoHz%8g=1lWx
+z9POMdwtR3$zvD<$zp<zVC0Ka_)Xp?P&b9N}lhBq<HlIS>u*h72`q5c~TFDX2!!SN{
+zD7&Jb<(*g`AHYmpgt@pAt6;T!f1HM>_HBGU*T)J*m=BqAP%~X_uCemX*q8D{mT%t4
+z@A!JumJUMwI^KyoOZQ+M^iT_Z3AHn20X=@7N$AGU%x$O{?n3RvDf2hvZwD7v;CIvt
+zbze8sMEjuH4>8A>Q&9syj@q#WmM_D2#&?@YRKf$O4v%1M{N4=j>`$mZYJj$8SMz4n
+z1csvenPA>;^;0p7^2g0*%z5akVj&6LxCAx8YpC*7sF|;|@@?jR)E1tw`g3Mj7r%W?
+zRDEOA)@NZYyaoBTcK4xnVr3WJ|C>pCMnM85UGKjpIjDheM$V5LiMnBhxdHWv4kE9(
+zJCEA27F~V&qRPji7WOuVVVPNOuJ6kJtHEX~*oxZ99jKl7);x<^$zP~1q~vb?1lpq7
+z^+gSEJ4WJgR6k>_z7RFxBGmn_pceR%M?yD#WexUN{){!ai0UY^yKOCMfX1kSvrr4j
+zw|o~=$2Xz|9D#%IA=KZ9dr;$@G`+JVf++aa3ND#JJ^T(LP&d>zQ!y|BjG;UWn_xa_
+z;PI$|XP666?MqPol%poR-p_k(BZ(LawwilU6S|l95AigSLcw#`LKR$_i0y%t|B-Cv
+zKmMa^H|cMQQC2n|GcDbi_R~rC(C_~lD@?<9Dq0dBkS--SS8g^DObjQ!Bd%P>Ni-nR
+ztzauoAa)VAS(#`|{F}Iuh^Fr=S8LM$())jac$Jt;L=d{p5;qZvG<qFR5W3osKk6r4
+zAyy@yj5`QjfA|DGXIZ)qZ5k5%8Q`9<vPR^uB{Y8E(rfrIF_XB4in_#+Kn<tfd=pcN
+zJnD+AtO4n2gsyWwt_@yG)U$FG-=z<(A|letAN$AnE|-c>Dqh1q#1=x=eZ-4_6oXSg
+zhcsu@T_Vb?{2N?GEFjtuakRS*^NH%DXJ9RiAnqm|j5RSZei(G1pfYh!pwK_b>Et_*
+z|AGi7{R@6X6cF18ePNXo>j+(+5r>uF(h1Kd77+)D>V&RpL>J-};(Ox1+W)VJ_X%CA
+ziK)Z|;!olhLf2&<HwBki`W>80^dX|G>}%}EWOe;Y=%;t2GF&w%PqMlYQ{(^76>hl@
+ztWDIBG=9&@ukb914~YWmI^#v6HL;#}nOH&8w?Ued9!vBjS`v2<j}u&;TgB%>VuP|=
+zBZ#X4DgL*kG@aD2{3qCgc%EoQxxN{7H6)taU^_`aMa(1m5kC-%iM_-CVkI$<h@yQ{
+zo&P~(?j&@*L3ARrs9cM`5ox63aUAgzp>L-cB7>-`JlBK7HN@{kKILztt|X!t(U-_0
+z#uFbCONpw)N$r0mp(~Rca|m6J5E+3Ke^QxZG?7i4iB?vD^@tmYR#x^icC~aj977x;
+zHd|R3_uo%C0lj8?G_eX1OAH|%BHkh%B~B5#a%p?ziXm}~*hn;?ygv3OCK0+`@^Lk(
+z%Oc(1^0DMQ5zUD;dj55(xQ<MFYam`A+Eb?MYHWn>26F%Z5oGP2v8r~KSN1gVIT1>f
+z5V{5v(*h}d4E6t}tHMp6TH)>3kr+noBlL)B5tXdt6w<m932qNuIegwqoF|?n+R}D8
+z?kA#4XCw}Yj2t;;=)L2|-!*h%X+r9Zu+r7(Uq;MX(sDvXvzEyj**TdRrAe9ZN5y>i
+f?BefAi!0`rAD^+b^m2z?p{2(PHipkx*E98RWns-x
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 67f285f..840271d 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-04 18:51+0800\n"
++"POT-Creation-Date: 2016-11-14 15:50+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -826,6 +826,22 @@ msgstr "建立时间"
+ msgid "Note"
+ msgstr "摘要"
+ 
++#: templates/login.html:57 templates/user_setting.html.py:192
++msgid "Wrong password or account"
++msgstr "帐户或密码有误"
++
++#: templates/login.html:61
++msgid "reCAPTCHA validation failed"
++msgstr "reCAPTCHA 验证错误"
++
++#: templates/login.html:65
++msgid "Repeat Sign-in, Logout!"
++msgstr "重复登入!"
++
++#: templates/login.html:69
++msgid "Login Expired! Please Login Again."
++msgstr "登入逾时"
++
+ #: templates/login_i18n.html:20
+ msgid "Languages"
+ msgstr "语言"
+@@ -887,6 +903,10 @@ msgstr "系统事件纪录"
+ msgid "Log Out"
+ msgstr "登出"
+ 
++#: templates/menu.html:70
++msgid "Longin timeout!"
++msgstr "登入逾时"
++
+ #: templates/registration/forget_password.html:10
+ #: templates/registration/forget_password.html:21
+ msgid "Forgotten your password ?"
+@@ -1446,10 +1466,6 @@ msgstr "输入的'新密码'与'确认密码'不一致"
+ msgid "Change password successfully"
+ msgstr "密码变更成功"
+ 
+-#: templates/user_setting.html:192
+-msgid "Wrong password or account"
+-msgstr "帐户或密码有误"
+-
+ #: templates/user_setting.html:194
+ msgid "Fail to change password"
+ msgstr "密码变更失败"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 9f99123c2aac111722335b6fab1eecfc68e1dfa6..ae5a2efbd171c860f6acf889f389f2df1c88c8a8 100755
+GIT binary patch
+delta 7336
+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
+
+delta 7087
+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
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 8084009..21d2a7e 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-11-04 18:51+0800\n"
++"POT-Creation-Date: 2016-11-14 15:50+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -826,6 +826,22 @@ msgstr "建立時間"
+ msgid "Note"
+ msgstr "摘要"
+ 
++#: templates/login.html:57 templates/user_setting.html.py:192
++msgid "Wrong password or account"
++msgstr "帳戶或密碼有誤"
++
++#: templates/login.html:61
++msgid "reCAPTCHA validation failed"
++msgstr "reCAPTCHA 驗證錯誤"
++
++#: templates/login.html:65
++msgid "Repeat Sign-in, Logout!"
++msgstr "重複登入!"
++
++#: templates/login.html:69
++msgid "Login Expired! Please Login Again."
++msgstr "登入逾時"
++
+ #: templates/login_i18n.html:20
+ msgid "Languages"
+ msgstr "語言"
+@@ -887,6 +903,10 @@ msgstr "系統事件紀錄"
+ msgid "Log Out"
+ msgstr "登出"
+ 
++#: templates/menu.html:70
++msgid "Longin timeout!"
++msgstr "登入逾時"
++
+ #: templates/registration/forget_password.html:10
+ #: templates/registration/forget_password.html:21
+ msgid "Forgotten your password ?"
+@@ -1446,10 +1466,6 @@ msgstr "輸入的'新密碼'與'確認密碼'不一致"
+ msgid "Change password successfully"
+ msgstr "密碼變更成功"
+ 
+-#: templates/user_setting.html:192
+-msgid "Wrong password or account"
+-msgstr "帳戶或密碼有誤"
+-
+ #: templates/user_setting.html:194
+ msgid "Fail to change password"
+ msgstr "密碼變更失敗"
+diff --git a/templates/login.html b/templates/login.html
+index 1e5477e..9affb08 100755
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html xml:lang="{{ LANGUAGE_CODE }}" lang="{{ LANGUAGE_CODE }}">
+     {% include 'commons_js.html' %}
++    {% load i18n %}
+     {% load static %}
+     <!--
+     <body background="{% static "img/background.jpg" %}">
+@@ -15,7 +16,7 @@
+                 <section class="login-form">
+                     <form method="post" action="" role="login">{% csrf_token %}
+                         <img src="{% static "img/shuttle_logo.png" %}" class="img-responsive" alt="" />
+-                        <input type="email" name="email" placeholder="Email" required class="form-control input-lg" />
++                        <input type="email" name="email" placeholder="E-Mail address" required class="form-control input-lg" />
+                         <input type="password" class="form-control input-lg" name="password" id="password" placeholder="Password" required="" />
+ 
+                         <!-- check password strength and recaptcha
+@@ -53,17 +54,19 @@
+     var code = '{{Code}}';
+     if (code == "9999") {
+         location.href = '/';
+-        alert("Wrong password or account");
++        alert("{% trans "Wrong password or account" %}");
+     /*
+     } else if (code == "9998") {
+         location.href = '/';
+-        alert("reCAPTCHA validation failed");
++        alert("{% trans "reCAPTCHA validation failed" %}");
+     */
+     } else if (code == "9997") {
+         location.href = '/';
+-        alert("Repeat Sign-in, Logout!");
++        alert("{%  trans "Repeat Sign-in, Logout!" %}");
++    /*
+     } else if (code == "9996") {
+         location.href = '/';
+-        alert("Login Expired! Please Login Again.");
++        alert("{% trans "Login Expired! Please Login Again." %}");
++    */
+     }
+ </script>
+diff --git a/templates/menu.html b/templates/menu.html
+index 38995bc..55f7283 100755
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -66,6 +66,11 @@
+     </ul>
+ 
+     <script>
++        setTimeout(function() {
++            alert("{% trans "Longin timeout!" %}");
++            location.href = '/';
++        }, {{ request.session.get_expiry_age }} * 1000);
++
+         $(document).ready(function() {
+             var systemlink = ["/dashboard/", "/user_list", "/user_add/", "/user_update", "/system_settings/",
+                                 "/user_group_list", "/user_group_add/", "/user_group_edit", "/user_group_members", "/user_group_devices",
+-- 
+1.9.1
+

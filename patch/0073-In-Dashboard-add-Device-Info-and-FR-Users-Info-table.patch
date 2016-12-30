@@ -1,0 +1,351 @@
+From 8e7f5f459d254775489ab591b2aa91bb5d0452df Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Tue, 24 May 2016 18:53:30 +0800
+Subject: [PATCH 073/443] In Dashboard, add 'Device Info' and 'FR Users Info'
+ table
+
+---
+ dashboard/views.py       |  53 ++++++++++-
+ templates/dashboard.html | 243 +++++++++++++++++++++--------------------------
+ 2 files changed, 158 insertions(+), 138 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index a96a8d2..95dd5a9 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -10,7 +10,7 @@ from django.http import HttpResponseRedirect
+ from datetime import timedelta, datetime
+ from time import gmtime, strftime
+ from api.utility import get_localtimezone
+-from api.models import Config, Systemlogs, Frusers
++from api.models import Config, Systemlogs, Frusers, Devices
+ 
+ def _bytes2human(n):
+     # http://code.activestate.com/recipes/578019
+@@ -47,10 +47,12 @@ def dashboard_views(request):
+     disk_stat = psutil.disk_usage("/")
+     disk_total = _bytes2human(disk_stat.total)
+     disk_used = _bytes2human(disk_stat.used)
++    disk_stat_percent = disk_stat.percent
+ 
+     mem_stat = psutil.virtual_memory()
+     total_mem = _bytes2human(mem_stat.total)
+     used_mem = _bytes2human(mem_stat.total - mem_stat.available)
++    mem_stat_percent = mem_stat.percent
+ 
+     #utc_now = datetime.utcnow()
+     now = datetime.now()
+@@ -68,4 +70,51 @@ def dashboard_views(request):
+         Config.objects.create(Name = 'LogLimit', Value = '200000')
+         syslog_limit = 200000
+ 
+-    return render_to_response('dashboard.html',locals())
++    device_total_count = Devices.objects.count()
++    device_proposed_count = Devices.objects.filter(State='Proposed').count()
++    device_offline_count = Devices.objects.filter(State='Offline').count()
++    device_online_count = device_total_count - device_offline_count - device_proposed_count
++
++    devices_query_set = Devices.objects.all().order_by('-UpdateDate')
++    devices = [res for res in devices_query_set if (res.State != 'Proposed')]
++    devices = devices[:5]
++    devices = [res.as_json() for res in devices]
++    index = 0
++    for dev in devices:
++        dev['Index'] = index+1
++        index += 1
++
++    frusers_query_set = Frusers.objects.all().order_by('-UpdateDate')
++    frusers = [res for res in frusers_query_set if (res.State != 'Disable')]
++    frusers = frusers[:5]
++    frusers = [res.as_json() for res in frusers]
++    index = 0
++    for user in frusers:
++        user['Index'] = index+1
++        user['Age'] = user['Age'] or ''
++        index += 1
++
++    return render(request, 'dashboard.html',
++                  {
++                      'uptime_days' : uptime_days,
++                      'uptime_hms' : uptime_hms,
++                      'disk_used' : disk_used,
++                      'disk_total' : disk_total,
++                      'disk_stat_percent' : disk_stat_percent,
++                      'used_mem' : used_mem,
++                      'total_mem' : total_mem,
++                      'mem_stat_percent' : mem_stat_percent,
++                      'frusers_total_count' : frusers_total_count,
++                      'frusers_limit' : frusers_limit,
++                      'Syslogs_total_count' : Syslogs_total_count,
++                      'syslog_limit' : syslog_limit,
++                      'now' : now,
++                      'tz' : tz,
++                      'device_total_count' : device_total_count,
++                      'device_online_count' : device_online_count,
++                      'device_offline_count' : device_offline_count,
++                      'device_proposed_count' : device_proposed_count,
++                      'devices': devices,
++                      'frusers': frusers
++                      }
++                  )
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index 9bd8c09..7a11aac 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -3,146 +3,117 @@
+ {% load static %}
+ 
+ <html>
+-<head>
+-<meta charset="utf-8">
+-<meta name="viewport" content="width=device-width, initial-scale=1">
+-<title>Dashboard</title>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Dashboard</title>
++    </head>
+ 
+-<!--[if lt IE 9]>
+-<script src="js/html5shiv.js"></script>
+-<script src="js/respond.min.js"></script>
+-<![endif]-->
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/dashboard"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Dashboard</li>
++                </ol>
++            </div><!--/.row-->
+ 
+-</head>
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header">Dashboard</h1>
++                </div>
++            </div><!--/.row-->
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">Dashboard</li>
+-			</ol>
+-		</div><!--/.row-->
+-		
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">Dashboard</h1>
+-			</div>
+-		</div><!--/.row-->
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading">System Info</div>
++                        <div class="panel-body">
++                            <dl class="dl-horizontal">
++                                <dt>System Uptime</dt>
++                                <dd>{{uptime_days}} days, {{uptime_hms}}</dd>
++                                <dt>Disk Usage</dt>
++                                <dd>{{disk_used}} / {{ disk_total }} ({{disk_stat_percent}}%)</dd>
++                                <dt>Memory Usage</dt>
++                                <dd>{{used_mem}} / {{total_mem}} ({{mem_stat_percent}}%)</dd>
++                                <dt>FR User Count</dt>
++                                <dd>{{frusers_total_count}} / {{frusers_limit}}</dd>
++                                <dt>System Log Count</dt>
++                                <dd>{{Syslogs_total_count}} / {{syslog_limit}}</dd>
++                                <dt>System Current Time</dt>
++                                <dd>{{now}} ({{tz}})</dd>
++                            </dl>
++                            <div class="row">
++                                <div class="col-md-6 col-lg-6">
++                                    <div class="panel panel-default" style="background-color:lavender;">
++                                        <div class="panel-heading">Device Info</div>
++                                        <div class="panel-body">
++                                            <label>Device Count: {{device_total_count}} (online : {{device_online_count}} / offline : {{device_offline_count}} / proposed : {{device_proposed_count}})</label>
++                                            <table id="DeviceList"></table>
++                                        </div>
++                                    </div>
++                                </div>
++                                <div class="col-md-6 col-lg-6">
++                                    <div class="panel panel-default" style="background-color:lavenderblush;">
++                                        <div class="panel-heading">FR Users Info</div>
++                                        <div class="panel-body">
++                                            <label>FR User Count: {{frusers_total_count}}</label>
++                                            <table id="FRList"></table>
++                                        </div>
++                                    </div>
++                                </div>
++                            </div><!--/.row-->
++                        </div><!--panel-body-->
++                    </div><!--panel panel-default-->
++                </div><!--col-lg-12-->
++            </div><!--/.row-->
++        </div><!--/.main-->
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<div class="panel-heading">System Info</div>
+-					<div class="panel-body">
+-						<!-- data-url="{%static "data1.json"%}" -->
+-                        <dl class="dl-horizontal">
+-                            <dt>System Uptime</dt>
+-                            <dd>{{uptime_days}} days, {{uptime_hms}}</dd>
+-                            <dt>Disk Usage</dt>
+-                            <dd>{{disk_used}} / {{ disk_total }} ({{disk_stat.percent}}%)</dd>
+-                            <dt>Memory Usage</dt>
+-                            <dd>{{used_mem}} / {{total_mem}} ({{mem_stat.percent}}%)</dd>
+-                            <dt>FR User Count</dt>
+-                            <dd>{{frusers_total_count}} / {{frusers_limit}}</dd>
+-                            <dt>System Log Count</dt>
+-                            <dd>{{Syslogs_total_count}} / {{syslog_limit}}</dd>
+-                            <dt>System Current Time</dt>
+-                            <dd>{{now}} ({{tz}})</dd>
+-                        </dl>
+-                        <div class="row">
+-                            <div class="col-md-6 col-lg-6" style="background-color:lavender;">
+-                                .col-sm-4
+-                                {% for food in foods %}
+-                                <ul>
+-                                    <li> food's name:{{ food.name }} </li>
+-                                    <li> food's price:{{ food.price }} </li>
+-                                    <li> food's comment: {{ food.comment }} </li>
+-                                    <li> is spicy {{ food.is_spicy }} </li>
+-                                </ul>
+-                                {% endfor %}
+-                            </div>
+-                            <div class="col-md-6 col-lg-6" style="background-color:lavenderblush;">
+-                                .col-sm-4
+-                                {% for food in foods %}
+-                                <ul>
+-                                    <li> food's name:{{ food.name }} </li>
+-                                    <li> food's price:{{ food.price }} </li>
+-                                    <li> food's comment: {{ food.comment }} </li>
+-                                    <li> is spicy {{ food.is_spicy }} </li>
+-                                </ul>
+-                                {% endfor %}
+-                            </div>
+-                        </div>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->
+-	</div><!--/.main-->
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var $DeviceList = $('#DeviceList');
++            var $FRList = $('#FRList');
+ 
+-	<script src="{% static "chart.min.js" %}"></script>
+-	<script src="{% static "chart-data.js" %}"></script>
+-	<script src="{% static "easypiechart.js" %}"></script>
+-	<script src="{% static "easypiechart-data.js" %}"></script>
+-	<script src="{% static "bootstrap-datepicker.js" %}"></script>
+-	<script src="{% static "bootstrap-table.js" %}"></script>
+-	<script>
+-		// var dataSet = {{test|safe}};
+-		var index
+-		var dataSet = {{obj|safe}};
+-		console.log(dataSet);
+-		$('#userList').bootstrapTable({
+-			columns: [{
+-				field: 'Index',
+-				title: 'No.',
+-				sortable: true,
+-			},{
+-				field: 'Account',
+-				title: 'Account',
+-				sortable: true
+-			}, {
+-				field: 'Name',
+-				title: 'Name',
+-				sortable: true
+-			}, {
+-				field: 'RoleOId',
+-				title: 'Role',
+-				sortable: true
+-			},{
+-				field: 'CreateDate',
+-				title: 'CreateDate',
+-				sortable: true
+-			},
+-			{
+-				field: 'UpdateDate',
+-				title: 'UpdateDate',
+-				sortable: true
+-			},
+-			{
+-				field: 'OId',
+-				title: '',
+-				formatter: function(value, row, index) {
+-					return '<button class="btn green"  value="' + value + '">Delete</button>';
+-				}
+-			}],
+-			data: dataSet
+-		});
+-
+-		!function ($) {
+-			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+-				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+-			}); 
+-			$(".sidebar span.icon").find('em:first').addClass("glyphicon-plus");
+-		}(window.jQuery);
+-
+-		$(window).on('resize', function () {
+-		  if ($(window).width() > 768) $('#sidebar-collapse').collapse('show')
+-		})
+-		$(window).on('resize', function () {
+-		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+-		})
+-	</script>	
+-</body>
++            $DeviceList.bootstrapTable({
++                columns: [
++                {
++                    field: 'Index',
++                    title: 'No.',
++                },
++                {
++                    field: 'Name',
++                    title: 'Device Name',
++                },
++                {
++                    field: 'UpdateDate',
++                    title: 'Latest Sync Time',
++                }
++                ],
++                    data: {{devices|safe}}
++            });
+ 
++            $FRList.bootstrapTable({
++                columns: [
++                {
++                    field: 'Index',
++                    title: 'No.',
++                },
++                {
++                    field: 'FRUserId',
++                    title: 'FRUserID',
++                },
++                {
++                    field: 'Name',
++                    title: 'Device Name',
++                },
++                {
++                    field: 'UpdateDate',
++                    title: 'Latest Sync Time',
++                }
++                ],
++                    data: {{frusers|safe}}
++            });
++        </script>
++    </body>
+ </html>
+-- 
+1.9.1
+

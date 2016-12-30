@@ -1,0 +1,23 @@
+From d9e01056e736241cdbcb62bf19cffd91b0976373 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 4 Aug 2016 11:30:26 +0800
+Subject: [PATCH 223/443] Add shell.sh
+
+---
+ shell.sh | 4 ++++
+ 1 file changed, 4 insertions(+)
+ create mode 100755 shell.sh
+
+diff --git a/shell.sh b/shell.sh
+new file mode 100755
+index 0000000..1e9295b
+--- /dev/null
++++ b/shell.sh
+@@ -0,0 +1,4 @@
++#!/bin/bash
++service httpd restart
++pkill -f FingerprintService
++./FingerprintService
+-- 
+1.9.1
+

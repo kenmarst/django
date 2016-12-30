@@ -1,0 +1,66 @@
+From 0fb77fdce8a8524a889a43cf7b6625496bdc91c1 Mon Sep 17 00:00:00 2001
+From: Frank <frank_lin@tw.shuttle.com>
+Date: Mon, 5 Dec 2016 15:05:56 +0800
+Subject: [PATCH 395/443] FR User can change Name in BR06 only.
+
+---
+ frusers/views.py           | 2 ++
+ templates/fruser_edit.html | 8 +++++---
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 457b61c..edfcdbc 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -80,6 +80,7 @@ def fruser_edit_view(request):
+     try:
+         fruser = Frusers.objects.get(OId = request.GET['OId']).as_json()
+         fruser['Age'] = fruser['Age'] or ''
++        fruser['Name'] = fruser['Name'] or ''
+         fruser['FR'] = 'archived' if fruser['FaceID1'] or fruser['FaceID2'] or fruser['FaceID3'] else 'unarchived'
+         fruser['RFID'] = 'archived' if fruser['RFIDCard'] else 'unarchived'
+         fruser['FP'] = 'archived' if fruser['FingerprintID1'] != 'x00' or fruser['FingerprintID2'] != 'x00' else 'unarchived'
+@@ -275,6 +276,7 @@ def update_fruser(request):
+         Frusers.objects.filter(OId = request.POST['OId']).update(
+             Gender = request.POST['Gender'],
+             Age = int(request.POST['Age']) or 0,
++            Name = request.POST['Name'],
+             State = request.POST['State'],
+             DisableCauses = request.POST['DisableCauses']
+         )
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index ed470d7..1b4b104 100755
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -42,9 +42,9 @@
+                                             <p class="text-left">{{obj.FRUserId}}</p>
+                                         </label>
+                                         <label class="col-md-1 control-label">{% trans "Name" %} :</label>
+-                                        <label class="col-md-2 control-label">
+-                                            <p class="text-left">{{obj.Name}}</p>
+-                                        </label>
++                                        <div class="col-md-2">
++                                            <input type="text" class="form-control" placeholder="{% trans "Please input your name" %}" title="{% trans "Please input your name" %}" name="Name" value="{{obj.Name}}" AutoComplete="Off" pattern="[\u4e00-\u9fa5\w-]{1,25}" oninput="setCustomValidity('')" oninvalid="setCustomValidity(`{% trans "The name can only contain 1 to 25 bit of Chinese or English or Number or '_' or '-'" %}`)" required>
++                                        </div>
+                                         <label class="col-md-1 control-label checkbox">
+                                             <input type="checkbox" name="State">{% trans "Disable" %}
+                                         </label>
+@@ -162,6 +162,7 @@
+         function onSaveClick(){
+             var Gender = $('select[name=Gender]').val();
+             var Age = $('input[name=Age]').val();
++            var Name = $('input[name=Name]').val();
+             var DisableCauses = $('input[name=DisableCauses]').val();
+             var State = $('input[name=State]').prop('checked');
+ 
+@@ -182,6 +183,7 @@
+                     'OId': {{obj|safe}}.OId,
+                     'Gender': Gender,
+                     'Age': Age,
++                    'Name': Name,
+                     'State': State,
+                     'DisableCauses': DisableCauses
+                 },
+-- 
+1.9.1
+

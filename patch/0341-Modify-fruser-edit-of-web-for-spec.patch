@@ -1,0 +1,36 @@
+From 1d5fd75fc532b824a82fc66805b1628a2fe6c19d Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 1 Nov 2016 16:16:02 +0800
+Subject: [PATCH 341/443] Modify fruser edit of web for spec.
+
+Showing fruser register photo.
+---
+ templates/fruser_edit.html | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index e805b45..fd7e0c6 100755
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -74,6 +74,18 @@
+                                             <button type="submit" class="btn btn-default">{% trans "Save" %}</button>
+                                         </div>
+                                     </div>
++                                    <div class="form-group">
++                                        <div class="col-md-6">
++                                            {% if obj.Face1 %}
++                                                <img class="img-responsive" src="{{obj.Face1}}">
++                                            {% endif %}
++                                        </div>
++                                        <div class="col-md-6">
++                                            {% if obj.Face2 %}
++                                                <img class="img-responsive" src="{{obj.Face2}}">
++                                            {% endif %}
++                                        </div>
++                                    </div>
+                                 </div>
+                             </form>
+                         </div>
+-- 
+1.9.1
+

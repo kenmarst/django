@@ -1,0 +1,253 @@
+From 4e856e7f39acc2a8b2e874599ddd1b7d00d83daf Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 6 May 2016 14:31:05 +0800
+Subject: [PATCH 022/443] Add Face Enroll API Add, Delete, List
+
+---
+ api/face.py      | 187 ++++++++++++++++++++++++++++++++++++++++++++++++-------
+ br06/settings.py |   3 +-
+ 2 files changed, 165 insertions(+), 25 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 89949ba..08571a2 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -2,30 +2,125 @@
+ 
+ import json, requests
+ from collections import ChainMap
+-from django.http import JsonResponse
++from django.http import HttpResponse, JsonResponse
++from .models import Devices, Frusers, Systemlogs, Config
+ from django.views.decorators.csrf import csrf_exempt
+-from .utility import TCIT_API
++from django.conf import settings
++from .utility import sendImg, getImg, TCIT_API, TCIT_res_str
++from datetime import datetime
+ 
+ result_success = {'Result' : 'Success'}
+ result_fail = {'Result' : 'Fail'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
++true = '1'
+ 
+ @csrf_exempt
+ def add(request):
+     if request.method == 'POST':
++        if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++            logContent = 'Device ip accept'
++            Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++        else :
++            logContent = 'Need accept'
++            try:
++                print("Writing system log...")
++                Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++            except Exception as error:
++                print(str(error))
++                logContent = str(error)
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+         try:
+-            req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'FRUserId'}
+-            if all(k in req for k in req_key) and all(req.values()):
+-                """
+-                enter code
+-                """
+-                return JsonResponse(result_success)
++            # check FRUserId
++            fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
++            #1. Update load face img to TCIT and get Image Id
++            res_upload = sendImg(request)
++            image_id = res_upload['img_id']
++            print('image_id : ', image_id)
++            if not res_upload['state'] == 1000:
++                logContent = TCIT_res_str(res_upload['state'])
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++
++            #2. Through TCIT to recognize face, then get Face Id
++            res_face_detect = TCIT_API("/face/detection/detect/", data = {'img_id' : image_id})
++            if len(res_face_detect['faces']) != 1:
++                logContent = 'face detect error'
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
+-        except Exception as e:
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
++                if res_face_detect['state'] == 1000:
++                    face_id = res_face_detect['faces'][0]['face_id']
++                    print('face_id : ', face_id)
++                else:
++                    logContent = TCIT_res_str(res_face_detect['state'])
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++
++            #3. Call TCIT Add Face to Person
++            if not fruser.PersonId:
++                res_personid = TCIT_API('/face/person/create/', data = {'face_id': face_id})
++                if res_personid['state'] == 1000:
++                    print('person_id', res_personid['person_id'])
++                    personId = res_personid['person_id']
++                else:
++                    logContent = "/faec/person/create/" + TCIT_res_str(res_personid['state'])
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++            else:
++                personId = fruser.PersonId
++            res_face_personadd = TCIT_API(
++                    '/face/person/update/add/',
++                    data = {'person_id' : personId, 'face_id': face_id}
++            )
++            if not res_face_personadd['state'] == 1000:
++                Frusers.objects.filter(OId = fruser.OId).update(
++                        PersonId = personId,
++                )
++                logContent = "/face/person/update/add/" + TCIT_res_str(res_face_personadd['state'])
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++
++            print("res_face_personadd",res_face_personadd)
++
++            #4 get img from device and save
++            if Config.objects.get(Name = 'PicFaceSave').Value == true:
++                open(
++                    settings.STATICFILES_DIRS[4] +
++                    request.POST.get('FRUserId') +
++                    '_' +
++                    datetime.now().strftime("%Y%m%d%H%M%S") +
++                    '.jpg',
++                    'wb+'
++                ).write(request.FILES['image'].file.getvalue())
++
++                #Fruser update
++                if not fruser.Face1:
++                    Frusers.objects.filter(OId = fruser.OId).update(
++                            PersonId = personId,
++                            Face1 = settings.STATICFILES_DIRS[4] + request.POST.get('FRUserId') + \
++                                    '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                            FaceID1 = face_id
++                    )
++                else:
++                    Frusers.objects.filter(OId = fruser.OId).update(
++                            PersonId = personId,
++                            Face2 = settings.STATICFILES_DIRS[4] + request.POST.get('FRUserId') + \
++                                    '_' + datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg',
++                            FaceID2 = face_id
++                    )
++
++            # return
++            logContent = "Face Enroll Add Successfully"
++            return JsonResponse(dict({'Message' : logContent}))
++        except Exception as error:
++            print(str(error))
++            logContent = str(error)
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        finally:
++            try:
++                print("Writing system log...")
++                Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++            except Exception as error:
++                print(str(error))
++                logContent = str(error)
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+@@ -36,14 +131,44 @@ def delete(request):
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId'}
+             if all(k in req for k in req_key) and all(req.values()):
+-                """
+-                enter code
+-                """
+-                return JsonResponse(result_success)
++                ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
++                if ip_devices.State != 'Proposed':
++                    frusers = Frusers.objects.get(FRUserId = req['FRUserId'])
++                    res = json.loads(
++                        requests.post(
++                            'http://' + TCIT_IP + '/face/person/update/remove',
++                            data={
++                                'person_id':frusers.PersonId,
++                                'face_id':frusers.FaceID1,
++                                'face_id':frusers.FaceID2,
++                                'face_id':frusers.FaceID3,
++                            }
++                        ).text
++                    )
++                    if res['state'] == 1000:
++                        logContent = 'Face Delete Successfully'
++                        return JsonResponse({'Message' :logContent})
++                    else:
++                        logContent = 'Face remove error'
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++                else:
++                    logContent = 'Need accept'
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
+-        except Exception as e:
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
++                logContent = 'Request parameter error'
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        except Exception as error:
++            print(str(error))
++            logContent = str(error)
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        finally:
++            try:
++                print("Writing system log...")
++                Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++            except Exception as error:
++                print(str(error))
++                logContent = str(error)
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+@@ -54,12 +179,26 @@ def list(request):
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId'}
+             if all(k in req for k in req_key) and all(req.values()):
+-                """
+-                enter code
+-                """
++                ip_devices = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
++                if ip_devices.State != 'Proposed':
++                    fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
++                    if (fruser.Face1=="") and (fruser.Face2=="") and (fruser.Face3==""):
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : "no face img"})))
++                    if fruser.Face1:
++                        img_1 = open(fruser.Face1, 'rb')
++                        return HttpResponse(img_1.read(), content_type="image/jpg")
++                    if fruser.Face2:
++                        img_2 = open(fruser.Face2, 'rb')
++                        return HttpResponse(img_2.read(), content_type="image/jpg")
++                    if fruser.Face3:
++                        img_3 = open(fruser.Face3, 'rb')
++                        return HttpResponse(img_3.read(), content_type="image/jpg")
++                else:
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
+             else:
+                 return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
+-        except Exception as e:
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
++        except Exception as error:
++            print(str(error))
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+diff --git a/br06/settings.py b/br06/settings.py
+index 793011f..3d2cddc 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -134,7 +134,8 @@ STATICFILES_DIRS = [
+      "static/js",
+      "static/styles",
+      "static/css",
+-     "static/img",
++     "static/img/",
++     "fruserpic/",
+ ]
+ 
+ TCIT_IP = 'localhost:8800'
+-- 
+1.9.1
+

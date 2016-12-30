@@ -1,0 +1,29 @@
+From e742699444c374401d3ce18b1e6b2d1b48aa4c3f Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 6 Sep 2016 11:48:06 +0800
+Subject: [PATCH 255/443] Fix UserAdd bug
+
+---
+ api/user.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index b7153e6..b5cacc9 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -53,9 +53,9 @@ def add(request):
+                                     headers = {'Content-Type': 'application/json'}
+                                 ).text)
+                             #print(res_4G)
+-                        if not res_4G['status'] == settings.SE_4G:
+-                            logContent = '{message_head}4G User does not exist'.format(message_head = message_head)
+-                            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++                            if not res_4G['status'] == settings.SE_4G:
++                                logContent = '{message_head}4G User does not exist'.format(message_head = message_head)
++                                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+                         # print("Creating new account now.")
+                         Frusers.objects.create(
+                             FRUserId = req['FRUserId'],
+-- 
+1.9.1
+

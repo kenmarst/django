@@ -1,0 +1,44 @@
+From 55e391f6d7ca03ee2ef68bf73e4ddb27ca995ce7 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 2 Aug 2016 16:12:43 +0800
+Subject: [PATCH 217/443] Modify verify and identify API : when State = Enable
+ the Fruser can use verify and identify API. If not, can't pass the fruser.
+
+---
+ api/recognition.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 757f4eb..2bb6f5e 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -41,7 +41,7 @@ def face_verify(request):
+         try:
+             ip_device = Devices.objects.get(IP = request.META['REMOTE_ADDR'])
+             if ip_device.State != 'Proposed':
+-                fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
++                fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+                 if fruser.PersonId:
+                     # get img id
+                     res_upload = sendImg(request)
+@@ -125,7 +125,7 @@ def face_identify(request):
+                         else:
+                             raise Exception('Request TCIT error')
+                         if person_id:
+-                            fruser = Frusers.objects.get(PersonId = person_id)
++                            fruser = Frusers.objects.get(PersonId = person_id, State = 'Enable')
+                             face_save(request, fruser.FRUserId)
+ 
+                             for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+@@ -188,7 +188,7 @@ def rfid_verify(request):
+                 ip_device = Devices.objects.get(IP = client_ip)
+                 if ip_device.State != 'Proposed':
+                     from .models import Frusers
+-                    fruser = Frusers.objects.get(RFIDCard = req['RFIDCard'])
++                    fruser = Frusers.objects.get(RFIDCard = req['RFIDCard'], State = 'Enable')
+                     for member in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+                         for device in member.GroupOId.frusergroupdevices_set.filter(GroupOId = member.GroupOId):
+                             if device.DeviceOId == ip_device:
+-- 
+1.9.1
+

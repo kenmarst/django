@@ -1,0 +1,627 @@
+From c5c371799917cb131361f0769da9ef18df4df0d3 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 18 May 2016 20:47:21 +0800
+Subject: [PATCH 048/443] Complete Users web function
+
+Complete User Interface :
+
+UsersList, UserCreate, UserUpdate, Delete
+---
+ br06/urls.py               |  12 +++-
+ templates/user_add.html    | 167 +++++++++++++++++++++++++++++++++++++++++++++
+ templates/user_list.html   |  93 ++++++++++++++++---------
+ templates/user_update.html | 161 +++++++++++++++++++++++++++++++++++++++++++
+ user/views.py              |  67 +++++++++++++++++-
+ 5 files changed, 464 insertions(+), 36 deletions(-)
+ create mode 100644 templates/user_add.html
+ create mode 100644 templates/user_update.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index c700995..4ce465e 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -16,7 +16,7 @@ Including another URLconf
+ from django.conf.urls import url
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+-from user.views import user_list_view, user_setting, login, logout, change_passwd, password_reset_confirm, ResetPasswordRequestView
++from user.views import user_setting, login, logout, change_passwd, password_reset_confirm, ResetPasswordRequestView, user_list_view, user_add_view, user_update_view, add_user, update_user, delete_user
+ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view, systemlog_export
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export
+@@ -27,7 +27,6 @@ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+     url(r'^$', login),
+     url(r'^logout/?$', logout),
+-    url(r'^user_list/?$', user_list_view),
+     url(r'^setting/?$', user_setting),
+     url(r'^fruser_list/?$', fruser_list_view),
+     url(r'^systemlog_list/?$', systemlog_list_view),
+@@ -38,6 +37,15 @@ urlpatterns = [
+ ]
+ 
+ urlpatterns += [
++    url(r'^user_list/?$', user_list_view),
++    url(r'^user_add/?$', user_add_view),
++    url(r'^user_update/?$', user_update_view),
++    url(r'^add_user/?$', add_user),
++    url(r'^update_user/?$', update_user),
++    url(r'^delete_user/?$', delete_user),
++]
++
++urlpatterns += [
+     url(r'^device_list/?$', device_list_view),
+     url(r'^device_add/?$', device_add_view),
+     url(r'^device_edit/?$', device_edit_view),
+diff --git a/templates/user_add.html b/templates/user_add.html
+new file mode 100644
+index 0000000..079daa4
+--- /dev/null
++++ b/templates/user_add.html
+@@ -0,0 +1,167 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>User List</title>
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">User add</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>User add</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>User add</p>
++                        </div>
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++					                        <i style="color: red;">*</i>
++					                        帳號名稱
++                                        </label>
++                                        <div class="col-md-6">
++                                                <input type="text" class="form-control" placeholder="" name="account">
++                                        </div>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i>
++                                            姓名
++                                        </label>
++                                        <div class="col-md-6">
++                                                <input type="text" class="form-control" placeholder="" name="name">
++                                            </div>
++                                        </div>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++					                        <i style="color: red;">*</i>
++					                        E-Mail
++                                        </label>
++                                        <div class="col-md-6">
++                                                <input type="text" class="form-control" placeholder="" name="email">
++                                        </div>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i>
++                                            密碼
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="password" class="form-control" placeholder="" name="password">
++                                        </div>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            確認密碼
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="password" class="form-control" placeholder="" name="confirm">
++                                        </div>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i>
++                                            角色
++                                        </label>
++                                        <div class="col-md-6">
++                                            <select class="form-control" name="role">
++                                                {% for i in Roles %}
++　                                                  <option value="{{i.OId}}">{{i.Name}}</option>
++                                                {% endfor %}
++                                            </select>
++                                        </div>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-3 pull-right">
++                                <button class="btn btn-default" onclick="history.back()">Back</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++    function onSaveClick () {
++		var account = $('input[name=account]').val();
++		var name = $('input[name=name]').val();
++		var email = $('input[name=email]').val();
++		var password = $('input[name=password]').val();
++		var psw_confirm = $('input[name=confirm]').val();
++		var role = $('select[name=role]').val();
++        if (account && name && email && password && psw_confirm && role) {
++            if (password == psw_confirm) {
++                $.ajax({
++                    type: 'post',
++                    url: '/add_user/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'Account': account,
++                        'Name': name,
++                        'Email': email,
++                        'Password': password,
++                        'RoleOId' : role,
++                    },
++                    success: function(data) {
++                        console.log("CODE = ",data.CODE);
++                        if (data.CODE == "0") {
++                            alert("User add successfully");
++                            location.href = '/user_list/';
++                        } else {
++                            alert("Fail to add User");
++                        }
++                    },
++                    error: function(data) {
++                        console.log('why nunu');
++                    }
++                });
++            } else
++                alert("Password doesn't match")
++        } else
++            alert("Cannot be null");
++    }
++	</script>
++</body>
++
++</html>
+diff --git a/templates/user_list.html b/templates/user_list.html
+index ac3adee..dfcabe3 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -27,39 +27,16 @@
+ 		
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-				<h1 class="page-header">User List</h1>
++                <h1 class="page-header"><small>User List</small></h1>
+ 			</div>
+-			<div class="col-lg-12">
+-				<button class="btn green pull-right"  value="">Create new account</button>
+-			<div>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+-					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 					<div class="panel-body">
+-						<!-- data-url="{%static "data1.json"%}" -->
+-						<table id="userList" data-toggle="" data-url=""  data-show-refresh="" data-show-toggle="" data-show-columns="" data-search="true" data-select-item-l="toolbar1" data-pagination="true" data-sort-name="name" data-sort-order="desc">
+-						    <thead>
+-						    <tr>
+-<!-- 						        <th data-field="id" data-sortable="true">Item ID</th>
+-						        <th data-field="name"  data-sortable="true">Item Name</th>
+-						        <th data-field="price" data-sortable="true">Item Price</th> -->
+-						    </tr>
+-						    </thead>
+-						</table>
+-						<!-- kimi test 
+-						{% for story in obj %}
+-							<h2>
+-							  <p>{{story.Account}}</p>
+-							  <p>{{story.Name}}</p>
+-							  <p>{{story.Email}}</p>
+-							  <p>{{story.OId}}</p>
+-							  <p>{{story.RoleId}}</p>
+-							</h2>
+-						{% endfor %}
+-						 -->
++				        <button id="new_acc" class="btn btn-default" onclick="location.href='/user_add/'" value="">Create new account</button>
++						<table id="userList">
+ 					</div>
+ 				</div>
+ 			</div>
+@@ -76,8 +53,14 @@
+ 		// var dataSet = {{test|safe}};
+ 		var index
+ 		var dataSet = {{obj|safe}};
+-		console.log(dataSet);
+-		$('#userList').bootstrapTable({
++        $('#userList').bootstrapTable({
++            search: true,      
++            pagination: true,  
++            pageSize: 10,      
++            pageList: [10, 25, 50, 100],
++            sortName: 'Name',  
++            sortOrder: 'desc', 
++            toolbar:'#new_acc',
+ 			columns: [{
+ 				field: 'Index',
+ 				title: 'No.',
+@@ -85,7 +68,10 @@
+ 			},{
+ 				field: 'Account',
+ 				title: 'Account',
+-				sortable: true
++				sortable: true,
++                formatter: function(value, row) {
++                    return '<a href="/user_update?OId=' + row.OId + '"  >'+ value +'</a>';
++                }
+ 			}, {
+ 				field: 'Name',
+ 				title: 'Name',
+@@ -107,13 +93,58 @@
+ 			{
+ 				field: 'OId',
+ 				title: '',
+-				formatter: function(value, row, index) {
+-					return '<button class="btn green"  value="' + value + '">Delete</button>';
++				formatter: function(value, row) {
++					return '<button class="btn green" onclick=delete_user("' + value + '")>Delete</button>';
+ 				}
+ 			}],
+ 			data: dataSet
+ 		});
+ 
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function delete_user(OId) {
++            var ret = confirm('Confirm to delete ');
++            //console.log(ret);
++            //console.log(OId);
++            if(ret)
++            $.ajax({
++                type: 'post',
++                url: '/delete_user/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': OId
++                },
++                success: function(data) {
++                    //console.log("CODE = ",data.CODE);
++                    if (data.CODE == "0") {
++                        location.reload();
++                    } else {
++                        alert("Fail to delete user");
++                    }
++                },
++                error: function(data) {
++                    console.log('why nunu');
++                }
++            });
++        }
++
+ 		!function ($) {
+ 			$(document).on("click","ul.nav li.parent > a > span.icon", function(){		  
+ 				$(this).find('em:first').toggleClass("glyphicon-minus");	  
+diff --git a/templates/user_update.html b/templates/user_update.html
+new file mode 100644
+index 0000000..29df75b
+--- /dev/null
++++ b/templates/user_update.html
+@@ -0,0 +1,161 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>User Update</title>
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">User update</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>User Update</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-heading" style="background-color: #FFFFFF;">
++                            <p>User update</p>
++                        </div>
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            帳號名稱
++                                        </label>
++                                        <label class="col-md-3 control-label">
++                                            <p class="text-left" >{{obj.Account}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i>
++                                            姓名
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input class="form-control" placeholder="" name="Name" value="{{obj.Name}}" AutoComplete="Off">
++                                        </div>
++                                    </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">
++                                            E-Mail
++                                        </label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left" >{{obj.Email}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label"> 
++                                            <i style="color: red;">*</i>
++                                            密碼
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="password" class="form-control" placeholder="" name="password">
++                                        </div>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            確認密碼
++                                        </label>
++                                        <div class="col-md-6">
++                                            <input type="password" class="form-control" placeholder="" name="confirm">
++                                        </div>
++                                    </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label">
++                                            <i style="color: red;">*</i>
++                                            角色
++                                        </label>
++                                        <div class="col-md-6">
++                                            <select class="form-control" name="role">
++                                                {% for i in Roles %}
++　                                                  <option value="{{i.OId}}">{{i.Name}}</option>
++                                                {% endfor %}
++                                            </select>
++                                        </div>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-md-offset-3 col-md-3 pull-right">
++                                <button class="btn btn-default" onclick="history.back()">Back</button>
++                                <button class="btn btn-default" onclick="onSaveClick()">Save</button>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++    function onSaveClick(){
++		var name = $('input[name=Name]').val();
++		var password = $('input[name=password]').val();
++        var psw_confirm = $('input[name=confirm]').val();
++		var role = $('select[name=role]').val();
++        if (name && role) {
++            if (password == psw_confirm) {
++                $.ajax({
++                    type: 'post',
++                    url: '/update_user/',
++                    async: true,
++                    dataType: 'json',
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
++                        'OId' : '{{obj.OId}}',
++                        'Name': name,
++                        'Password': password,
++                        'RoleOId' : role,
++                    },
++                    success: function(data) {
++                        console.log("CODE = ",data.CODE);
++                        if (data.CODE == "0") {
++                            alert("User update successfully");
++                            location.href = '/user_list/';
++                        } else {
++                            alert("Fail to update User");
++                        }
++                    },
++                    error: function(data) {
++                        console.log('why nunu');
++                    }
++                });
++            } else
++                alert("Password doesn't match");
++        } else
++            alert("Cannot be null");
++    }
++	</script>
++</body>
++
++</html>
+diff --git a/user/views.py b/user/views.py
+index 9322a4a..ce49e3a 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -36,8 +36,8 @@ key = 15
+ def check_user(request):
+     mail = request.POST.get('email', '')
+     password = md5(request.POST.get('password', ''))
+-    print("mail",mail)
+-    print("password",password)
++    #print("mail",mail)
++    #print("password",password)
+     form = RegisterForm(request.POST)
+     data = request.POST
+     response = data.get('g-recaptcha-response')
+@@ -90,7 +90,7 @@ def user_setting(request):
+     except:
+         return render(request, 'setting.html', {'active': "setting", 'Email': request.session['Email']})
+ 
+-
++# User List
+ def user_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+@@ -103,6 +103,67 @@ def user_list_view(request):
+         index += 1
+     return render(request, 'user_list.html', {'active': "user_list", 'obj': result})
+ 
++def user_add_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    return render(request, 'user_add.html', { 'Roles': Role.objects.all() } )
++
++def user_update_view(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        user = Users.objects.get(OId = request.GET['OId']).as_json()
++        return render(
++            request,
++            'user_update.html',
++            {'obj' : Users.objects.get(OId = request.GET['OId']), 'Roles': Role.objects.all()},
++        )
++    except Exception as e:
++        print (e)
++        return JsonResponse(res_code[1])
++
++def add_user(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Users.objects.create(
++            Account = request.POST['Account'],
++            Name = request.POST['Name'],
++            Email = request.POST['Email'],
++            Password = md5(request.POST['Password']),#md5
++            RoleOId = Role.objects.get(OId = request.POST['RoleOId'])
++        )
++        return JsonResponse(res_code[0])
++    except Exception as e:
++        print (e)
++        return JsonResponse(res_code[1])
++
++def update_user(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        Users.objects.filter(OId = request.POST['OId']).update(
++            Name = request.POST['Name'],
++            Password = md5(request.POST['Password']) if request.POST['Password'] else \
++                    Users.objects.get(OId = request.POST['OId']).Password,
++            RoleOId = Role.objects.get(OId = request.POST['RoleOId'])
++        )
++        return JsonResponse(res_code[0])
++    except Exception as e:
++        print (e)
++        return JsonResponse(res_code[1])
++
++def delete_user(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    try:
++        #print( request.POST.get('Account', '') )
++        Users.objects.get(OId = request.POST.get('OId', '')).delete()
++        return JsonResponse(res_code[0])
++    except Exception as e:
++        print (e)
++        return JsonResponse(res_code[1])
++
+ 
+ class RegisterForm(forms.Form):
+     captcha = NoReCaptchaField()
+-- 
+1.9.1
+

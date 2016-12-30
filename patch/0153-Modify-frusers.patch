@@ -1,0 +1,25 @@
+From 24601e756eebc66edb2bac7788f8acdf27acb1c1 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Mon, 27 Jun 2016 19:06:21 +0800
+Subject: [PATCH 153/443] Modify frusers
+
+Take out of frusers import message.
+---
+ frusers/views.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index 1b31e9f..6b3fa50 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -95,7 +95,6 @@ def import_fruser(request):
+ 
+         with open(csvdir, 'r') as csvfile:
+             for row in csv.DictReader(csvfile):
+-                print(row.get('FRUserId'))
+                 try:
+                     Frusers.objects.get(FRUserId = row['FRUserId'])
+                 except:
+-- 
+1.9.1
+

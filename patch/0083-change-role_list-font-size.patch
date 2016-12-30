@@ -1,0 +1,72 @@
+From 4c0414b21e589b8df210ea8376805b5c5a176b06 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 25 May 2016 15:52:06 +0800
+Subject: [PATCH 083/443] change role_list font size
+
+---
+ templates/role_list.html | 27 ++++++++++++++++-----------
+ 1 file changed, 16 insertions(+), 11 deletions(-)
+
+diff --git a/templates/role_list.html b/templates/role_list.html
+index 0154a11..f0ea0d9 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -8,17 +8,22 @@
+ 		<meta charset="utf-8">
+ 		<meta name="viewport" content="width=device-width, initial-scale=1">
+         <title>{% trans "Role List" %}</title>
++        <!--[if lt IE 9]>
++        <script src="js/html5shiv.js"></script>
++        <script src="js/respond.min.js"></script>
++        <![endif]-->
++
+     </head>
+ 
+     <body>
+         {% include 'menu.html' %}
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+-                <ol class="breadcrumb">
+-                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">{% trans "Role and Permission" %}</li>
+-                </ol>
+-            </div>
++			<ol class="breadcrumb">
++				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++				<li class="active">{% trans "User List" %}</li>
++			</ol>
++		    </div><!--/.row-->
+ 
+             <div id='toolbar'>
+                 <button class="btn btn-default" onclick="location.href='/role_add/'" value="">{% trans "Create new Role" %}</button>
+@@ -26,10 +31,10 @@
+             </div>
+ 
+             <div class="row">
+-                <div class="col-lg-12">
+-                    <h1 class="page-header"><small>{% trans "Role List" %}<small></h1>
+-                </div>
+-            </div>
++			  <div class="col-lg-12">
++                <h1 class="page-header"><small>{% trans "Role List" %}</small></h1>
++			  </div>
++		    </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+@@ -95,10 +100,10 @@
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+-                        <div align="center"> \
++                         <div align="center"> \
+                             <button class="btn btn-default" onclick="location.href=\'/role_rename?OId=' + row.OId + '\'">{% trans "Rename" %}</button> \
+                             <button class="btn btn-default" onclick=role_delete("' + row.OId + '")>{% trans "Delete" %}</button> \
+-                        </div>';
++                         </div>';
+                         }
+                     }
+                 ],
+-- 
+1.9.1
+

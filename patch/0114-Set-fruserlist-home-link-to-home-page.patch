@@ -1,0 +1,25 @@
+From 57addf758884fb975aef8d9ac63299709c44b70b Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Mon, 30 May 2016 13:49:58 +0800
+Subject: [PATCH 114/443] Set fruserlist home link to home page.
+
+---
+ templates/fruser_list.html | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index d2a158f..e6ae134 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -14,7 +14,7 @@
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+             <div class="row">
+                 <ol class="breadcrumb">
+-                    <li><a href="/fruser_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+                     <li class="active">{% trans "FR User List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+-- 
+1.9.1
+

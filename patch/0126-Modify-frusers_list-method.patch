@@ -1,0 +1,170 @@
+From 82160076afe4ad52d32a5e5c4c3c249c73d7189e Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 15 Jun 2016 18:38:18 +0800
+Subject: [PATCH 126/443] Modify frusers_list method
+
+Modify frusers_list method for large data load.
+---
+ br06/urls.py               | 19 +++++++++++++------
+ frusers/views.py           | 44 +++++++++++++++++++++++++++++++++++---------
+ templates/fruser_list.html | 15 ++++++++++++---
+ 3 files changed, 60 insertions(+), 18 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 4a91440..e702bf0 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -17,7 +17,7 @@ from django.conf.urls import url, include
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_setting, user_list_view, user_add_view, user_update_view, add_user, update_user, delete_user
+-from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser
++from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser, fruser_data
+ from systemlogs.views import systemlog_list_view, systemlog_export
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export
+ from logsetting.views import logsetting
+@@ -35,11 +35,7 @@ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^admin/', admin.site.urls),
+     url(r'^user_setting/?$', user_setting),
+-    url(r'^systemlog_list/?$', systemlog_list_view),
+-    url(r'^systemlog_export/?$',systemlog_export),
+-    url(r'^fruserlog_list/?$', fruserlog_list_view),
+-    url(r'^fruserlog_export/?$',fruserlog_export),
+-    url(r'^logsetting/?$',logsetting),
++    url(r'^logsetting/?$', logsetting),
+     url(r'^system_settings/$', settings_views),
+     url(r'^dashboard/$', dashboard_views),
+     url(r'^home/$', home_view),
+@@ -47,6 +43,16 @@ urlpatterns = [
+ ]
+ 
+ urlpatterns += [
++    url(r'^systemlog_list/?$', systemlog_list_view),
++    url(r'^systemlog_export/?$', systemlog_export),
++]
++
++urlpatterns += [
++    url(r'^fruserlog_list/?$', fruserlog_list_view),
++    url(r'^fruserlog_export/?$', fruserlog_export),
++]
++
++urlpatterns += [
+     url(r'^$', login),
+     url(r'^logout/?$', logout),
+     url(r'^reset_password/(?P<uidb64>[0-9A-Za-z]+)/(?P<times>.+)/(?P<token>.+)/$', password_reset_confirm, name='password_reset_confirm'),
+@@ -126,6 +132,7 @@ urlpatterns += [
+     url(r'^export_fruser/?$', export_fruser),
+     url(r'^update_fruser/?$', update_fruser),
+     url(r'^delete_fruser/?$', delete_fruser),
++    url(r'^fruser_data/?$', fruser_data),
+ ]
+ 
+ urlpatterns += [
+diff --git a/frusers/views.py b/frusers/views.py
+index 0178041..e5ba843 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -6,6 +6,7 @@ from api.models import Frusers, Frusergroups
+ from datetime import datetime
+ from login.views import check_login
+ from django.conf import settings
++from django.db.models import Q
+ import csv, tarfile, os, sys, json, requests
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -18,15 +19,7 @@ def fruser_list_view(request):
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+     try:
+-        frusers = [fruser.as_json() for fruser in Frusers.objects.all()]
+-        index = 0
+-        for fruser in frusers:
+-            fruser['Age'] = fruser['Age'] or ''
+-            fruser['Index'] = index + 1
+-            index += 1
+-            fruser['Group'] = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = fruser['OId']).values('Name')) or 'Default'
+-
+-        return render(request, 'fruser_list.html', {'active': 'fruser_list', 'obj': frusers})
++        return render(request, 'fruser_list.html', {'active': 'fruser_list'})
+     except:
+         return render(request, 'registration/not_found.html')
+ 
+@@ -179,3 +172,36 @@ def delete_fruser(request):
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
++
++def fruser_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        if request.GET.get('sort', None) in {'FRUserId', 'Name', 'Group', 'CreateDate', 'UpdateDate'}:
++            if request.GET.get('order', None) == 'asc':
++                order = request.GET.get('sort')
++            else:
++                order = '-' + request.GET.get('sort')
++        else:
++            order = 'FRUserId'
++        if search:
++            frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).order_by(order)
++        else:
++            frusers = Frusers.objects.order_by(order)
++        fruser_count = frusers.count()
++        frusers = [fruser.as_json() for fruser in frusers[offset : offset + limit]]
++        index = 0
++        for fruser in frusers:
++            fruser['Age'] = fruser['Age'] or ''
++            fruser['Index'] = index + 1
++            index += 1
++            fruser['Group'] = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = fruser['OId']).values('Name')) or 'Default'
++        return JsonResponse({'total': fruser_count, 'rows': frusers})
++    except:
++        return render(request, 'registration/not_found.html')
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 5f34cb2..d99915e 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -67,13 +67,23 @@
+         <script src="{% static "js/bootstrap-table.js" %}"></script>
+         <script>
+             $('#FruserList').bootstrapTable({
++                url: '/fruser_data',
+                 search: true,
+                 pagination: true,
+                 toolbar: '#ImExport',
+                 pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+-                sortName: 'Index',
++                sortName: 'FRUserId',
+                 sortOrder: 'asc',
++                sidePagination: 'server',
++                queryParams: function(params) {
++                    return {
++                        limit: params.limit,
++                        offset: params.offset,
++                        search: params.search,
++                        sort: params.sort,
++                        order: params.order
++                    };
++                },
+                 columns: [
+                     {
+                         field: 'Index',
+@@ -115,7 +125,6 @@
+                         }
+                     }
+                 ],
+-                data: {{obj|safe}}
+             });
+ 
+             //For getting CSRF token
+-- 
+1.9.1
+

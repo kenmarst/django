@@ -1,0 +1,221 @@
+From fa082c393e489743d9a2ed870a0ba454e51451af Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Wed, 21 Sep 2016 13:34:45 +0800
+Subject: [PATCH 288/443] Fix Bug1518 - Search Function issues
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Bugzila Id: 1518
+    Desciption:
+               BR06 Server - Search有分英文大小寫, 輸入大寫只找的到大寫.
+      Solution:
+               Search時 需不分英文大小寫
+---
+ devices/views.py      |  6 +++---
+ frusergroups/views.py | 10 +++++-----
+ fruserlogs/views.py   |  2 +-
+ frusers/views.py      |  2 +-
+ role/views.py         |  2 +-
+ systemlogs/views.py   |  2 +-
+ user/views.py         |  2 +-
+ usergroups/views.py   | 10 +++++-----
+ 8 files changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index 97a31af..1688b8b 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -33,7 +33,7 @@ def device_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            devices = Devices.objects.filter(Q(MAC__contains = search) | Q(IP__contains = search) | Q(Name__contains = search)).distinct().order_by(order)
++            devices = Devices.objects.filter(Q(MAC__icontains = search) | Q(IP__icontains = search) | Q(Name__icontains = search)).distinct().order_by(order)
+         else:
+             devices = Devices.objects.order_by(order)
+         device_count = devices.count()
+@@ -91,7 +91,7 @@ def device_frusergroups_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            groups = Frusergroups.objects.filter(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            groups = Frusergroups.objects.filter(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             groups = Frusergroups.objects.filter(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).order_by(order)
+         group_count = groups.count()
+@@ -114,7 +114,7 @@ def device_frusergroups_add_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            groups = Frusergroups.objects.exclude(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            groups = Frusergroups.objects.exclude(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             groups = Frusergroups.objects.exclude(frusergroupdevices__DeviceOId__OId = request.GET.get('OId', None)).order_by(order)
+         group_count = groups.count()
+diff --git a/frusergroups/views.py b/frusergroups/views.py
+index 6d116ef..f023829 100644
+--- a/frusergroups/views.py
++++ b/frusergroups/views.py
+@@ -32,7 +32,7 @@ def frusergroups_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            frusergroups = Frusergroups.objects.filter(Q(Name__contains = search)).annotate(UserNumber = Count('frusergroupmember')).order_by(order)
++            frusergroups = Frusergroups.objects.filter(Q(Name__icontains = search)).annotate(UserNumber = Count('frusergroupmember')).order_by(order)
+         else:
+             frusergroups = Frusergroups.objects.annotate(UserNumber = Count('frusergroupmember')).order_by(order)
+         frusergroup_count = frusergroups.count()
+@@ -122,7 +122,7 @@ def frusergroup_member_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            members = Frusers.objects.filter(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            members = Frusers.objects.filter(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             members = Frusers.objects.filter(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         member_count = members.count()
+@@ -147,7 +147,7 @@ def frusergroup_member_add_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            FR_users = Frusers.objects.exclude(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            FR_users = Frusers.objects.exclude(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             FR_users = Frusers.objects.exclude(frusergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         FR_user_count = FR_users.count()
+@@ -206,7 +206,7 @@ def frusergroup_devices_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            groupdevices = Devices.objects.filter(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            groupdevices = Devices.objects.filter(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             groupdevices = Devices.objects.filter(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         groupdevice_count = groupdevices.count()
+@@ -229,7 +229,7 @@ def frusergroup_devices_add_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            devices = Devices.objects.exclude(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            devices = Devices.objects.exclude(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             devices = Devices.objects.exclude(frusergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         device_count = devices.count()
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 0d752ce..3903150 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -33,7 +33,7 @@ def fruserlog_data(request):
+     else:
+         order = '-' + request.GET.get('sort', 'LogDateTime')
+     if search:
+-        fruserlogs = Fruserlogs.objects.filter(Q(FRUserId__contains = search) | Q(FRUserName__contains = search) | Q(DeviceName__contains = search)).distinct().order_by(order)
++        fruserlogs = Fruserlogs.objects.filter(Q(FRUserId__icontains = search) | Q(FRUserName__icontains = search) | Q(DeviceName__icontains = search)).distinct().order_by(order)
+     else:
+         fruserlogs = Fruserlogs.objects.order_by(order)
+     fruserlog_count = fruserlogs.count()
+diff --git a/frusers/views.py b/frusers/views.py
+index 36ac292..2c9432b 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -45,7 +45,7 @@ def fruser_data(request):
+                     ~Q(frusergroupmember__GroupOId__Name__contains = '')
+                 ).distinct().order_by(order)
+             else:
+-                frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).distinct().order_by(order)
++                frusers = Frusers.objects.filter(Q(FRUserId__icontains = search) | Q(Name__icontains = search) | Q(frusergroupmember__GroupOId__Name__icontains = search)).distinct().order_by(order)
+         else:
+             frusers = Frusers.objects.order_by(order)
+         fruser_count = frusers.count()
+diff --git a/role/views.py b/role/views.py
+index 8d56c01..6638f4f 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -85,7 +85,7 @@ def role_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'CreateDate')
+         if search:
+-            roles = Role.objects.filter(Q(Name__contains = search) | Q(Sort__contains = search) | Q(Category__contains = search)).distinct().order_by(order)
++            roles = Role.objects.filter(Q(Name__icontains = search) | Q(Sort__icontains = search) | Q(Category__icontains = search)).distinct().order_by(order)
+         else:
+             roles = Role.objects.order_by(order)
+         role_count = roles.count()
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 28ba9db..30d6f11 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -32,7 +32,7 @@ def systemlog_data(request):
+     else:
+         order = '-' + request.GET.get('sort', 'LogDateTime')
+     if search:
+-        systemlogs = Systemlogs.objects.filter(Q(Category__contains = search) | Q(LogContent__contains = search)).distinct().order_by(order)
++        systemlogs = Systemlogs.objects.filter(Q(Category__icontains = search) | Q(LogContent__icontains = search)).distinct().order_by(order)
+     else:
+         systemlogs = Systemlogs.objects.order_by(order)
+     systemlog_count = systemlogs.count()
+diff --git a/user/views.py b/user/views.py
+index 027d29c..e15cc37 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -46,7 +46,7 @@ def user_list_data(request):
+         else:
+             order = '-' + sort.get(request.GET.get('sort'), 'Account')
+         if search:
+-            users = Users.objects.filter(Q(Account__contains = search) | Q(Name__contains = search) | Q(RoleOId__Name__contains = search) | Q(Email__contains = search)).distinct().order_by(order)
++            users = Users.objects.filter(Q(Account__icontains = search) | Q(Name__icontains = search) | Q(RoleOId__Name__icontains = search) | Q(Email__icontains = search)).distinct().order_by(order)
+         else:
+             users = Users.objects.order_by(order)
+         user_count = users.count()
+diff --git a/usergroups/views.py b/usergroups/views.py
+index 4d11ea9..db9c5bf 100644
+--- a/usergroups/views.py
++++ b/usergroups/views.py
+@@ -34,7 +34,7 @@ def user_group_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            usergroups = Usergroups.objects.filter(Q(Name__contains = search)).annotate(UserNumber = Count('usergroupmember')).order_by(order)
++            usergroups = Usergroups.objects.filter(Q(Name__icontains = search)).annotate(UserNumber = Count('usergroupmember')).order_by(order)
+         else:
+             usergroups = Usergroups.objects.annotate(UserNumber = Count('usergroupmember')).order_by(order)
+         usergroup_count = usergroups.count()
+@@ -92,7 +92,7 @@ def user_group_members_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            members = Users.objects.filter(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            members = Users.objects.filter(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             members = Users.objects.filter(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         member_count = members.count()
+@@ -116,7 +116,7 @@ def user_group_members_add_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            users = Users.objects.exclude(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            users = Users.objects.exclude(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             users = Users.objects.exclude(usergroupmember__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         user_count = users.count()
+@@ -150,7 +150,7 @@ def user_group_devices_list_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            groupdevices = Devices.objects.filter(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            groupdevices = Devices.objects.filter(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             groupdevices = Devices.objects.filter(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         groupdevice_count = groupdevices.count()
+@@ -174,7 +174,7 @@ def user_group_devices_add_data(request):
+         else:
+             order = '-' + request.GET.get('sort', 'Name')
+         if search:
+-            devices = Devices.objects.exclude(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__contains = search)).order_by(order)
++            devices = Devices.objects.exclude(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).filter(Q(Name__icontains = search)).order_by(order)
+         else:
+             devices = Devices.objects.exclude(usergroupdevices__GroupOId__OId = request.GET.get('OId', None)).order_by(order)
+         device_count = devices.count()
+-- 
+1.9.1
+

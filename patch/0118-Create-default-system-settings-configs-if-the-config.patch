@@ -1,0 +1,162 @@
+From 62446afe97f93df061f03bf1a26f153d9c3a30d6 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 2 Jun 2016 17:42:33 +0800
+Subject: [PATCH 118/443] Create default system settings configs, if the
+ configs is not exist.
+
+---
+ systemsettings/views.py | 138 ++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 135 insertions(+), 3 deletions(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index 1711957..e69faf9 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -1,9 +1,141 @@
+ from django.shortcuts import render
+-
+-# Create your views here.
+-
+ from django.shortcuts import render_to_response
+ from django.http import HttpResponseRedirect
++from api.models import Config
++
++# create default system settings configs
++# BackupMethod
++try:
++    Config.objects.get(Name = 'BackupMethod').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupMethod', Value = 'manual')
++        print('create default BackupMethod: manual')
++    except:
++        print('can\'t create default BackupMethod: manual')
++else:
++    print('default BackupMethod exist.')
++
++# BackupScheduling
++try:
++    Config.objects.get(Name = 'BackupScheduling').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupScheduling', Value = 'monthly')
++        print('create default BackupScheduling: monthly')
++    except:
++        print('can\'t create default BackupScheduling: monthly')
++else:
++    print('default BackupScheduling exist.')
++
++# BackupMonthlyDate
++try:
++    Config.objects.get(Name = 'BackupMonthlyDate').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupMonthlyDate', Value = '1')
++        print('create default BackupMonthlyDate: month')
++    except:
++        print('can\'t create default BackupMonthlyDate: 1')
++else:
++    print('default BackupMonthlyDate exist.')
++
++# BackupWeeklyDate
++try:
++    Config.objects.get(Name = 'BackupWeeklyDate').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupWeeklyDate', Value = '1,3,5')
++        print('create default BackupWeeklyDate: 1,3,5')
++    except:
++        print('can\'t create default BackupWeeklyDate: 1,3,5')
++else:
++    print('default BackupWeeklyDate exist.')
++
++# BackupTime
++try:
++    Config.objects.get(Name = 'BackupTime').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupTime', Value = '03:00')
++        print('create default BackupTime: 03:00')
++    except:
++        print('can\'t create default BackupTime: 03:00')
++else:
++    print('default BackupTime exist.')
++
++# BackupLocation
++try:
++    Config.objects.get(Name = 'BackupLocation').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupLocation', Value = 'local')
++        print('create default BackupLocation: local')
++    except:
++        print('can\'t create default BackupLocation: local')
++else:
++    print('default BackupLocation exist.')
++
++# BackupLocal
++try:
++    Config.objects.get(Name = 'BackupLocal').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupLocal', Value = '/opt/backup')
++        print('create default BackupLocal: /opt/backup')
++    except:
++        print('can\'t create default BackupLocal: /opt/backup')
++else:
++    print('default BackupLocal exist.')
++
++# LogLimit
++try:
++    Config.objects.get(Name = 'LogLimit').Name
++except:
++    try:
++        Config.objects.create(Name = 'LogLimit', Value = '200000')
++        print('create default LogLimit: 200000')
++    except:
++        print('can\'t create default LogLimit: 200000')
++else:
++    print('default LogLimit exist.')
++
++# LogPreservation
++try:
++    Config.objects.get(Name = 'LogPreservation').Name
++except:
++    try:
++        Config.objects.create(Name = 'LogPreservation', Value = '1')
++        print('create default LogPreservation: 1')
++    except:
++        print('can\'t create default LogPreservation: 1')
++else:
++    print('default LogPreservation exist.')
++
++# PicCreateSave
++try:
++    Config.objects.get(Name = 'PicCreateSave').Name
++except:
++    try:
++        Config.objects.create(Name = 'PicCreateSave', Value = 'true')
++        print('create default PicCreateSave: true')
++    except:
++        print('can\'t create default PicCreateSave: true')
++else:
++    print('default PicCreateSave exist.')
++
++# PicFaceSave
++try:
++    Config.objects.get(Name = 'PicFaceSave').Name
++except:
++    try:
++        Config.objects.create(Name = 'PicFaceSave', Value = 'true')
++        print('create default PicFaceSave: true')
++    except:
++        print('can\'t create default PicFaceSave: true')
++else:
++    print('default PicFaceSave exist.')
++
+ 
+ def settings_views(request):
+     if not 'OId' in request.session:
+-- 
+1.9.1
+

@@ -1,0 +1,26 @@
+From f5a75c91e235d213e14bf364cc38478056809049 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 4 Aug 2016 11:13:33 +0800
+Subject: [PATCH 220/443] Modify backup script to check MONGODUMP if exist to
+ execute
+
+---
+ systembackup/br06backup.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index e6775e2..34be0e3 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -112,7 +112,7 @@ if [ $ACTION = 'ok' ] || [ $ACTION = 'true' ]; then
+     $MYSQLDUMP -u $MYSQLUSER -p$MYSQLPASS --force $db | $GZIP -9 > $FILE
+   done
+ 
+-  if [ $MONGODUMP != '' ]; then
++  if [ $MONGODUMP ] && [ $MONGODUMP != '' ]; then
+     MONGODBS="weblocal_db"
+     echo $MONGODBS
+     FILE="$LOCALBAKPATH/$MONGODBS.$DATE-$TIME.gz"
+-- 
+1.9.1
+

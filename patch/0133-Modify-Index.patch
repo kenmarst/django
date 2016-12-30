@@ -1,0 +1,322 @@
+From 4ba3af2b4b89f6a4b66b0d2232e70455e9e2ebcf Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 19:56:48 +0800
+Subject: [PATCH 133/443] Modify Index
+
+Modify Index number and disable Index sort.
+Sort code about bootstrap table.
+---
+ br06/urls.py                  |  4 +--
+ fruserlogs/views.py           | 57 ++++++++++++++++++--------------------
+ frusers/views.py              | 64 +++++++++++++++++++++----------------------
+ systemlogs/views.py           | 55 ++++++++++++++++++-------------------
+ templates/fruser_list.html    |  7 ++---
+ templates/fruserlog_list.html |  3 +-
+ templates/systemlog_list.html |  3 +-
+ 7 files changed, 91 insertions(+), 102 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 0af02ef..d0cca40 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -44,14 +44,14 @@ urlpatterns = [
+ 
+ urlpatterns += [
+     url(r'^systemlog_list/?$', systemlog_list_view),
+-    url(r'^systemlog_export/?$', systemlog_export),
+     url(r'^systemlog_data/?$', systemlog_data),
++    url(r'^systemlog_export/?$', systemlog_export),
+ ]
+ 
+ urlpatterns += [
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+-    url(r'^fruserlog_export/?$', fruserlog_export),
+     url(r'^fruserlog_data/?$', fruserlog_data),
++    url(r'^fruserlog_export/?$', fruserlog_export),
+ ]
+ 
+ urlpatterns += [
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 28fd5b8..09814c9 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -21,6 +21,33 @@ def fruserlog_list_view(request):
+     return render(request, 'fruserlog_list.html', {'active': "fruserlog_list"})
+ 
+ @csrf_exempt
++def fruserlog_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    search = request.GET.get('search', None)
++    offset = int(request.GET.get('offset', 0))
++    limit = int(request.GET.get('limit', 0))
++    sort = {'FRUserId' : 'FRUserOId__FRUserId', 'FRUserName' : 'FRUserOId__Name', 'DeviceOId' : 'DeviceOId__Name', 'LogDateTime' : 'LogDateTime', 'LogContent' : 'LogContent'}
++    if request.GET.get('order', None) == 'asc':
++        order = sort.get(request.GET.get('sort'), 'LogDateTime')
++    else:
++        order = '-' + sort.get(request.GET.get('sort'), 'LogDateTime')
++    if search:
++        fruserlogs = Fruserlogs.objects.filter(Q(FRUserOId__FRUserId__contains = search) | Q(FRUserOId__Name__contains = search) | Q(DeviceOId__Name__contains = search)).order_by(order)
++    else:
++        fruserlogs = Fruserlogs.objects.order_by(order)
++    fruserlog_count = fruserlogs.count()
++    fruserlogs = [fruserlog.as_json() for fruserlog in fruserlogs[offset : offset + limit]]
++    index = offset
++    for fruserlog in fruserlogs:
++        fruserlog['Index'] = index + 1
++        index += 1
++    return JsonResponse({'total': fruserlog_count, 'rows': fruserlogs})
++
++@csrf_exempt
+ def fruserlog_export(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+@@ -77,33 +104,3 @@ def fruserlog_export(request):
+        writer.writerow([symbol.join([x[i] for i in header])])
+ 
+     return response
+-
+-@csrf_exempt
+-def fruserlog_data(request):
+-    login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
+-    search = request.GET.get('search', None)
+-    offset = int(request.GET.get('offset', 0))
+-    limit = int(request.GET.get('limit', 0))
+-    sort = {'FRUserId' : 'FRUserOId__FRUserId', 'FRUserName' : 'FRUserOId__Name', 'DeviceOId' : 'DeviceOId__Name', 'LogDateTime' : 'LogDateTime', 'LogContent' : 'LogContent'}
+-    if request.GET.get('sort', None) in sort.keys():
+-        if request.GET.get('order', None) == 'asc':
+-            order = sort[request.GET.get('sort')]
+-        else:
+-            order = '-' + sort[request.GET.get('sort')]
+-    else:
+-        order = 'LogDateTime'
+-    if search:
+-        fruserlogs = Fruserlogs.objects.filter(Q(FRUserOId__FRUserId__contains = search) | Q(FRUserOId__Name__contains = search) | Q(DeviceOId__Name__contains = search)).order_by(order)
+-    else:
+-        fruserlogs = Fruserlogs.objects.order_by(order)
+-    fruserlog_count = fruserlogs.count()
+-    fruserlogs = [fruserlog.as_json() for fruserlog in fruserlogs[offset : offset + limit]]
+-    index = 0
+-    for fruserlog in fruserlogs:
+-        fruserlog['Index'] = index + 1
+-        index += 1
+-    return JsonResponse({'total': fruserlog_count, 'rows': fruserlogs})
+diff --git a/frusers/views.py b/frusers/views.py
+index e5ba843..012a109 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -23,6 +23,37 @@ def fruser_list_view(request):
+     except:
+         return render(request, 'registration/not_found.html')
+ 
++def fruser_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    try:
++        search = request.GET.get('search', None)
++        offset = int(request.GET.get('offset', 0))
++        limit = int(request.GET.get('limit', 0))
++        order = request.GET.get('sort', 'FRUserId')
++        if request.GET.get('order', None) == 'asc':
++            order = order if order != 'Group' else 'frusergroupmember__GroupOId__Name'
++        else:
++            order = '-' + order if order != 'Group' else '-frusergroupmember__GroupOId__Name'
++        if search:
++            frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).order_by(order)
++        else:
++            frusers = Frusers.objects.order_by(order)
++        fruser_count = frusers.count()
++        frusers = [fruser.as_json() for fruser in frusers[offset : offset + limit]]
++        index = offset
++        for fruser in frusers:
++            fruser['Age'] = fruser['Age'] or ''
++            fruser['Index'] = index + 1
++            index += 1
++            fruser['Group'] = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = fruser['OId']).values('Name')) or 'Default'
++        return JsonResponse({'total': fruser_count, 'rows': frusers})
++    except:
++        return JsonResponse({'total': 0, 'rows': []})
++
+ def fruser_edit_view(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+@@ -172,36 +203,3 @@ def delete_fruser(request):
+         return JsonResponse(res_code[0])
+     except:
+         return JsonResponse(res_code[1])
+-
+-def fruser_data(request):
+-    login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
+-    try:
+-        search = request.GET.get('search', None)
+-        offset = int(request.GET.get('offset', 0))
+-        limit = int(request.GET.get('limit', 0))
+-        if request.GET.get('sort', None) in {'FRUserId', 'Name', 'Group', 'CreateDate', 'UpdateDate'}:
+-            if request.GET.get('order', None) == 'asc':
+-                order = request.GET.get('sort')
+-            else:
+-                order = '-' + request.GET.get('sort')
+-        else:
+-            order = 'FRUserId'
+-        if search:
+-            frusers = Frusers.objects.filter(Q(FRUserId__contains = search) | Q(Name__contains = search) | Q(frusergroupmember__GroupOId__Name__contains = search)).order_by(order)
+-        else:
+-            frusers = Frusers.objects.order_by(order)
+-        fruser_count = frusers.count()
+-        frusers = [fruser.as_json() for fruser in frusers[offset : offset + limit]]
+-        index = 0
+-        for fruser in frusers:
+-            fruser['Age'] = fruser['Age'] or ''
+-            fruser['Index'] = index + 1
+-            index += 1
+-            fruser['Group'] = ', '.join(group['Name'] for group in Frusergroups.objects.filter(frusergroupmember__FRUserOId__OId = fruser['OId']).values('Name')) or 'Default'
+-        return JsonResponse({'total': fruser_count, 'rows': frusers})
+-    except:
+-        return render(request, 'registration/not_found.html')
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index fd2a0f2..a392a0e 100644
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -20,6 +20,32 @@ def systemlog_list_view(request):
+     return render(request, 'systemlog_list.html', {'active': "systemlog_list"})
+ 
+ @csrf_exempt
++def systemlog_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    search = request.GET.get('search', None)
++    offset = int(request.GET.get('offset', 0))
++    limit = int(request.GET.get('limit', 0))
++    if request.GET.get('order', None) == 'asc':
++        order = request.GET.get('sort', 'LogDateTime')
++    else:
++        order = '-' + request.GET.get('sort', 'LogDateTime')
++    if search:
++        systemlogs = Systemlogs.objects.filter(Q(Category__contains = search) | Q(LogContent__contains = search)).order_by(order)
++    else:
++        systemlogs = Systemlogs.objects.order_by(order)
++    systemlog_count = systemlogs.count()
++    systemlogs = [systemlog.as_json() for systemlog in systemlogs[offset : offset + limit]]
++    index = offset
++    for systemlog in systemlogs:
++        systemlog['Index'] = index + 1
++        index += 1
++    return JsonResponse({'total': systemlog_count, 'rows': systemlogs})
++
++@csrf_exempt
+ def systemlog_export(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+@@ -77,32 +103,3 @@ def systemlog_export(request):
+        writer.writerow([symbol.join([x[i] for i in header])])
+ 
+     return response
+-
+-@csrf_exempt
+-def systemlog_data(request):
+-    login_request = json.loads(check_login(request, permission))
+-    if login_request["CODE"] == "0":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+-    elif login_request["CODE"] == "1":
+-        return HttpResponseRedirect("/home")
+-    search = request.GET.get('search', None)
+-    offset = int(request.GET.get('offset', 0))
+-    limit = int(request.GET.get('limit', 0))
+-    if request.GET.get('sort', None) in {'Category', 'LogContent', 'LogDateTime'}:
+-        if request.GET.get('order', None) == 'asc':
+-            order = request.GET.get('sort')
+-        else:
+-            order = '-' + request.GET.get('sort')
+-    else:
+-        order = 'LogDateTime'
+-    if search:
+-        systemlogs = Systemlogs.objects.filter(Q(Category__contains = search) | Q(LogContent__contains = search)).order_by(order)
+-    else:
+-        systemlogs = Systemlogs.objects.order_by(order)
+-    systemlog_count = systemlogs.count()
+-    systemlogs = [systemlog.as_json() for systemlog in systemlogs[offset : offset + limit]]
+-    index = 0
+-    for systemlog in systemlogs:
+-        systemlog['Index'] = index + 1
+-        index += 1
+-    return JsonResponse({'total': systemlog_count, 'rows': systemlogs})
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index bff4727..6cd47b1 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -96,8 +96,7 @@
+                 columns: [
+                     {
+                         field: 'Index',
+-                        title: '{% trans "No." %}',
+-                        sortable: true
++                        title: '{% trans "No." %}'
+                     },
+                     {
+                         field: 'FRUserId',
+@@ -169,7 +168,7 @@
+                     contentType: false,
+                     success: function(data) {
+                         if (data.CODE == "0") {
+-                            location.reload();
++                            $('#FruserList').bootstrapTable('refresh');
+                         } else if (data.CODE == "2") {
+                             alert("The file format is not correct");
+                         } else {
+@@ -196,7 +195,7 @@
+                         },
+                         success: function(data) {
+                             if (data.CODE == "0") {
+-                                location.reload();
++                                $('#FruserList').bootstrapTable('refresh');
+                             } else {
+                                 alert("Fail to delete fruser");
+                             }
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 838679a..9378960 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -90,8 +90,7 @@
+ 			columns: [
+                 {
+                     field: 'Index',
+-                    title: '{% trans "No." %}',
+-                    sortable: true,
++                    title: '{% trans "No." %}'
+                 }, {
+                     field: 'FRUserId',
+                     title: '{% trans "FRUserId" %}',
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index 6377a88..ba47f17 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -78,8 +78,7 @@
+ 			columns: [
+                 {
+                     field: 'Index',
+-                    title: '{% trans "No." %}',
+-                    sortable: true,
++                    title: '{% trans "No." %}'
+                 },
+                 {
+                     field: 'Category',
+-- 
+1.9.1
+

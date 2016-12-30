@@ -1,0 +1,1138 @@
+From 20291c8d144ae6a791b952da97dcf9f6b710c6c1 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Fri, 24 Jun 2016 16:08:27 +0800
+Subject: [PATCH 148/443] In System Settings page, add save and connect test
+ method for Backup Scheduling, System Log.
+
+---
+ br06/urls.py                   |  10 +-
+ systemsettings/views.py        | 399 +++++++++++++++++++++++++++-
+ templates/system_settings.html | 590 ++++++++++++++++++++++++++++++++---------
+ 3 files changed, 866 insertions(+), 133 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 13e6f90..fd3a424 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -21,7 +21,7 @@ from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, exp
+ from systemlogs.views import systemlog_list_view, systemlog_export, systemlog_data
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_data
+ from logsetting.views import logsetting
+-from systemsettings.views import settings_views
++from systemsettings.views import system_settings_views, settings_system_backup, settings_system_connect_test, settings_system_log
+ from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_list_data, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, device_frusergroups_list_data, device_frusergroups_add_data, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_list_data, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_members_list_data, user_group_members_add_data, user_group_devices_view, user_group_devices_list_data, user_group_devices_add_data, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+@@ -35,13 +35,19 @@ urlpatterns = [
+     url(r'^i18n/', include('django.conf.urls.i18n')),
+     url(r'^admin/', admin.site.urls),
+     url(r'^logsetting/?$', logsetting),
+-    url(r'^system_settings/$', settings_views),
+     url(r'^dashboard/$', dashboard_views),
+     url(r'^home/$', home_view),
+     url(r'^empty/$', empty_view),
+ ]
+ 
+ urlpatterns += [
++    url(r'^system_settings/$', system_settings_views),
++    url(r'^settings_system_backup/?$', settings_system_backup),
++    url(r'^settings_system_connect_test/?$', settings_system_connect_test),
++    url(r'^settings_system_log/?$', settings_system_log),
++]
++
++urlpatterns += [
+     url(r'^systemlog_list/?$', systemlog_list_view),
+     url(r'^systemlog_data/?$', systemlog_data),
+     url(r'^systemlog_export/?$', systemlog_export),
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index f1686ee..4e9a59a 100644
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect, JsonResponse
+ from api.models import Config
+ from login.views import check_login
+ import json
++from ftplib import FTP
+ 
+ # create default system settings configs
+ # BackupMethod
+@@ -10,10 +11,10 @@ try:
+     Config.objects.get(Name = 'BackupMethod').Name
+ except:
+     try:
+-        Config.objects.create(Name = 'BackupMethod', Value = 'manual')
+-        print('create default BackupMethod: manual')
++        Config.objects.create(Name = 'BackupMethod', Value = 'Automatic')
++        print('create default BackupMethod: Automatic')
+     except:
+-        print('can\'t create default BackupMethod: manual')
++        print('can\'t create default BackupMethod: Automatic')
+ else:
+     print('default BackupMethod exist.')
+ 
+@@ -22,10 +23,10 @@ try:
+     Config.objects.get(Name = 'BackupScheduling').Name
+ except:
+     try:
+-        Config.objects.create(Name = 'BackupScheduling', Value = 'monthly')
+-        print('create default BackupScheduling: monthly')
++        Config.objects.create(Name = 'BackupScheduling', Value = 'Weekly')
++        print('create default BackupScheduling: Weekly')
+     except:
+-        print('can\'t create default BackupScheduling: monthly')
++        print('can\'t create default BackupScheduling: Weekly')
+ else:
+     print('default BackupScheduling exist.')
+ 
+@@ -35,7 +36,7 @@ try:
+ except:
+     try:
+         Config.objects.create(Name = 'BackupMonthlyDate', Value = '1')
+-        print('create default BackupMonthlyDate: month')
++        print('create default BackupMonthlyDate: 1')
+     except:
+         print('can\'t create default BackupMonthlyDate: 1')
+ else:
+@@ -70,10 +71,10 @@ try:
+     Config.objects.get(Name = 'BackupLocation').Name
+ except:
+     try:
+-        Config.objects.create(Name = 'BackupLocation', Value = 'local')
+-        print('create default BackupLocation: local')
++        Config.objects.create(Name = 'BackupLocation', Value = 'ftp')
++        print('create default BackupLocation: ftp')
+     except:
+-        print('can\'t create default BackupLocation: local')
++        print('can\'t create default BackupLocation: ftp')
+ else:
+     print('default BackupLocation exist.')
+ 
+@@ -89,6 +90,56 @@ except:
+ else:
+     print('default BackupLocal exist.')
+ 
++# BackupRemoteHost
++try:
++    Config.objects.get(Name = 'BackupRemoteHost').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupRemoteHost', Value = '0.0.0.0')
++        print('create default BackupRemoteHost: 00.0.0.0')
++    except:
++        print('can\'t create default BackupRemoteHost: 0.0.0.0')
++else:
++    print('default BackupRemoteHost exist.')
++
++# BackupRemotePort
++try:
++    Config.objects.get(Name = 'BackupRemotePort').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupRemotePort', Value = '21')
++        print('create default BackupRemotePort: 21')
++    except:
++        print('can\'t create default BackupRemotePort: 21')
++else:
++    print('default BackupRemotePort exist.')
++
++
++# BackupRemoteAccount
++try:
++    Config.objects.get(Name = 'BackupRemoteAccount').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupRemoteAccount', Value = 'ftpAccount')
++        print('create default BackupRemoteAccount: ftpAccount')
++    except:
++        print('can\'t create default BackupRemoteAccount: ftpAccount')
++else:
++    print('default BackupRemoteAccount exist.')
++
++
++# BackupRemotePassword
++try:
++    Config.objects.get(Name = 'BackupRemotePassword').Name
++except:
++    try:
++        Config.objects.create(Name = 'BackupRemotePassword', Value = 'Password')
++        print('create default BackupRemotePassword: Password')
++    except:
++        print('can\'t create default BackupRemotePassword: Password')
++else:
++    print('default BackupRemotePassword exist.')
++
+ # LogLimit
+ try:
+     Config.objects.get(Name = 'LogLimit').Name
+@@ -140,11 +191,335 @@ else:
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ permission = 'permission_system'
+ 
+-def settings_views(request):
++def system_settings_views(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] == "0":
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+ 
+-    return render_to_response('system_settings.html', locals())
++    try:
++        BackupMethod = Config.objects.get(Name = 'BackupMethod').Value
++    except:
++        print('get BackupMethod fail.')
++
++    try:
++        BackupScheduling = Config.objects.get(Name = 'BackupScheduling').Value
++    except:
++        print('get BackupScheduling fail.')
++
++    try:
++        BackupMonthlyDate = Config.objects.get(Name = 'BackupMonthlyDate').Value
++    except:
++        print('get BackupMonthlyDate fail.')
++
++    try:
++        BackupWeeklyDate = Config.objects.get(Name = 'BackupWeeklyDate').Value
++        BackupWeeklyDate = BackupWeeklyDate.split(',')
++        mon_chk = 'false'
++        tue_chk = 'false'
++        wed_chk = 'false'
++        thu_chk = 'false'
++        fri_chk = 'false'
++        sat_chk = 'false'
++        sun_chk = 'false'
++        for a in BackupWeeklyDate:
++            if a=='1':
++                mon_chk = 'true'
++            if a=='2':
++                tue_chk = 'true'
++            if a=='3':
++                wed_chk = 'true'
++            if a=='4':
++                thu_chk = 'true'
++            if a=='5':
++                fri_chk = 'true'
++            if a=='6':
++                sat_chk = 'true'
++            if a=='7':
++                sun_chk = 'true'
++
++    except:
++        print('get BackupWeeklyDate fail.')
++
++    try:
++        BackupTime = Config.objects.get(Name = 'BackupTime').Value
++        BackupTime = BackupTime.split(':')
++        BackupTime_hours = BackupTime[0]
++        BackupTime_mins = BackupTime[1]
++
++    except:
++        print('get BackupTime fail.')
++
++    try:
++        BackupLocation = Config.objects.get(Name = 'BackupLocation').Value
++    except:
++        print('get BackupLocation fail.')
++
++    try:
++        BackupLocal = Config.objects.get(Name = 'BackupLocal').Value
++    except:
++        print('get BackupLocal fail.')
++
++    try:
++        BackupRemoteHost = Config.objects.get(Name = 'BackupRemoteHost').Value
++    except:
++        print('get BackupRemoteHost fail.')
++
++    try:
++        BackupRemotePort = Config.objects.get(Name = 'BackupRemotePort').Value
++    except:
++        print('get BackupRemotePort fail.')
++
++    try:
++        BackupRemoteAccount = Config.objects.get(Name = 'BackupRemoteAccount').Value
++    except:
++        print('get BackupRemoteAccount fail.')
++
++    try:
++        BackupRemotePassword = Config.objects.get(Name = 'BackupRemotePassword').Value
++    except:
++        print('get BackupRemotePassword fail.')
++
++    try:
++        LogLimit = Config.objects.get(Name = 'LogLimit').Value
++    except:
++        print('get LogLimit fail.')
++
++    try:
++        LogPreservation = Config.objects.get(Name = 'LogPreservation').Value
++    except:
++        print('get LogPreservation fail.')
++
++    try:
++        PicCreateSave = Config.objects.get(Name = 'PicCreateSave').Value
++    except:
++        print('get PicCreateSave fail.')
++
++    try:
++        PicFaceSave = Config.objects.get(Name = 'PicFaceSave').Value
++    except:
++        print('get PicFaceSave fail.')
++
++    try:
++        return render(request, 'system_settings.html',
++                      {
++                          'BackupMethod' : BackupMethod,
++                          'BackupScheduling' : BackupScheduling,
++                          'BackupMonthlyDate' : BackupMonthlyDate,
++                          'BackupWeeklyDate' : BackupWeeklyDate,
++                          'mon_chk' : mon_chk,
++                          'tue_chk' : tue_chk,
++                          'wed_chk' : wed_chk,
++                          'thu_chk' : thu_chk,
++                          'fri_chk' : fri_chk,
++                          'sat_chk' : sat_chk,
++                          'sun_chk' : sun_chk,
++                          'BackupTime' : BackupTime,
++                          'BackupTime_hours' : BackupTime_hours,
++                          'BackupTime_mins' : BackupTime_mins,
++                          'BackupLocation' : BackupLocation,
++                          'BackupLocal' : BackupLocal,
++                          'BackupRemoteHost' : BackupRemoteHost,
++                          'BackupRemotePort' : BackupRemotePort,
++                          'BackupRemoteAccount' : BackupRemoteAccount,
++                          'BackupRemotePassword' : BackupRemotePassword,
++                          'LogLimit' : LogLimit,
++                          'LogPreservation' : LogPreservation,
++                          'PicCreateSave' : PicCreateSave,
++                          'PicFaceSave' : PicFaceSave,
++                      }
++                      )
++    except:
++        return render(request, 'registration/not_found.html')
++
++def settings_system_backup(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++
++    try:
++        BackupMethod = request.POST.get('BackupMethod', 'n/a')
++        print('BackupMethod : ', BackupMethod)
++        if BackupMethod != 'n/a':
++            Config.objects.filter(Name = 'BackupMethod').update(Value=BackupMethod)
++
++        if BackupMethod == 'Automatic':
++            BackupScheduling = request.POST.get('BackupScheduling', 'n/a')
++            print('BackupScheduling : ', BackupScheduling)
++
++            if BackupScheduling != 'n/a':
++                Config.objects.filter(Name = 'BackupScheduling').update(Value=BackupScheduling)
++
++            if BackupScheduling == 'Monthly':
++                BackupMonthlyDate = request.POST.get('BackupMonthlyDate', 'n/a')
++                print('BackupMonthlyDate : ', BackupMonthlyDate)
++                if BackupMonthlyDate != 'n/a':
++                    Config.objects.filter(Name = 'BackupMonthlyDate').update(Value=BackupMonthlyDate)
++
++                BackupMonthlyDate_hours = request.POST['BackupMonthlyDate_hours']
++                print('BackupMonthlyDate_hours : ', BackupMonthlyDate_hours)
++
++                BackupMonthlyDate_mins = request.POST['BackupMonthlyDate_mins']
++                print('BackupMonthlyDate_mins : ', BackupMonthlyDate_mins)
++
++                BackupTime = BackupMonthlyDate_hours + ':' + BackupMonthlyDate_mins
++                print('BackupTime : ', BackupTime)
++                Config.objects.filter(Name = 'BackupTime').update(Value=BackupTime)
++
++
++            if BackupScheduling == 'Weekly':
++                BackupWeeklyDate = ''
++                mon_chk = request.POST['mon_chk']
++                print('mon_chk : ', mon_chk)
++                if mon_chk == 'true':
++                    BackupWeeklyDate += '1,'
++
++                tue_chk = request.POST['tue_chk']
++                print('tue_chk : ', tue_chk)
++                if tue_chk == 'true':
++                    BackupWeeklyDate += '2,'
++
++                wed_chk = request.POST['wed_chk']
++                print('wed_chk : ', wed_chk)
++                if wed_chk == 'true':
++                    BackupWeeklyDate += '3,'
++
++                thu_chk = request.POST['thu_chk']
++                print('thu_chk : ', thu_chk)
++                if thu_chk == 'true':
++                    BackupWeeklyDate += '4,'
++
++                fri_chk = request.POST['fri_chk']
++                print('fri_chk : ', fri_chk)
++                if fri_chk == 'true':
++                    BackupWeeklyDate += '5,'
++
++                sat_chk = request.POST['sat_chk']
++                print('sat_chk : ', sat_chk)
++                if sat_chk == 'true':
++                    BackupWeeklyDate += '6,'
++
++                sun_chk = request.POST['sun_chk']
++                print('sun_chk : ', sun_chk)
++                if sun_chk == 'true':
++                    BackupWeeklyDate += '7,'
++
++                print('BackupWeeklyDate : ', BackupWeeklyDate)
++                Config.objects.filter(Name = 'BackupWeeklyDate').update(Value=BackupWeeklyDate)
++
++                BackupWeeklyDate_hours = request.POST['BackupWeeklyDate_hours']
++                print('BackupWeeklyDate_hours : ', BackupWeeklyDate_hours)
++
++                BackupWeeklyDate_mins = request.POST['BackupWeeklyDate_mins']
++                print('BackupWeeklyDate_mins : ', BackupWeeklyDate_mins)
++
++                BackupTime = BackupWeeklyDate_hours + ':' + BackupWeeklyDate_mins
++                Config.objects.filter(Name = 'BackupTime').update(Value=BackupTime)
++
++            BackupLocal = request.POST.get('BackupLocal', '')
++            print('BackupLocal :', BackupLocal)
++            if BackupLocal != '':
++                Config.objects.filter(Name = 'BackupLocal').update(Value=BackupLocal)
++
++            rftp_chk = request.POST['rftp_chk']
++            print('rftp_chk :', rftp_chk)
++
++            if rftp_chk == 'true':
++                BackupLocation = 'ftp'
++                Config.objects.filter(Name = 'BackupLocation').update(Value=BackupLocation)
++
++                BackupRemoteHost = request.POST.get('BackupRemoteHost', '')
++                print('BackupRemoteHost :', BackupRemoteHost)
++                if BackupRemoteHost != '':
++                    Config.objects.filter(Name = 'BackupRemoteHost').update(Value=BackupRemoteHost)
++
++                BackupRemotePort = request.POST.get('BackupRemotePort', '')
++                print('BackupRemotePort :', BackupRemotePort)
++                if BackupRemotePort != '':
++                    Config.objects.filter(Name = 'BackupRemotePort').update(Value=BackupRemotePort)
++
++                BackupRemoteAccount = request.POST.get('BackupRemoteAccount', '')
++                print('BackupRemoteAccount :', BackupRemoteAccount)
++                if BackupRemoteAccount != '':
++                    Config.objects.filter(Name = 'BackupRemoteAccount').update(Value=BackupRemoteAccount)
++
++                BackupRemotePassword = request.POST.get('BackupRemotePassword', '')
++                print('BackupRemotePassword :', BackupRemotePassword)
++                if BackupRemotePassword != '':
++                    Config.objects.filter(Name = 'BackupRemotePassword').update(Value=BackupRemotePassword)
++            else:
++                BackupLocation = 'local'
++                Config.objects.filter(Name = 'BackupLocation').update(Value=BackupLocation)
++
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++
++def settings_system_connect_test(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++
++    try:
++        BackupRemoteHost = request.POST.get('BackupRemoteHost', '')
++        print('Test BackupRemoteHost :', BackupRemoteHost)
++
++        BackupRemotePort = request.POST.get('BackupRemotePort', '')
++        print('Test BackupRemotePort :', BackupRemotePort)
++
++        BackupRemoteAccount = request.POST.get('BackupRemoteAccount', '')
++        print('Test BackupRemoteAccount :', BackupRemoteAccount)
++
++        BackupRemotePassword = request.POST.get('BackupRemotePassword', '')
++        print('Test BackupRemotePassword :', BackupRemotePassword)
++
++        try:
++            ftp = FTP()
++            ftp.connect(BackupRemoteHost, int(BackupRemotePort))
++            ftp.login(BackupRemoteAccount, BackupRemotePassword)
++            print('Connected! Welcome msg is ' + ftp.getwelcome())
++            ftp.quit()
++        except:
++            print('Connected fail!')
++            return JsonResponse(res_code[1])
++
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
++def settings_system_log(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++
++    try:
++        LogLimit = request.POST.get('LogLimit', '')
++        print('LogLimit :', LogLimit)
++        if LogLimit != '':
++            Config.objects.filter(Name = 'LogLimit').update(Value=LogLimit)
++
++        LogPreservation = request.POST.get('LogPreservation', '')
++        print('LogPreservation :', LogPreservation)
++        if LogPreservation != '':
++            Config.objects.filter(Name = 'LogPreservation').update(Value=LogPreservation)
++
++        PicCreateSave = request.POST['PicCreateSave']
++        print('PicCreateSave :', PicCreateSave)
++        Config.objects.filter(Name = 'PicCreateSave').update(Value=PicCreateSave)
++
++        PicFaceSave = request.POST['PicFaceSave']
++        print('PicFaceSave :', PicFaceSave)
++        Config.objects.filter(Name = 'PicFaceSave').update(Value=PicFaceSave)
++
++        return JsonResponse(res_code[0])
++    except:
++        return JsonResponse(res_code[1])
++
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 846f615..1beb4a8 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -29,130 +29,140 @@
+             <div class="row">
+                 <div class="col-md-12 col-lg-12">
+                     <div class="panel panel-default" style="background-color:lavender;">
+-                        <div class="panel-heading">{% trans "Backup Scheduling" %}</div>
++                        <div class="panel-heading"><p>{% trans "Backup Scheduling" %}</p></div>
+                         <div class="panel-body">
+                             <form role="form">
+-                                <div class = "form-group" >
++                                <div class = "form-group form-inline" >
+                                     <div class="radio">
+-                                        <label><input type="radio" name="optradio">{% trans "Manually" %}</label>
++                                        <label><input type="radio" value="Manually" id="BackupMethod_Manually" name="BackupMethod">{% trans "Manually" %}</label>
+                                     </div>
+-                                </div>
+-                                <div class = "form-group" >
++                                    <div></div>
+                                     <div class="radio">
+-                                        <label><input type="radio" name="optradio">{% trans "Automatic" %}</label>
++                                        <label><input type="radio" value="Automatic" id="BackupMethod_Automatic" name="BackupMethod">{% trans "Automatic" %}</label>
+                                     </div>
+                                 </div>
+-                            </form>
+-                            <div class="col-sm-12">
+-                                <form role="form">
+-                                    <div class = "form-group" >
+-                                        <div>
+-                                            <input type="radio" name="optradio">{% trans "Every Month" %}
+-                                            <input type="text" maxlength=2 size=1 id="day">{% trans "Day" %}, {% trans "Time" %}:
+-                                            <select id="ampm">
+-                                                <option>AM</option>
+-                                                <option>PM</option>
+-                                            </select>
+-                                            <select id="hours">
+-                                                <option>00</option>
+-                                                <option>01</option>
+-                                                <option>02</option>
+-                                                <option>03</option>
+-                                                <option>04</option>
+-                                                <option>05</option>
+-                                                <option>06</option>
+-                                                <option>07</option>
+-                                                <option>08</option>
+-                                                <option>09</option>
+-                                                <option>10</option>
+-                                                <option>11</option>
+-                                                <option>12</option>
+-                                            </select>
+-                                            <label>:</label>
+-                                            <select id="mins">
+-                                                <option>00</option>
+-                                                <option>05</option>
+-                                                <option>10</option>
+-                                                <option>15</option>
+-                                                <option>20</option>
+-                                                <option>25</option>
+-                                                <option>30</option>
+-                                                <option>35</option>
+-                                                <option>40</option>
+-                                                <option>45</option>
+-                                                <option>50</option>
+-                                                <option>55</option>
+-                                            </select>
+-                                        </div>
++                                <div class = "form-group form-inline" >
++                                    <div class="col-md-12">
++                                        <input type="radio" value="Monthly" id="BackupScheduling_Month" name="BackupScheduling">{% trans "Every Month" %}
++                                        <input type="text" maxlength=2 size=1 id="BackupMonthlyDate" name="BackupMonthlyDate">{% trans "Day" %}, {% trans "Time" %}:
++                                        <select id="BackupMonthlyDate_hours" name="BackupMonthlyDate_hours">
++                                            <option value="00">00</option>
++                                            <option value="01">01</option>
++                                            <option value="02">02</option>
++                                            <option value="03">03</option>
++                                            <option value="04">04</option>
++                                            <option value="05">05</option>
++                                            <option value="06">06</option>
++                                            <option value="07">07</option>
++                                            <option value="08">08</option>
++                                            <option value="09">09</option>
++                                            <option value="10">10</option>
++                                            <option value="11">11</option>
++                                            <option value="12">12</option>
++                                            <option value="13">13</option>
++                                            <option value="14">14</option>
++                                            <option value="15">15</option>
++                                            <option value="16">16</option>
++                                            <option value="17">17</option>
++                                            <option value="18">18</option>
++                                            <option value="19">19</option>
++                                            <option value="20">20</option>
++                                            <option value="21">21</option>
++                                            <option value="22">22</option>
++                                            <option value="23">23</option>
++                                        </select>
++                                        <label>:</label>
++                                        <select id="BackupMonthlyDate_mins"  name="BackupMonthlyDate_mins">
++                                            <option value="00">00</option>
++                                            <option value="05">05</option>
++                                            <option value="10">10</option>
++                                            <option value="15">15</option>
++                                            <option value="20">20</option>
++                                            <option value="25">25</option>
++                                            <option value="30">30</option>
++                                            <option value="35">35</option>
++                                            <option value="40">40</option>
++                                            <option value="45">45</option>
++                                            <option value="50">50</option>
++                                            <option value="55">55</option>
++                                        </select>
+                                     </div>
+-                                    <div class = "form-group">
+-                                        <div>
+-                                            <input type="radio" name="optradio">{% trans "Every Week" %}
+-                                            <input type="checkbox" value="">{% trans "Sun" %},
+-                                            <input type="checkbox" value="">{% trans "Mon" %},
+-                                            <input type="checkbox" value="">{% trans "Tue" %},
+-                                            <input type="checkbox" value="">{% trans "Wed" %},
+-                                            <input type="checkbox" value="">{% trans "Thu" %},
+-                                            <input type="checkbox" value="">{% trans "Fri" %},
+-                                            <input type="checkbox" value="">{% trans "Sat" %},
+-                                            Time:
+-                                            <select id="ampm">
+-                                                <option>AM</option>
+-                                                <option>PM</option>
+-                                            </select>
+-                                            <select id="hours">
+-                                                <option>00</option>
+-                                                <option>01</option>
+-                                                <option>02</option>
+-                                                <option>03</option>
+-                                                <option>04</option>
+-                                                <option>05</option>
+-                                                <option>06</option>
+-                                                <option>07</option>
+-                                                <option>08</option>
+-                                                <option>09</option>
+-                                                <option>10</option>
+-                                                <option>11</option>
+-                                                <option>12</option>
+-                                            </select>
+-                                            <label>:</label>
+-                                            <select id="mins">
+-                                                <option>00</option>
+-                                                <option>05</option>
+-                                                <option>10</option>
+-                                                <option>15</option>
+-                                                <option>20</option>
+-                                                <option>25</option>
+-                                                <option>30</option>
+-                                                <option>35</option>
+-                                                <option>40</option>
+-                                                <option>45</option>
+-                                                <option>50</option>
+-                                                <option>55</option>
+-                                            </select>
++                                </div>
++                                <div class = "form-group form-inline">
++                                    <div class="col-md-12">
++                                        <input type="radio" value="Weekly" id="BackupScheduling_Week" name="BackupScheduling">{% trans "Every Week" %}
++                                        <input type="checkbox" id="sun_chk" name="sun_chk" value="7">{% trans "Sun" %},
++                                        <input type="checkbox" id="mon_chk" name="mon_chk" value="1">{% trans "Mon" %},
++                                        <input type="checkbox" id="tue_chk" name="tue_chk" value="2">{% trans "Tue" %},
++                                        <input type="checkbox" id="wed_chk" name="wed_chk" value="3">{% trans "Wed" %},
++                                        <input type="checkbox" id="thu_chk" name="thu_chk" value="4">{% trans "Thu" %},
++                                        <input type="checkbox" id="fri_chk" name="fri_chk" value="5">{% trans "Fri" %},
++                                        <input type="checkbox" id="sat_chk" name="sat_chk" value="6">{% trans "Sat" %}, Time:
++                                        <select id="BackupWeeklyDate_hours" name="BackupWeeklyDate_hours">
++                                            <option value="00">00</option>
++                                            <option value="01">01</option>
++                                            <option value="02">02</option>
++                                            <option value="03">03</option>
++                                            <option value="04">04</option>
++                                            <option value="05">05</option>
++                                            <option value="06">06</option>
++                                            <option value="07">07</option>
++                                            <option value="08">08</option>
++                                            <option value="09">09</option>
++                                            <option value="10">10</option>
++                                            <option value="11">11</option>
++                                            <option value="12">12</option>
++                                            <option value="13">13</option>
++                                            <option value="14">14</option>
++                                            <option value="15">15</option>
++                                            <option value="16">16</option>
++                                            <option value="17">17</option>
++                                            <option value="18">18</option>
++                                            <option value="19">19</option>
++                                            <option value="20">20</option>
++                                            <option value="21">21</option>
++                                            <option value="22">22</option>
++                                            <option value="23">23</option>
++                                        </select>
++                                        <label>:</label>
++                                        <select id="BackupWeeklyDate_mins"  name="BackupWeeklyDate_mins">
++                                            <option value="00">00</option>
++                                            <option value="05">05</option>
++                                            <option value="10">10</option>
++                                            <option value="15">15</option>
++                                            <option value="20">20</option>
++                                            <option value="25">25</option>
++                                            <option value="30">30</option>
++                                            <option value="35">35</option>
++                                            <option value="40">40</option>
++                                            <option value="45">45</option>
++                                            <option value="50">50</option>
++                                            <option value="55">55</option>
++                                        </select>
++                                        <div>{% trans "Local backup location" %}:<input type="text" id="BackupLocal" name="BackupLocal" maxlength=256 size=32 placeholder="/opt/backup"></div>
++                                        <div class="checkbox"><input type="checkbox" id="rftp_chk" name="rftp_chk">{% trans "Remote backup FTP Setting" %}:</div>
++                                        <div class="col-md-12">
++                                            <!--{% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=20 placeholder="IP ADDRESS" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$">-->
++                                            {% trans "HOST" %}(H):<input type="text" id="BackupRemoteHost" name="BackupRemoteHost" maxlength=20 size=25 placeholder="HOST NAME / IP ADDRESS">
++                                            {% trans "PORT" %}(P):<input type="text" id="BackupRemotePort" name="BackupRemotePort" maxlength=5 size=4 placeholder="21">
++                                            {% trans "USERNAME" %}(U):<input type="text" id="BackupRemoteAccount" name="BackupRemoteAccount" maxlength=20 size=20 placeholder="USERNAME">
++                                            {% trans "PASSWORD" %}(W):<input type="password" id="BackupRemotePassword" name="BackupRemotePassword" maxlength=20 size=20 placeholder="PASSWORD">
++                                            <input type="button" class="btn btn-info btn-sm" id="connect_test" name="connect_test" onclick="OnConnectTestClick()" value="{% trans "Connect Test" %}">
+                                         </div>
+                                     </div>
+-                                </form>
+-                            </div>
+-                            <div class="col-sm-12">
+-                                <form class="form-inline" role="form">
+-                                    <div class="form-group">
+-                                        <input type="checkbox" value="">{% trans "Local backup location" %}:
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <input type="button" class="btn btn-info btn-sm" value="...">
+-                                    </div>
+-                                </form>
+-                                <br>
+-                                <form class="form-inline" role="form">
+-                                    <div class="checkbox"><input type="checkbox" value="">{% trans "Remote backup FTP Setting" %}:</div><br>
+-                                    <div class="form-group">{% trans "HOST" %}(H):<input type="text" maxlength=20 size=10 id="HOST"></div>
+-                                    <div class="form-group">{% trans "USERNAME" %}(U):<input type="text" maxlength=20 size=10 id="USERNAME"></div>
+-                                    <div class="form-group">{% trans "PASSWORD" %}(W):<input type="text" maxlength=20 size=10 id="PASSWORD"></div>
+-                                    <div class="form-group">{% trans "PORT" %}(P):<input type="text" maxlength=20 size=5 id="PORT"></div>
+-                                    <div class="form-group"><input type="button" class="btn btn-info btn-sm" value="{% trans "Connect Test" %}"></div>
+-                                </form>
+-                            </div>
++                                </div>
++                                <div class="col-md-12"><br></div>
++                                <div class="form-actions form-group">
++                                    <input type="button" class="btn btn-info" onclick="backupOnSaveClick()" value="{% trans "Save" %}">
++                                </div>
++                                <!--<div>
++                                     {{BackupMethod}},<br>{{BackupScheduling}},<br>{{BackupMonthlyDate}},<br>{{BackupWeeklyDate}},
++                                     <br>{{BackupTime}}, {{BackupTime_hours}} : {{BackupTime_mins}}
++                                     <br>{{BackupLocal}},
++                                     <br>{{BackupLocation}}, {{BackupRemoteHost}}, {{BackupRemotePort}}, {{BackupRemoteAccount}}, {{BackupRemotePassword}},
++                                     <br>{{LogLimit}}, {{LogPreservation}}, {{PicCreateSave}}, {{PicFaceSave}}
++                                </div>-->
++                            </form>
+                         </div><!--panel-body-->
+                     </div><!--panel panel-default-->
+                 </div><!--col-lg-12-->
+@@ -165,18 +175,22 @@
+                             <form role="form">
+                                 <div class="form-group">
+                                     <p>{% trans "Log count limit" %}:
+-                                    <input type="text" maxlength=7 size=10 id="HOST">
++                                    <input type="text" maxlength=7 size=10 id="LogLimit" name="LogLimit">
+                                     , {% trans "if the logs exceeds limit" %}, {% trans "keep" %}
+-                                    <input type="text" maxlength=2 size=1 id="HOST">
++                                    <input type="text" maxlength=2 size=1 id="LogPreservation" name="LogPreservation">
+                                     {% trans "month data" %}(default=1), {% trans "others will be remove." %}</p>
+                                     <p>* {% trans "In limit duration, the logs can be record to 150% amount." %}<br>
+                                     * {% trans "Over 150% amount, system will keep latest logs, and remove the other older logs." %}</p>
+-                                    </div>
++                                </div>
+                                 <div class="form-group">
+-                                        <input type="checkbox" value="aaa">{% trans "Save user photo image" %}
++                                    <input type="checkbox" id="PicCreateSave" name="PicCreateSave">{% trans "Save user photo image" %}
+                                 </div>
+                                 <div class="form-group">
+-                                        <input type="checkbox" value="aaa">{% trans "Save FR recognition photo image" %}
++                                    <input type="checkbox" id="PicFaceSave" name="PicFaceSave">{% trans "Save FR recognition photo image" %}
++                                </div>
++                                <div class="col-md-12"><br></div>
++                                <div class="form-actions form-group">
++                                    <input type="button" class="btn btn-info" onclick="logOnSaveClick()" value="{% trans "Save" %}">
+                                 </div>
+                             </form>
+                         </div><!--panel-body-->
+@@ -185,5 +199,343 @@
+             </div><!--/.row-->
+         </div><!--/.main-->
+ 
++        {% load static %}
++        <script>
++        //For getting CSRF token
++        function getCookie(name) {
++            var cookieValue = null;
++
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    // Does this cookie string begin with the name we want?
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
++
++        function OnConnectTestClick(){
++            var BackupRemoteHost = $('input[name=BackupRemoteHost]').val();
++            var BackupRemotePort = $('input[name=BackupRemotePort]').val();
++            var BackupRemoteAccount = $('input[name=BackupRemoteAccount]').val();
++            var BackupRemotePassword = $('input[name=BackupRemotePassword]').val();
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/settings_system_connect_test/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'BackupRemoteHost': BackupRemoteHost,
++                    'BackupRemotePort': BackupRemotePort,
++                    'BackupRemoteAccount': BackupRemoteAccount,
++                    'BackupRemotePassword': BackupRemotePassword,
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("FTP connect test successfully");
++                        location.href = '/system_settings/';
++                    } else {
++                        alert("Fail to connect FTP");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
++        function backupOnSaveClick(){
++            var BackupMethod = $('input[name=BackupMethod]:checked').val();
++            var BackupScheduling = $('input[name=BackupScheduling]:checked').val();
++
++            var BackupMonthlyDate = $('input[name=BackupMonthlyDate]').val();
++
++            var BackupMonthlyDate_hours = $('select[name=BackupMonthlyDate_hours]').val();
++            var BackupMonthlyDate_mins = $('select[name=BackupMonthlyDate_mins]').val();
++
++            var sun_chk = $('input[name=sun_chk]').prop('checked');
++            var mon_chk = $('input[name=mon_chk]').prop('checked');
++            var tue_chk = $('input[name=tue_chk]').prop('checked');
++            var wed_chk = $('input[name=wed_chk]').prop('checked');
++            var thu_chk = $('input[name=thu_chk]').prop('checked');
++            var fri_chk = $('input[name=fri_chk]').prop('checked');
++            var sat_chk = $('input[name=sat_chk]').prop('checked');
++
++            var BackupWeeklyDate_hours = $('select[name=BackupWeeklyDate_hours]').val();
++            var BackupWeeklyDate_mins = $('select[name=BackupWeeklyDate_mins]').val();
++
++            var BackupLocal = $('input[name=BackupLocal]').val();
++
++            var rftp_chk = $('input[name=rftp_chk]').prop('checked');
++            var BackupLocation = (rftp_chk) ? 'ftp':'local';
++            var BackupRemoteHost = $('input[name=BackupRemoteHost]').val();
++            var BackupRemotePort = $('input[name=BackupRemotePort]').val();
++            var BackupRemoteAccount = $('input[name=BackupRemoteAccount]').val();
++            var BackupRemotePassword = $('input[name=BackupRemotePassword]').val();
++
++            if (BackupScheduling == 'Weekly' && !(sun_chk || mon_chk || tue_chk || wed_chk || thu_chk || fri_chk || sat_chk)) {
++                alert("Must select one week day!");
++                return;
++            }
++            
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/settings_system_backup/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'BackupMethod': BackupMethod,
++                    'BackupScheduling': BackupScheduling,
++                    'BackupMonthlyDate': BackupMonthlyDate,
++                    'BackupMonthlyDate_hours': BackupMonthlyDate_hours,
++                    'BackupMonthlyDate_mins': BackupMonthlyDate_mins,
++                    'sun_chk': sun_chk,
++                    'mon_chk': mon_chk,
++                    'tue_chk': tue_chk,
++                    'wed_chk': wed_chk,
++                    'thu_chk': thu_chk,
++                    'fri_chk': fri_chk,
++                    'sat_chk': sat_chk,
++                    'BackupWeeklyDate_hours': BackupWeeklyDate_hours,
++                    'BackupWeeklyDate_mins': BackupWeeklyDate_mins,
++                    'BackupLocal': BackupLocal,
++                    'rftp_chk': rftp_chk,
++                    'BackupRemoteHost': BackupRemoteHost,
++                    'BackupRemotePort': BackupRemotePort,
++                    'BackupRemoteAccount': BackupRemoteAccount,
++                    'BackupRemotePassword': BackupRemotePassword,
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("Backup setting successfully");
++                        location.href = '/system_settings/';
++                    } else {
++                        alert("Fail to setting Backup");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
++
++        function logOnSaveClick(){
++            var LogLimit = $('input[name=LogLimit]').val();
++            var LogPreservation = $('input[name=LogPreservation]').val();
++            var PicCreateSave = $('input[name=PicCreateSave]').prop('checked');
++            var PicFaceSave = $('input[name=PicFaceSave]').prop('checked');
++
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/settings_system_log/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'LogLimit': LogLimit,
++                    'LogPreservation': LogPreservation,
++                    'PicCreateSave': PicCreateSave,
++                    'PicFaceSave': PicFaceSave,
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        alert("Log setting successfully");
++                        location.href = '/system_settings/';
++                    } else {
++                        alert("Fail to setting Log");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
++
++        $('#BackupMethod_Manually').click(function() {
++            if($(this).is(':enabled')) {
++                $("#BackupScheduling_Month, #BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
++                $("#BackupScheduling_Week, #sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").attr("disabled", true);
++                $("#BackupLocal").attr("disabled", true);
++                $("#rftp_chk, #BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").attr("disabled", true);
++                $('input[name="BackupScheduling"][value={{BackupScheduling}}]').prop('checked', true);
++                $('input[name="BackupMonthlyDate"]').val('{{BackupMonthlyDate}}');
++                $('select[name="BackupMonthlyDate_hours"]').val('{{BackupTime_hours}}');
++                $('select[name="BackupMonthlyDate_mins"]').val('{{BackupTime_mins}}');
++                $('select[name="BackupWeeklyDate_hours"]').val('{{BackupTime_hours}}');
++                $('select[name="BackupWeeklyDate_mins"]').val('{{BackupTime_mins}}');
++                $('input[name="BackupLocal"]').val('{{BackupLocal}}');
++                $('input[name="BackupRemoteHost"]').val('{{BackupRemoteHost}}');
++                $('input[name="BackupRemotePort"]').val('{{BackupRemotePort}}');
++                $('input[name="BackupRemoteAccount"]').val('{{BackupRemoteAccount}}');
++                $('input[name="BackupRemotePassword"]').val('{{BackupRemotePassword}}');
++            }
++        });
++
++        $('#BackupMethod_Automatic').click(function() {
++            if($(this).is(':enabled')) { 
++                $("#BackupScheduling_Month").removeAttr("disabled");
++                $("#BackupScheduling_Week").removeAttr("disabled");
++                if ('{{BackupScheduling}}' == 'Monthly') {
++                    $("#BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").removeAttr("disabled");
++                }
++                else {
++                    $("#sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").removeAttr("disabled");
++                }
++                $("#BackupLocal").removeAttr("disabled");
++                $("#rftp_chk").removeAttr("disabled");
++                if ('{{BackupLocation}}' == 'ftp') {
++                    $('input[name="rftp_chk"]').prop('checked', true);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
++                } else {
++                    $('input[name="rftp_chk"]').prop('checked', false);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
++                }
++                $('input[name="BackupScheduling"][value={{BackupScheduling}}]').prop('checked', true);
++                $('input[name="BackupMonthlyDate"]').val('{{BackupMonthlyDate}}');
++                $('select[name="BackupMonthlyDate_hours"]').val('{{BackupTime_hours}}');
++                $('select[name="BackupMonthlyDate_mins"]').val('{{BackupTime_mins}}');
++                $('select[name="BackupWeeklyDate_hours"]').val('{{BackupTime_hours}}');
++                $('select[name="BackupWeeklyDate_mins"]').val('{{BackupTime_mins}}');
++                $('input[name="BackupLocal"]').val('{{BackupLocal}}');
++                $('input[name="BackupRemoteHost"]').val('{{BackupRemoteHost}}');
++                $('input[name="BackupRemotePort"]').val('{{BackupRemotePort}}');
++                $('input[name="BackupRemoteAccount"]').val('{{BackupRemoteAccount}}');
++                $('input[name="BackupRemotePassword"]').val('{{BackupRemotePassword}}');
++            }
++        });
++
++        $('#BackupScheduling_Month').click(function() {
++            if($(this).is(':enabled')) { 
++                $("#sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").attr("disabled", true);
++                $("#BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").removeAttr("disabled");
++                $('input[name="BackupMonthlyDate"]').val('{{BackupMonthlyDate}}');
++                $('select[name="BackupMonthlyDate_hours"]').val('{{BackupTime_hours}}');
++                $('select[name="BackupMonthlyDate_mins"]').val('{{BackupTime_mins}}');
++            }
++        });
++
++        $('#BackupScheduling_Week').click(function() {
++            if($(this).is(':enabled')) { 
++                $("#BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
++                $("#sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").removeAttr("disabled");
++                $('select[name="BackupWeeklyDate_hours"]').val('{{BackupTime_hours}}');
++                $('select[name="BackupWeeklyDate_mins"]').val('{{BackupTime_mins}}');
++            }
++        });
++
++        $('#rftp_chk').change(function() {
++            if($(this).is(':checked')) { 
++                $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
++            }
++            else
++                $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
++        });
++
++        $(document).ready(function() {
++            $('input[name="BackupMethod"][value={{BackupMethod}}]').prop('checked', true);
++            if ('{{BackupMethod}}' == 'Manually') {
++                $("#BackupScheduling_Month, #BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
++                $("#BackupScheduling_Week, #sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").attr("disabled", true);
++                $("#BackupLocal").attr("disabled", true);
++                $("#rftp_chk, #BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").attr("disabled", true);
++            }
++            else {
++                $('input[name="BackupScheduling"][value={{BackupScheduling}}]').prop('checked', true);
++                if ('{{BackupScheduling}}' == 'Monthly') {
++                    $("#sun_chk, #mon_chk, #tue_chk, #wed_chk, #thu_chk, #fri_chk, #sat_chk, #BackupWeeklyDate_hours, #BackupWeeklyDate_mins").attr("disabled", true);
++                }
++                else {
++                    $("#BackupMonthlyDate, #BackupMonthlyDate_hours, #BackupMonthlyDate_mins").attr("disabled", true);
++                }
++                
++                if ('{{BackupLocation}}' == 'ftp') {
++                    $('input[name="rftp_chk"]').prop('checked', true);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", false);
++                } else {
++                    $('input[name="rftp_chk"]').prop('checked', false);
++                    $("#BackupRemoteHost, #BackupRemotePort, #BackupRemoteAccount, #BackupRemotePassword, #connect_test").prop("disabled", true);
++                }
++            }
++
++            $('input[name="BackupMonthlyDate"]').val('{{BackupMonthlyDate}}');
++            $('select[name="BackupMonthlyDate_hours"]').val('{{BackupTime_hours}}');
++            $('select[name="BackupMonthlyDate_mins"]').val('{{BackupTime_mins}}');
++
++            if ('{{mon_chk}}' == 'true') {
++                $('input[name="mon_chk"]').prop('checked', true);
++            } else {
++                $('input[name="mon_chk"]').prop('checked', false);
++            }
++
++            if ('{{tue_chk}}' == 'true') {
++                $('input[name="tue_chk"]').prop('checked', true);
++            } else {
++                $('input[name="tue_chk"]').prop('checked', false);
++            }
++
++            if ('{{wed_chk}}' == 'true') {
++                $('input[name="wed_chk"]').prop('checked', true);
++            } else {
++                $('input[name="wed_chk"]').prop('checked', false);
++            }
++
++            if ('{{thu_chk}}' == 'true') {
++                $('input[name="thu_chk"]').prop('checked', true);
++            } else {
++                $('input[name="thu_chk"]').prop('checked', false);
++            }
++
++            if ('{{fri_chk}}' == 'true') {
++                $('input[name="fri_chk"]').prop('checked', true);
++            } else {
++                $('input[name="fri_chk"]').prop('checked', false);
++            }
++
++            if ('{{sat_chk}}' == 'true') {
++                $('input[name="sat_chk"]').prop('checked', true);
++            } else {
++                $('input[name="sat_chk"]').prop('checked', false);
++            }
++
++            if ('{{sun_chk}}' == 'true') {
++                $('input[name="sun_chk"]').prop('checked', true);
++            } else {
++                $('input[name="sun_chk"]').prop('checked', false);
++            }
++
++            $('select[name="BackupWeeklyDate_hours"]').val('{{BackupTime_hours}}');
++            $('select[name="BackupWeeklyDate_mins"]').val('{{BackupTime_mins}}');
++
++            $('input[name="BackupLocal"]').val('{{BackupLocal}}');
++
++            $('input[name="BackupRemoteHost"]').val('{{BackupRemoteHost}}');
++            $('input[name="BackupRemotePort"]').val('{{BackupRemotePort}}');
++            $('input[name="BackupRemoteAccount"]').val('{{BackupRemoteAccount}}');
++            $('input[name="BackupRemotePassword"]').val('{{BackupRemotePassword}}');
++
++            $('input[name="LogLimit"]').val('{{LogLimit}}');
++            $('input[name="LogPreservation"]').val('{{LogPreservation}}');
++
++            if ('{{PicCreateSave}}' == 'true') {
++                $('input[name="PicCreateSave"]').prop('checked', true);
++            } else {
++                $('input[name="PicCreateSave"]').prop('checked', false);
++            }
++
++            if ('{{PicFaceSave}}' == 'true') {
++                $('input[name="PicFaceSave"]').prop('checked', true);
++            } else {
++                $('input[name="PicFaceSave"]').prop('checked', false);
++            }
++        });
++
++        </script>
+     </body>
+ </html>
+-- 
+1.9.1
+

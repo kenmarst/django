@@ -1,0 +1,29 @@
+From 89e608f62b491a98d8ecff8e5e717935aa9266d9 Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Thu, 1 Dec 2016 19:37:14 +0800
+Subject: [PATCH 386/443] Change language option prompts on Device_setting
+
+---
+ templates/device_settings.html | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 55be8c0..86e43f5 100755
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -296,9 +296,9 @@
+                                         <label class="col-md-3 control-label">{% trans "Multi-language" %} :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Language">
+-                                                <option value="en">{% trans "en" %}</option>
+-                                                <option value="zh-cn">{% trans "zh-cn" %}</option>
+-                                                <option value="zh-tw">{% trans "zh-tw" %}</option>
++                                                <option value="en">English</option>
++                                                <option value="zh-cn">筒体中文</option>
++                                                <option value="zh-tw">繁體中文</option>
+                                             </select>
+                                         </div>
+                                     </div>
+-- 
+1.9.1
+

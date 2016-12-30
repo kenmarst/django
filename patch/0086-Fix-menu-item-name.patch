@@ -1,0 +1,29 @@
+From 613f476391d22b16cb9a62785caaf4ec8b8de506 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Wed, 25 May 2016 17:55:02 +0800
+Subject: [PATCH 086/443] Fix menu item name.
+
+---
+ templates/menu.html | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/templates/menu.html b/templates/menu.html
+index 9093e0a..1ae6464 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -34,9 +34,9 @@
+             <ul class="children collapse" id="sub-item-1">
+                 <li><a class="" href="/dashboard"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Dashboard" %} </a></li>
+                 <li><a class="" href="/user_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User List" %} </a></li>
+-                <li><a class="" href="/user_group_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Group List" %} </a></li>
+-                <li><a class="" href="/role_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Role & Permission" %} </a></li>
+-                <li><a class="" href="#"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg>{% trans "Setting" %} </a></li>
++                <li><a class="" href="/user_group_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User Group List" %} </a></li>
++                <li><a class="" href="/role_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Role and Permission" %} </a></li>
++                <li><a class="" href="#"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg> {% trans "Setting" %} </a></li>
+             </ul>
+         </li>
+         {% endifequal %}
+-- 
+1.9.1
+

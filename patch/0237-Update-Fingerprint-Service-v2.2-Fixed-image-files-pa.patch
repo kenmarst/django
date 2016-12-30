@@ -1,0 +1,42 @@
+From e35fb87d3f0bf39f70cd6c1698b5b3e07890e4e5 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 25 Aug 2016 18:42:03 +0800
+Subject: [PATCH 237/443] Update Fingerprint Service v2.2 : Fixed image files
+ path.
+
+/var/www/br06/
+---
+ fingerprinterd/FingerprintService | Bin 34979 -> 34979 bytes
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+diff --git a/fingerprinterd/FingerprintService b/fingerprinterd/FingerprintService
+index ae8573201067772ee09600a9bc4f1c14a39acb46..62245083f4188923e8fae26c4611d36502909523 100755
+GIT binary patch
+delta 646
+zcmZXSOK1~O6o%&vv~dKb(P$qsnF$jo6Rb{K+B%>@7G0zoAxc#OQf=HQXi^I?UHJe(
+z>jN7ON<j*0H>nC1F9mTk5nNbT*$Ay&xKfOdnqs9E3)gcqf{Wh8|DF5Yb2f)NQIIDJ
+z@@QE}SW@jI3UjXCF};gp#%hIwlQ1919y*)8dn>hg^JDP+e&6unmHtj-V{*Dl_Jwh^
+z#Ri?VZZl-)#-y5{99J7*4^FF5h~Wpd35MBkRR?&C&DuVAj>oiCc!5{7&P%0mO#1w+
+z%DMYRRLx7A$4BapZqg<9mk{ebaYP7dJBj6=wT`_)_=Wi7iFrQ>Lx^{t=nx%ULcI1w
+zs?U_%9wC?~tbiVn+!Mk)@{CW+WbuG*z%|V32RA$rk57JZ{&l@u#u?p&Rjlgg<$4oO
+zg_3f}WYZx--e_MK7_#&Eyqz9u>$dS^cq=X#J!^HarF~cW+@QB%Y0Z>__rg)=V5RVJ
+zNX=F_zfPS`zjHoC)E77}6BEQL@iwsmBx#x0MjTk=JW1S48yh5c5l4xqS7@F%_J`()
+z7Us+y5XXmRL|*!aZ_OZGDy9Z~s6;f#VU*IvUP=YeP~OK8%5j{eoWdE(5>_G+u$bSv
+yQ^(%yyc~mz*qgDH|9|F6X17xO_k)V;RVG^x4z}kSp-8!f_2+KL5NDPA%Z9&(RPR9m
+
+delta 633
+zcmYL{O=uHA6vy|Cq#7ZzDbaqIbvI<QSuv$XlnQ>3qF}`jwx}%ywW3~|rqH4X!4!%b
+z@sRiq=8}u`pm?w{<l<#(Rj`Lbg$k8|y=khbDGC}>7~f<IF3kTo^V|1kmtiIgY_h=e
+z^M2D-8jo4{;09I8Tc}p5F;VdeEQL1A9IhAlO${!KvN6{`lsofae25p><yKaU;#zwr
+zH1ovvC<7ZE?IdMMYk>|dYdc{-E^DoDiT}|IfC+5V55Ya`*As9bC-l8Hi)KoxJgW-f
+z&d6EYFCltzzP@Hdap$Di<cV`qEK2eFXQSev6f07E^2Ab*L|uyap4cNR0x=S=Juz_B
+zQrxf<+!J=l2q|utG!H$qQT80e6GjvUao9K&xGrBl{UOBH&F*8IH7r=bsxiVo#_&qS
+zVYL`9N1_Z*o7-?LdbG(qI$GK^cHkqk9jDDWBzeU=4+F{<A?{Gg!Z#tNh&|thm?w@B
+ztHd%<1x3;6d%KCbRUsVW0Xl;W@d7bV%-5)&I9;cHqJt%C7i4hOibuk<_bBb9bZ=3Q
+z++u<CUsA%PuF}Y0Fs{Q5Oj4Gxm+~`?P$scJ`3j#?zQK2ti?~Wz!Jr-YIe&#<yxYF*
+zL&r|=w;kCO^x^Szr~m&o8Bcflv+I{8%U`C4n?S|nSPNt+xAKc)cNrLb<=PANA3M$J
+A7ytkO
+
+-- 
+1.9.1
+

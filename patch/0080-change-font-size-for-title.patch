@@ -1,0 +1,39 @@
+From dee1d20f42c8fbdcaa396595ce821d27fbc00c25 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 25 May 2016 15:11:23 +0800
+Subject: [PATCH 080/443] change font size for title
+
+---
+ templates/logsetting.html | 2 +-
+ templates/role_list.html  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index b648b0f..8099fdf 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -26,7 +26,7 @@
+ 
+ 		<div class="row">
+ 			<div class="col-lg-12">
+-				<h1 class="page-header">{% trans "Log Setting" %}</h1>
++				<h1 class="page-header"><small>{% trans "Log Setting" %}</small></h1>
+ 			</div>
+ 		</div><!--/.row-->
+ 
+diff --git a/templates/role_list.html b/templates/role_list.html
+index ddd54f9..0154a11 100644
+--- a/templates/role_list.html
++++ b/templates/role_list.html
+@@ -27,7 +27,7 @@
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header">{% trans "Role List" %}</h1>
++                    <h1 class="page-header"><small>{% trans "Role List" %}<small></h1>
+                 </div>
+             </div>
+ 
+-- 
+1.9.1
+

@@ -1,0 +1,151 @@
+From 438c91eb9957730e50515cc8ca92b76fe7cdf539 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 27 Apr 2016 20:09:45 +0800
+Subject: [PATCH 015/443] Change TCIT_API function
+
+Change TCIT_API function.
+---
+ api/recognition.py | 58 ++++++++++++++++++++++--------------------------------
+ api/utility.py     | 10 +++++-----
+ br06/settings.py   |  1 -
+ 3 files changed, 29 insertions(+), 40 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index d5bc7d0..e29b2b5 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -40,34 +40,28 @@ def face_identify(request):
+             ip_device = Devices.objects.get(IP = client_ip)
+ 
+             if ip_device.State != 'Proposed':
+-                res_upload = json.loads(
+-                    requests.post(
+-                        TCIT_API('storage/upload'),
+-                        files = {'image' : (
+-                            request.FILES['image'].name,
+-                            request.FILES['image'].file,
+-                            request.FILES['image'].content_type
+-                        )}
+-                    ).text
++                res_upload = TCIT_API(
++                    '/storage/upload',
++                    files = {'image' : (
++                        request.FILES['image'].name,
++                        request.FILES['image'].file,
++                        request.FILES['image'].content_type
++                    )}
+                 )
+ 
+                 if res_upload['state'] == 1000:
+-                    res_face_detect = json.loads(
+-                        requests.post(
+-                            TCIT_API('face/detection/detect'),
+-                            data = {'img_id' : res_upload['img_id']}
+-                        ).text
++                    res_face_detect = TCIT_API(
++                        '/face/detection/detect',
++                        data = {'img_id' : res_upload['img_id']}
+                     )
+                     face_id = res_face_detect['faces'][0]['face_id']
+ 
+-                    for group in json.loads(requests.post(TCIT_API('face/query/group_list')).text)['groups']:
++                    for group in TCIT_API('/face/query/group_list')['groups']:
+                         person_id = None
+                         similarity = 50
+-                        res_group_identify = json.loads(
+-                            requests.post(
+-                                TCIT_API('face/group/identify'),
+-                                data = {'group_id' : group, 'face_id' : face_id}
+-                            ).text
++                        res_group_identify = TCIT_API(
++                            '/face/group/identify',
++                            data = {'group_id' : group, 'face_id' : face_id}
+                         )
+ 
+                         if res_group_identify['state'] == 1000:
+@@ -108,22 +102,18 @@ def face_check(request):
+             from .models import Devices
+             ip_devices = Devices.objects.get(IP = client_ip)
+             if ip_devices.State != 'Proposed':
+-                res_upload = json.loads(
+-                    requests.post(
+-                        TCIT_API('storage/upload'),
+-                        files = {'image': (
+-                            request.FILES['image'].name,
+-                            request.FILES['image'].file,
+-                            request.FILES['image'].content_type
+-                        )}
+-                    ).text
++                res_upload = TCIT_API(
++                    '/storage/upload',
++                    files = {'image': (
++                        request.FILES['image'].name,
++                        request.FILES['image'].file,
++                        request.FILES['image'].content_type
++                    )}
+                 )
+                 if res_upload['state'] == 1000:
+-                    res_face_detect = json.loads(
+-                            requests.post(
+-                                TCIT_API('face/detection/detect'),
+-                                data = {'img_id' : res_upload['img_id']}
+-                            ).text
++                    res_face_detect = TCIT_API(
++                        '/face/detection/detect',
++                        data = {'img_id' : res_upload['img_id']}
+                     )
+                     face_id = res_face_detect['faces'][0]['face_id']
+                     return JsonResponse(result_success)
+diff --git a/api/utility.py b/api/utility.py
+index 10c611d..e32668a 100644
+--- a/api/utility.py
++++ b/api/utility.py
+@@ -9,10 +9,8 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csr
+ from django.conf import settings
+ import json, requests, urllib
+ 
+-def TCIT_API(url):
+-    url = 'http://%s/%s' % (settings.TCIT_IP, url)
+-    return url
+-
++def TCIT_API(pattern, **kwargs):
++    return  json.loads(requests.post('http://%s%s' % (settings.TCIT_IP, pattern), **kwargs).text)
+ 
+ # Create your views here.
+ 
+@@ -22,17 +20,19 @@ def check_session(request):
+     else:
+         return True
+ 
++'''
+ def TCIT_API(url_query,data):
+     url_query = "http://" + settings.TCIT_IP + url_query
+     # url_query = "http://192.168.154.131:5566/test/"
+     if data == "":
+         u = urllib.request.urlopen(url_query)
+     else:
+-        binary_data = data.encode('utf-8') 
++        binary_data = data.encode('utf-8')
+         u = urllib.request.urlopen(url_query, binary_data)
+     string = u.read().decode('utf-8')
+     json_obj = json.loads(string)
+     return json_obj
++'''
+ 
+ def TCIT_res_str(code):
+     TCIT_res_code = {1000: "STATE_SUCCESSFUL", 3000: "STATE_FAIL", 3001: "STATE_REQUEST_METHOD_ERROR",3002:"STATE_PARAMETER_ERROR",3003:"STATE_PROCESS_ERROR"}
+diff --git a/br06/settings.py b/br06/settings.py
+index 60a8a35..bf39a5d 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -121,7 +121,6 @@ USE_L10N = True
+ 
+ USE_TZ = True
+ 
+-#NOCAPTCHA = True
+ NOCAPTCHA = True
+ 
+ NORECAPTCHA_SITE_KEY = os.environ.get('NORECAPTCHA_SITE_KEY', "")
+-- 
+1.9.1
+

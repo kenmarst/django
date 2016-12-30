@@ -1,0 +1,181 @@
+From 80f46e4bf80d19f514d1bd69daa9d4e899ea845a Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 26 Apr 2016 17:12:36 +0800
+Subject: [PATCH 010/443] Add google reCAPTCHA
+
+[install app in localhost]
+pip install django-nose
+pip install django-recaptcha
+
+[Modify reCAPTCHA to your site]
+Site key: templates/login.html "data-sitekey"
+Secret key: br06/settings.py "SECRET_KEY"
+---
+ br06/settings.py     | 10 ++++++++--
+ templates/login.html |  9 +++++++++
+ user/views.py        | 56 +++++++++++++++++++++++++++++++++++++++++-----------
+ 3 files changed, 62 insertions(+), 13 deletions(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index b2014c5..3e28eb7 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -20,7 +20,7 @@ PROJECT_DIR = os.path.dirname(__file__)
+ # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
+ 
+ # SECURITY WARNING: keep the secret key used in production secret!
+-SECRET_KEY = 'pf6w=kly%$(mh(c8=%vvv_+&_p40yp5+9j0c^^&^7hcdbl4^uz'
++SECRET_KEY = '6LcOCx4TAAAAAPE6AF6FY3ZNe-v8ze6fp-PDBvch'
+ 
+ # SECURITY WARNING: don't run with debug turned on in production!
+ DEBUG = True
+@@ -38,7 +38,9 @@ INSTALLED_APPS = [
+     'django.contrib.messages',
+     'django.contrib.staticfiles',
+     'bootstrap3',
+-    'api'
++    'api',
++    'nocaptcha_recaptcha',
++    'django_nose'
+ ]
+ 
+ MIDDLEWARE_CLASSES = [
+@@ -119,6 +121,10 @@ USE_L10N = True
+ 
+ USE_TZ = True
+ 
++NOCAPTCHA = True
++
++NORECAPTCHA_SITE_KEY = os.environ.get('NORECAPTCHA_SITE_KEY', "")
++NORECAPTCHA_SECRET_KEY = os.environ.get('NORECAPTCHA_SECRET_KEY', "")
+ 
+ # Static files (CSS, JavaScript, Images)
+ # https://docs.djangoproject.com/en/dev/howto/static-files/
+diff --git a/templates/login.html b/templates/login.html
+index aeac0f6..14b6c9c 100644
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -4,6 +4,10 @@
+ {% load static %}
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+ <!-- <body background="{% static "background.jpg" %}"> -->
++<head>
++	<script src="https://www.google.com/recaptcha/api.js" async defer></script>
++</head>
++
+ <div class="container">
+ 	<div class="row" id="pwd-container">
+ 	<div class="col-md-4"></div>
+@@ -17,6 +21,8 @@
+ 
+ 					<div class="pwstrength_viewport_progress"></div>
+ 
++					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY"></div>
++
+ 					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">Sign in</button>
+ 					<div>
+ 						<a href="#">Create account</a> or <a href="#">reset password</a>
+@@ -49,4 +55,7 @@
+ 	if( code == "9999"){
+ 		alert("Wrong password or account");
+ 	}
++	if( code == "9998"){
++		alert("reCAPTCHA validation failed");
++	}
+ </script>
+diff --git a/user/views.py b/user/views.py
+index a28ccf5..459fbf4 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -12,6 +12,12 @@ from django.core import serializers
+ import json
+ import hashlib
+ from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
++from django.template import RequestContext
++from nocaptcha_recaptcha.fields import NoReCaptchaField
++from django import forms
++import urllib
++from urllib.request import urlopen
++from br06.settings import *
+ 
+ 
+ #Users.objects.create(Account='admin', Password='e10adc3949ba59abbe56e057f20f883e', Name='SU3', Email='kimi_tsai@tw.shuttle.com', RoleOId=uuid.uuid1)
+@@ -26,17 +32,24 @@ def check_user(request):
+     password = md5(request.POST.get('password', ''))
+     print("mail",mail)
+     print("password",password)
+-    try:
+-        obj = Users.objects.get(Email=mail, Password=password)
+-        # set session
+-        request.session['Account'] = obj.Account
+-        request.session['Email'] = obj.Email
+-        request.session['Name'] = obj.Name
+-        request.session['OId'] = str(obj.OId)
+-        return json.dumps(res_code[0])
+-    except:
+-        print("mail and passsword are not match")
+-        return json.dumps(res_code[2])
++    form = RegisterForm(request.POST)
++    data = request.POST
++    response = data.get('g-recaptcha-response')
++    if checkRecaptcha(response,SECRET_KEY):
++        try:
++            obj = User.objects.get(Email=mail, Password=password)
++            # set session
++            request.session['Account'] = obj.Account
++            request.session['Email'] = obj.Email
++            request.session['Name'] = obj.Name
++            request.session['OId'] = str(obj.OId)
++            return json.dumps(res_code[0])
++        except:
++            print("mail and passsword are not match")
++            return json.dumps(res_code[2])
++    else:
++        print("reCAPTCHA validation failed")
++        return json.dumps(res_code[1])
+ 
+ 
+ def md5(str):
+@@ -92,11 +105,17 @@ def user_list_view(request):
+     return render(request, 'user_list.html', {'active': "user_list", 'obj': result})
+ 
+ 
++class RegisterForm(forms.Form):
++    captcha = NoReCaptchaField()
++
++
+ def login(request):
+     if request.method == "POST":
+         check_result = json.loads(check_user(request))
+         if check_result["CODE"] == "0":
+             return HttpResponseRedirect("/user_list")
++        elif check_result["CODE"] == "1":
++            return render(request, 'login.html', {'Result':"Fail",'Code': "9998","Message":"reCAPTCHA validation failed"})
+         elif check_result["CODE"] == "2":
+             # TODO: Need store this log fail to DB?
+             return render(request, 'login.html', {'Result':"Fail",'Code': "9999","Message":"Wrong password or account"})
+@@ -104,6 +123,21 @@ def login(request):
+     return render(request, 'login.html', {'CODE': ""})
+ 
+ 
++def checkRecaptcha(response, secretkey):
++    url = 'https://www.google.com/recaptcha/api/siteverify?'
++    url = url + 'secret=' +secretkey
++    url = url + '&response=' +response
++    try:
++        jsonobj = json.loads(urlopen(url).read().decode('utf-8'))
++        if jsonobj['success']:
++            return True
++        else:
++            return False
++    except Exception as e:
++        print (e)
++        return False
++
++
+ def logout(request):
+     request.session.flush()
+     return HttpResponseRedirect("/")
+-- 
+1.9.1
+

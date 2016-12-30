@@ -1,0 +1,1072 @@
+From 07eb3378249c5c128c25b1d99cc5995b34678204 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 13:54:15 +0800
+Subject: [PATCH 130/443] Update language messages files.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   8 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   8 +-
+ templates/dashboard.html                     |   4 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 9736 -> 9727 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 171 ++++++++++++++-------------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 9736 -> 9727 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 171 ++++++++++++++-------------
+ 9 files changed, 182 insertions(+), 180 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index fab9c65d1f7dcf233f08ade1cbab245509b0e03c..895f5f1f01c8592ed9649b7d6a1d2ac0006bb06c 100644
+GIT binary patch
+delta 21
+ccmZo-X=0i1oXbqt&`iP5*viCW<3~Y807ah$HUIzs
+
+delta 21
+ccmZo-X=0i1oXb?#*g(P1(8|bc<3~Y807XFtD*ylh
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 4c93898..5bcd1fa 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-30 11:26+0800\n"
++"POT-Creation-Date: 2016-06-16 13:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:131
++#: br06/settings.py:140
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:132
++#: br06/settings.py:141
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:133
++#: br06/settings.py:142
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index a0d8463df24eb2561ca9b404312eadeb83704bba..2a0a0e1139ebd08402ba4762ae20c8b1648fe09d 100644
+GIT binary patch
+delta 21
+ccmZo-X=0i1oXbqt&`iP5*viCY<3~Y807Z)iG5`Po
+
+delta 21
+ccmZo-X=0i1oXb?#*g(P1(8|bY<3~Y807WeZCjbBd
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 0249d98..97b71a0 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-30 11:22+0800\n"
++"POT-Creation-Date: 2016-06-16 13:44+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:131
++#: br06/settings.py:140
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:132
++#: br06/settings.py:141
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:133
++#: br06/settings.py:142
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index be6a329..6d0129d 100644
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -101,7 +101,7 @@
+                                             <label>{% trans "Device Count" %}: {{device_total_count}} (online : {{device_online_count}} / offline : {{device_offline_count}} / {% trans "proposed" %} : {{device_proposed_count}})</label>
+                                             <table id="DeviceList"></table>
+                                             <div class="text-right">
+-                                                <a href="/device_list">View Detail</a>
++                                                <a href="/device_list">{% trans "View Detail" %}</a>
+                                             </div>
+                                         </div>
+                                     </div>
+@@ -113,7 +113,7 @@
+                                             <label>{% trans "FR User Count" %}: {{frusers_total_count}}</label>
+                                             <table id="FRList"></table>
+                                             <div class="text-right">
+-                                                <a href="/fruser_list">View Detail</a>
++                                                <a href="/fruser_list">{% trans "View Detail" %}</a>
+                                             </div>
+                                         </div>
+                                     </div>
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 5aba0b81744930456c5e678c7ea1f75481de1465..5a00c830ebd40abb62ff27f8e388bd848c3c28ae 100644
+GIT binary patch
+delta 2621
+zcmYk-drZ}39LMno4xj>p3W!n3O*Yxolfwwe63x3N2x&@c8lhrjCY0F4lb1{-yd5jA
+zVO}s<fqL5PpDur3Tj^S>KftB7W|97pZKiBG9KAp1_ucZ@KD?gi`Tfpw`~A*g%go*x
+zr^ZGGVw`j52RRpwKVvL*npZK3_6>}~e^K}MVt<TDa;^xIu^*Nom)v|z!5Z}82JC~I
+zQR8gKMBJa`0^tc-=;%vFo89oG*^cq_|AZRoGHOA;qwepr>;GUR?H<&9y{P+q$==5L
+z;%wRpsLw4%U9V0Kcq?9M7uMs0T-b&WV>2?AYsXUT#HE<a_O#QTs1rGg4`7S6+i@W6
+z^EenUqb9s%{dZ6&78l^EDk-QVNk<)#A2spgs2!D{1}MjLoQJH%)gxoMM${uYiaN2=
+zsBykVE#wE(Be;Y*fj>~=1^%X@9o$4sbO*Jdd)D74)mumcYQQYiJ2DCfU?FPZ(@_hk
+zu=a9Hqg{^-<$|d3TTm0XdhLJ<QPGOdq9*tjHNgec!a7hNxPl3I6}6+AsEMP7cqXIz
+zhoN?wkJ`wS=2X=9WvKZUh1;C*GAereYwd=$p=r?vye~%gP;U+QP^TKj(aV9TwGB0M
+z%n_)kk%zNzn)UBRy)I4W8S6i1Ua<aOP<!f1=Zm4!>ZU^z-ZlGVc<p4=X=kGD^P?7&
+zhuU<JIT6)A%ba5_Fe|afIk&>v9jMP=$q0B8U9$_fQ9I}{6EnT*SvY}yKbGNY)P3hr
+z6L+Fc<TuntZkv%=-hGLv`?63w&qdu=7_iD@vm7<>V$^`OsGV;`4bX@@CAY_}hfw!_
+zj~eijc^x%Tx3y!kz0W6^X=WhPD#Ovo2mGjk@~poYHNh0?uP~RPj<C+IuQPX<$B;vC
+zXYnDth(7E_ZRD=k4!DS6-b$lU6Q`J2s2lyLiSki9Dz@vTs1sU<`Yo$PEp!L!b4Tp@
+zNo#*&*S|xJb1~fJ`Cq4^33^Zqh{^F*nuO2MPDT9$)S?F7WHy+)&3)!!)WS|!`zzG=
+z?Wpm8wDzxR7t`^lUAT!6v{iIuJHs{a7kV{y9;JK6`o`f@vMhKgE<3Q6S{2zwqR14Y
+zQcRvA?9v@1Wkh8Kc`01urxZUWmBdd@lWG!44w3iBXJkC7Cn~2r+;Pv~xcJ;jJE(t1
+z4wL2N0J*;$p;1Wmqcn$XC;8+gX(S(!{lU-UQzunWn?O|b090NiV+qg5jU+3Heg;(*
+zlXuB*qB4rS671JMFHjn8J2w*xNC{bIePi%-@-cah%qA*tlIh{v|9_IHZnEZ9a}B0j
+z{dwF=+DJ5MAwC`Z3sh#2UE~d-7gYa17ZH^`WIfSW`W-Tus60Yy!!_^E6YwaROSTaG
+z%Xyj1AS(Q(hs(2O9ZuF`|G+xlN4<ngNCSD5sKgSzl$+I{JWV!`8uB*DB`T9h25BYb
+zWEBaLGel(s`Gm|P`nROgq}Og^xawTCxe#}g6V?{ZWC6)h<G!+#`ZV$wNwEGRe9P)$
+zKG{d~%{)fFAZ~nRW!0)W7b-{$`a&IpTBGCUR#&abm{?V}q`D@wX-Hi}Z2rj6`5B}0
+jipCU#BGYa~h2ql(#Kd(q9slcK!?m{Nu8qO8oE!fEsss3*
+
+delta 2619
+zcmYk;e@vBC9LMn^zv9PLekO#7*N~N&hABd7p|q=^q-aLvFDeB?sSL!_v_}gHEUdg}
+zDVn9J=}Jk;Ia~9OTFc7Ke~LC;ZDlQ6N^{y)Ht7Ai&)3!2KKFIbdCooOJm<NWOW*XC
+z^3I7-UXpX}t2F20up49XdrZW0W)H^D{u?#E4>dk1-MRjlhT}1a2{;cK;;Qj_T!qoN
+z39rM=sCl-hJI^Ik*++*KIEwN3u?_glJdFYR&!Q$ej~aggHU5%azlu?`<1_qmNvLtj
+zs2j_`S(uG_UtNah4``%AJ6>ZK+Her<tvDEuAalFZSb^uT1`D}8y>AEVL=NK(c+}db
+zF_m^V4#e}Q4XL62SdWU1EYlo{I*}2mBbtC(cq;17=b<L3!XdaA*^6sJ=62gqkK{1w
+z#6CgI^CfD*Z&8onSJVl3e^Akcf1&Q67qw7qroXWSRDU{ZBiX14N1;9=<1qz8sEt>m
+zHc(^j6_`!C37OjMLd|~^S=V#Nt>Xl0N1vh=_!_mqcc=~ggxctDH~@Q4chrkoI3>$B
+zi0Usu-DxT6gr}KvQ1dUuc-_)c>u5lINW8AH*p4Vqr}<~DzjlD5jvNB&RI|;StbeRI
+z!7N3+zYJ$!mGvJ&eOx{=zp(x@=8x8Yeu#ZB{-Hys6$ttZr<jAyTTrK6gc=t@ZL|z^
+z(-r1iRR3agnOSeH#yaQRdTU<@dj15L>Cheb+J&T{{vD*5`Kar~Sc)N>jV*Tl3~J$v
+zs1vz@8lQBdZx-rA@=@c8QBSkPvjH>B`DQKZ4J%O-wxaHQ7ixk%$WwC%?fOa7_#aRU
+zUo!hp3kCB0{v6c%hnrr3Rf^2JFq#1&)I??0Ux`{^f%Pvp*P$N4M!Vi_?l+Gkhv80P
+z4)$O)28Km8;<*$m>c~XxbP#Ic5oR%J$05{0<*0F$cD)95LJg?DWv!@<?nS-tm|Z_%
+z?QiV*Sxn~h=X$K854AvAzQ3UyoJTu|`s%MmP1t6(n;qtE^8ji?o!0&wHSa0Zjdff5
+zoZ6G<xM&xyVn5m{I;z(qHUBSj19cvyyWjdsu#7ww-kFr=t)W&!ULrB%9-=ad+)dV#
+zo#Z~EvW(P4YR<ib?~=vjHu3>kN}|Y{q=mdkCX>}frPIgl^9`2-hKF9I{yKS^)RG<K
+z|78!2J4igKB(IQh<N(=3-XI;}_XC+B9eOEIneXGOaUvN;Mv^B<Dp7fayg+VNgEERN
+z4=3~=<IRe+ox2x{Nd@7FN6J`UpC-G=N-~?MtR>SUwf|o9)6;CtjpiyGV)ch{8#zp3
+z$w9(r+H;Gj%p{x1GejRu{cu(hl`Z5sqObA>GLWbgkQI@d|8gf3k_SjD(NE12q@1W^
+z`M3woMx3f!-D(|em_QySFOzzrl1KvNMKvfP@;rH*JWGZXl_?}h4v{(JDbh}k5S3fW
+zZt@V(&(RF>7VEnvqLSz17Gjv}xArv_P|3g6FqhyoQbYz=pZ)<`XLT``Y$tJKFZqzT
+z$%__MFJIxhij%|9iBswu8>;Jr<+Tl6C(}A(yPC5a`Xv^Q98(Y+J$n4@<GP}<FUN$J
+Y<R-`ca;*91wk=&(a#Q2N>G{9^3%SJeJ^%m!
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index aba3d81..bb93259 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-30 11:26+0800\n"
++"POT-Creation-Date: 2016-06-16 13:48+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -62,32 +62,36 @@ msgstr "设备总数量"
+ msgid "proposed"
+ msgstr "待审数"
+ 
++#: templates/dashboard.html:104 templates/dashboard.html.py:116
++msgid "View Detail"
++msgstr "查看详情"
++
+ #: templates/dashboard.html:111
+ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+-#: templates/dashboard.html:143 templates/dashboard.html.py:161
+-#: templates/fruser_list.html:80 templates/frusergroups_list.html.py:54
+-#: templates/fruserlog_list.html:81 templates/role_list.html.py:72
+-#: templates/systemlog_list.html:68 templates/user_list.html.py:68
++#: templates/dashboard.html:152 templates/dashboard.html.py:170
++#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:63
++#: templates/fruserlog_list.html:93 templates/role_list.html.py:81
++#: templates/systemlog_list.html:81 templates/user_list.html.py:77
+ msgid "No."
+ msgstr "编号"
+ 
+-#: templates/dashboard.html:147 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:64
+-#: templates/fruserlog_list.html:93
++#: templates/dashboard.html:156 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:73
++#: templates/fruserlog_list.html:105
+ msgid "Device Name"
+ msgstr "设备名称"
+ 
+-#: templates/dashboard.html:151 templates/dashboard.html.py:173
++#: templates/dashboard.html:160 templates/dashboard.html.py:182
+ msgid "Latest Update Time"
+ msgstr "最后更新时间"
+ 
+-#: templates/dashboard.html:165
++#: templates/dashboard.html:174
+ msgid "User ID"
+ msgstr "工号"
+ 
+-#: templates/dashboard.html:169
++#: templates/dashboard.html:178
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -100,23 +104,23 @@ msgid "Device add"
+ msgstr "新增设备"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:153 templates/frusergroup_devices.html.py:108
+-#: templates/user_group_devices.html:108
++#: templates/device_list.html:162 templates/frusergroup_devices.html.py:117
++#: templates/user_group_devices.html:117
+ msgid "Device"
+ msgstr "设备"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:173 templates/frusergroup_add.html.py:48
+-#: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
+-#: templates/role_permission.html:37 templates/role_rename.html.py:42
+-#: templates/user_add.html:96 templates/user_group_add.html.py:48
+-#: templates/user_group_edit.html:65 templates/user_setting.html.py:118
+-#: templates/user_update.html:93
++#: templates/device_settings.html:173 templates/fruser_edit.html.py:101
++#: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
++#: templates/role_add.html:46 templates/role_permission.html.py:37
++#: templates/role_rename.html:42 templates/user_add.html.py:96
++#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
++#: templates/user_setting.html:118 templates/user_update.html.py:93
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:174 templates/fruser_edit.html.py:100
++#: templates/device_settings.html:174 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+ #: templates/logsetting.html:85 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
+@@ -169,41 +173,41 @@ msgstr "搜寻群组"
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:79
++#: templates/device_frusergroups.html:88
+ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/device_frusergroups.html:86 templates/device_list.html.py:98
+-#: templates/fruser_list.html:113 templates/frusergroups_list.html.py:72
+-#: templates/role_list.html:105 templates/user_group_devices.html.py:89
+-#: templates/user_group_list.html:71 templates/user_group_members.html:89
+-#: templates/user_list.html.py:101
++#: templates/device_frusergroups.html:95 templates/device_list.html.py:107
++#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:81
++#: templates/role_list.html:114 templates/user_group_devices.html.py:98
++#: templates/user_group_list.html:80 templates/user_group_members.html:98
++#: templates/user_list.html.py:110
+ msgid "Delete"
+ msgstr "删除"
+ 
+-#: templates/device_frusergroups.html:105 templates/fruser_list.html.py:95
++#: templates/device_frusergroups.html:114 templates/fruser_list.html.py:114
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+-#: templates/frusergroups_list.html:59 templates/user_group_add.html.py:31
+-#: templates/user_group_edit.html:48 templates/user_group_list.html.py:58
++#: templates/frusergroups_list.html:68 templates/user_group_add.html.py:31
++#: templates/user_group_edit.html:48 templates/user_group_list.html.py:67
+ msgid "Group"
+ msgstr "群组"
+ 
+-#: templates/device_frusergroups.html:132 templates/device_list.html.py:153
+-#: templates/fruser_list.html:167 templates/frusergroup_devices.html.py:135
+-#: templates/frusergroup_member.html:135 templates/frusergroups_list.html:98
+-#: templates/user_group_devices.html:135 templates/user_group_list.html:98
+-#: templates/user_group_members.html:135 templates/user_list.html.py:125
++#: templates/device_frusergroups.html:141 templates/device_list.html.py:162
++#: templates/fruser_list.html:185 templates/frusergroup_devices.html.py:144
++#: templates/frusergroup_member.html:144 templates/frusergroups_list.html:107
++#: templates/user_group_devices.html:144 templates/user_group_list.html:107
++#: templates/user_group_members.html:144 templates/user_list.html.py:134
+ msgid "Confirm to delete"
+ msgstr "您是否确认要删除"
+ 
+-#: templates/device_frusergroups.html:132
++#: templates/device_frusergroups.html:141
+ msgid "from this device"
+ msgstr "设备"
+ 
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+-#: templates/menu.html.py:44 templates/role_permission.html:76
++#: templates/menu.html.py:44 templates/role_permission.html:85
+ #: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+ #: templates/user_group_members.html:39
+ msgid "Device List"
+@@ -213,28 +217,28 @@ msgstr "设备管理"
+ msgid "Create new device"
+ msgstr "建立新设备"
+ 
+-#: templates/device_list.html:69
++#: templates/device_list.html:78
+ msgid "Status"
+ msgstr "状态"
+ 
+-#: templates/device_list.html:82
++#: templates/device_list.html:91
+ msgid "Sync time"
+ msgstr "同步时间"
+ 
+-#: templates/device_list.html:90
++#: templates/device_list.html:99
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:91
++#: templates/device_list.html:100
+ msgid "Reject"
+ msgstr "拒绝"
+ 
+-#: templates/device_list.html:96 templates/fruser_list.html.py:112
+-#: templates/frusergroups_list.html:71 templates/user_group_list.html.py:70
++#: templates/device_list.html:105 templates/fruser_list.html.py:131
++#: templates/frusergroups_list.html:80 templates/user_group_list.html.py:79
+ msgid "Edit"
+ msgstr "编辑"
+ 
+-#: templates/device_list.html:97 templates/menu.html.py:39
++#: templates/device_list.html:106 templates/menu.html.py:39
+ #: templates/system_settings.html:10 templates/system_settings.html.py:19
+ #: templates/system_settings.html:25
+ msgid "Settings"
+@@ -270,17 +274,17 @@ msgstr "修改用户资讯"
+ msgid "Fruser"
+ msgstr "设备使用者"
+ 
+-#: templates/fruser_edit.html:39 templates/fruser_list.html.py:85
+-#: templates/fruserlog_list.html:85
++#: templates/fruser_edit.html:39 templates/fruser_list.html.py:104
++#: templates/fruserlog_list.html:97
+ msgid "FRUserId"
+ msgstr "工号"
+ 
+-#: templates/fruser_edit.html:43 templates/fruser_list.html.py:90
+-#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
+-#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
+-#: templates/user_group_devices.html.py:82
+-#: templates/user_group_members.html:82 templates/user_list.html.py:79
+-#: templates/user_setting.html:54 templates/user_update.html.py:47
++#: templates/fruser_edit.html:43 templates/fruser_list.html.py:109
++#: templates/frusergroup_devices.html:91 templates/frusergroup_member.html:91
++#: templates/fruserlog_list.html:101 templates/user_add.html.py:48
++#: templates/user_group_devices.html:91 templates/user_group_members.html:91
++#: templates/user_list.html.py:88 templates/user_setting.html:54
++#: templates/user_update.html.py:47
+ msgid "Name"
+ msgstr "姓名"
+ 
+@@ -305,9 +309,10 @@ msgid "Age"
+ msgstr "年龄"
+ 
+ #: templates/fruser_list.html:10 templates/fruser_list.html.py:18
+-#: templates/fruser_list.html:24
+-msgid "Fruser List"
+-msgstr "设备使用者清单"
++#: templates/fruser_list.html:24 templates/menu.html.py:47
++#: templates/role_permission.html:97
++msgid "FR User List"
++msgstr "设备使用者管理"
+ 
+ #: templates/fruser_list.html:33
+ msgid "Import"
+@@ -330,11 +335,11 @@ msgstr "关闭"
+ msgid "Upload"
+ msgstr "上传"
+ 
+-#: templates/fruser_list.html:100 templates/role_list.html.py:92
++#: templates/fruser_list.html:119 templates/role_list.html.py:101
+ msgid "Create Date"
+ msgstr "建立时间"
+ 
+-#: templates/fruser_list.html:105
++#: templates/fruser_list.html:124
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
+@@ -381,9 +386,9 @@ msgstr "新增设备"
+ msgid "Search Device"
+ msgstr "搜寻设备"
+ 
+-#: templates/frusergroup_devices.html:135
+-#: templates/frusergroup_member.html:135 templates/user_group_devices.html:135
+-#: templates/user_group_list.html:98 templates/user_group_members.html:135
++#: templates/frusergroup_devices.html:144
++#: templates/frusergroup_member.html:144 templates/user_group_devices.html:144
++#: templates/user_group_list.html:107 templates/user_group_members.html:144
+ msgid "from this group"
+ msgstr "群组"
+ 
+@@ -403,7 +408,7 @@ msgstr "建立新成员"
+ msgid "Search User"
+ msgstr "搜寻使用者"
+ 
+-#: templates/frusergroup_member.html:108 templates/user_group_members.html:108
++#: templates/frusergroup_member.html:117 templates/user_group_members.html:117
+ msgid "User"
+ msgstr "使用者"
+ 
+@@ -416,11 +421,11 @@ msgstr "设备使用者群组管理"
+ msgid "Create new group"
+ msgstr "建立新群组"
+ 
+-#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:63
++#: templates/frusergroups_list.html:73 templates/user_group_list.html.py:72
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:98
++#: templates/frusergroups_list.html:107
+ msgid "group"
+ msgstr "群组"
+ 
+@@ -429,11 +434,11 @@ msgstr "群组"
+ msgid "FRUser Log List"
+ msgstr "设备使用者登入纪录"
+ 
+-#: templates/fruserlog_list.html:100 templates/user_list.html.py:87
++#: templates/fruserlog_list.html:112 templates/user_list.html.py:96
+ msgid "CreateDate"
+ msgstr "建立时间"
+ 
+-#: templates/fruserlog_list.html:105
++#: templates/fruserlog_list.html:116
+ msgid "Note"
+ msgstr "摘要"
+ 
+@@ -450,7 +455,7 @@ msgstr "纪录汇出设置"
+ msgid "Separator Options"
+ msgstr "分隔符号"
+ 
+-#: templates/menu.html:33 templates/role_permission.html.py:66
++#: templates/menu.html:33 templates/role_permission.html.py:75
+ msgid "System"
+ msgstr "系统"
+ 
+@@ -469,15 +474,11 @@ msgstr "网站使用者群组管理"
+ msgid "Role and Permission"
+ msgstr "角色管理与权限"
+ 
+-#: templates/menu.html:47 templates/role_permission.html.py:88
+-msgid "FR User List"
+-msgstr "设备使用者管理"
+-
+-#: templates/menu.html:50 templates/role_permission.html.py:100
++#: templates/menu.html:50 templates/role_permission.html.py:109
+ msgid "FR User Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/menu.html:54 templates/role_permission.html.py:112
++#: templates/menu.html:54 templates/role_permission.html.py:121
+ msgid "Log"
+ msgstr "纪录"
+ 
+@@ -562,11 +563,11 @@ msgstr "确认"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:36 templates/role_list.html.py:77
++#: templates/role_add.html:36 templates/role_list.html.py:86
+ msgid "Role Name"
+ msgstr "角色名称"
+ 
+-#: templates/role_add.html:40 templates/role_list.html.py:82
++#: templates/role_add.html:40 templates/role_list.html.py:91
+ msgid "Sort"
+ msgstr "排序"
+ 
+@@ -583,19 +584,19 @@ msgstr "建立新角色"
+ msgid "Role Permission"
+ msgstr "角色权限"
+ 
+-#: templates/role_list.html:87 templates/systemlog_list.html.py:73
++#: templates/role_list.html:96 templates/systemlog_list.html.py:86
+ msgid "Category"
+ msgstr "类别"
+ 
+-#: templates/role_list.html:97
++#: templates/role_list.html:106
+ msgid "Update Date"
+ msgstr "更新时间"
+ 
+-#: templates/role_list.html:104
++#: templates/role_list.html:113
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:129
++#: templates/role_list.html:138
+ msgid "Confirm to delete this Role"
+ msgstr "您是否确认要删除这个角色"
+ 
+@@ -604,7 +605,7 @@ msgstr "您是否确认要删除这个角色"
+ msgid "Permission Settings"
+ msgstr "权限设置"
+ 
+-#: templates/role_permission.html:61
++#: templates/role_permission.html:70
+ msgid "Role / Permission"
+ msgstr "角色 / 权限"
+ 
+@@ -750,11 +751,11 @@ msgstr "储存脸部辨识成功照片"
+ msgid "System log List"
+ msgstr "系统事件纪录"
+ 
+-#: templates/systemlog_list.html:78
++#: templates/systemlog_list.html:91
+ msgid "Notes"
+ msgstr "摘要"
+ 
+-#: templates/systemlog_list.html:82
++#: templates/systemlog_list.html:95
+ msgid "Date/Time"
+ msgstr "日期时间"
+ 
+@@ -763,7 +764,7 @@ msgstr "日期时间"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:72
++#: templates/user_add.html:39 templates/user_list.html.py:81
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帐号"
+@@ -781,7 +782,7 @@ msgstr "密码"
+ msgid "Confirm password"
+ msgstr "确认密码"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:83
++#: templates/user_add.html:84 templates/user_list.html.py:92
+ #: templates/user_update.html:81
+ msgid "Role"
+ msgstr "角色"
+@@ -802,7 +803,7 @@ msgstr "设备管理"
+ msgid "User Group Edit"
+ msgstr "使用者群组修改"
+ 
+-#: templates/user_group_list.html:53
++#: templates/user_group_list.html:62
+ msgid "No"
+ msgstr "编号"
+ 
+@@ -814,11 +815,11 @@ msgstr "群组成员管理"
+ msgid "Create new account"
+ msgstr "建立新帐号"
+ 
+-#: templates/user_list.html:92
++#: templates/user_list.html:101
+ msgid "UpdateDate"
+ msgstr "更新时间"
+ 
+-#: templates/user_list.html:97 templates/user_setting.html.py:66
++#: templates/user_list.html:106 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "电子信箱"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index a71f312f9cc0089b845049c910ca165298540f05..6862b71f4316ae7b1adb47b4fe82350a102dc329 100644
+GIT binary patch
+delta 2621
+zcmYk-drZ}39LMno4i^Okm4h0UT$D{V_2e*8vP2UVH9$yHQqu?#BQv4YE}m2}mGE|~
+zyoPxVR(LsW_D`2Tu&s2h)gR(gTeC?2$Tm_oozC8$^ZRc3Y#(0F^Zb72x&40UuyMw{
+z=_kfT2jiS`XZt%Bi$7xmcA8f(hW2$##D7uu-@`r_m+D*r`mr~bBA47;Ov5_#;W~`R
+z4XAOpU<&R@b-~C4ZFKaa<G9`MrP+Z=^#6n!=n`r{zoYK&vg`j~H0?X6`|hFc^ZC7v
+z^}?C7lTn{rh`L_u4|*$JW*64tgIw5*593i}EZ2c$*oliVm+fh%+fXNR2p_;UYj<Ej
+z+GlY9UP4WH!}@QbPAoCVRaMeZN0Na$q5x{*$5A^fMGa7a88`=7i(7?^<(g5C<Phq_
+zPNK&78nuugP><ju>ID8kjTiizigwVAn&=j4L3gb`exSFIWYmD!sCQ%}_QkQNg-=5*
+zpwik)FrD@)WGELxjo*fvxZP_9U6_hibQ(3mx2Orup%!)?^?}Qnj8{-Q>PAf*Gsx4A
+z>K}^QX+CNrPnuIv<Cml6TM%h;#x+#*_Sf4DtHZ^yd%Z74&tPv2cTuMr!_mursI?6?
+zbIjqWr;&#xSZw{fP_IjidCL0FnCGnj7u24*GWcTXw0h{!gtyK3Ot0-nopu)Lz5r@L
+zd8kbnn3GWbCFU%1o>_%;&bg)5K9BnR<;<Wr(N()}6SadoW=fWKJsT&|AHZ^4fx7Pu
+zYT{1RiTsAz$W1dk+q*9Xbze4W=eel+#s;l2*{nbfybv{DJ!<EhPy;k0Ps#1H>tWRW
+z-=hY+XkJ52)MM?qA>QXx&2%%EWtCy*;{yTIKzY_*h?-!E^;eoTs3UB!>ub#I=3(Rz
+z+-ZCWFQ5;5P#d}JwSz8dsJGHs)Wm6KHtNOzYNCA9jtcF18R~@QqkhZkQ48IQ`rJXg
+z-fHb{?D}`8aV|vKJpXG{G{GIz0^)MKm8Rlzv<ISo0_sr%H=0f64s*A80JX4V*8U1L
+zeg|s&AFchX+J$udX&1UNinfZ5Y+Iz}{X(yx&ZBhCSl@V@N@_y;6Ndy>Q>!MMNer1n
+zR0_#cgk8FQq@1WMB`-y4{FLISq>2Q{Nm5Iq$$s)4`HV~;tBA@84|l{fG(IV}Xe;#(
+z$pNy2>?QY?gEYnx{V2^MTSz`>CC%g`vM2O;(!iohY7>cy9)QY=WE|lcxe;U;(a)gD
+zLh>#dMpQ<US3<q}<ORzjZRcj-7*a~sSl?)ToqSAQBQuH0n`By~_WvJ0)kbS>GFM`T
+z)t|>*<T!~XZN#Tze}PH~*-qXddO`IMbOBM>N!Aj5rQaa~h{_|RK2r1kJOPiA*<>Tp
+zznquJbfUs<dZavSHsEAE_7AM%ebh_1h%}K`iAn;|OSwS}%F|>WsUvTbT%uA$GD$nB
+zAj?UJoFXd2$tPqE(Z3~?7QJ@sBUR^ynDcQ5Ic9Bfl*}VJYTQ>AQ!gfuk!0&Hz_+X}
+z=91k+-^|103*shJRaGx<aN#j2Az%1>|Mu9#*|pUxGbdFyEUK*wHx6ouO2{8EDnD~n
+jUcu<m;pp@mG2x_)zHy0NEl2*^*L1Zt+_gTGo^$;_slxc7
+
+delta 2619
+zcmYk;eN5F=9LMn^c!`IrJed%pTtil58a@S~rP8j3l1~|x_)sC3N@bv?rv0p-z{1LF
+zmZDjjny!GPoU=9msI{!z_@`*o)mGM`r8K8)WrN<I`}?{&+vmQ{IlptyIluF}mrLKw
+z#<KQFF<z2$?yEHC;;;(?_&p}#IkN}*)BYPZz7I7%Dc!jNn1;m|!UU{9hPW!c7S~}c
+zZpCYG8)}|i>CSV>R1VUi1&(1nery9iGdnRz|5?;T-Kg>BQR6S#^(z=dJARNqE(tX*
+z8FgcWa4u${-d8io^9QV<Lp$DJ7n*Sh?HxE2k0NusPMm}1uo@?DdwSn))QPm=b$HC$
+zotR3y3kPF2YC~$MKj2Z(k!6^}Q71AIbwm?U3r|Pgc?D{MC76Rtk-fNjWNx<;^+?)K
+zC-w<yo-a`gev5hpzoJgS`-6%m{0nsly{Lr(8UDr+Q2ptsjbx!F9F6*n6k`g8Q5!Eu
+zZJ^rPt1*jqJu<c1i<<u!vaaV&SjS1!jy^>#@HJ|I?@$}~3ANGRa3J=e?x+{Fa7w0c
+z2-RPJy3-QW3C}R+qvl_X@w%lI)=`K0ka!)XftDCgr}^hFf9)Vg9X$lpsb-lsSpRr)
+zqFI7^e<{wwCDz}H`nY^#eqsG*%pa}4JIB5l|Ine+3WofJQ_P{}O{mi@M2!ohHd>0h
+z={e>CRR2<QrCDpP#~SC{W^11hdHw{K=+GVa+J&Uy{vD*5d8q3}Sb|}khmCgq3~J#E
+zs1v!28lQB%Zzk$Q@=)W7P)~ERX9H%N3(e)IH>^cX*o3<Cy{HNHBTvm8vFoQ$<9|Rc
+ze9`PfEfmc4`?FE+&o{jSs}!1dU@QZ|sEJCgzZ|u|BI{peZbChREp~modB{A09ELlM
+z+1P`z7#tDZi04wMs3QZl(;=vZN18>b9fwg1m7&I!+x2SH3Du$gmNlU^dI0sl<97X|
+zwZF0JXEB-2pX;%XKGXtfdH#m7v4VC8_0`{qny}g2Znl{F%)_V+wOjjh)V!xrH`ZnC
+zb81ha<APndg8gW#=%`+e*8IQBb<}y3?q2JgjHTp}$eyHJZv(Yz@*?R^?jkBv$em;}
+z*+cFjDl17%wC3D9_%2yWZXq9#6(okdNgBy}WGY!tRN8&qLEp&aV1D=&>aUZx$#Sxr
+z{J-p{aT|#z<>X~@D>+QIk~c_8<o#eqSchIhR2KTUDx5?{kWu7ul1fw_BF~c>)u4<f
+zt0D;l#(8t2ZRhUBA~J{Y#G_?AuTPS_WG$ITR5p^C(b|76`srz~<`#1u=2-nf+)3I<
+zfE*!wraf0lWj5JHo+A2S>W6a)QF)C#OY~KKh72Yu1!Q%!=D*wy6Ucp}iRh>1F;YfU
+zGJV|r<{F%?TiszD&6q$QCNGg%qLN60<OMY-Ve%Y#lsrxHiOMt*BCTXTd4g;wM~TYK
+zWFL8e=;vq_d5iU3JyFT^af>lR4q5vui>TyXZJ5h&1}P*1txx}eZL+#pKz5Nha)5kD
+z+|<g-s#U99M^SPlHgQ_*n!2jmP}%ajj#FvvfsTgEx_*fhMvW^7jTuusc5FvX)}{WD
+ZWy6x=emUOo^N!Yz%fnLRBI$X*{|mag^IQM`
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 3701c5e..ff8dc9c 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-30 11:22+0800\n"
++"POT-Creation-Date: 2016-06-16 13:44+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -62,32 +62,36 @@ msgstr "設備總數量"
+ msgid "proposed"
+ msgstr "待審數"
+ 
++#: templates/dashboard.html:104 templates/dashboard.html.py:116
++msgid "View Detail"
++msgstr "查看詳情"
++
+ #: templates/dashboard.html:111
+ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+-#: templates/dashboard.html:143 templates/dashboard.html.py:161
+-#: templates/fruser_list.html:80 templates/frusergroups_list.html.py:54
+-#: templates/fruserlog_list.html:81 templates/role_list.html.py:72
+-#: templates/systemlog_list.html:68 templates/user_list.html.py:68
++#: templates/dashboard.html:152 templates/dashboard.html.py:170
++#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:63
++#: templates/fruserlog_list.html:93 templates/role_list.html.py:81
++#: templates/systemlog_list.html:81 templates/user_list.html.py:77
+ msgid "No."
+ msgstr "編號"
+ 
+-#: templates/dashboard.html:147 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:64
+-#: templates/fruserlog_list.html:93
++#: templates/dashboard.html:156 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:73
++#: templates/fruserlog_list.html:105
+ msgid "Device Name"
+ msgstr "設備名稱"
+ 
+-#: templates/dashboard.html:151 templates/dashboard.html.py:173
++#: templates/dashboard.html:160 templates/dashboard.html.py:182
+ msgid "Latest Update Time"
+ msgstr "最後更新時間"
+ 
+-#: templates/dashboard.html:165
++#: templates/dashboard.html:174
+ msgid "User ID"
+ msgstr "工號"
+ 
+-#: templates/dashboard.html:169
++#: templates/dashboard.html:178
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -100,23 +104,23 @@ msgid "Device add"
+ msgstr "新增設備"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:153 templates/frusergroup_devices.html.py:108
+-#: templates/user_group_devices.html:108
++#: templates/device_list.html:162 templates/frusergroup_devices.html.py:117
++#: templates/user_group_devices.html:117
+ msgid "Device"
+ msgstr "設備"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:173 templates/frusergroup_add.html.py:48
+-#: templates/frusergroup_edit.html:65 templates/role_add.html.py:46
+-#: templates/role_permission.html:37 templates/role_rename.html.py:42
+-#: templates/user_add.html:96 templates/user_group_add.html.py:48
+-#: templates/user_group_edit.html:65 templates/user_setting.html.py:118
+-#: templates/user_update.html:93
++#: templates/device_settings.html:173 templates/fruser_edit.html.py:101
++#: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
++#: templates/role_add.html:46 templates/role_permission.html.py:37
++#: templates/role_rename.html:42 templates/user_add.html.py:96
++#: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
++#: templates/user_setting.html:118 templates/user_update.html.py:93
+ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:174 templates/fruser_edit.html.py:100
++#: templates/device_settings.html:174 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+ #: templates/logsetting.html:85 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
+@@ -169,41 +173,41 @@ msgstr "搜尋群組"
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:79
++#: templates/device_frusergroups.html:88
+ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/device_frusergroups.html:86 templates/device_list.html.py:98
+-#: templates/fruser_list.html:113 templates/frusergroups_list.html.py:72
+-#: templates/role_list.html:105 templates/user_group_devices.html.py:89
+-#: templates/user_group_list.html:71 templates/user_group_members.html:89
+-#: templates/user_list.html.py:101
++#: templates/device_frusergroups.html:95 templates/device_list.html.py:107
++#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:81
++#: templates/role_list.html:114 templates/user_group_devices.html.py:98
++#: templates/user_group_list.html:80 templates/user_group_members.html:98
++#: templates/user_list.html.py:110
+ msgid "Delete"
+ msgstr "刪除"
+ 
+-#: templates/device_frusergroups.html:105 templates/fruser_list.html.py:95
++#: templates/device_frusergroups.html:114 templates/fruser_list.html.py:114
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+-#: templates/frusergroups_list.html:59 templates/user_group_add.html.py:31
+-#: templates/user_group_edit.html:48 templates/user_group_list.html.py:58
++#: templates/frusergroups_list.html:68 templates/user_group_add.html.py:31
++#: templates/user_group_edit.html:48 templates/user_group_list.html.py:67
+ msgid "Group"
+ msgstr "群組"
+ 
+-#: templates/device_frusergroups.html:132 templates/device_list.html.py:153
+-#: templates/fruser_list.html:167 templates/frusergroup_devices.html.py:135
+-#: templates/frusergroup_member.html:135 templates/frusergroups_list.html:98
+-#: templates/user_group_devices.html:135 templates/user_group_list.html:98
+-#: templates/user_group_members.html:135 templates/user_list.html.py:125
++#: templates/device_frusergroups.html:141 templates/device_list.html.py:162
++#: templates/fruser_list.html:185 templates/frusergroup_devices.html.py:144
++#: templates/frusergroup_member.html:144 templates/frusergroups_list.html:107
++#: templates/user_group_devices.html:144 templates/user_group_list.html:107
++#: templates/user_group_members.html:144 templates/user_list.html.py:134
+ msgid "Confirm to delete"
+ msgstr "您是否確認要刪除"
+ 
+-#: templates/device_frusergroups.html:132
++#: templates/device_frusergroups.html:141
+ msgid "from this device"
+ msgstr "設備"
+ 
+ #: templates/device_list.html:10 templates/device_list.html.py:19
+ #: templates/device_list.html:25 templates/frusergroup_devices.html.py:39
+ #: templates/frusergroup_edit.html:38 templates/frusergroup_member.html:39
+-#: templates/menu.html.py:44 templates/role_permission.html:76
++#: templates/menu.html.py:44 templates/role_permission.html:85
+ #: templates/user_group_devices.html:39 templates/user_group_edit.html:38
+ #: templates/user_group_members.html:39
+ msgid "Device List"
+@@ -213,28 +217,28 @@ msgstr "設備管理"
+ msgid "Create new device"
+ msgstr "建立新設備"
+ 
+-#: templates/device_list.html:69
++#: templates/device_list.html:78
+ msgid "Status"
+ msgstr "狀態"
+ 
+-#: templates/device_list.html:82
++#: templates/device_list.html:91
+ msgid "Sync time"
+ msgstr "同步時間"
+ 
+-#: templates/device_list.html:90
++#: templates/device_list.html:99
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:91
++#: templates/device_list.html:100
+ msgid "Reject"
+ msgstr "拒絕"
+ 
+-#: templates/device_list.html:96 templates/fruser_list.html.py:112
+-#: templates/frusergroups_list.html:71 templates/user_group_list.html.py:70
++#: templates/device_list.html:105 templates/fruser_list.html.py:131
++#: templates/frusergroups_list.html:80 templates/user_group_list.html.py:79
+ msgid "Edit"
+ msgstr "編輯"
+ 
+-#: templates/device_list.html:97 templates/menu.html.py:39
++#: templates/device_list.html:106 templates/menu.html.py:39
+ #: templates/system_settings.html:10 templates/system_settings.html.py:19
+ #: templates/system_settings.html:25
+ msgid "Settings"
+@@ -270,17 +274,17 @@ msgstr "修改用戶資訊"
+ msgid "Fruser"
+ msgstr "設備使用者"
+ 
+-#: templates/fruser_edit.html:39 templates/fruser_list.html.py:85
+-#: templates/fruserlog_list.html:85
++#: templates/fruser_edit.html:39 templates/fruser_list.html.py:104
++#: templates/fruserlog_list.html:97
+ msgid "FRUserId"
+ msgstr "工號"
+ 
+-#: templates/fruser_edit.html:43 templates/fruser_list.html.py:90
+-#: templates/frusergroup_devices.html:82 templates/frusergroup_member.html:82
+-#: templates/fruserlog_list.html.py:89 templates/user_add.html:48
+-#: templates/user_group_devices.html.py:82
+-#: templates/user_group_members.html:82 templates/user_list.html.py:79
+-#: templates/user_setting.html:54 templates/user_update.html.py:47
++#: templates/fruser_edit.html:43 templates/fruser_list.html.py:109
++#: templates/frusergroup_devices.html:91 templates/frusergroup_member.html:91
++#: templates/fruserlog_list.html:101 templates/user_add.html.py:48
++#: templates/user_group_devices.html:91 templates/user_group_members.html:91
++#: templates/user_list.html.py:88 templates/user_setting.html:54
++#: templates/user_update.html.py:47
+ msgid "Name"
+ msgstr "姓名"
+ 
+@@ -305,9 +309,10 @@ msgid "Age"
+ msgstr "年齡"
+ 
+ #: templates/fruser_list.html:10 templates/fruser_list.html.py:18
+-#: templates/fruser_list.html:24
+-msgid "Fruser List"
+-msgstr "設備使用者清單"
++#: templates/fruser_list.html:24 templates/menu.html.py:47
++#: templates/role_permission.html:97
++msgid "FR User List"
++msgstr "設備使用者管理"
+ 
+ #: templates/fruser_list.html:33
+ msgid "Import"
+@@ -330,11 +335,11 @@ msgstr "關閉"
+ msgid "Upload"
+ msgstr "上傳"
+ 
+-#: templates/fruser_list.html:100 templates/role_list.html.py:92
++#: templates/fruser_list.html:119 templates/role_list.html.py:101
+ msgid "Create Date"
+ msgstr "建立時間"
+ 
+-#: templates/fruser_list.html:105
++#: templates/fruser_list.html:124
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
+@@ -381,9 +386,9 @@ msgstr "新增設備"
+ msgid "Search Device"
+ msgstr "搜尋設備"
+ 
+-#: templates/frusergroup_devices.html:135
+-#: templates/frusergroup_member.html:135 templates/user_group_devices.html:135
+-#: templates/user_group_list.html:98 templates/user_group_members.html:135
++#: templates/frusergroup_devices.html:144
++#: templates/frusergroup_member.html:144 templates/user_group_devices.html:144
++#: templates/user_group_list.html:107 templates/user_group_members.html:144
+ msgid "from this group"
+ msgstr "群組"
+ 
+@@ -403,7 +408,7 @@ msgstr "建立新成員"
+ msgid "Search User"
+ msgstr "搜尋使用者"
+ 
+-#: templates/frusergroup_member.html:108 templates/user_group_members.html:108
++#: templates/frusergroup_member.html:117 templates/user_group_members.html:117
+ msgid "User"
+ msgstr "使用者"
+ 
+@@ -416,11 +421,11 @@ msgstr "設備使用者群組管理"
+ msgid "Create new group"
+ msgstr "建立新群組"
+ 
+-#: templates/frusergroups_list.html:64 templates/user_group_list.html.py:63
++#: templates/frusergroups_list.html:73 templates/user_group_list.html.py:72
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:98
++#: templates/frusergroups_list.html:107
+ msgid "group"
+ msgstr "群組"
+ 
+@@ -429,11 +434,11 @@ msgstr "群組"
+ msgid "FRUser Log List"
+ msgstr "設備使用者登入紀錄"
+ 
+-#: templates/fruserlog_list.html:100 templates/user_list.html.py:87
++#: templates/fruserlog_list.html:112 templates/user_list.html.py:96
+ msgid "CreateDate"
+ msgstr "建立時間"
+ 
+-#: templates/fruserlog_list.html:105
++#: templates/fruserlog_list.html:116
+ msgid "Note"
+ msgstr "摘要"
+ 
+@@ -450,7 +455,7 @@ msgstr "紀錄匯出設定"
+ msgid "Separator Options"
+ msgstr "分隔符號"
+ 
+-#: templates/menu.html:33 templates/role_permission.html.py:66
++#: templates/menu.html:33 templates/role_permission.html.py:75
+ msgid "System"
+ msgstr "系統"
+ 
+@@ -469,15 +474,11 @@ msgstr "網站使用者群組管理"
+ msgid "Role and Permission"
+ msgstr "角色管理與權限"
+ 
+-#: templates/menu.html:47 templates/role_permission.html.py:88
+-msgid "FR User List"
+-msgstr "設備使用者管理"
+-
+-#: templates/menu.html:50 templates/role_permission.html.py:100
++#: templates/menu.html:50 templates/role_permission.html.py:109
+ msgid "FR User Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/menu.html:54 templates/role_permission.html.py:112
++#: templates/menu.html:54 templates/role_permission.html.py:121
+ msgid "Log"
+ msgstr "紀錄"
+ 
+@@ -562,11 +563,11 @@ msgstr "確認"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:36 templates/role_list.html.py:77
++#: templates/role_add.html:36 templates/role_list.html.py:86
+ msgid "Role Name"
+ msgstr "角色名稱"
+ 
+-#: templates/role_add.html:40 templates/role_list.html.py:82
++#: templates/role_add.html:40 templates/role_list.html.py:91
+ msgid "Sort"
+ msgstr "排序"
+ 
+@@ -583,19 +584,19 @@ msgstr "建立新角色"
+ msgid "Role Permission"
+ msgstr "角色權限"
+ 
+-#: templates/role_list.html:87 templates/systemlog_list.html.py:73
++#: templates/role_list.html:96 templates/systemlog_list.html.py:86
+ msgid "Category"
+ msgstr "類別"
+ 
+-#: templates/role_list.html:97
++#: templates/role_list.html:106
+ msgid "Update Date"
+ msgstr "更新時間"
+ 
+-#: templates/role_list.html:104
++#: templates/role_list.html:113
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:129
++#: templates/role_list.html:138
+ msgid "Confirm to delete this Role"
+ msgstr "您是否確認要刪除這個角色"
+ 
+@@ -604,7 +605,7 @@ msgstr "您是否確認要刪除這個角色"
+ msgid "Permission Settings"
+ msgstr "權限設定"
+ 
+-#: templates/role_permission.html:61
++#: templates/role_permission.html:70
+ msgid "Role / Permission"
+ msgstr "角色 / 權限"
+ 
+@@ -750,11 +751,11 @@ msgstr "儲存臉部辨識成功照片"
+ msgid "System log List"
+ msgstr "系統事件紀錄"
+ 
+-#: templates/systemlog_list.html:78
++#: templates/systemlog_list.html:91
+ msgid "Notes"
+ msgstr "摘要"
+ 
+-#: templates/systemlog_list.html:82
++#: templates/systemlog_list.html:95
+ msgid "Date/Time"
+ msgstr "日期時間"
+ 
+@@ -763,7 +764,7 @@ msgstr "日期時間"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:72
++#: templates/user_add.html:39 templates/user_list.html.py:81
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帳號"
+@@ -781,7 +782,7 @@ msgstr "密碼"
+ msgid "Confirm password"
+ msgstr "確認密碼"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:83
++#: templates/user_add.html:84 templates/user_list.html.py:92
+ #: templates/user_update.html:81
+ msgid "Role"
+ msgstr "角色"
+@@ -802,7 +803,7 @@ msgstr "設備管理"
+ msgid "User Group Edit"
+ msgstr "使用者群組修改"
+ 
+-#: templates/user_group_list.html:53
++#: templates/user_group_list.html:62
+ msgid "No"
+ msgstr "編號"
+ 
+@@ -814,11 +815,11 @@ msgstr "群組成員管理"
+ msgid "Create new account"
+ msgstr "建立新帳號"
+ 
+-#: templates/user_list.html:92
++#: templates/user_list.html:101
+ msgid "UpdateDate"
+ msgstr "更新時間"
+ 
+-#: templates/user_list.html:97 templates/user_setting.html.py:66
++#: templates/user_list.html:106 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "電子信箱"
+ 
+-- 
+1.9.1
+

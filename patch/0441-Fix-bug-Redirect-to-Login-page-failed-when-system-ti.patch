@@ -1,0 +1,59 @@
+From 1a47d9bcf8fc06054438a5a908499bc35a39347f Mon Sep 17 00:00:00 2001
+From: Frank <frank_lin@tw.shuttle.com>
+Date: Thu, 29 Dec 2016 16:38:49 +0800
+Subject: [PATCH 441/443] Fix bug - Redirect to Login page failed when system
+ timeout.
+
+---
+ login/views.py | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
+
+diff --git a/login/views.py b/login/views.py
+index 8c93688..a0915e6 100755
+--- a/login/views.py
++++ b/login/views.py
+@@ -104,17 +104,23 @@ def set_client_ip(request):
+ @csrf_exempt
+ def login(request):
+     if request.method == "POST":
+-        check_result = json.loads(check_user(request))
+-        if check_result["CODE"] == "0":
++        check_result = json.loads(check_user(request))['CODE']
++        if check_result == "0":
+             if request.session['Account'] == 'admin':
+                 Systemlogs.objects.create(Category = "User", LogContent = 'admin login.')
+             setSessionPermission(request)
+             set_client_ip(request)
+             return HttpResponseRedirect("/home")
+-        elif check_result["CODE"] == "1":
++        elif check_result == "1":
+             return render(request, 'login.html', {'Result':"Fail",'Code': "9998"})
+-        elif check_result["CODE"] == "2":
++        elif check_result == "2":
+             return render(request, 'login.html', {'Result':"Fail",'Code': "9999"})
++    elif request.session.get('Code', '') == "3":
++        del request.session['Code']
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9996"})
++    elif request.session.get('Code', '') == "4":
++        del request.session['Code']
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     return render(request, 'login.html', {'CODE': ""})
+ 
+ 
+@@ -158,9 +164,11 @@ def check_login(request, permission):
+ 
+ def check_login_redirect(request, code):
+     if code == "1":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9996"})
++        request.session['Code'] = "3"
++        return HttpResponseRedirect("/")
+     elif code == "2":
+-        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++        request.session['Code'] = "4"
++        return HttpResponseRedirect("/")
+     elif code == "3":
+         return HttpResponseRedirect("/home")
+ 
+-- 
+1.9.1
+

@@ -1,0 +1,72 @@
+From 428548d624a698586b40e5cb8884ddf214384b7b Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Wed, 27 Apr 2016 11:29:24 +0800
+Subject: [PATCH 012/443] fix systemlog error
+
+---
+ api/models.py           |  4 +---
+ templates/log_list.html | 29 +++++++++--------------------
+ 2 files changed, 10 insertions(+), 23 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 9c8ec8b..2b0d63a 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -363,8 +363,6 @@ class Systemlogs(models.Model):
+             OId=str(self.OId),
+             Category=self.Category,
+             LogContent=self.LogContent,
+-            LogDateTime=self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+-            CreateDate=self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+-            UpdateDate=self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
++            LogDateTime=self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
+         )
+ 
+diff --git a/templates/log_list.html b/templates/log_list.html
+index 3d6f917..6249420 100644
+--- a/templates/log_list.html
++++ b/templates/log_list.html
+@@ -79,31 +79,20 @@
+ 				field: 'Index',
+ 				title: 'No.',
+ 				sortable: true,
+-			},{
+-				field: 'Account',
+-				title: 'Account',
+-				sortable: true
+-			}, {
+-				field: 'Name',
+-				title: 'Name',
+-				sortable: true
+-			}, {
+-				field: 'RoleOId',
+-				title: 'Role',
+-				sortable: true
+-			},{
+-				field: 'CreateDate',
+-				title: 'CreateDate',
+-				sortable: true
+ 			},
+ 			{
+-				field: 'UpdateDate',
+-				title: 'UpdateDate',
++				field: 'Category',
++				title: 'Category',
+ 				sortable: true
++			}, 
++			{
++				field: 'LogContent',
++				title: 'Notes'
+ 			},
+ 			{
+-				field: 'OId',
+-				title: '123'
++				field: 'LogDateTime',
++				title: 'Date/Time',
++				sortable: true
+ 			}],
+ 			data: dataSet
+ 		});
+-- 
+1.9.1
+

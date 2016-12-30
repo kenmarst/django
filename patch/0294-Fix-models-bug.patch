@@ -1,0 +1,27 @@
+From 67b0b17e83685c3d5d7bd8fc397accaebda708e8 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 23 Sep 2016 17:05:25 +0800
+Subject: [PATCH 294/443] Fix models bug.
+
+---
+ api/models.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index a29bc62..0cb2606 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -112,8 +112,8 @@ class Devices(models.Model):
+         ('Offline', 'Offline'),
+     )
+     devices_type = (
+-        ('Register', 'Register').
+-        ('Recognition', 'Recognition').
++        ('Register', 'Register'),
++        ('Recognition', 'Recognition'),
+     )
+     devices_model = (
+         ('FR', 'FR'),
+-- 
+1.9.1
+

@@ -1,0 +1,29 @@
+From 1fd57a8a7242d21ab86776a893b136b54e3ccaeb Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 5 Dec 2016 15:47:08 +0800
+Subject: [PATCH 397/443] Fix Config name: new server version.
+
+---
+ api/cron.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 0819e0a..5caf74a 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -121,10 +121,10 @@ def chk_new_version():
+         # check version
+         if new_version_date > version_date:
+             print('update check: Server has new version to update.')
+-            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': new_version_date})
++            Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': new_version_date})
+         else:
+             print('update check: There hadn\'t new server version to update.')
+-            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': settings.VERSION})
++            Config.objects.update_or_create(Name = 'NewServerVersion', defaults = {'Value': settings.VERSION})
+ 
+         """ Device update check"""
+         # check version
+-- 
+1.9.1
+

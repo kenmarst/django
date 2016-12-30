@@ -1,0 +1,24 @@
+From 3ba9eb655484a65aef090806ec7db459ffd890db Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Fri, 20 May 2016 10:48:48 +0800
+Subject: [PATCH 054/443] remove warnning message while server running
+
+---
+ br06/urls.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index abe8ad2..8ebc9a0 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -118,6 +118,6 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
+-    url(r'^reset_password/(?P<uidb64>[0-9A-Za-z]+)/(?P<times>.+)/(?P<token>.+)/$', 'user.views.password_reset_confirm', name='password_reset_confirm'),
++    url(r'^reset_password/(?P<uidb64>[0-9A-Za-z]+)/(?P<times>.+)/(?P<token>.+)/$', password_reset_confirm),
+     url(r'^account/forget_password', ResetPasswordRequestView),
+ ]
+-- 
+1.9.1
+

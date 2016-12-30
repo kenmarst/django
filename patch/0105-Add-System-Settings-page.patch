@@ -1,0 +1,363 @@
+From cc76fe51aeae68e4fc53d76dc59f603d2c1436b4 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Fri, 27 May 2016 15:48:24 +0800
+Subject: [PATCH 105/443] Add System Settings page.
+
+---
+ br06/urls.py                          |   2 +
+ systemsettings/__init__.py            |   0
+ systemsettings/admin.py               |   3 +
+ systemsettings/apps.py                |   5 +
+ systemsettings/migrations/__init__.py |   0
+ systemsettings/models.py              |   3 +
+ systemsettings/tests.py               |   3 +
+ systemsettings/views.py               |  12 ++
+ templates/menu.html                   |   2 +-
+ templates/system_settings.html        | 233 ++++++++++++++++++++++++++++++++++
+ 10 files changed, 262 insertions(+), 1 deletion(-)
+ create mode 100644 systemsettings/__init__.py
+ create mode 100644 systemsettings/admin.py
+ create mode 100644 systemsettings/apps.py
+ create mode 100644 systemsettings/migrations/__init__.py
+ create mode 100644 systemsettings/models.py
+ create mode 100644 systemsettings/tests.py
+ create mode 100644 systemsettings/views.py
+ create mode 100644 templates/system_settings.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index ecebaae..aa251ee 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -21,6 +21,7 @@ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view, systemlog_export
+ from fruserlogs.views import fruserlog_list_view, fruserlog_export
+ from logsetting.views import logsetting
++from systemsettings.views import settings_views
+ from dashboard.views import dashboard_views
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, device_frusergroups_view, add_device, accept_device, change_device_name, settings_device, delete_device, add_frusergroupdevice, delete_frusergroupdevice
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+@@ -39,6 +40,7 @@ urlpatterns = [
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_export/?$',fruserlog_export),
+     url(r'^logsetting/?$',logsetting),
++    url(r'^system_settings/$', settings_views),
+     url(r'^dashboard/$', dashboard_views),
+     url(r'^home/$', home_view),
+     url(r'^empty/$', empty_view),
+diff --git a/systemsettings/__init__.py b/systemsettings/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/systemsettings/admin.py b/systemsettings/admin.py
+new file mode 100644
+index 0000000..8c38f3f
+--- /dev/null
++++ b/systemsettings/admin.py
+@@ -0,0 +1,3 @@
++from django.contrib import admin
++
++# Register your models here.
+diff --git a/systemsettings/apps.py b/systemsettings/apps.py
+new file mode 100644
+index 0000000..4b37ce4
+--- /dev/null
++++ b/systemsettings/apps.py
+@@ -0,0 +1,5 @@
++from django.apps import AppConfig
++
++
++class SystemsettingsConfig(AppConfig):
++    name = 'systemsettings'
+diff --git a/systemsettings/migrations/__init__.py b/systemsettings/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/systemsettings/models.py b/systemsettings/models.py
+new file mode 100644
+index 0000000..71a8362
+--- /dev/null
++++ b/systemsettings/models.py
+@@ -0,0 +1,3 @@
++from django.db import models
++
++# Create your models here.
+diff --git a/systemsettings/tests.py b/systemsettings/tests.py
+new file mode 100644
+index 0000000..7ce503c
+--- /dev/null
++++ b/systemsettings/tests.py
+@@ -0,0 +1,3 @@
++from django.test import TestCase
++
++# Create your tests here.
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+new file mode 100644
+index 0000000..0b42bcd
+--- /dev/null
++++ b/systemsettings/views.py
+@@ -0,0 +1,12 @@
++from django.shortcuts import render
++
++# Create your views here.
++
++from django.shortcuts import render_to_response
++from django.http import HttpResponseRedirect
++
++def settings_views(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++
++    return render_to_response('system_settings.html', locals())
+diff --git a/templates/menu.html b/templates/menu.html
+index 119ebd8..d35cdd9 100644
+--- a/templates/menu.html
++++ b/templates/menu.html
+@@ -36,7 +36,7 @@
+                 <li><a class="" href="/user_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User List" %} </a></li>
+                 <li><a class="" href="/user_group_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "User Group List" %} </a></li>
+                 <li><a class="" href="/role_list"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"></use></svg> {% trans "Role and Permission" %} </a></li>
+-                <li><a class="" href="#"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg> {% trans "Setting" %} </a></li>
++                <li><a class="" href="/system_settings"><svg class="glyph stroked chevron-right"><use xlink:href="#stroked-chevron-right"/></svg> {% trans "Setting" %} </a></li>
+             </ul>
+         </li>
+         {% endifequal %}
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+new file mode 100644
+index 0000000..bf49f3b
+--- /dev/null
++++ b/templates/system_settings.html
+@@ -0,0 +1,233 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++{% load static %}
++
++<html>
++    <head>
++        <meta charset="utf-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1">
++        <title>Dashboard</title>
++    </head>
++
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/system_settings"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">Settings</li>
++                </ol>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header"><small>Settings</small></h1>
++                </div>
++            </div><!--/.row-->
++
++            <div class="row">
++                <div class="col-md-12 col-lg-12">
++                    <div class="panel panel-default" style="background-color:lavender;">
++                        <div class="panel-heading">Backup Scheduling</div>
++                        <div class="panel-body">
++                            <form role="form">
++                                <div class = "form-group" >
++                                    <div class="radio">
++                                        <label><input type="radio" name="optradio">Manually</label>
++                                    </div>
++                                </div>
++                                <div class = "form-group" >
++                                    <div class="radio">
++                                        <label><input type="radio" name="optradio">Automatic</label>
++                                    </div>
++                                </div>
++                            </form>
++                            <div class="col-sm-12">
++                                <form role="form">
++                                    <div class = "form-group" >
++                                        <div>
++                                            <input type="radio" name="optradio">Every Month
++                                            <input type="text" maxlength=2 size=1 id="day">Day, Time:
++                                            <select id="ampm">
++                                                <option>AM</option>
++                                                <option>PM</option>
++                                            </select>
++                                            <select id="hours">
++                                                <option>00</option>
++                                                <option>01</option>
++                                                <option>02</option>
++                                                <option>03</option>
++                                                <option>04</option>
++                                                <option>05</option>
++                                                <option>06</option>
++                                                <option>07</option>
++                                                <option>08</option>
++                                                <option>09</option>
++                                                <option>10</option>
++                                                <option>11</option>
++                                                <option>12</option>
++                                            </select>
++                                            <label>:</label>
++                                            <select id="mins">
++                                                <option>00</option>
++                                                <option>05</option>
++                                                <option>10</option>
++                                                <option>15</option>
++                                                <option>20</option>
++                                                <option>25</option>
++                                                <option>30</option>
++                                                <option>35</option>
++                                                <option>40</option>
++                                                <option>45</option>
++                                                <option>50</option>
++                                                <option>55</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                    <div class = "form-group">
++                                        <div>
++                                            <input type="radio" name="optradio">Every Week
++                                            <input type="checkbox" value="">Sun,
++                                            <input type="checkbox" value="">Mon,
++                                            <input type="checkbox" value="">Tue,
++                                            <input type="checkbox" value="">Wed,
++                                            <input type="checkbox" value="">Thu,
++                                            <input type="checkbox" value="">Fri,
++                                            <input type="checkbox" value="">Sat,
++                                            Time:
++                                            <select id="ampm">
++                                                <option>AM</option>
++                                                <option>PM</option>
++                                            </select>
++                                            <select id="hours">
++                                                <option>00</option>
++                                                <option>01</option>
++                                                <option>02</option>
++                                                <option>03</option>
++                                                <option>04</option>
++                                                <option>05</option>
++                                                <option>06</option>
++                                                <option>07</option>
++                                                <option>08</option>
++                                                <option>09</option>
++                                                <option>10</option>
++                                                <option>11</option>
++                                                <option>12</option>
++                                            </select>
++                                            <label>:</label>
++                                            <select id="mins">
++                                                <option>00</option>
++                                                <option>05</option>
++                                                <option>10</option>
++                                                <option>15</option>
++                                                <option>20</option>
++                                                <option>25</option>
++                                                <option>30</option>
++                                                <option>35</option>
++                                                <option>40</option>
++                                                <option>45</option>
++                                                <option>50</option>
++                                                <option>55</option>
++                                            </select>
++                                        </div>
++                                    </div>
++                                </form>
++                            </div>
++                            <div class="col-sm-12">
++                                <form class="form-inline" role="form">
++                                    <div class="form-group">
++                                        <input type="checkbox" value="">Local backup location:
++                                    </div>
++                                    <div class="form-group">
++                                        <input type="button" class="btn btn-info btn-sm" value="...">
++                                    </div>
++                                </form>
++                                <br>
++                                <form class="form-inline" role="form">
++                                    <div class="checkbox"><input type="checkbox" value="">Remote backup FTP Setting:</div><br>
++                                    <div class="form-group">HOST(H):<input type="text" maxlength=20 size=10 id="HOST"></div>
++                                    <div class="form-group">USERNAME(U):<input type="text" maxlength=20 size=10 id="USERNAME"></div>
++                                    <div class="form-group">PASSWORD(W):<input type="text" maxlength=20 size=10 id="PASSWORD"></div>
++                                    <div class="form-group">PORT(P):<input type="text" maxlength=20 size=5 id="PORT"></div>
++                                    <div class="form-group"><input type="button" class="btn btn-info btn-sm" value="Connect Test"></div>
++                                </form>
++                            </div>
++                        </div><!--panel-body-->
++                    </div><!--panel panel-default-->
++                </div><!--col-lg-12-->
++            </div><!--/.row-->
++            <div class="row">
++                <div class="col-md-12 col-lg-12">
++                    <div class="panel panel-default" style="background-color:lavenderblush;">
++                        <div class="panel-heading">System Log</div>
++                        <div class="panel-body">
++                            <form role="form">
++                                <div class="form-group">
++                                    <p>Log count limit:
++                                    <input type="text" maxlength=7 size=10 id="HOST">
++                                    , if the logs exceeds limit, keep
++                                    <input type="text" maxlength=2 size=1 id="HOST">
++                                    month data(default=1), others will be remove.</p>
++                                    <p>* In limit duration, the logs can be record to 150% amount.<br>
++                                    * Over 150% amount, system will keep latest logs, and remove the other older logs.</p>
++                                    </div>
++                                <div class="form-group">
++                                        <input type="checkbox" value="aaa">Save user photo image
++                                </div>
++                                <div class="form-group">
++                                        <input type="checkbox" value="aaa">Save FR recognition photo image
++                                </div>
++                            </form>
++                        </div><!--panel-body-->
++                    </div><!--panel panel-default-->
++                </div><!--col-lg-12-->
++            </div><!--/.row-->
++        </div><!--/.main-->
++
++        <script src="{% static "bootstrap-table.js" %}"></script>
++        <script>
++            var $DeviceList = $('#DeviceList');
++            var $FRList = $('#FRList');
++
++            $DeviceList.bootstrapTable({
++                columns: [
++                {
++                    field: 'Index',
++                    title: 'No.',
++                },
++                {
++                    field: 'Name',
++                    title: 'Device Name',
++                },
++                {
++                    field: 'UpdateDate',
++                    title: 'Latest Sync Time',
++                }
++                ],
++                    data: {{devices|safe}}
++            });
++
++            $FRList.bootstrapTable({
++                columns: [
++                {
++                    field: 'Index',
++                    title: 'No.',
++                },
++                {
++                    field: 'FRUserId',
++                    title: 'FRUserID',
++                },
++                {
++                    field: 'Name',
++                    title: 'Device Name',
++                },
++                {
++                    field: 'UpdateDate',
++                    title: 'Latest Sync Time',
++                }
++                ],
++                    data: {{frusers|safe}}
++            });
++        </script>
++    </body>
++</html>
+-- 
+1.9.1
+

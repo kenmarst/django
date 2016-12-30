@@ -1,0 +1,35 @@
+From 51c0fbc477c36e363fd35252e300159e89918f2c Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 6 Jul 2016 14:08:39 +0800
+Subject: [PATCH 161/443] Remove unnecessary file
+
+---
+ systembackup/backup.conf | 6 ------
+ systembackup/log.conf    | 2 --
+ 2 files changed, 8 deletions(-)
+ delete mode 100644 systembackup/backup.conf
+ delete mode 100644 systembackup/log.conf
+
+diff --git a/systembackup/backup.conf b/systembackup/backup.conf
+deleted file mode 100644
+index 2fc68a1..0000000
+--- a/systembackup/backup.conf
++++ /dev/null
+@@ -1,6 +0,0 @@
+-BackupLocal=/opt/backup
+-BackupLocation=local
+-BackupRemoteHost=172.30.100.165
+-BackupRemotePort=21
+-BackupRemoteAccount=rd@MobileSW
+-BackupRemotePassword=rd-2014
+diff --git a/systembackup/log.conf b/systembackup/log.conf
+deleted file mode 100644
+index 5740123..0000000
+--- a/systembackup/log.conf
++++ /dev/null
+@@ -1,2 +0,0 @@
+-PicCreateSave=1
+-PicFaceSave=1
+-- 
+1.9.1
+

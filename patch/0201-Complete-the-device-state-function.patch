@@ -1,0 +1,64 @@
+From 995874cc6f2b402144e3c54c164bd6454dfacc83 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 25 Jul 2016 17:33:07 +0800
+Subject: [PATCH 201/443] Complete the device state function
+
+Complete the device state function of api and web.
+---
+ api/connection.py | 5 ++++-
+ devices/views.py  | 2 ++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index ac633db..92112ca 100644
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -18,7 +18,7 @@ def check(request):
+             try:
+                 devices = Devices.objects.get(IP = client_ip)
+                 states = {'Proposed' : 0, 'Approved' : 1, 'Online' : 1, 'Offline' : 1, 'Setting' : 2, 'Getting': 3}
+-                Devices.objects.filter(IP = client_ip).update(UpdateDate = datetime.now())
++                Devices.objects.filter(IP = client_ip).update(State = 'Approved', UpdateDate = datetime.now())
+ 
+                 return JsonResponse({'Result' : states[devices.State]})
+             except:
+@@ -36,6 +36,8 @@ def get(request):
+             client_ip = request.META['REMOTE_ADDR']
+             from api.models import Devices
+             devices = Devices.objects.get(IP = client_ip)
++            devices.State = 'Approved'
++            devices.save()
+ 
+             return JsonResponse(dict(ChainMap(result_success, {
+                 'Model' : devices.Model,
+@@ -69,6 +71,7 @@ def set(request):
+             if all(k in req for k in req_key):
+                 from api.models import Devices
+                 Devices.objects.filter(IP = client_ip).update(
++                    State = 'Getting',
+                     Model = req['Model'],
+                     WelcomeR0Action = req['WelcomeR0Action'],
+                     WelcomeR0Pulse = req['WelcomeR0Pulse'],
+diff --git a/devices/views.py b/devices/views.py
+index 122fb42..beebe19 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -176,6 +176,7 @@ def change_device_name(request):
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
+             Name = request.POST['Name'],
++            State = 'Setting',
+             UpdateDate = datetime.now()
+         )
+         return JsonResponse(res_code[0])
+@@ -190,6 +191,7 @@ def settings_device(request):
+         return HttpResponseRedirect("/home")
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
++            State = 'Setting',
+             Model = request.POST['Model'],
+             WelcomeR0Action = request.POST['WelcomeR0Action'],
+             WelcomeR0Pulse = request.POST['WelcomeR0Pulse'],
+-- 
+1.9.1
+

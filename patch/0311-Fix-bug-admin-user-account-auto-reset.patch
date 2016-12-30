@@ -1,0 +1,36 @@
+From 146550e8b3da06b8de17817abd74a50c649b4a5d Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 7 Oct 2016 18:21:14 +0800
+Subject: [PATCH 311/443] Fix bug - admin user account auto reset.
+
+---
+ role/views.py | 13 -------------
+ 1 file changed, 13 deletions(-)
+
+diff --git a/role/views.py b/role/views.py
+index 12f39c6..d4e0a3e 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -48,19 +48,6 @@ except:
+         print('can\'t create default account: admin')
+ else:
+     print('default account "admin" exist.')
+-    if Users.objects.get(Account = 'admin').Email != ADMIN_MAIL:
+-        print('update admin email.')
+-        Users.objects.filter(Account = 'admin').update(
+-            Email = ADMIN_MAIL,
+-            UpdateDate = datetime.now()
+-        )
+-
+-    if Users.objects.get(Account = 'admin').Password != ADMIN_PASSWORD:
+-        print('update admin password.')
+-        Users.objects.filter(Account = 'admin').update(
+-            Password = ADMIN_PASSWORD,
+-            UpdateDate = datetime.now()
+-        )
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_system'
+-- 
+1.9.1
+

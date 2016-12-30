@@ -1,0 +1,25 @@
+From fbeeb7a67dd285fd107b4a4c70de4a022f02a30e Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Mon, 29 Aug 2016 13:54:01 +0800
+Subject: [PATCH 240/443] fix get_result api: logintime Unix Timestamp
+
+---
+ api/recognition.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 88002da..893070b 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -319,7 +319,7 @@ def get_result(request):
+                         settings.RE_4G,
+                         data = json.dumps({
+                             "account": req['FRUserId'],
+-                            "login_time": time.time(),# Unix Timestamp
++                            "login_time": str(int(time.time())),# Unix Timestamp
+                             "checksum": md5(req['FRUserId']+"#Qut0yV84VRfVVaet%")
+                         }).encode('utf8')
+                 ).text)
+-- 
+1.9.1
+

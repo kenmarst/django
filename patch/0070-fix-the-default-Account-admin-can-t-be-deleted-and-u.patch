@@ -1,0 +1,128 @@
+From a3b8b2b9d46b4949f8ecddb9a20e3c0b84956d38 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 24 May 2016 15:40:24 +0800
+Subject: [PATCH 070/443] fix the default Account "admin" can't be deleted and
+ updated from user web
+
+---
+ api/models.py              |  1 +
+ templates/user_list.html   | 17 +++++++++++------
+ templates/user_update.html |  6 ++++--
+ user/views.py              | 10 +++++++---
+ 4 files changed, 23 insertions(+), 11 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index fc46a52..045136f 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -236,6 +236,7 @@ class Users(models.Model):
+             Account = self.Account,
+             Password = self.Password,
+             Name = self.Name,
++            Email = self.Email,
+             RoleOId = self.RoleOId.Name,
+             CreateDate = self.CreateDate.strftime("%Y-%m-%d %H:%M:%S"),
+             UpdateDate = self.UpdateDate.strftime("%Y-%m-%d %H:%M:%S")
+diff --git a/templates/user_list.html b/templates/user_list.html
+index 922b434..25d06e5 100644
+--- a/templates/user_list.html
++++ b/templates/user_list.html
+@@ -92,10 +92,12 @@
+ 				sortable: true
+ 			},
+ 			{
+-				field: 'OId',
+-				title: '',
+-				formatter: function(value, row) {
+-					return '<button class="btn green" onclick=delete_user("' + value + '")>{% trans "Delete" %}</button>';
++				field: 'Email',
++				title: '{% trans "Email" %}',
++				sortable: true
++            },{
++                formatter: function(value, row) {
++                               return '<button class="btn btn-default" onclick=delete_user("' + row.OId + '","' + row.Account + '")>{% trans "Delete" %}</button>';
+ 				}
+ 			}],
+ 			data: dataSet
+@@ -118,7 +120,7 @@
+             return cookieValue;
+         }
+ 
+-        function delete_user(OId) {
++        function delete_user(OId, Account) {
+             var ret = confirm('Confirm to delete ');
+             //console.log(ret);
+             //console.log(OId);
+@@ -130,12 +132,15 @@
+                 dataType: 'json',
+                 data: {
+                     csrfmiddlewaretoken : getCookie('csrftoken'),
+-                    'OId': OId
++                    'OId': OId,
++                    'Account': Account,
+                 },
+                 success: function(data) {
+                     //console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         location.reload();
++                    } else if (data.CODE == "2") {
++                        alert("Admin is can't be deleted");
+                     } else {
+                         alert("Fail to delete user");
+                     }
+diff --git a/templates/user_update.html b/templates/user_update.html
+index 24b24a1..a3f1d62 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -134,6 +134,7 @@
+                     data: {
+                         csrfmiddlewaretoken : getCookie('csrftoken'),
+                         'OId' : '{{obj.OId}}',
++                        'Account' : '{{obj.Account}}',
+                         'Name': name,
+                         'Password': password,
+                         'RoleOId' : role,
+@@ -143,9 +144,10 @@
+                         if (data.CODE == "0") {
+                             alert("User update successfully");
+                             location.href = '/user_list/';
+-                        } else {
++                        } else if (data.CODE == "2") {
++                            alert("admin is cannot be updated");
++                        } else
+                             alert("Fail to update User");
+-                        }
+                     },
+                     error: function(data) {
+                         console.log('why nunu');
+diff --git a/user/views.py b/user/views.py
+index 2a923c9..3c9857e 100644
+--- a/user/views.py
++++ b/user/views.py
+@@ -72,6 +72,8 @@ def update_user(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
++        if request.POST['Account'] == 'admin':
++            return JsonResponse(res_code[2])
+         Users.objects.filter(OId = request.POST['OId']).update(
+             Name = request.POST['Name'],
+             Password = md5(request.POST['Password']) if request.POST['Password'] else \
+@@ -87,9 +89,11 @@ def delete_user(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+     try:
+-        #print( request.POST.get('Account', '') )
+-        Users.objects.get(OId = request.POST.get('OId', '')).delete()
+-        return JsonResponse(res_code[0])
++        if request.POST['Account'] == 'admin' :
++            return JsonResponse(res_code[2])
++        else :
++            Users.objects.get(OId = request.POST['OId']).delete()
++            return JsonResponse(res_code[0])
+     except Exception as e:
+         print (e)
+         return JsonResponse(res_code[1])
+-- 
+1.9.1
+

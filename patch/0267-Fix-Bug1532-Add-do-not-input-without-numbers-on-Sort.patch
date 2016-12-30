@@ -1,0 +1,44 @@
+From 0d7f0c3205f1d9cbc23561417561a93cc0d51ffe Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 8 Sep 2016 14:41:42 +0800
+Subject: [PATCH 267/443] Fix Bug1532: Add do not input without numbers on
+ 'Sort' when create a new role.
+
+---
+ templates/role_add.html | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/templates/role_add.html b/templates/role_add.html
+index f5c87da..597e7f1 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -38,7 +38,7 @@
+                                     </div>
+                                     <div class="form-group form-md-line-input">
+                                         <label class="col-md-3 control-label"><i style="color: red;">*</i> {% trans "Sort" %} </label>
+-                                        <div class="col-md-6"><input type="text" class="form-control" placeholder="" name="sort"></div>
++                                        <div class="col-md-6"><input type="number" class="form-control" placeholder="" name="sort" style="ime-mode:disabled" onkeyup="return ValidateNumber(this,value)"></div>
+                                     </div>
+                                 </div>
+                                 <div class="form-actions">
+@@ -109,6 +109,17 @@
+                 e.preventDefault();
+             }
+         });
++
++        function ValidateNumber(e, pnumber)
++        {
++            if (!/^\d+$/.test(pnumber))
++            {
++                $(e).val(/^\d+/.exec($(e).val()));
++                alert("Please input 'Sort' number.");
++            }
++            return false;
++        }
++
+         </script>
+     </body>
+ </html>
+-- 
+1.9.1
+

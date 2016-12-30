@@ -1,0 +1,463 @@
+From 6e192278262f27d8d41d7837b0d96c28010a2bd7 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Thu, 26 May 2016 15:23:30 +0800
+Subject: [PATCH 096/443] Modify role page composition.
+
+---
+ templates/role_add.html        | 195 ++++++++++++++++++-----------------------
+ templates/role_permission.html |   4 +-
+ templates/role_rename.html     | 187 +++++++++++++++++++--------------------
+ 3 files changed, 177 insertions(+), 209 deletions(-)
+
+diff --git a/templates/role_add.html b/templates/role_add.html
+index 914157a..15bb324 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -1,6 +1,8 @@
+ <!DOCTYPE html>
+ {% load i18n %}
+ {% include 'commons_js.html' %}
++{% load static %}
++
+ <html>
+     <head>
+         <meta charset="utf-8">
+@@ -8,122 +10,99 @@
+         <title>{% trans "Role List" %}</title>
+     </head>
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">{% trans "Role add" %}</li>
+-			</ol>
+-		</div><!--/.row-->
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">{% trans "Role add" %}</li>
++                </ol>
++            </div>
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">{% trans "Create New Role" %}</h1>
+-			</div>
+-		</div><!--/.row-->
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header">{% trans "Create New Role" %}</h1>
++                </div>
++            </div>
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<div class="panel-body">
+-						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+-                            <div class="form-body">
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Role Name" %}
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                    	<div class="input-icon">
+-                                        	<input type="text" class="form-control" placeholder="" name="name">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
+-                                        </div>
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label"><i style="color: red;">*</i> {% trans "Role Name" %} </label>
++                                        <div class="col-md-6"><input type="text" class="form-control" placeholder="" name="name"></div>
+                                     </div>
+-                                </div>
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "Sort" %}
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                        <div class="input-icon">
+-                                            <input type="text" class="form-control" placeholder="" name="sort">
+-                                            <div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
+-                                        </div>
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label"><i style="color: red;">*</i> {% trans "Sort" %} </label>
++                                        <div class="col-md-6"><input type="text" class="form-control" placeholder="" name="sort"></div>
+                                     </div>
+                                 </div>
+-                            </div>
+-                            <div class="form-actions">
+-                                <div class="row">
+-                                    <div class="col-md-offset-3 col-md-4 pull-right">
+-                                        <a onclick="history.back()" type="reset" class="btn btn-default">{% trans "Back" %}</a>
+-                                        <a onclick="onSaveClick()" type="" class="btn btn-default">{% trans "Save" %}</a>
++                                <div class="form-actions">
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                                        <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+-                            </div>
+-                        </form>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->
+-	</div><!--/.main-->
+-
+-	{% load static %}
+-	<script>
+-
+-	function getCookie(name) {
+-		var cookieValue = null;
+-		if (document.cookie && document.cookie != '') {
+-			var cookies = document.cookie.split(';');
+-			for (var i = 0; i < cookies.length; i++) {
+-				var cookie = jQuery.trim(cookies[i]);
+-				if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-					break;
+-				}
+-			}
+-		}
+-		return cookieValue;
+-	}
+-
+-	function onSaveClick(){
+-		var name = $('input[name=name]').val();
+-		var sort = $('input[name=sort]').val();
+-        var category = 'User'
+-		if(!name || !sort){
+-			alert("please enter correct information");
+-			return
+-		}
+-		$.ajax({
+-			type: 'post',
+-			url: '/add_role/',
+-			async: true,
+-			dataType: 'json',
+-			data: {
+-				csrfmiddlewaretoken : getCookie('csrftoken'),
+-				'Name': name,
+-				'Sort': sort,
+-				'Category': category,
+-			},
++                            </form>
++                        </div>
++                    </div>
++                </div>
++            </div>
++        </div>
+ 
+-			success: function(data) {
+-				console.log("CODE = ",data.CODE);
+-				if (data.CODE == "0") {
+-					alert("Role add successfully");
+-					location.href = '/role_list/';
+-				} else {
+-					alert("Fail to add Role");
+-				}
+-			},
++        <script>
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
+ 
+-			error: function(data) {
+-				console.log('why nunu');
+-			}
+-		});
+-	}
+-	</script>
+-</body>
++        function onSaveClick(){
++            var name = $('input[name=name]').val();
++            var sort = $('input[name=sort]').val();
++            var category = 'User'
++            if(!name || !sort){
++                alert("please enter correct information");
++                return
++            }
++            $.ajax({
++                type: 'post',
++                url: '/add_role/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'Name': name,
++                    'Sort': sort,
++                    'Category': category,
++                },
++                success: function(data) {
++                    console.log("CODE = ",data.CODE);
++                    if (data.CODE == "0") {
++                        alert("Role add successfully");
++                        location.href = '/role_list/';
++                    } else {
++                        alert("Fail to add Role");
++                    }
++                },
++                error: function(data) {
++                }
++            });
++        }
+ 
++        </script>
++    </body>
+ </html>
+diff --git a/templates/role_permission.html b/templates/role_permission.html
+index 1f88057..455f594 100644
+--- a/templates/role_permission.html
++++ b/templates/role_permission.html
+@@ -34,8 +34,8 @@
+                         </div>
+                         <div class="panel-footer">
+                             <div>
+-                                <a onclick=history.back() type="reset" class="btn btn-default">{% trans "Back" %}</a>
+-                                <a onclick=permission_save() type="" class="btn btn-default">{% trans "Save" %}</a>
++                              <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                              <a class="btn default" onclick="permission_save()">{% trans "Save" %}</a>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index b97f5a6..c23ffc9 100644
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -1,6 +1,8 @@
+ <!DOCTYPE html>
+ {% load i18n %}
+ {% include 'commons_js.html' %}
++{% load static %}
++
+ <html>
+     <head>
+         <meta charset="utf-8">
+@@ -8,113 +10,100 @@
+         <title>{% trans "Role Rename" %}</title>
+     </head>
+ 
+-<body>
+-	{% include 'menu.html' %}
+-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-		<div class="row">
+-			<ol class="breadcrumb">
+-				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-				<li class="active">{% trans "Role Rename" %}</li>
+-			</ol>
+-		</div><!--/.row-->
++    <body>
++        {% include 'menu.html' %}
++        <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
++            <div class="row">
++                <ol class="breadcrumb">
++                    <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++                    <li class="active">{% trans "Role Rename" %}</li>
++                </ol>
++            </div>
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<h1 class="page-header">{% trans "Role Rename" %}</h1>
+-			</div>
+-		</div><!--/.row-->
++            <div class="row">
++                <div class="col-lg-12">
++                    <h1 class="page-header">{% trans "Role Rename" %}</h1>
++                </div>
++            </div>
+ 
+-		<div class="row">
+-			<div class="col-lg-12">
+-				<div class="panel panel-default">
+-					<div class="panel-body">
+-						<form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
+-                            <div class="form-body">
+-                                <div class="form-group form-md-line-input">
+-                                    <label class="col-md-3 control-label" for="form_control_1">{% trans "New Name" %}
+-                                        <span class="required">*</span>
+-                                    </label>
+-                                    <div class="col-md-6">
+-                                    	<div class="input-icon">
+-                                        	<input type="text" class="form-control" placeholder="" name="name">
+-                                        	<div class="form-control-focus"> </div>
+-                                            <i class="fa fa-envelope"></i>
+-                                        </div>
++            <div class="row">
++                <div class="col-lg-12">
++                    <div class="panel panel-default">
++                        <div class="panel-body">
++                            <form action="#" class="form-horizontal" id="form_sample_1">{% csrf_token %}
++                                <div class="form-body">
++                                    <div class="form-group form-md-line-input">
++                                        <label class="col-md-3 control-label"><i style="color: red;">*</i> {% trans "New Name" %} </label>
++                                        <div class="col-md-6"><input type="text" class="form-control" placeholder="" name="name"></div>
+                                     </div>
+                                 </div>
+-                            </div>
+-                            <div class="form-actions">
+-                                <div class="row">
+-                                    <div class="col-md-offset-3 col-md-4 pull-right">
+-                                        <a onclick="history.back()" type="reset" class="btn btn-default">{% trans "Back" %}</a>
+-                                        <a onclick="onSaveClick()" type="" class="btn btn-default">{% trans "Save" %}</a>
++                                <div class="form-actions">
++                                    <div class="col-md-offset-3 col-md-9">
++                                        <a class="btn default" onclick="history.back()">{% trans "Back" %}</a>
++                                        <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
+                                     </div>
+                                 </div>
+-                            </div>
+-                        </form>
+-					</div>
+-				</div>
+-			</div>
+-		</div><!--/.row-->
+-	</div><!--/.main-->
+-
+-	{% load static %}
+-	<script>
+-
+-	function getCookie(name) {
+-		var cookieValue = null;
+-		if (document.cookie && document.cookie != '') {
+-			var cookies = document.cookie.split(';');
+-			for (var i = 0; i < cookies.length; i++) {
+-				var cookie = jQuery.trim(cookies[i]);
+-				if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-					break;
+-				}
+-			}
+-		}
+-		return cookieValue;
+-	}
++                            </form>
++                        </div>
++                    </div>
++                </div>
++            </div>
++        </div>
+ 
+-	function onSaveClick(){
+-		var name = $('input[name=name]').val();
+-		var sort = $('input[name=sort]').val();
+-        console.log({{obj|safe}}.OId);
+-		if(!name){
+-			alert("please enter correct information");
+-			return
+-		}
+-		$.ajax({
+-			type: 'post',
+-			url: '/rename_role/',
+-			async: true,
+-			dataType: 'json',
+-			data: {
+-				csrfmiddlewaretoken : getCookie('csrftoken'),
+-                'OId': {{obj|safe}}.OId,
+-				'Name': name,
+-				'Sort': sort,
+-			},
++        <script>
++        function getCookie(name) {
++            var cookieValue = null;
++            if (document.cookie && document.cookie != '') {
++                var cookies = document.cookie.split(';');
++                for (var i = 0; i < cookies.length; i++) {
++                    var cookie = jQuery.trim(cookies[i]);
++                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
++                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++                        break;
++                    }
++                }
++            }
++            return cookieValue;
++        }
+ 
+-			success: function(data) {
+-				console.log("CODE = ",data.CODE);
+-				if (data.CODE == "0") {
+-                    alert("Default role can't rename")
+-					location.href = '/role_list/';
+-				} else if (data.CODE == "1"){
+-					alert("Role Rename successfully");
+-					location.href = '/role_list/';
+-				} else {
+-					alert("Fail to rename Role");
+-				}
+-			},
++        function onSaveClick() {
++            var name = $('input[name=name]').val();
++            var sort = $('input[name=sort]').val();
++            console.log({{obj|safe}}.OId);
++            if(!name){
++                alert("please enter correct information");
++                return
++            }
++            $.ajax({
++                type: 'post',
++                url: '/rename_role/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : getCookie('csrftoken'),
++                    'OId': {{obj|safe}}.OId,
++                    'Name': name,
++                    'Sort': sort,
++                },
+ 
+-			error: function(data) {
+-				console.log('why nunu');
+-			}
+-		});
+-	}
+-	</script>
+-</body>
++                success: function(data) {
++                    console.log("CODE = ",data.CODE);
++                    if (data.CODE == "0") {
++                        alert("Default role can't rename")
++                        location.href = '/role_list/';
++                    } else if (data.CODE == "1"){
++                        alert("Role Rename successfully");
++                        location.href = '/role_list/';
++                    } else {
++                        alert("Fail to rename Role");
++                    }
++                },
+ 
++                error: function(data) {
++                    console.log('why nunu');
++                }
++            });
++        }
++        </script>
++    </body>
+ </html>
+-- 
+1.9.1
+

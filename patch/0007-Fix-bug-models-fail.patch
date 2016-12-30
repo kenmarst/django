@@ -1,0 +1,26 @@
+From 7dd56b773772a752084b3d877fc9c37a9e88310d Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 21 Apr 2016 16:14:05 +0800
+Subject: [PATCH 007/443] Fix bug - models fail
+
+Fix the the return fail when view fruserlogs.
+---
+ api/models.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/models.py b/api/models.py
+index 083496b..7ab42e5 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -304,7 +304,7 @@ class Fruserlogs(models.Model):
+         db_table = 'fruserlogs'
+ 
+     def __str__(self):
+-        return '%s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
++        return '%s %s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
+ 
+ 
+ class Systemlogs(models.Model):
+-- 
+1.9.1
+

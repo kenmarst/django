@@ -1,0 +1,187 @@
+From 85b2fcc9f92ca2326b03a96bf70772445ed856b9 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Fri, 13 May 2016 18:16:36 +0800
+Subject: [PATCH 034/443] update log/log setting
+
+---
+ br06/urls.py                                   |   4 +--
+ fruserlogs/views.py                            |   1 +
+ logsetting/__init__.py                         |   0
+ logsetting/__pycache__/__init__.cpython-34.pyc | Bin 0 -> 135 bytes
+ logsetting/__pycache__/views.cpython-34.pyc    | Bin 0 -> 1358 bytes
+ logsetting/admin.py                            |   3 +++
+ logsetting/apps.py                             |   5 ++++
+ logsetting/logssetting.json                    |   1 +
+ logsetting/migrations/__init__.py              |   0
+ logsetting/models.py                           |   3 +++
+ logsetting/views.py                            |  34 +++++++++++++++++++++++++
+ 11 files changed, 49 insertions(+), 2 deletions(-)
+ create mode 100644 logsetting/__init__.py
+ create mode 100644 logsetting/__pycache__/__init__.cpython-34.pyc
+ create mode 100644 logsetting/__pycache__/views.cpython-34.pyc
+ create mode 100644 logsetting/admin.py
+ create mode 100644 logsetting/apps.py
+ create mode 100644 logsetting/logssetting.json
+ create mode 100644 logsetting/migrations/__init__.py
+ create mode 100644 logsetting/models.py
+ create mode 100644 logsetting/views.py
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 9c40f01..7bcfa83 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -20,7 +20,7 @@ from user.views import user_list_view, user_setting, login, logout, change_passw
+ from frusers.views import fruser_list_view
+ from systemlogs.views import systemlog_list_view,systemlog_export
+ from fruserlogs.views import fruserlog_list_view,fruserlog_export
+-#from logsetting.views import logsetting
++from logsetting.views import logsetting
+ from devices.views import device_list_view, device_add_view, device_edit_view, device_settings_view, add_device, delete_device
+ 
+ urlpatterns = [
+@@ -34,7 +34,7 @@ urlpatterns = [
+     url(r'^systemlog_export/?$',systemlog_export),
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_export/?$',fruserlog_export),
+-    #url(r'^logsetting/?$',logsetting),
++    url(r'^logsetting/?$',logsetting),
+ ]
+ 
+ urlpatterns += [
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index be56ac5..482971e 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -52,6 +52,7 @@ def fruserlog_export(request):
+       header=['FRUserName','LogDateTime','DeviceOId', 'LogContent']
+       symbol="!" 
+     
++    print(header)  
+     #json_data=json.loads(data)
+     #symbol=json_data[0]['symbol']
+     #header=[]
+diff --git a/logsetting/__init__.py b/logsetting/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/logsetting/__pycache__/__init__.cpython-34.pyc b/logsetting/__pycache__/__init__.cpython-34.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..f9045b5994514df15d2f35418b16ca74c5901303
+GIT binary patch
+literal 135
+zcmaFI!^`z}mT5Qx5IhDEFu(|8H~?`m3y?@*U<lS^^jpbL1QJFNzfANq@^e%5vr>zT
+zQ}qjq^0QKtOZ1b949p-zPJViEYDr0EUb=pKd}dx|NqoFsLFFwDo80`A(wtN~kZHw0
+G%m4sZ@gQjc
+
+literal 0
+HcmV?d00001
+
+diff --git a/logsetting/__pycache__/views.cpython-34.pyc b/logsetting/__pycache__/views.cpython-34.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..020a6831cab339c6e72fd7a16065c1d91a606dc4
+GIT binary patch
+literal 1358
+zcmYjROK&4Z5dL}|evF;i35lIZIUtJzUM)5pSkMX~P#z)(5)=omG-$PQ+?{xwd3d`!
+zFJqs=pV>dckLW9>T=)SwQ9Tp08Be$CtFEf9`l@^Wt*-<xK79RV+XMc=v&SL%2O8>c
+znmD}-F_18X49sE&v4g}#=oZ+`v4_wru$N;Wp<iGhaS2HoVY$F1#1$k}gjFN~!l2NW
+z5!aB^5!MS_LA-)w72#@utB4y28+k?~HxV|M@*2XmrM!-C9XtT9;V&Tk1iXqtxBfu2
+zpvz22ij)gU(#B6(PfvuJW~mY<f=5z}H0kR<t1MmWEq-oCc>VZnLY8}(P)C{Gzm1gc
+zIwm-fS4zk@yHF+=+$k**E0cX~q~!TKaVwIk4PQ}0>nOcYM<Zr)qNnsUcIjVjk(L;r
+z0~6q~47m->Ea&$O1FLnwU0gblj9KVn;(^oa<KDrd@Fb-VURo;2rHwg5o49B%T-<VK
+zS`47enCFqnb?@!3Sa_JbmO5R*+_PJ@c^z%CA++7*6|}!0e**t|@)c}d0`fZdT!meK
+ze{J74HdG^5=qhx8Ne#S-ZN5fPsYleB4a%7<e9V1J>NWuF$WlPBSOWMaA}XCKY2nqq
+zOKsdbGVbvqe`I~*{dPP!HB}|1Lpju$G%%&}NW@&tYJdFMQFqB%7I$7hvd+xuyp)#f
+znb)}<#xu9`y7OT1BYQb>7H=PXyVkVrdg@JYLPx-`8&eVKDC5+vng9Fg!581o8rG_4
+zU~jCG*m%3gd;7EcvmHC#RZ~_%sVGaOOQB6E5qg|)xnhBPA+#ye6w|>mz8t0(!nm<W
+zjjOaYUN#k}46J2yaQfrv;qJlVFZ+Xcdxs|j<KM_g3u!NCw`9svyuT6@q*N4ZJU-Mz
+z!<1o>@y?@Ie1QC%Y#+bskF!MdCzO=vPi1D$Z~shw`Kp*c*3`d_#Et4r?@aJf*`N?=
+zhbFKF3utVzO=p$uu+LbFt+BxQlr>%Xg4VkmrpYH%QPxxAOzP2<R(ZCj_M{%uoy$p)
+z^woj1%$wHJ+9;EvCvHb#s);%!?X@t$a2oZJjEh*wvURCg?aq@+kuDeHYR`b`*}EpI
+z)?~TkC`-=^J}X3z&`~0cukWTp8F!?vjc0qEXP<NRZ0g!DmG5Ztt5|$*4~%Nj)MU$F
+ME0?xdoz=bn0OFoc_y7O^
+
+literal 0
+HcmV?d00001
+
+diff --git a/logsetting/admin.py b/logsetting/admin.py
+new file mode 100644
+index 0000000..8c38f3f
+--- /dev/null
++++ b/logsetting/admin.py
+@@ -0,0 +1,3 @@
++from django.contrib import admin
++
++# Register your models here.
+diff --git a/logsetting/apps.py b/logsetting/apps.py
+new file mode 100644
+index 0000000..276e9b9
+--- /dev/null
++++ b/logsetting/apps.py
+@@ -0,0 +1,5 @@
++from django.apps import AppConfig
++
++
++class LogsettingConfig(AppConfig):
++    name = 'logsetting'
+diff --git a/logsetting/logssetting.json b/logsetting/logssetting.json
+new file mode 100644
+index 0000000..7f85806
+--- /dev/null
++++ b/logsetting/logssetting.json
+@@ -0,0 +1 @@
++[{"symbol":"comma","val0":""}]
+\ No newline at end of file
+diff --git a/logsetting/migrations/__init__.py b/logsetting/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/logsetting/models.py b/logsetting/models.py
+new file mode 100644
+index 0000000..71a8362
+--- /dev/null
++++ b/logsetting/models.py
+@@ -0,0 +1,3 @@
++from django.db import models
++
++# Create your models here.
+diff --git a/logsetting/views.py b/logsetting/views.py
+new file mode 100644
+index 0000000..c037070
+--- /dev/null
++++ b/logsetting/views.py
+@@ -0,0 +1,34 @@
++from django.shortcuts import render
++from django.http import HttpResponseRedirect
++from django.http import JsonResponse
++from django.http import HttpResponse
++from django.core.exceptions import ObjectDoesNotExist
++from api.models import Fruserlogs, Systemlogs
++from django.views.decorators.csrf import csrf_exempt
++from django.conf import settings
++import datetime,types
++import csv
++import json
++
++# Create your views here.
++
++def logsetting(request):
++    if not 'OId' in request.session:
++        return HttpResponseRedirect("/")
++    if request.method == "POST":
++      symbol = request.POST.get('separator', '')
++      data = request.POST.getlist('fields','')
++      
++      s='[{\"symbol\":'+'\"'+symbol+'\",'
++      for i in range(0,len(data)):
++        s+='\"val'+str(i)+'\":\"'+data[i]+'\"'
++        if(i < len(data)-1):
++          s+=','
++      s+='}]'     
++     
++      file = open(settings.STATICFILES_DIRS[5]+'logssetting.json', 'w', encoding = 'UTF-8')
++      file.write(s)
++            
++      #print(s)
++    return render(request, 'logsetting.html', {'CODE':""})
++
+-- 
+1.9.1
+

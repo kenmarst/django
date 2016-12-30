@@ -1,0 +1,25 @@
+From 1944fe2db86c18b7a4318b4e4165225075acc54b Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 22 Nov 2016 17:58:43 +0800
+Subject: [PATCH 368/443] 4G[UserAdd]: Get fruser name from 4G result.
+
+---
+ api/user.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/user.py b/api/user.py
+index 368d1d8..793caa6 100755
+--- a/api/user.py
++++ b/api/user.py
+@@ -61,7 +61,7 @@ def add(request):
+                         # Creating new account now
+                         fruser = Frusers.objects.create(
+                             FRUserId = req['FRUserId'],
+-                            Name = req['Name'],
++                            Name = req['Name'] if not settings.EN_4G else res_4G['response_data']['username'].encode('utf8').decode('utf8'),
+                             Gender = req['Gender'],
+                             Age = req['Age'],
+                             RFIDCard = req['RFIDCard'],
+-- 
+1.9.1
+

@@ -1,0 +1,560 @@
+From 9f7e41ca451cf2c8c1c7951240918b18f459ed6d Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Tue, 17 May 2016 17:37:11 +0800
+Subject: [PATCH 038/443] Add device not found web & Fix bug
+
+Add not found web to device.
+Modify not_found.html composition.
+Remove all console log from devices webs.
+
+Bug fix
+  -  web list may show error when recieve null parameter.
+  -  google recaptch composition error.
+---
+ api/models.py                         | 55 ++++++++++++++++++++++-------------
+ devices/views.py                      | 13 +++++----
+ templates/device_add.html             |  2 --
+ templates/device_edit.html            |  3 --
+ templates/device_frusergroups.html    |  9 ------
+ templates/device_list.html            |  7 -----
+ templates/device_settings.html        |  2 --
+ templates/login.html                  | 20 +++++--------
+ templates/registration/not_found.html | 27 +++++++++--------
+ 9 files changed, 63 insertions(+), 75 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 765d993..f471dc4 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -29,6 +29,7 @@ class Config(models.Model):
+ 
+     class Meta:
+         db_table = 'config'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+@@ -48,6 +49,7 @@ class Role(models.Model):
+ 
+     class Meta:
+         db_table = 'role'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+@@ -67,6 +69,7 @@ class Acl(models.Model):
+ 
+     class Meta:
+         db_table = 'acl'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s (%s)' % (self.FunctionName, self.OId)
+@@ -162,6 +165,7 @@ class Devices(models.Model):
+ 
+     class Meta:
+         db_table = 'devices'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+@@ -191,14 +195,15 @@ class Users(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Account = models.CharField(db_column = 'Account', unique = True, max_length = 255)
+     Password = models.CharField(db_column = 'Password', max_length = 64)
+-    Name = models.CharField(db_column = 'Name', max_length = 32, blank = True, null = True)
+-    Email = models.EmailField(db_column = 'Email', max_length = 256, blank = True, null = True)
++    Name = models.CharField(db_column = 'Name', default = '', max_length = 32, blank = True, null = True)
++    Email = models.EmailField(db_column = 'Email', default = '', max_length = 256, blank = True, null = True)
+     RoleOId = models.ForeignKey(Role, on_delete = models.CASCADE, db_column = 'RoleOId', max_length = 36)
+     CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+     UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'users'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s (%s)' % (self.Account, self.OId)
+@@ -224,6 +229,7 @@ class Usergroups(models.Model):
+ 
+     class Meta:
+         db_table = 'usergroups'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+@@ -238,6 +244,7 @@ class Usergroupmember(models.Model):
+ 
+     class Meta:
+         db_table = 'usergroupmember'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s %s' % (self.GroupOId, self.UserOId)
+@@ -252,6 +259,7 @@ class Usergroupdevices(models.Model):
+ 
+     class Meta:
+         db_table = 'usergroupdevices'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s %s' % (self.GroupOId, self.DeviceOId)
+@@ -259,6 +267,7 @@ class Usergroupdevices(models.Model):
+ 
+ class Frusers(models.Model):
+     frusers_gender = (
++            ('', ''),
+             ('Male', 'Male'),
+             ('Female', 'Female'),
+     )
+@@ -268,24 +277,25 @@ class Frusers(models.Model):
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     FRUserId = models.CharField(db_column = 'FRUserId', max_length = 16)
+-    Name = models.CharField(db_column = 'Name', max_length = 32, blank = True, null = True)
+-    Gender = models.CharField(db_column = 'Gender', choices = frusers_gender, max_length = 8, blank = True, null = True)
+-    Age = models.IntegerField(db_column = 'Age', blank = True, null = True)
+-    PersonId = models.CharField(db_column = 'PersonId', max_length = 32, blank = True, null = True)
+-    Face1 = models.CharField(db_column = 'Face1', max_length = 256, blank = True, null = True)
+-    Face2 = models.CharField(db_column = 'Face2', max_length = 256, blank = True, null = True)
+-    Face3 = models.CharField(db_column = 'Face3', max_length = 256, blank = True, null = True)
+-    FaceID1 = models.CharField(db_column = 'FaceID1', max_length = 32, blank = True, null = True)
+-    FaceID2 = models.CharField(db_column = 'FaceID2', max_length = 32, blank = True, null = True)
+-    FaceID3 = models.CharField(db_column = 'FaceID3', max_length = 32, blank = True, null = True)
+-    RFIDCard = models.CharField(db_column = 'RFIDCard', max_length = 16, blank = True, null = True)
++    Name = models.CharField(db_column = 'Name', default = '', max_length = 32, blank = True, null = True)
++    Gender = models.CharField(db_column = 'Gender', choices = frusers_gender, max_length = 8, blank = True)
++    Age = models.IntegerField(db_column = 'Age', default = '', blank = True, null = True)
++    PersonId = models.CharField(db_column = 'PersonId', default = '', max_length = 32, blank = True, null = True)
++    Face1 = models.CharField(db_column = 'Face1', default = '', max_length = 256, blank = True, null = True)
++    Face2 = models.CharField(db_column = 'Face2', default = '', max_length = 256, blank = True, null = True)
++    Face3 = models.CharField(db_column = 'Face3', default = '', max_length = 256, blank = True, null = True)
++    FaceID1 = models.CharField(db_column = 'FaceID1', default = '', max_length = 32, blank = True, null = True)
++    FaceID2 = models.CharField(db_column = 'FaceID2', default = '', max_length = 32, blank = True, null = True)
++    FaceID3 = models.CharField(db_column = 'FaceID3', default = '', max_length = 32, blank = True, null = True)
++    RFIDCard = models.CharField(db_column = 'RFIDCard', default = '', max_length = 16, blank = True, null = True)
+     State = models.CharField(db_column = 'State', choices = frusers_state, default = 'Enable', max_length = 8)
+-    DisableCauses = models.CharField(db_column = 'DisableCauses', max_length = 256, blank = True, null = True)
++    DisableCauses = models.CharField(db_column = 'DisableCauses', default = '', max_length = 256, blank = True, null = True)
+     CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+     UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+     class Meta:
+         db_table = 'frusers'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s %s (%s)' % (self.FRUserId, self.Name, self.OId)
+@@ -296,8 +306,8 @@ class Frusers(models.Model):
+             OId = self.OId,
+             FRUserID = self.FRUserId,
+             Name = self.Name,
+-            #Gender = self.Gender,
+-            #Age = self.Age,
++            Gender = self.Gender,
++            Age = self.Age,
+             PersonId = self.PersonId,
+             Face1 = self.Face1,
+             Face2 = self.Face2,
+@@ -321,6 +331,7 @@ class Frusergroups(models.Model):
+ 
+     class Meta:
+         db_table = 'frusergroups'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s (%s)' % (self.Name, self.OId)
+@@ -344,6 +355,7 @@ class Frusergroupmember(models.Model):
+ 
+     class Meta:
+         db_table = 'frusergroupmember'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s %s' % (self.GroupOId, self.FRUserOId)
+@@ -358,6 +370,7 @@ class Frusergroupdevices(models.Model):
+ 
+     class Meta:
+         db_table = 'frusergroupdevices'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s %s' % (self.GroupOId, self.DeviceOId)
+@@ -368,10 +381,11 @@ class Fruserlogs(models.Model):
+     LogDateTime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add =  True)
+     FRUserOId = models.ForeignKey('Frusers', on_delete = models.DO_NOTHING, db_column = 'FRUserOId', max_length = 36, blank = True, null = True)
+     DeviceOId = models.ForeignKey('Devices', on_delete = models.DO_NOTHING, db_column = 'DeviceOId', max_length = 36)
+-    LogContent = models.CharField(db_column = 'LogContent', max_length = 256, blank = True, null = True)
++    LogContent = models.CharField(db_column = 'LogContent', default = '', max_length = 256, blank = True, null = True)
+ 
+     class Meta:
+         db_table = 'fruserlogs'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s %s %s' % (self.FRUserOId,  self.DeviceOId, self.LogDateTime)
+@@ -380,8 +394,8 @@ class Fruserlogs(models.Model):
+         return dict(
+             Index = 0,
+             OId = self.OId,
+-            FRUserId = self.FRUserOId.FRUserId if self.FRUserOId else "",
+-            FRUserName = self.FRUserOId.Name if self.FRUserOId else "",
++            FRUserId = self.FRUserOId.FRUserId if self.FRUserOId else '',
++            FRUserName = self.FRUserOId.Name if self.FRUserOId else '',
+             DeviceOId = self.DeviceOId.Name,
+             LogContent = self.LogContent,
+             LogDateTime = self.LogDateTime.strftime("%Y-%m-%d %H:%M:%S"),
+@@ -398,10 +412,11 @@ class Systemlogs(models.Model):
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     LogDateTime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add = True)
+     Category = models.CharField(db_column = 'Category', choices = systemlogs_category, max_length = 8)
+-    LogContent = models.CharField(db_column = 'LogContent', max_length = 256, blank = True, null = True)
++    LogContent = models.CharField(db_column = 'LogContent', default = '', max_length = 256, blank = True, null = True)
+ 
+     class Meta:
+         db_table = 'systemlogs'
++        ordering = ['OId']
+ 
+     def __str__(self):
+         return '%s %s' % (self.Category, self.LogDateTime)
+diff --git a/devices/views.py b/devices/views.py
+index 89c364e..e4645ae 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -18,12 +18,15 @@ def device_list_view(request):
+             index += 1
+         return render(request, 'device_list.html', {'active': 'device_list', 'obj': devices})
+     except:
+-        return HttpResponseRedirect("/")
++        return render(request, 'registration/not_found.html')
+ 
+ def device_add_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
+-    return render(request, 'device_add.html')
++    try:
++        return render(request, 'device_add.html')
++    except:
++        return render(request, 'registration/not_found.html')
+ 
+ def device_edit_view(request):
+     if not 'OId' in request.session:
+@@ -32,7 +35,7 @@ def device_edit_view(request):
+         device = Devices.objects.get(OId = request.GET['OId']).as_json()
+         return render(request, 'device_edit.html', {'active': 'device_edit', 'obj': device})
+     except:
+-        return HttpResponseRedirect("/")
++        return render(request, 'registration/not_found.html')
+ 
+ def device_settings_view(request):
+     if not 'OId' in request.session:
+@@ -41,7 +44,7 @@ def device_settings_view(request):
+         device = Devices.objects.get(OId = request.GET['OId']).as_json()
+         return render(request, 'device_settings.html', {'active': 'device_settings', 'obj': device})
+     except:
+-        return HttpResponseRedirect("/")
++        return render(request, 'registration/not_found.html')
+ 
+ def device_frusergroups_view(request):
+     if not 'OId' in request.session:
+@@ -53,7 +56,7 @@ def device_frusergroups_view(request):
+         groups = [res_all.as_json() for res_all in obj_all if res_all not in [res.GroupOId for res in obj]]
+         return render(request, 'device_frusergroups.html', {'active': 'device_settings', 'devicegroups': devicegroups, 'groups': groups, 'DeviceOId': request.GET['OId']})
+     except:
+-        return HttpResponseRedirect("/")
++        return render(request, 'registration/not_found.html')
+ 
+ def add_device(request):
+     if not 'OId' in request.session:
+diff --git a/templates/device_add.html b/templates/device_add.html
+index 51cec38..d21a819 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -121,7 +121,6 @@
+                     'IP': IP,
+                 },
+                 success: function(data) {
+-                    console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         alert("Device add successfully");
+                         location.href = '/device_list/';
+@@ -130,7 +129,6 @@
+                     }
+                 },
+                 error: function(data) {
+-                    console.log('why nunu');
+                 }
+             });
+         }
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index fd64ce5..3638ee2 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -184,7 +184,6 @@
+ 
+         function onSaveClick(){
+             var Name = $('input[name=Name]').val();
+-            console.log(Name);
+ 
+             $.ajax({
+                 type: 'post',
+@@ -198,7 +197,6 @@
+                     'Name': Name
+                 },
+                 success: function(data) {
+-                    console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         alert("Change device name successfully");
+                         location.reload();
+@@ -207,7 +205,6 @@
+                     }
+                 },
+                 error: function(data) {
+-                    console.log('why nunu');
+                 }
+             });
+         }
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index 8038dcb..bf8f446 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -70,7 +70,6 @@
+             var $GroupList = $('#GroupList');
+ 
+             var devicegroups = {{devicegroups|safe}};
+-            console.log(devicegroups);
+             $GroupList.bootstrapTable({
+                 search: true,
+                 pagination: true,
+@@ -97,7 +96,6 @@
+             });
+ 
+             var groups = {{groups|safe}};
+-            console.log(groups);
+             $GroupAdd.bootstrapTable({
+                 search: true,
+                 pageSize: 10,
+@@ -136,7 +134,6 @@
+ 
+             function delete_group(GroupOId, Name) {
+                 var ret = confirm('Confirm to delete ' + Name + ' from this device?');
+-                console.log(ret);
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+@@ -150,7 +147,6 @@
+                             'GroupOId': GroupOId
+                         },
+                         success: function(data) {
+-                            console.log("CODE = ",data.CODE);
+                             if (data.CODE == "0") {
+                                 $GroupAdd.bootstrapTable('append', data);
+                                 $GroupList.bootstrapTable('remove', {
+@@ -162,7 +158,6 @@
+                             }
+                         },
+                         error: function(data) {
+-                            console.log('why nunu');
+                         }
+                     });
+                 }
+@@ -174,8 +169,6 @@
+                     function (row) {return row.OId}
+                 );
+ 
+-                console.log(GroupOIds);
+-
+                 $.ajax({
+                     type: 'post',
+                     traditional: true,
+@@ -188,7 +181,6 @@
+                         'GroupOIds': GroupOIds
+                     },
+                     success: function(data) {
+-                        console.log("CODE = ",data.CODE);
+                         if (data.CODE == "0") {
+                             $GroupList.bootstrapTable('append', $.map(
+                                 $GroupAdd.bootstrapTable('getSelections'),
+@@ -203,7 +195,6 @@
+                         }
+                     },
+                     error: function(data) {
+-                        console.log('why nunu');
+                     }
+                 });
+ 
+diff --git a/templates/device_list.html b/templates/device_list.html
+index 9552d2d..f66bf30 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -49,7 +49,6 @@
+         <script src="{% static "bootstrap-table.js" %}"></script>
+         <script>
+             var dataSet = {{obj|safe}};
+-            console.log(dataSet);
+             $('#DeviceList').bootstrapTable({
+                 search: true,
+                 pagination: true,
+@@ -132,7 +131,6 @@
+ 
+             function accept_device(OId, Name) {
+                 var ret = confirm('Confirm to accept ' +Name+ ' Device?');
+-                console.log(ret);
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+@@ -145,7 +143,6 @@
+                             'OId': OId
+                         },
+                         success: function(data) {
+-                            console.log("CODE = ",data.CODE);
+                             if (data.CODE == "0") {
+                                 location.reload();
+                             } else {
+@@ -153,7 +150,6 @@
+                             }
+                         },
+                         error: function(data) {
+-                            console.log('why nunu');
+                         }
+                     });
+                 }
+@@ -161,7 +157,6 @@
+ 
+             function delete_device(OId, Name) {
+                 var ret = confirm('Confirm to delete ' +Name+ ' Device?');
+-                console.log(ret);
+                 if (ret) {
+                     $.ajax({
+                         type: 'post',
+@@ -174,7 +169,6 @@
+                             'OId': OId
+                         },
+                         success: function(data) {
+-                            console.log("CODE = ",data.CODE);
+                             if (data.CODE == "0") {
+                                 location.reload();
+                             } else {
+@@ -182,7 +176,6 @@
+                             }
+                         },
+                         error: function(data) {
+-                            console.log('why nunu');
+                         }
+                     });
+                 }
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index b77bbfd..a44c843 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -208,7 +208,6 @@
+                     'Language': Language
+                 },
+                 success: function(data) {
+-                    console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         alert("Device setting successfully");
+                         location.href = '/device_list/';
+@@ -217,7 +216,6 @@
+                     }
+                 },
+                 error: function(data) {
+-                    console.log('why nunu');
+                 }
+             });
+         }
+diff --git a/templates/login.html b/templates/login.html
+index 2e96405..3170e77 100644
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -10,41 +10,35 @@
+ 
+ <div class="container">
+ 	<div class="row" id="pwd-container">
+-	<div class="col-md-4"></div>
+-
+-		<div class="col-md-4">
++		<div class="col-md-offset-4 col-md-4">
+ 			<section class="login-form">
+ 				<form method="post" action="" role="login">{% csrf_token %}
+ 					<img src="{% static "shuttle_logo.png" %}" class="img-responsive" alt="" />
+-					<input type="email" name="email" placeholder="Email" required class="form-control input-lg" value="kimi_tsai@tw.shuttle.com" />
++					<input type="email" name="email" placeholder="Email" required class="form-control input-lg" />
+ 					<input type="password" class="form-control input-lg" name="password" id="password" placeholder="Password" required="" />
+ 
+ 					<div class="pwstrength_viewport_progress"></div>
+ 
+-					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY"></div>
+-
++					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY" style="transform:scale(0.8);-webkit-transform:scale(0.8);transform-origin:0 0;-webkit-transform-origin:0 0;" align="center"></div>
+ 					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">Sign in</button>
+ 					<div>
+ 						<a href="account/forget_password">Forget password</a>
+ 					</div>
+ 				</form>
+-				
++
+ 				<!-- <div class="form-links">
+ 					<a href="#">www.website.com</a>
+ 				</div> -->
+ 
+-			</section>  
++			</section>
+ 		</div>
+-	  
+-		<div class="col-md-4"></div>
+-
+ 	</div>
+-  
++
+ <!-- 	<p>
+ 		<a href="http://validator.w3.org/check?uri=http%3A%2F%2Fbootsnipp.com%2Fiframe%2FW00op" target="_blank"><small>HTML</small><sup>5</sup></a>
+ 		<br>
+ 		<br>
+-	</p>    -->  
++	</p>    -->
+ </div>
+ 
+ <script src="{% static "login.js" %}"></script>
+diff --git a/templates/registration/not_found.html b/templates/registration/not_found.html
+index 7efea0b..3edd7b3 100644
+--- a/templates/registration/not_found.html
++++ b/templates/registration/not_found.html
+@@ -9,20 +9,19 @@
+ 
+ <div class="container">
+ 	<div class="row" id="pwd-container">
+-	<div class="col-md-4"></div>
+-		<div class="col-md-4">
+-			<section class="login-form">
+-				<form method="post" action="" role="login">{% csrf_token %}
+-					<div>
+-					<a style="font-size:30px">PAGE NOT FOUND</a>
+-					</div>
+-					<br>
+-					<img src="{% static "404eddy.png" %}" class="img-responsive" alt="" />
+-                    <a style="font-size:18px">A collection of the best 404 not found error pages on the Internet.</a>
+-					<br>
+-				</form>
+-			</section>  
+-		</div>
++        <div class="col-md-offset-4 col-md-4">
++            <section class="login-form">
++                <form method="post" action="" role="login">{% csrf_token %}
++                    <div>
++                        <p style="font-size:30px">PAGE NOT FOUND</p>
++                    </div>
++                    <br>
++                    <img src="{% static "404eddy.png" %}" class="img-responsive" alt="" />
++                    <p style="font-size:18px">A collection of the best 404 not found error pages on the Internet.</p>
++                    <br>
++                </form>
++            </section>
++        </div>
+ 	</div>
+ </div>
+ 
+-- 
+1.9.1
+

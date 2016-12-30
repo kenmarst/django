@@ -1,0 +1,79 @@
+From d266e133783ba8e01fdf67be1b5e2a314998b981 Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Tue, 24 May 2016 16:06:18 +0800
+Subject: [PATCH 072/443] Fix create default admin bug.
+
+---
+ role/views.py | 43 ++++++++++++++++++++++++++-----------------
+ 1 file changed, 26 insertions(+), 17 deletions(-)
+
+diff --git a/role/views.py b/role/views.py
+index 6f2e4d0..a2d0213 100644
+--- a/role/views.py
++++ b/role/views.py
+@@ -9,26 +9,32 @@ from collections import ChainMap
+ try:
+     Role.objects.get(Name = 'Admin(default)').Name
+ except:
+-    print('create default role: admin')
+-    Role.objects.create(Name = 'Admin(default)', Sort = '1', Category = 'System')
+-    Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
+-    Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++    try:
++        Role.objects.create(Name = 'Admin(default)', Sort = '1', Category = 'System')
++        Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++        Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++        Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++        Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++        Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Admin(default)'), ACL = 'Enable')
++        print('create default role: admin')
++    except:
++        print('can\'t create default role: admin')
+ else:
+     print('default role "admin" exist.')
+ 
+ try:
+     Role.objects.get(Name = 'Users(default)').Name
+ except:
+-    print('create default role: users')
+-    Role.objects.create(Name = 'Users(default)', Sort = '2', Category = 'System')
+-    Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-    Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-    Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-    Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
+-    Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++    try:
++        Role.objects.create(Name = 'Users(default)', Sort = '2', Category = 'System')
++        Acl.objects.create(FunctionName = 'permission_system', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_device', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_fruserlist', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_frusergroup', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++        Acl.objects.create(FunctionName = 'permission_log', RoleOId = Role.objects.get(Name = 'Users(default)'), ACL = 'Disable')
++        print('create default role: users')
++    except:
++        print('can\'t create default role: users')
+ else:
+     print('default role "users" exist.')
+ 
+@@ -36,9 +42,12 @@ else:
+ try:
+     Users.objects.get(Account = 'admin').Account
+ except:
+-    print('create default account: admin')
+-    Users.objects.create(Account = 'admin', Password = ADMIN_PASSWORD, Name = 'admin',
+-                         Email = ADMIN_MAIL, RoleOId = Role.objects.get(Name = 'Admin(default)'))
++    try:
++        Users.objects.create(Account = 'admin', Password = ADMIN_PASSWORD, Name = 'admin',
++                             Email = ADMIN_MAIL, RoleOId = Role.objects.get(Name = 'Admin(default)'))
++        print('create default account: admin')
++    except:
++        print('can\'t create default account: admin')
+ else:
+     print('default account "admin" exist.')
+     if Users.objects.get(Account = 'admin').Email != ADMIN_MAIL:
+-- 
+1.9.1
+

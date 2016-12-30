@@ -1,0 +1,35 @@
+From 267872e1e907b1894e4ddbb77f52b19d0f36a064 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 15 Jun 2016 17:58:12 +0800
+Subject: [PATCH 125/443] Modify API UserUpdate : if RFIDCard already exists
+ then return FRUserId
+
+---
+ api/user.py | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/api/user.py b/api/user.py
+index 3a03f14..522e8a2 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -72,6 +72,17 @@ def update(request):
+             req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFIDCard', 'State', 'Groups'}
+             if all(k in req for k in req_key):
+                 if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                    frusers = Frusers.objects.filter(RFIDCard = req['RFIDCard'])
++                    if frusers.exists():
++                        logContent = 'RFIDCard already exists'
++                        return JsonResponse(dict(ChainMap(
++                            result_fail,
++                            fail_code999,
++                            {'Message' : logContent},
++                            {'FRUsers':[{
++                                'FRUserId' : i.FRUserId
++                            } for i in frusers]}
++                        )))
+                     fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
+                     Frusers.objects.filter(OId = fruser.OId).update(
+                         Name = req['Name'],
+-- 
+1.9.1
+

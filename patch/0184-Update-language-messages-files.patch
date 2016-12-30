@@ -1,0 +1,1125 @@
+From 9bc175402d5174f3580f75bad9fd9b34d880fba6 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 14 Jul 2016 16:42:06 +0800
+Subject: [PATCH 184/443] Update language messages files.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 215 ++++++++++++++-------------
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 215 ++++++++++++++-------------
+ 4 files changed, 222 insertions(+), 212 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 5bcd1fa..4920a00 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-06-16 13:48+0800\n"
++"POT-Creation-Date: 2016-07-14 16:38+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 97b71a0..cf1a4ca 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-06-16 13:44+0800\n"
++"POT-Creation-Date: 2016-07-14 16:30+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index bb93259..642af6e 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-06-16 13:48+0800\n"
++"POT-Creation-Date: 2016-07-14 16:38+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -71,15 +71,15 @@ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+ #: templates/dashboard.html:152 templates/dashboard.html.py:170
+-#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:63
+-#: templates/fruserlog_list.html:93 templates/role_list.html.py:81
+-#: templates/systemlog_list.html:81 templates/user_list.html.py:77
++#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:72
++#: templates/fruserlog_list.html:93 templates/role_list.html.py:89
++#: templates/systemlog_list.html:81 templates/user_list.html.py:85
+ msgid "No."
+ msgstr "编号"
+ 
+ #: templates/dashboard.html:156 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:73
+-#: templates/fruserlog_list.html:105
++#: templates/device_edit.html:53 templates/device_list.html.py:83
++#: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "设备名称"
+ 
+@@ -104,13 +104,13 @@ msgid "Device add"
+ msgstr "新增设备"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:162 templates/frusergroup_devices.html.py:117
+-#: templates/user_group_devices.html:117
++#: templates/device_list.html:173 templates/frusergroup_devices.html.py:141
++#: templates/user_group_devices.html:141
+ msgid "Device"
+ msgstr "设备"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:173 templates/fruser_edit.html.py:101
++#: templates/device_settings.html:252 templates/fruser_edit.html.py:101
+ #: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
+ #: templates/role_add.html:46 templates/role_permission.html.py:37
+ #: templates/role_rename.html:42 templates/user_add.html.py:96
+@@ -120,10 +120,11 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:174 templates/fruser_edit.html.py:102
++#: templates/device_settings.html:253 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+-#: templates/logsetting.html:85 templates/role_add.html.py:47
++#: templates/logsetting.html:87 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
++#: templates/system_settings.html:159 templates/system_settings.html.py:196
+ #: templates/user_add.html:97 templates/user_group_add.html.py:49
+ #: templates/user_group_edit.html:66 templates/user_setting.html.py:119
+ #: templates/user_update.html:94
+@@ -151,7 +152,7 @@ msgstr "FR群组管理"
+ msgid "Device parameter"
+ msgstr "设备参数"
+ 
+-#: templates/device_edit.html:191
++#: templates/device_edit.html:181
+ msgid "Parameter Settings"
+ msgstr "设置参数"
+ 
+@@ -173,34 +174,34 @@ msgstr "搜寻群组"
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:88
++#: templates/device_frusergroups.html:99
+ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/device_frusergroups.html:95 templates/device_list.html.py:107
+-#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:81
+-#: templates/role_list.html:114 templates/user_group_devices.html.py:98
+-#: templates/user_group_list.html:80 templates/user_group_members.html:98
+-#: templates/user_list.html.py:110
++#: templates/device_frusergroups.html:106 templates/device_list.html.py:119
++#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
++#: templates/role_list.html:121 templates/user_group_devices.html.py:110
++#: templates/user_group_list.html:90 templates/user_group_members.html:110
++#: templates/user_list.html.py:116
+ msgid "Delete"
+ msgstr "删除"
+ 
+-#: templates/device_frusergroups.html:114 templates/fruser_list.html.py:114
++#: templates/device_frusergroups.html:137 templates/fruser_list.html.py:113
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+-#: templates/frusergroups_list.html:68 templates/user_group_add.html.py:31
+-#: templates/user_group_edit.html:48 templates/user_group_list.html.py:67
++#: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
++#: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+ msgid "Group"
+ msgstr "群组"
+ 
+-#: templates/device_frusergroups.html:141 templates/device_list.html.py:162
+-#: templates/fruser_list.html:185 templates/frusergroup_devices.html.py:144
+-#: templates/frusergroup_member.html:144 templates/frusergroups_list.html:107
+-#: templates/user_group_devices.html:144 templates/user_group_list.html:107
+-#: templates/user_group_members.html:144 templates/user_list.html.py:134
++#: templates/device_frusergroups.html:163 templates/device_list.html.py:173
++#: templates/fruser_list.html:191 templates/frusergroup_devices.html.py:167
++#: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
++#: templates/user_group_devices.html:167 templates/user_group_list.html:116
++#: templates/user_group_members.html:167 templates/user_list.html.py:140
+ msgid "Confirm to delete"
+ msgstr "您是否确认要删除"
+ 
+-#: templates/device_frusergroups.html:141
++#: templates/device_frusergroups.html:163
+ msgid "from this device"
+ msgstr "设备"
+ 
+@@ -217,51 +218,51 @@ msgstr "设备管理"
+ msgid "Create new device"
+ msgstr "建立新设备"
+ 
+-#: templates/device_list.html:78
++#: templates/device_list.html:88
+ msgid "Status"
+ msgstr "状态"
+ 
+-#: templates/device_list.html:91
++#: templates/device_list.html:101
+ msgid "Sync time"
+ msgstr "同步时间"
+ 
+-#: templates/device_list.html:99
++#: templates/device_list.html:111
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:100
++#: templates/device_list.html:112
+ msgid "Reject"
+ msgstr "拒绝"
+ 
+-#: templates/device_list.html:105 templates/fruser_list.html.py:131
+-#: templates/frusergroups_list.html:80 templates/user_group_list.html.py:79
++#: templates/device_list.html:117 templates/fruser_list.html.py:131
++#: templates/frusergroups_list.html:89 templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "编辑"
+ 
+-#: templates/device_list.html:106 templates/menu.html.py:39
++#: templates/device_list.html:118 templates/menu.html.py:39
+ #: templates/system_settings.html:10 templates/system_settings.html.py:19
+ #: templates/system_settings.html:25
+ msgid "Settings"
+ msgstr "设置"
+ 
+-#: templates/device_settings.html:8 templates/device_settings.html.py:18
+-#: templates/device_settings.html:25
++#: templates/device_settings.html:8 templates/device_settings.html.py:19
++#: templates/device_settings.html:26
+ msgid "Device Settings"
+ msgstr "设备设置"
+ 
+-#: templates/device_settings.html:33
++#: templates/device_settings.html:34
+ msgid "Device parameter setup"
+ msgstr "建立设备参数"
+ 
+-#: templates/device_settings.html:163
++#: templates/device_settings.html:242
+ msgid "en"
+ msgstr "英文"
+ 
+-#: templates/device_settings.html:164
++#: templates/device_settings.html:243
+ msgid "zh-cn"
+ msgstr "简体中文"
+ 
+-#: templates/device_settings.html:165
++#: templates/device_settings.html:244
+ msgid "zh-tw"
+ msgstr "繁体中文"
+ 
+@@ -274,17 +275,17 @@ msgstr "修改用户资讯"
+ msgid "Fruser"
+ msgstr "设备使用者"
+ 
+-#: templates/fruser_edit.html:39 templates/fruser_list.html.py:104
+-#: templates/fruserlog_list.html:97
++#: templates/fruser_edit.html:39 templates/fruser_list.html.py:103
++#: templates/fruserlog_list.html:96
+ msgid "FRUserId"
+ msgstr "工号"
+ 
+-#: templates/fruser_edit.html:43 templates/fruser_list.html.py:109
+-#: templates/frusergroup_devices.html:91 templates/frusergroup_member.html:91
+-#: templates/fruserlog_list.html:101 templates/user_add.html.py:48
+-#: templates/user_group_devices.html:91 templates/user_group_members.html:91
+-#: templates/user_list.html.py:88 templates/user_setting.html:54
+-#: templates/user_update.html.py:47
++#: templates/fruser_edit.html:43 templates/fruser_list.html.py:108
++#: templates/frusergroup_devices.html:102
++#: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
++#: templates/user_add.html.py:48 templates/user_group_devices.html:102
++#: templates/user_group_members.html:102 templates/user_list.html.py:95
++#: templates/user_setting.html:54 templates/user_update.html.py:47
+ msgid "Name"
+ msgstr "姓名"
+ 
+@@ -335,11 +336,11 @@ msgstr "关闭"
+ msgid "Upload"
+ msgstr "上传"
+ 
+-#: templates/fruser_list.html:119 templates/role_list.html.py:101
++#: templates/fruser_list.html:118 templates/role_list.html.py:108
+ msgid "Create Date"
+ msgstr "建立时间"
+ 
+-#: templates/fruser_list.html:124
++#: templates/fruser_list.html:123
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
+@@ -386,9 +387,9 @@ msgstr "新增设备"
+ msgid "Search Device"
+ msgstr "搜寻设备"
+ 
+-#: templates/frusergroup_devices.html:144
+-#: templates/frusergroup_member.html:144 templates/user_group_devices.html:144
+-#: templates/user_group_list.html:107 templates/user_group_members.html:144
++#: templates/frusergroup_devices.html:167
++#: templates/frusergroup_member.html:167 templates/user_group_devices.html:167
++#: templates/user_group_list.html:116 templates/user_group_members.html:167
+ msgid "from this group"
+ msgstr "群组"
+ 
+@@ -408,7 +409,7 @@ msgstr "建立新成员"
+ msgid "Search User"
+ msgstr "搜寻使用者"
+ 
+-#: templates/frusergroup_member.html:117 templates/user_group_members.html:117
++#: templates/frusergroup_member.html:141 templates/user_group_members.html:141
+ msgid "User"
+ msgstr "使用者"
+ 
+@@ -421,11 +422,11 @@ msgstr "设备使用者群组管理"
+ msgid "Create new group"
+ msgstr "建立新群组"
+ 
+-#: templates/frusergroups_list.html:73 templates/user_group_list.html.py:72
++#: templates/frusergroups_list.html:81 templates/user_group_list.html.py:81
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:107
++#: templates/frusergroups_list.html:115
+ msgid "group"
+ msgstr "群组"
+ 
+@@ -434,11 +435,11 @@ msgstr "群组"
+ msgid "FRUser Log List"
+ msgstr "设备使用者登入纪录"
+ 
+-#: templates/fruserlog_list.html:112 templates/user_list.html.py:96
++#: templates/fruserlog_list.html:111 templates/user_list.html.py:107
+ msgid "CreateDate"
+ msgstr "建立时间"
+ 
+-#: templates/fruserlog_list.html:116
++#: templates/fruserlog_list.html:115
+ msgid "Note"
+ msgstr "摘要"
+ 
+@@ -563,11 +564,11 @@ msgstr "确认"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:36 templates/role_list.html.py:86
++#: templates/role_add.html:36 templates/role_list.html.py:93
+ msgid "Role Name"
+ msgstr "角色名称"
+ 
+-#: templates/role_add.html:40 templates/role_list.html.py:91
++#: templates/role_add.html:40 templates/role_list.html.py:98
+ msgid "Sort"
+ msgstr "排序"
+ 
+@@ -584,19 +585,19 @@ msgstr "建立新角色"
+ msgid "Role Permission"
+ msgstr "角色权限"
+ 
+-#: templates/role_list.html:96 templates/systemlog_list.html.py:86
++#: templates/role_list.html:103 templates/systemlog_list.html.py:85
+ msgid "Category"
+ msgstr "类别"
+ 
+-#: templates/role_list.html:106
++#: templates/role_list.html:113
+ msgid "Update Date"
+ msgstr "更新时间"
+ 
+-#: templates/role_list.html:113
++#: templates/role_list.html:120
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:138
++#: templates/role_list.html:144
+ msgid "Confirm to delete this Role"
+ msgstr "您是否确认要删除这个角色"
+ 
+@@ -622,116 +623,120 @@ msgstr "新名称"
+ msgid "Backup Scheduling"
+ msgstr "备份排程"
+ 
+-#: templates/system_settings.html:37
++#: templates/system_settings.html:38
+ msgid "Manually"
+ msgstr "手动备份"
+ 
+-#: templates/system_settings.html:42
++#: templates/system_settings.html:39
++msgid "Instantly backup after clicking save"
++msgstr "点击储存后立即备份"
++
++#: templates/system_settings.html:44
+ msgid "Automatic"
+ msgstr "自动备份"
+ 
+-#: templates/system_settings.html:50
++#: templates/system_settings.html:49
+ msgid "Every Month"
+ msgstr "每月"
+ 
+-#: templates/system_settings.html:51
++#: templates/system_settings.html:50
+ msgid "Day"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:51
++#: templates/system_settings.html:50
+ msgid "Time"
+ msgstr "时间"
+ 
+-#: templates/system_settings.html:90
++#: templates/system_settings.html:96
+ msgid "Every Week"
+ msgstr "每周"
+ 
+-#: templates/system_settings.html:91
++#: templates/system_settings.html:97
+ msgid "Sun"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:92
++#: templates/system_settings.html:98
+ msgid "Mon"
+ msgstr "一"
+ 
+-#: templates/system_settings.html:93
++#: templates/system_settings.html:99
+ msgid "Tue"
+ msgstr "二"
+ 
+-#: templates/system_settings.html:94
++#: templates/system_settings.html:100
+ msgid "Wed"
+ msgstr "三"
+ 
+-#: templates/system_settings.html:95
++#: templates/system_settings.html:101
+ msgid "Thu"
+ msgstr "四"
+ 
+-#: templates/system_settings.html:96
++#: templates/system_settings.html:102
+ msgid "Fri"
+ msgstr "五"
+ 
+-#: templates/system_settings.html:97
++#: templates/system_settings.html:103
+ msgid "Sat"
+ msgstr "六"
+ 
+-#: templates/system_settings.html:140
++#: templates/system_settings.html:145
+ msgid "Local backup location"
+ msgstr "本地备份地点"
+ 
+-#: templates/system_settings.html:148
++#: templates/system_settings.html:146
+ msgid "Remote backup FTP Setting"
+ msgstr "异地备份FTP设置"
+ 
+-#: templates/system_settings.html:149
++#: templates/system_settings.html:148 templates/system_settings.html.py:149
+ msgid "HOST"
+ msgstr "主机"
+ 
+ #: templates/system_settings.html:150
++msgid "PORT"
++msgstr "连接埠"
++
++#: templates/system_settings.html:151
+ msgid "USERNAME"
+ msgstr "使用者名称"
+ 
+-#: templates/system_settings.html:151
++#: templates/system_settings.html:152
+ msgid "PASSWORD"
+ msgstr "密码"
+ 
+-#: templates/system_settings.html:152
+-msgid "PORT"
+-msgstr "连接埠"
+-
+ #: templates/system_settings.html:153
+ msgid "Connect Test"
+ msgstr "测试连线"
+ 
+-#: templates/system_settings.html:163
++#: templates/system_settings.html:176
+ msgid "System Log"
+ msgstr "系统纪录"
+ 
+-#: templates/system_settings.html:167
++#: templates/system_settings.html:180
+ msgid "Log count limit"
+ msgstr "Log笔数限制"
+ 
+-#: templates/system_settings.html:169
++#: templates/system_settings.html:182
+ msgid "if the logs exceeds limit"
+ msgstr "若超过笔数限制"
+ 
+-#: templates/system_settings.html:169
++#: templates/system_settings.html:182
+ msgid "keep"
+ msgstr "保留"
+ 
+-#: templates/system_settings.html:171
++#: templates/system_settings.html:184
+ msgid "month data"
+ msgstr "月资料"
+ 
+-#: templates/system_settings.html:171
++#: templates/system_settings.html:184
+ msgid "others will be remove."
+ msgstr "其他移除"
+ 
+-#: templates/system_settings.html:172
++#: templates/system_settings.html:185
+ #, python-format
+ msgid "In limit duration, the logs can be record to 150%% amount."
+ msgstr "若期限内超过笔数限制，最多可以纪录到1.5倍的笔数限制。"
+ 
+-#: templates/system_settings.html:173
++#: templates/system_settings.html:186
+ #, python-format
+ msgid ""
+ "Over 150%% amount, system will keep latest logs, and remove the other older "
+@@ -739,11 +744,11 @@ msgid ""
+ msgstr ""
+ "若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
+ 
+-#: templates/system_settings.html:176
++#: templates/system_settings.html:189
+ msgid "Save user photo image"
+ msgstr "储存建档资料"
+ 
+-#: templates/system_settings.html:179
++#: templates/system_settings.html:192
+ msgid "Save FR recognition photo image"
+ msgstr "储存脸部辨识成功照片"
+ 
+@@ -751,11 +756,11 @@ msgstr "储存脸部辨识成功照片"
+ msgid "System log List"
+ msgstr "系统事件纪录"
+ 
+-#: templates/systemlog_list.html:91
++#: templates/systemlog_list.html:90
+ msgid "Notes"
+ msgstr "摘要"
+ 
+-#: templates/systemlog_list.html:95
++#: templates/systemlog_list.html:94
+ msgid "Date/Time"
+ msgstr "日期时间"
+ 
+@@ -764,7 +769,7 @@ msgstr "日期时间"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:81
++#: templates/user_add.html:39 templates/user_list.html.py:88
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帐号"
+@@ -782,7 +787,7 @@ msgstr "密码"
+ msgid "Confirm password"
+ msgstr "确认密码"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:92
++#: templates/user_add.html:84 templates/user_list.html.py:103
+ #: templates/user_update.html:81
+ msgid "Role"
+ msgstr "角色"
+@@ -803,7 +808,7 @@ msgstr "设备管理"
+ msgid "User Group Edit"
+ msgstr "使用者群组修改"
+ 
+-#: templates/user_group_list.html:62
++#: templates/user_group_list.html:72
+ msgid "No"
+ msgstr "编号"
+ 
+@@ -815,14 +820,14 @@ msgstr "群组成员管理"
+ msgid "Create new account"
+ msgstr "建立新帐号"
+ 
+-#: templates/user_list.html:101
+-msgid "UpdateDate"
+-msgstr "更新时间"
+-
+-#: templates/user_list.html:106 templates/user_setting.html.py:66
++#: templates/user_list.html:99 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "电子信箱"
+ 
++#: templates/user_list.html:111
++msgid "UpdateDate"
++msgstr "更新时间"
++
+ #: templates/user_setting.html:23 templates/user_setting.html.py:29
+ msgid "Setting"
+ msgstr "设置"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index ff8dc9c..b671873 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-06-16 13:44+0800\n"
++"POT-Creation-Date: 2016-07-14 16:30+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -71,15 +71,15 @@ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+ #: templates/dashboard.html:152 templates/dashboard.html.py:170
+-#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:63
+-#: templates/fruserlog_list.html:93 templates/role_list.html.py:81
+-#: templates/systemlog_list.html:81 templates/user_list.html.py:77
++#: templates/fruser_list.html:99 templates/frusergroups_list.html.py:72
++#: templates/fruserlog_list.html:93 templates/role_list.html.py:89
++#: templates/systemlog_list.html:81 templates/user_list.html.py:85
+ msgid "No."
+ msgstr "編號"
+ 
+ #: templates/dashboard.html:156 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:73
+-#: templates/fruserlog_list.html:105
++#: templates/device_edit.html:53 templates/device_list.html.py:83
++#: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "設備名稱"
+ 
+@@ -104,13 +104,13 @@ msgid "Device add"
+ msgstr "新增設備"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:162 templates/frusergroup_devices.html.py:117
+-#: templates/user_group_devices.html:117
++#: templates/device_list.html:173 templates/frusergroup_devices.html.py:141
++#: templates/user_group_devices.html:141
+ msgid "Device"
+ msgstr "設備"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:173 templates/fruser_edit.html.py:101
++#: templates/device_settings.html:252 templates/fruser_edit.html.py:101
+ #: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
+ #: templates/role_add.html:46 templates/role_permission.html.py:37
+ #: templates/role_rename.html:42 templates/user_add.html.py:96
+@@ -120,10 +120,11 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:174 templates/fruser_edit.html.py:102
++#: templates/device_settings.html:253 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+-#: templates/logsetting.html:85 templates/role_add.html.py:47
++#: templates/logsetting.html:87 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
++#: templates/system_settings.html:159 templates/system_settings.html.py:196
+ #: templates/user_add.html:97 templates/user_group_add.html.py:49
+ #: templates/user_group_edit.html:66 templates/user_setting.html.py:119
+ #: templates/user_update.html:94
+@@ -151,7 +152,7 @@ msgstr "FR群組管理"
+ msgid "Device parameter"
+ msgstr "設備參數"
+ 
+-#: templates/device_edit.html:191
++#: templates/device_edit.html:181
+ msgid "Parameter Settings"
+ msgstr "設定參數"
+ 
+@@ -173,34 +174,34 @@ msgstr "搜尋群組"
+ msgid "Add"
+ msgstr "新增"
+ 
+-#: templates/device_frusergroups.html:88
++#: templates/device_frusergroups.html:99
+ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/device_frusergroups.html:95 templates/device_list.html.py:107
+-#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:81
+-#: templates/role_list.html:114 templates/user_group_devices.html.py:98
+-#: templates/user_group_list.html:80 templates/user_group_members.html:98
+-#: templates/user_list.html.py:110
++#: templates/device_frusergroups.html:106 templates/device_list.html.py:119
++#: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
++#: templates/role_list.html:121 templates/user_group_devices.html.py:110
++#: templates/user_group_list.html:90 templates/user_group_members.html:110
++#: templates/user_list.html.py:116
+ msgid "Delete"
+ msgstr "刪除"
+ 
+-#: templates/device_frusergroups.html:114 templates/fruser_list.html.py:114
++#: templates/device_frusergroups.html:137 templates/fruser_list.html.py:113
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+-#: templates/frusergroups_list.html:68 templates/user_group_add.html.py:31
+-#: templates/user_group_edit.html:48 templates/user_group_list.html.py:67
++#: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
++#: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+ msgid "Group"
+ msgstr "群組"
+ 
+-#: templates/device_frusergroups.html:141 templates/device_list.html.py:162
+-#: templates/fruser_list.html:185 templates/frusergroup_devices.html.py:144
+-#: templates/frusergroup_member.html:144 templates/frusergroups_list.html:107
+-#: templates/user_group_devices.html:144 templates/user_group_list.html:107
+-#: templates/user_group_members.html:144 templates/user_list.html.py:134
++#: templates/device_frusergroups.html:163 templates/device_list.html.py:173
++#: templates/fruser_list.html:191 templates/frusergroup_devices.html.py:167
++#: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
++#: templates/user_group_devices.html:167 templates/user_group_list.html:116
++#: templates/user_group_members.html:167 templates/user_list.html.py:140
+ msgid "Confirm to delete"
+ msgstr "您是否確認要刪除"
+ 
+-#: templates/device_frusergroups.html:141
++#: templates/device_frusergroups.html:163
+ msgid "from this device"
+ msgstr "設備"
+ 
+@@ -217,51 +218,51 @@ msgstr "設備管理"
+ msgid "Create new device"
+ msgstr "建立新設備"
+ 
+-#: templates/device_list.html:78
++#: templates/device_list.html:88
+ msgid "Status"
+ msgstr "狀態"
+ 
+-#: templates/device_list.html:91
++#: templates/device_list.html:101
+ msgid "Sync time"
+ msgstr "同步時間"
+ 
+-#: templates/device_list.html:99
++#: templates/device_list.html:111
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:100
++#: templates/device_list.html:112
+ msgid "Reject"
+ msgstr "拒絕"
+ 
+-#: templates/device_list.html:105 templates/fruser_list.html.py:131
+-#: templates/frusergroups_list.html:80 templates/user_group_list.html.py:79
++#: templates/device_list.html:117 templates/fruser_list.html.py:131
++#: templates/frusergroups_list.html:89 templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "編輯"
+ 
+-#: templates/device_list.html:106 templates/menu.html.py:39
++#: templates/device_list.html:118 templates/menu.html.py:39
+ #: templates/system_settings.html:10 templates/system_settings.html.py:19
+ #: templates/system_settings.html:25
+ msgid "Settings"
+ msgstr "設定"
+ 
+-#: templates/device_settings.html:8 templates/device_settings.html.py:18
+-#: templates/device_settings.html:25
++#: templates/device_settings.html:8 templates/device_settings.html.py:19
++#: templates/device_settings.html:26
+ msgid "Device Settings"
+ msgstr "設備設定"
+ 
+-#: templates/device_settings.html:33
++#: templates/device_settings.html:34
+ msgid "Device parameter setup"
+ msgstr "建立設備參數"
+ 
+-#: templates/device_settings.html:163
++#: templates/device_settings.html:242
+ msgid "en"
+ msgstr "英文"
+ 
+-#: templates/device_settings.html:164
++#: templates/device_settings.html:243
+ msgid "zh-cn"
+ msgstr "簡體中文"
+ 
+-#: templates/device_settings.html:165
++#: templates/device_settings.html:244
+ msgid "zh-tw"
+ msgstr "繁體中文"
+ 
+@@ -274,17 +275,17 @@ msgstr "修改用戶資訊"
+ msgid "Fruser"
+ msgstr "設備使用者"
+ 
+-#: templates/fruser_edit.html:39 templates/fruser_list.html.py:104
+-#: templates/fruserlog_list.html:97
++#: templates/fruser_edit.html:39 templates/fruser_list.html.py:103
++#: templates/fruserlog_list.html:96
+ msgid "FRUserId"
+ msgstr "工號"
+ 
+-#: templates/fruser_edit.html:43 templates/fruser_list.html.py:109
+-#: templates/frusergroup_devices.html:91 templates/frusergroup_member.html:91
+-#: templates/fruserlog_list.html:101 templates/user_add.html.py:48
+-#: templates/user_group_devices.html:91 templates/user_group_members.html:91
+-#: templates/user_list.html.py:88 templates/user_setting.html:54
+-#: templates/user_update.html.py:47
++#: templates/fruser_edit.html:43 templates/fruser_list.html.py:108
++#: templates/frusergroup_devices.html:102
++#: templates/frusergroup_member.html:102 templates/fruserlog_list.html:100
++#: templates/user_add.html.py:48 templates/user_group_devices.html:102
++#: templates/user_group_members.html:102 templates/user_list.html.py:95
++#: templates/user_setting.html:54 templates/user_update.html.py:47
+ msgid "Name"
+ msgstr "姓名"
+ 
+@@ -335,11 +336,11 @@ msgstr "關閉"
+ msgid "Upload"
+ msgstr "上傳"
+ 
+-#: templates/fruser_list.html:119 templates/role_list.html.py:101
++#: templates/fruser_list.html:118 templates/role_list.html.py:108
+ msgid "Create Date"
+ msgstr "建立時間"
+ 
+-#: templates/fruser_list.html:124
++#: templates/fruser_list.html:123
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
+@@ -386,9 +387,9 @@ msgstr "新增設備"
+ msgid "Search Device"
+ msgstr "搜尋設備"
+ 
+-#: templates/frusergroup_devices.html:144
+-#: templates/frusergroup_member.html:144 templates/user_group_devices.html:144
+-#: templates/user_group_list.html:107 templates/user_group_members.html:144
++#: templates/frusergroup_devices.html:167
++#: templates/frusergroup_member.html:167 templates/user_group_devices.html:167
++#: templates/user_group_list.html:116 templates/user_group_members.html:167
+ msgid "from this group"
+ msgstr "群組"
+ 
+@@ -408,7 +409,7 @@ msgstr "建立新成員"
+ msgid "Search User"
+ msgstr "搜尋使用者"
+ 
+-#: templates/frusergroup_member.html:117 templates/user_group_members.html:117
++#: templates/frusergroup_member.html:141 templates/user_group_members.html:141
+ msgid "User"
+ msgstr "使用者"
+ 
+@@ -421,11 +422,11 @@ msgstr "設備使用者群組管理"
+ msgid "Create new group"
+ msgstr "建立新群組"
+ 
+-#: templates/frusergroups_list.html:73 templates/user_group_list.html.py:72
++#: templates/frusergroups_list.html:81 templates/user_group_list.html.py:81
+ msgid "Users"
+ msgstr "使用者"
+ 
+-#: templates/frusergroups_list.html:107
++#: templates/frusergroups_list.html:115
+ msgid "group"
+ msgstr "群組"
+ 
+@@ -434,11 +435,11 @@ msgstr "群組"
+ msgid "FRUser Log List"
+ msgstr "設備使用者登入紀錄"
+ 
+-#: templates/fruserlog_list.html:112 templates/user_list.html.py:96
++#: templates/fruserlog_list.html:111 templates/user_list.html.py:107
+ msgid "CreateDate"
+ msgstr "建立時間"
+ 
+-#: templates/fruserlog_list.html:116
++#: templates/fruserlog_list.html:115
+ msgid "Note"
+ msgstr "摘要"
+ 
+@@ -563,11 +564,11 @@ msgstr "確認"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:36 templates/role_list.html.py:86
++#: templates/role_add.html:36 templates/role_list.html.py:93
+ msgid "Role Name"
+ msgstr "角色名稱"
+ 
+-#: templates/role_add.html:40 templates/role_list.html.py:91
++#: templates/role_add.html:40 templates/role_list.html.py:98
+ msgid "Sort"
+ msgstr "排序"
+ 
+@@ -584,19 +585,19 @@ msgstr "建立新角色"
+ msgid "Role Permission"
+ msgstr "角色權限"
+ 
+-#: templates/role_list.html:96 templates/systemlog_list.html.py:86
++#: templates/role_list.html:103 templates/systemlog_list.html.py:85
+ msgid "Category"
+ msgstr "類別"
+ 
+-#: templates/role_list.html:106
++#: templates/role_list.html:113
+ msgid "Update Date"
+ msgstr "更新時間"
+ 
+-#: templates/role_list.html:113
++#: templates/role_list.html:120
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+-#: templates/role_list.html:138
++#: templates/role_list.html:144
+ msgid "Confirm to delete this Role"
+ msgstr "您是否確認要刪除這個角色"
+ 
+@@ -622,116 +623,120 @@ msgstr "新名稱"
+ msgid "Backup Scheduling"
+ msgstr "備份排程"
+ 
+-#: templates/system_settings.html:37
++#: templates/system_settings.html:38
+ msgid "Manually"
+ msgstr "手動備份"
+ 
+-#: templates/system_settings.html:42
++#: templates/system_settings.html:39
++msgid "Instantly backup after clicking save"
++msgstr "點擊儲存後立即備份"
++
++#: templates/system_settings.html:44
+ msgid "Automatic"
+ msgstr "自動備份"
+ 
+-#: templates/system_settings.html:50
++#: templates/system_settings.html:49
+ msgid "Every Month"
+ msgstr "每月"
+ 
+-#: templates/system_settings.html:51
++#: templates/system_settings.html:50
+ msgid "Day"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:51
++#: templates/system_settings.html:50
+ msgid "Time"
+ msgstr "時間"
+ 
+-#: templates/system_settings.html:90
++#: templates/system_settings.html:96
+ msgid "Every Week"
+ msgstr "每週"
+ 
+-#: templates/system_settings.html:91
++#: templates/system_settings.html:97
+ msgid "Sun"
+ msgstr "日"
+ 
+-#: templates/system_settings.html:92
++#: templates/system_settings.html:98
+ msgid "Mon"
+ msgstr "一"
+ 
+-#: templates/system_settings.html:93
++#: templates/system_settings.html:99
+ msgid "Tue"
+ msgstr "二"
+ 
+-#: templates/system_settings.html:94
++#: templates/system_settings.html:100
+ msgid "Wed"
+ msgstr "三"
+ 
+-#: templates/system_settings.html:95
++#: templates/system_settings.html:101
+ msgid "Thu"
+ msgstr "四"
+ 
+-#: templates/system_settings.html:96
++#: templates/system_settings.html:102
+ msgid "Fri"
+ msgstr "五"
+ 
+-#: templates/system_settings.html:97
++#: templates/system_settings.html:103
+ msgid "Sat"
+ msgstr "六"
+ 
+-#: templates/system_settings.html:140
++#: templates/system_settings.html:145
+ msgid "Local backup location"
+ msgstr "本地備份地點"
+ 
+-#: templates/system_settings.html:148
++#: templates/system_settings.html:146
+ msgid "Remote backup FTP Setting"
+ msgstr "異地備份FTP設定"
+ 
+-#: templates/system_settings.html:149
++#: templates/system_settings.html:148 templates/system_settings.html.py:149
+ msgid "HOST"
+ msgstr "主機"
+ 
+ #: templates/system_settings.html:150
++msgid "PORT"
++msgstr "連接埠"
++
++#: templates/system_settings.html:151
+ msgid "USERNAME"
+ msgstr "使用者名稱"
+ 
+-#: templates/system_settings.html:151
++#: templates/system_settings.html:152
+ msgid "PASSWORD"
+ msgstr "密碼"
+ 
+-#: templates/system_settings.html:152
+-msgid "PORT"
+-msgstr "連接埠"
+-
+ #: templates/system_settings.html:153
+ msgid "Connect Test"
+ msgstr "測試連線"
+ 
+-#: templates/system_settings.html:163
++#: templates/system_settings.html:176
+ msgid "System Log"
+ msgstr "系統紀錄"
+ 
+-#: templates/system_settings.html:167
++#: templates/system_settings.html:180
+ msgid "Log count limit"
+ msgstr "Log筆數限制"
+ 
+-#: templates/system_settings.html:169
++#: templates/system_settings.html:182
+ msgid "if the logs exceeds limit"
+ msgstr "若超過筆數限制"
+ 
+-#: templates/system_settings.html:169
++#: templates/system_settings.html:182
+ msgid "keep"
+ msgstr "保留"
+ 
+-#: templates/system_settings.html:171
++#: templates/system_settings.html:184
+ msgid "month data"
+ msgstr "月資料"
+ 
+-#: templates/system_settings.html:171
++#: templates/system_settings.html:184
+ msgid "others will be remove."
+ msgstr "其他移除"
+ 
+-#: templates/system_settings.html:172
++#: templates/system_settings.html:185
+ #, python-format
+ msgid "In limit duration, the logs can be record to 150%% amount."
+ msgstr "若期限內超過筆數限制，最多可以紀錄到1.5倍的筆數限制。"
+ 
+-#: templates/system_settings.html:173
++#: templates/system_settings.html:186
+ #, python-format
+ msgid ""
+ "Over 150%% amount, system will keep latest logs, and remove the other older "
+@@ -739,11 +744,11 @@ msgid ""
+ msgstr ""
+ "若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
+ 
+-#: templates/system_settings.html:176
++#: templates/system_settings.html:189
+ msgid "Save user photo image"
+ msgstr "儲存建檔資料"
+ 
+-#: templates/system_settings.html:179
++#: templates/system_settings.html:192
+ msgid "Save FR recognition photo image"
+ msgstr "儲存臉部辨識成功照片"
+ 
+@@ -751,11 +756,11 @@ msgstr "儲存臉部辨識成功照片"
+ msgid "System log List"
+ msgstr "系統事件紀錄"
+ 
+-#: templates/systemlog_list.html:91
++#: templates/systemlog_list.html:90
+ msgid "Notes"
+ msgstr "摘要"
+ 
+-#: templates/systemlog_list.html:95
++#: templates/systemlog_list.html:94
+ msgid "Date/Time"
+ msgstr "日期時間"
+ 
+@@ -764,7 +769,7 @@ msgstr "日期時間"
+ msgid "User add"
+ msgstr "使用者新增"
+ 
+-#: templates/user_add.html:39 templates/user_list.html.py:81
++#: templates/user_add.html:39 templates/user_list.html.py:88
+ #: templates/user_setting.html:41 templates/user_update.html.py:38
+ msgid "Account"
+ msgstr "帳號"
+@@ -782,7 +787,7 @@ msgstr "密碼"
+ msgid "Confirm password"
+ msgstr "確認密碼"
+ 
+-#: templates/user_add.html:84 templates/user_list.html.py:92
++#: templates/user_add.html:84 templates/user_list.html.py:103
+ #: templates/user_update.html:81
+ msgid "Role"
+ msgstr "角色"
+@@ -803,7 +808,7 @@ msgstr "設備管理"
+ msgid "User Group Edit"
+ msgstr "使用者群組修改"
+ 
+-#: templates/user_group_list.html:62
++#: templates/user_group_list.html:72
+ msgid "No"
+ msgstr "編號"
+ 
+@@ -815,14 +820,14 @@ msgstr "群組成員管理"
+ msgid "Create new account"
+ msgstr "建立新帳號"
+ 
+-#: templates/user_list.html:101
+-msgid "UpdateDate"
+-msgstr "更新時間"
+-
+-#: templates/user_list.html:106 templates/user_setting.html.py:66
++#: templates/user_list.html:99 templates/user_setting.html.py:66
+ msgid "Email"
+ msgstr "電子信箱"
+ 
++#: templates/user_list.html:111
++msgid "UpdateDate"
++msgstr "更新時間"
++
+ #: templates/user_setting.html:23 templates/user_setting.html.py:29
+ msgid "Setting"
+ msgstr "設定"
+-- 
+1.9.1
+

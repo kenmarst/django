@@ -1,0 +1,47 @@
+From 886055561c4c4ebbc5ed4049f9f379b9b6070f66 Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Tue, 17 May 2016 17:55:59 +0800
+Subject: [PATCH 039/443] Fix table bug
+
+Bug fix - table always show scroll.
+---
+ templates/device_frusergroups.html | 2 +-
+ templates/device_list.html         | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/templates/device_frusergroups.html b/templates/device_frusergroups.html
+index bf8f446..9e333f6 100644
+--- a/templates/device_frusergroups.html
++++ b/templates/device_frusergroups.html
+@@ -86,7 +86,7 @@
+                     {
+                         formatter: function(value, row) {
+                             return ' \
+-                                <div class="row" align="center"> \
++                                <div align="center"> \
+                                     <button class="btn btn-default" onclick=delete_group("' + row.OId + '","' +row.Name+ '")>Delete</button> \
+                                 </div>';
+                         }
+diff --git a/templates/device_list.html b/templates/device_list.html
+index f66bf30..97c3051 100644
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -94,13 +94,13 @@
+                         formatter: function(value, row) {
+                             if (row.State == 'Proposed') {
+                                 return ' \
+-                                    <div class="row" align="center"> \
++                                    <div align="center"> \
+                                         <button class="btn btn-default" onclick=accept_device("' + row.OId + '","' +row.Name+ '")>Accept</button> \
+                                         <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Reject</button> \
+                                     </div>';
+                             } else {
+                                 return ' \
+-                                    <div class="row" align="center"> \
++                                    <div align="center"> \
+                                         <button class="btn btn-default" onclick="location.href=\'/device_edit?OId=' + row.OId + '\'">Edit</button> \
+                                         <button class="btn btn-default" onclick="location.href=\'/device_settings?OId=' + row.OId + '\'">Settings</button> \
+                                         <button class="btn btn-default" onclick=delete_device("' + row.OId + '","' +row.Name+ '")>Delete</button> \
+-- 
+1.9.1
+

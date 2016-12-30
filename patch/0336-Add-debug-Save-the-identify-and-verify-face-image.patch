@@ -1,0 +1,69 @@
+From b80ec5fa36a303c2462694239ba4e7237d490898 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 27 Oct 2016 20:22:38 +0800
+Subject: [PATCH 336/443] Add debug: Save the identify and verify face image.
+
+---
+ api/recognition.py | 32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index e03320c..bedbde9 100755
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -36,6 +36,26 @@ def face_save(request, id):
+         ).write(request.FILES.get('image', '').file.getvalue())
+ 
+ @csrf_exempt
++def face_save_debug(request, device, id, fun):
++    if settings.DEBUG == False
++        return
++    print('--------------------------------------------face debug now')
++    FaceDir = ''.join([
++        settings.PIC_DIR_FACE, device,
++        id, fun,
++        '_',
++        datetime.now().strftime("%Y%m%d%H%M%S"),
++        '.jpg'
++    ])
++    open(
++        os.path.join(
++            settings.MEDIA_DIR,
++            FaceDir
++            ),
++        'wb+'
++    ).write(request.FILES.get('image', '').file.getvalue())
++
++@csrf_exempt
+ def face_verify(request):
+     devices_ip = []
+     if request.method == 'POST':
+@@ -49,6 +69,12 @@ def face_verify(request):
+                     #print(res_upload)#
+                     if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+                         img_id = res_upload['img_id']
++
++                        face_save_debug(request, '_' + ip_device.Name + '_',
++                            '_' + fruser.FRUserId + '_',
++                            '_' + 'face_verify' + '_',
++                        )
++
+                         # get face id
+                         res_face_detect = TCIT_API("/face/detection/detect/", data = {'img_id' : img_id})
+                         if res_face_detect['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
+@@ -99,6 +125,12 @@ def face_identify(request):
+                 res_upload =  sendImg(request)
+ 
+                 if res_upload['state'] == TCIT_res_state["STATE_SUCCESSFUL"]:
++
++                    face_save_debug(request, '_' + ip_device.Name + '_',
++                        '_None_',
++                        '_' + 'face_identify' + '_',
++                    )
++
+                     # TCIT : post img_id to get face_id
+                     res_face_detect = TCIT_API(
+                         '/face/detection/detect',
+-- 
+1.9.1
+

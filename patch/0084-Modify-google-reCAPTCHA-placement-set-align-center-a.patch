@@ -1,0 +1,34 @@
+From 0891e1983faf23d758e2fdcacae34b2445358e03 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 25 May 2016 16:22:07 +0800
+Subject: [PATCH 084/443] Modify "google reCAPTCHA" placement, set align center
+ and constrain.
+
+---
+ templates/login.html | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/templates/login.html b/templates/login.html
+index 00fb3b7..eee1535 100644
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -20,7 +20,15 @@
+ 
+ 					<div class="pwstrength_viewport_progress"></div>
+ 
+-					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY" style="transform:scale(0.8);-webkit-transform:scale(0.8);transform-origin:0 0;-webkit-transform-origin:0 0;" align="center"></div>
++					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY"
++					     style="-moz-transform:scale(1);
++					           -webkit-transform:scale(1);
++					           -webkit-transform:scale(1);
++					           -o-transform:scale(1);
++					           -ms-transform:scale(1);
++					           transform:scale(1);"
++					     align="center">
++					</div>
+ 					<br>
+ 					<iframe src="login_i18n" style="width:160px;height:40px" frameborder="0" scrolling="no"></iframe>
+ 					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">Sign in</button>
+-- 
+1.9.1
+

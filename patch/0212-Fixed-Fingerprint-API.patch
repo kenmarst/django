@@ -1,0 +1,135 @@
+From d9f80dec7a100f34a2d7dc4bb3f7d7f79008865e Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Mon, 1 Aug 2016 17:36:03 +0800
+Subject: [PATCH 212/443] Fixed Fingerprint API
+
+---
+ api/fingerprint.py | 56 ++++++++++++++++++++++++++++--------------------------
+ api/views.py       | 10 ----------
+ 2 files changed, 29 insertions(+), 37 deletions(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index caf2a51..85f5e04 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -25,33 +25,31 @@ def verify(request):
+                 check = s.connect((HOST, PORT))
+                 if (check == None):
+                     fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
+-                    if fruser.PersonId:
+-                        FingerDir = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_verify.bmp'])
+ 
+-                        open(
+-                            os.path.join(settings.MEDIA_DIR,FingerDir),
+-                            'wb+').write(request.FILES['image'].file.getvalue()
+-                        )
++                    FingerDir = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_verify.bmp'])
+ 
+-                        VerifyUserId = 'V1' + str(settings.FINGER_LEVEL[ip_device.FingerBioScore]) + '*' + fruser.FRUserId
+-                        if (not 0):
+-                            s.send(VerifyUserId.encode())
++                    open(
++                        os.path.join(settings.MEDIA_DIR,FingerDir),
++                        'wb+').write(request.FILES['image'].file.getvalue()
++                    )
+ 
+-                        data = s.recv(4)
+-                        s.close()
+-                        if data.decode() == 'Pass' :
+-                            for i in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
+-                                print(i.GroupOId.OId)
+-                                for j in i.GroupOId.frusergroupdevices_set.filter(GroupOId = i.GroupOId.OId):
+-                                    print(j.DeviceOId.IP)
+-                                    if ip_device.IP == j.DeviceOId.IP:
+-                                        Fruserlogs.objects.create(FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceName = ip_device.Name, LogContent = 'Face verify pass')
+-                                        return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
+-                            raise Exception('No accept device in frusergroup')
+-                        else:
+-                            raise Exception('Fingerprint verify fail')
++                    VerifyUserId = 'V1' + str(settings.FINGER_LEVEL[ip_device.FingerBioScore]) + '*' + fruser.FRUserId
++                    if (not 0):
++                        s.send(VerifyUserId.encode())
++
++                    data = s.recv(4)
++                    s.close()
++                    if data.decode() == 'Pass' :
++                        for i in fruser.frusergroupmember_set.filter(FRUserOId = fruser.OId):
++                            print(i.GroupOId.OId)
++                            for j in i.GroupOId.frusergroupdevices_set.filter(GroupOId = i.GroupOId.OId):
++                                print(j.DeviceOId.IP)
++                                if ip_device.IP == j.DeviceOId.IP:
++                                    Fruserlogs.objects.create(FRUserId = fruser.FRUserId, FRUserName = fruser.Name, DeviceName = ip_device.Name, LogContent = 'Face verify pass')
++                                    return JsonResponse(dict(ChainMap(result_pass, {'FRUserId' : fruser.FRUserId})))
++                        raise Exception('No accept device in frusergroup')
+                     else:
+-                        raise Exception('No PersonId')
++                        raise Exception('Fingerprint verify fail')
+                 else:
+                     raise Exception('Need connect Finger Deamon')
+             else:
+@@ -77,8 +75,10 @@ def add(request):
+                     fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'))
+                     FingerDir_1 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register1.bmp'])
+                     FingerDir_2 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_register2.bmp'])
++                    FingerPath1 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_1))
++                    FingerPath2 = os.path.isfile(os.path.join(settings.MEDIA_DIR, FingerDir_2))
+ 
+-                    if (os.path.exists('media/' + FingerDir_1) == False and os.path.exists('media/' + FingerDir_2) == True) or (os.path.exists('media/' + FingerDir_1) == False and os.path.exists('media/' + FingerDir_2) == False) :
++                    if (FingerPath1 == False and FingerPath2 == True) or (FingerPath1 == False and FingerPath2 == False) :
+                         open(
+                             os.path.join(settings.MEDIA_DIR,FingerDir_1),
+                             'wb+').write(request.FILES['image'].file.getvalue()
+@@ -93,9 +93,10 @@ def add(request):
+                             Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
+                             return JsonResponse(result_success)
+                         else:
++                            os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_1))
+                             raise Exception('Finger add fail')
+ 
+-                    if os.path.exists('media/' + FingerDir_1) == True and os.path.exists('media/' + FingerDir_2) == False :
++                    if FingerPath1 == True and FingerPath2 == False :
+                         open(
+                             os.path.join(settings.MEDIA_DIR,FingerDir_2),
+                             'wb+').write(request.FILES['image'].file.getvalue()
+@@ -111,9 +112,10 @@ def add(request):
+                             Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger add Success')
+                             return JsonResponse(result_success)
+                         else:
++                            os.remove(os.path.join(settings.MEDIA_DIR, FingerDir_2))
+                             raise Exception('Finger add fail')
+ 
+-                    if os.path.exists('media/' + FingerDir_1) == True and os.path.exists('media/' + FingerDir_2) == True :
++                    if FingerPath1 == True and FingerPath2 == True :
+                         s.close()
+                         Systemlogs.objects.create(Category = "Frusers", LogContent = 'Finger already exists')
+                         return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger already exists'})))
+@@ -123,7 +125,7 @@ def add(request):
+                 raise Exception('Need accept')
+         except Exception as error:
+             print(str(error))
+-            Systemlogs.objects.create(DeviceOId = ip_device.OId, DeviceName = ip_device.Name, LogContent = 'Finger add fail : %s' % str(error))
++            Systemlogs.objects.create(LogContent = 'Finger add fail : %s' % str(error))
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+diff --git a/api/views.py b/api/views.py
+index 7e494fd..91ea44a 100644
+--- a/api/views.py
++++ b/api/views.py
+@@ -1,13 +1,3 @@
+ from django.shortcuts import render
+-import os
+-import psutil
+ 
+ # Create your views here.
+-process_name = "FingerprintService"
+-
+-for proc in psutil.process_iter():
+-    # check whether the process name matches
+-    if proc.name() == process_name:
+-        proc.kill()
+-
+-os.system("./FingerprintService")
+-- 
+1.9.1
+

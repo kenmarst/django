@@ -1,0 +1,49 @@
+From 085ef043c3307cb3c1192c7c63e4fbfeee9521fb Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Tue, 13 Sep 2016 10:49:49 +0800
+Subject: [PATCH 277/443] logsetting code fine tune
+
+---
+ logsetting/views.py | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/logsetting/views.py b/logsetting/views.py
+index 95ce4cb..10e939d 100644
+--- a/logsetting/views.py
++++ b/logsetting/views.py
+@@ -10,6 +10,8 @@ import csv, json, os
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_log'
++default_header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++default_symbol="comma"
+ 
+ def logsetting_view(request):
+     login_request = json.loads(check_login(request, permission))
+@@ -22,18 +24,18 @@ def logsetting_view(request):
+                 json_data = json.loads(f.read())
+             if json_data['symbol']:
+                 symbol = json_data['symbol']
+-                header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++                header=default_header[:]
+                 header2=[]
+                 for field in json_data.get('fields'):
+                    header.remove(field)
+                    header2.append(field)
+             else:
+-                header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
+-                symbol = "tab"
++                header=default_header[:]
++                symbol = default_symbol
+         except:
+-              header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++              header=default_header[:]
+               header2=[]
+-              symbol = "tab"
++              symbol = default_symbol
+         return render(request, 'logsetting.html',{'active': 'logsetting', 'symbol': symbol, 'header': header ,'header2' : header2})
+     except:
+         return render(request, 'registration/not_found.html')
+-- 
+1.9.1
+

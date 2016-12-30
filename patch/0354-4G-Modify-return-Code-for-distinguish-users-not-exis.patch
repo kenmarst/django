@@ -1,0 +1,59 @@
+From 83a91a328509860436d8d1e7fe7d6e4d8240acb1 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 10 Nov 2016 18:01:38 +0800
+Subject: [PATCH 354/443] 4G: Modify return 'Code' for distinguish users not
+ exist in 4G or BR06.
+
+---
+ api/user.py | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index dcf2324..368d1d8 100755
+--- a/api/user.py
++++ b/api/user.py
+@@ -1,4 +1,4 @@
+-import json, requests
++import json, requests, os
+ from collections import ChainMap
+ from django.http import JsonResponse
+ from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlogs
+@@ -8,12 +8,14 @@ from .utility import TCIT_API, TCIT_res_state, md5
+ from datetime import datetime
+ from django.conf import settings
+ from django.db.models import Q
+-import os
+ 
+ result_success = {'Result' : 'Success'}
+ result_fail = {'Result' : 'Fail'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
++#4G
++user_4G_not_exist = {'Code' : '0'}
++fruser_exist = {'Code' : '1'}
+ 
+ @csrf_exempt
+ def add(request):
+@@ -39,7 +41,7 @@ def add(request):
+                         Frusers.objects.get(FRUserId = req['FRUserId'])
+                         logContent = '{message_head}Fruser fail to create cause by FRUser already exists'.format(message_head = message_head)
+                         print(logContent)
+-                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++                        return JsonResponse(dict(ChainMap(result_fail, fruser_exist, {'Message' : logContent})))
+                     except ObjectDoesNotExist:
+                         # For 4G UserAdd
+                         if settings.EN_4G:
+@@ -55,8 +57,8 @@ def add(request):
+                             #print(res_4G)
+                             if not res_4G['status'] == settings.SE_4G:
+                                 logContent = '{message_head}4G User does not exist'.format(message_head = message_head)
+-                                return JsonResponse(dict(ChainMap(result_fail, {'Code' : '0'}, {'Message' : logContent})))
+-                        # print("Creating new account now.")
++                                return JsonResponse(dict(ChainMap(result_fail, user_4G_not_exist, {'Message' : logContent})))
++                        # Creating new account now
+                         fruser = Frusers.objects.create(
+                             FRUserId = req['FRUserId'],
+                             Name = req['Name'],
+-- 
+1.9.1
+

@@ -1,0 +1,352 @@
+From eb169b6310df863f0b1f6aa315fcc79456d0cbb0 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Tue, 20 Sep 2016 13:26:23 +0800
+Subject: [PATCH 284/443] Modify LogSettings error message, and update language
+ messages files.
+
+Update language messages files : System Settings page, Log Settings page.
+---
+ locale/zh_CN/LC_MESSAGES/django.po           |  8 ++---
+ locale/zh_TW/LC_MESSAGES/django.po           |  8 ++---
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 46 ++++++++++++++++++----------
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 46 ++++++++++++++++++----------
+ templates/logsetting.html                    |  6 ++--
+ 5 files changed, 69 insertions(+), 45 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index a6b76e9..8e22f4f 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-09 17:46+0800\n"
++"POT-Creation-Date: 2016-09-20 11:29+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:143
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:144
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:146
++#: br06/settings.py:145
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index a6b76e9..8e22f4f 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-09 17:46+0800\n"
++"POT-Creation-Date: 2016-09-20 11:29+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:144
++#: br06/settings.py:143
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:145
++#: br06/settings.py:144
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:146
++#: br06/settings.py:145
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 38e4559..569c740 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-09 17:46+0800\n"
++"POT-Creation-Date: 2016-09-20 11:29+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -122,7 +122,7 @@ msgstr "返回"
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+ #: templates/device_settings.html:301 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+-#: templates/logsetting.html:87 templates/role_add.html.py:47
++#: templates/logsetting.html:106 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
+ #: templates/system_settings.html:162 templates/system_settings.html.py:199
+ #: templates/user_add.html:97 templates/user_group_add.html.py:49
+@@ -222,7 +222,7 @@ msgid "Group"
+ msgstr "群组"
+ 
+ #: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+-#: templates/fruser_list.html:191 templates/frusergroup_devices.html.py:167
++#: templates/fruser_list.html:193 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+ #: templates/user_group_members.html:167 templates/user_list.html.py:140
+@@ -408,19 +408,19 @@ msgstr "建立时间"
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
+-#: templates/fruser_list.html:176
++#: templates/fruser_list.html:177
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正确"
+ 
+-#: templates/fruser_list.html:178
++#: templates/fruser_list.html:179
+ msgid "Please wait for uploading!"
+ msgstr "请等待上传！"
+ 
+-#: templates/fruser_list.html:180
++#: templates/fruser_list.html:181
+ msgid "Fail to import fruser!"
+ msgstr "汇入设备使用者失败"
+ 
+-#: templates/fruser_list.html:207
++#: templates/fruser_list.html:209
+ msgid "Fail to delete fruser"
+ msgstr "删除设备使用者失败"
+ 
+@@ -562,15 +562,15 @@ msgstr "纪录汇出设定"
+ msgid "Separator Options"
+ msgstr "分隔符号"
+ 
+-#: templates/logsetting.html:131
+-msgid "input error"
+-msgstr "输入错误"
++#: templates/logsetting.html:153
++msgid "Please select items."
++msgstr "请选择栏位项目"
+ 
+-#: templates/logsetting.html:151
++#: templates/logsetting.html:173
+ msgid "successfully"
+ msgstr "成功"
+ 
+-#: templates/logsetting.html:153
++#: templates/logsetting.html:175
+ msgid "Fail"
+ msgstr "失败"
+ 
+@@ -941,28 +941,40 @@ msgid "Must select one week day!"
+ msgstr "必须选择一个工作日"
+ 
+ #: templates/system_settings.html:294
++msgid "Must select correct monthly day!"
++msgstr "必须选择正确的月份日期！"
++
++#: templates/system_settings.html:299
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "选择每月 29~31 日，可能无法每月进行自动备份，您确定要继续吗?"
+ 
+-#: templates/system_settings.html:338
++#: templates/system_settings.html:343
+ msgid "Backup successfully"
+ msgstr "备份成功"
+ 
+-#: templates/system_settings.html:340
++#: templates/system_settings.html:345
+ msgid "Backup setting successfully"
+ msgstr "备份设定​​成功"
+ 
+-#: templates/system_settings.html:344
++#: templates/system_settings.html:349
+ msgid "Fail to setting Backup"
+ msgstr "备份设定​​失败"
+ 
+-#: templates/system_settings.html:373
++#: templates/system_settings.html:364
++msgid "Must input correct log limit value!"
++msgstr "必须输入正确的Log笔数限制值！"
++
++#: templates/system_settings.html:369
++msgid "Must input correct month value for log preservation!"
++msgstr "Log的保留月份必须输入正确的值！"
++
++#: templates/system_settings.html:388
+ msgid "Log setting successfully"
+ msgstr "Log设定成功"
+ 
+-#: templates/system_settings.html:376
++#: templates/system_settings.html:391
+ msgid "Fail to setting Log"
+ msgstr "Log设定失败"
+ 
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 2fb7ba8..9769fa6 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-09 17:46+0800\n"
++"POT-Creation-Date: 2016-09-20 11:29+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -122,7 +122,7 @@ msgstr "返回"
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+ #: templates/device_settings.html:301 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+-#: templates/logsetting.html:87 templates/role_add.html.py:47
++#: templates/logsetting.html:106 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
+ #: templates/system_settings.html:162 templates/system_settings.html.py:199
+ #: templates/user_add.html:97 templates/user_group_add.html.py:49
+@@ -222,7 +222,7 @@ msgid "Group"
+ msgstr "群組"
+ 
+ #: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+-#: templates/fruser_list.html:191 templates/frusergroup_devices.html.py:167
++#: templates/fruser_list.html:193 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+ #: templates/user_group_members.html:167 templates/user_list.html.py:140
+@@ -408,19 +408,19 @@ msgstr "建立時間"
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
+-#: templates/fruser_list.html:176
++#: templates/fruser_list.html:177
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正確"
+ 
+-#: templates/fruser_list.html:178
++#: templates/fruser_list.html:179
+ msgid "Please wait for uploading!"
+ msgstr "請等待上傳！"
+ 
+-#: templates/fruser_list.html:180
++#: templates/fruser_list.html:181
+ msgid "Fail to import fruser!"
+ msgstr "匯入設備使用者失敗"
+ 
+-#: templates/fruser_list.html:207
++#: templates/fruser_list.html:209
+ msgid "Fail to delete fruser"
+ msgstr "刪除設備使用者失敗"
+ 
+@@ -562,15 +562,15 @@ msgstr "紀錄匯出設定"
+ msgid "Separator Options"
+ msgstr "分隔符號"
+ 
+-#: templates/logsetting.html:131
+-msgid "input error"
+-msgstr "輸入錯誤"
++#: templates/logsetting.html:153
++msgid "Please select items."
++msgstr "請選擇欄位項目"
+ 
+-#: templates/logsetting.html:151
++#: templates/logsetting.html:173
+ msgid "successfully"
+ msgstr "成功"
+ 
+-#: templates/logsetting.html:153
++#: templates/logsetting.html:175
+ msgid "Fail"
+ msgstr "失敗"
+ 
+@@ -941,28 +941,40 @@ msgid "Must select one week day!"
+ msgstr "必須選擇一個工作日"
+ 
+ #: templates/system_settings.html:294
++msgid "Must select correct monthly day!"
++msgstr "必須選擇正確的月份日期！"
++
++#: templates/system_settings.html:299
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "選擇每月 29~31 日，可能無法每月進行自動備份，您確定要繼續嗎?"
+ 
+-#: templates/system_settings.html:338
++#: templates/system_settings.html:343
+ msgid "Backup successfully"
+ msgstr "備份成功"
+ 
+-#: templates/system_settings.html:340
++#: templates/system_settings.html:345
+ msgid "Backup setting successfully"
+ msgstr "備份設定成功"
+ 
+-#: templates/system_settings.html:344
++#: templates/system_settings.html:349
+ msgid "Fail to setting Backup"
+ msgstr "備份設定失敗"
+ 
+-#: templates/system_settings.html:373
++#: templates/system_settings.html:364
++msgid "Must input correct log limit value!"
++msgstr "必須輸入正確的Log筆數限制值！"
++
++#: templates/system_settings.html:369
++msgid "Must input correct month value for log preservation!"
++msgstr "Log的保留月份必須輸入正確的值！"
++
++#: templates/system_settings.html:388
+ msgid "Log setting successfully"
+ msgstr "Log設定成功"
+ 
+-#: templates/system_settings.html:376
++#: templates/system_settings.html:391
+ msgid "Fail to setting Log"
+ msgstr "Log設定失敗"
+ 
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index 920598f..736ada0 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -95,7 +95,7 @@
+                                                 <select multiple class="form-control" id="select2" style="width:200px;height:150px">
+                                                     {% for i in header2 %}
+                                                      <option value="{{i}}">{{i}}</option>
+-                                                    {% endfor %}    
++                                                    {% endfor %}
+                                                 </select>
+                                             </td>
+                                         </tr>
+@@ -145,12 +145,12 @@
+             var symbol1 = $('input[name=optradio]').filter(":checked").val()
+             var symbol2 = $('input[name=customsymbol]').val()
+ 			$("#select2").children().each(function(){
+-				this.selected = true; 
++				this.selected = true;
+ 			});
+ 			var s = $("#select2").val()
+             symbol = symbol1;
+             if ((symbol1 == 5 && (symbol2 == "") || (symbol2.length > 1)) || (symbol1 == undefined) || s == null) {
+-                alert("{% trans "input error" %}");
++                alert("{% trans "Please select items." %}");
+                 return
+             }
+             if (symbol1 == 5) {
+-- 
+1.9.1
+

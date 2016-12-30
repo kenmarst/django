@@ -1,0 +1,34 @@
+From 2d6d79c36bc5b5ac355bc01689b23bd2da550f51 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 16 Jun 2016 14:44:01 +0800
+Subject: [PATCH 131/443] Modify login CSRF mechanism.
+
+---
+ login/views.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/login/views.py b/login/views.py
+index 6d635f3..b6aed96 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -11,7 +11,7 @@ from .apps import br06_token_generator, encrypt, decrypt
+ from django.core.mail import send_mail
+ from django.views.generic import *
+ from datetime import datetime
+-from django.views.decorators.csrf import csrf_protect
++from django.views.decorators.csrf import csrf_exempt
+ import time, json
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+@@ -88,7 +88,7 @@ def set_client_ip(request):
+         print('set_client_ip error', e)
+ 
+ 
+-@csrf_protect
++@csrf_exempt
+ def login(request):
+     if request.method == "POST":
+         check_result = json.loads(check_user(request))
+-- 
+1.9.1
+

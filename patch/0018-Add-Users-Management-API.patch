@@ -1,0 +1,206 @@
+From 03c98d39231847ad9c1fcfe9c110c813e33ca211 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 28 Apr 2016 15:51:36 +0800
+Subject: [PATCH 018/443] Add Users Management API User Add, User Update, User
+ Delete, User List
+
+---
+ api/user.py | 151 ++++++++++++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 121 insertions(+), 30 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index eb1007b..3291bea 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -3,7 +3,9 @@
+ import json, requests
+ from collections import ChainMap
+ from django.http import JsonResponse
++from .models import Devices, Frusers, Frusergroupmember, Frusergroups, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
++from django.core.exceptions import ObjectDoesNotExist
+ from .utility import TCIT_API
+ 
+ result_success = {'Result' : 'Success'}
+@@ -16,16 +18,48 @@ def add(request):
+     if request.method == 'POST':
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFID', 'State'}
+-            if all(k in req for k in req_key) and all(req.values()):
+-                """
+-                enter code
+-                """
+-                return JsonResponse(result_success)
++            req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFIDCard', 'State', 'Groups'}
++            if all(k in req for k in req_key):
++                if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                    try:
++                        Frusers.objects.get(FRUserId = req['FRUserId'])
++                        logContent = "Frusers Fail to create: This Frusers already exists"
++                        print(logContent)
++                        return JsonResponse(dict(logContent))
++                    except ObjectDoesNotExist:
++                        print("Creating new account now.")
++                        Frusers.objects.create(
++                            FRUserId = req['FRUserId'],
++                            Name = req['Name'],
++                            Gender = req['Gender'],
++                            Age = req['Age'] if not req['Age'] == "" else None,
++                            RFIDCard = req['RFIDCard'],
++                            State = req['State']
++                        )
++                        for i in req['Groups']:
++                            Frusergroupmember.objects.create(
++                                FRUserOId = Frusers.objects.get(FRUserId = req['FRUserId']),
++                                GroupOId = Frusergroups.objects.get(OId = i['OId'])
++                            )
++                        logContent = "Frusers Create Successfully"
++                        return JsonResponse(dict(result_success))
++                else:
++                    logContent = 'Need accept'
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
+-        except Exception as e:
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
++                logContent = 'Request parameter error'
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        except Exception as error:
++            print(str(error))
++            logContent = str(error)
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++        finally:
++            try:
++                print("Writing system log...")
++                Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++            except Exception as error:
++                print(str(error))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+@@ -34,16 +68,35 @@ def update(request):
+     if request.method == 'POST':
+         try:
+             req = json.loads(request.body.decode('utf-8'))
+-            req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFID', 'State'}
+-            if all(k in req for k in req_key) and all(req.values()):
+-                """
+-                enter code
+-                """
+-                return JsonResponse(result_success)
++            req_key = {'FRUserId', 'Name', 'Gender', 'Age', 'RFIDCard', 'State'}
++            if all(k in req for k in req_key):
++                if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                    Frusers.objects.filter(OId = Frusers.objects.get(FRUserId = req['FRUserId']).OId).update(
++                        Name = req['Name'],
++                        Gender = req['Gender'],
++                        Age = req['Age'] if not req['Age'] == "" else None,
++                        RFIDCard = req['RFIDCard'],
++                        State = req['State']
++                    )
++                    logContent = "FRUser Update Successfully"
++                    return JsonResponse(dict(result_success))
++                else:
++                    logContent = 'Need accept'
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
+-        except Exception as e:
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
++                logContent = 'Request parameter error'
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        except Exception as error:
++            print(str(error))
++            logContent = str(error)
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++        finally:
++            try:
++                print("Writing system log...")
++                Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++            except Exception as error:
++                print(str(error))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+@@ -54,14 +107,32 @@ def delete(request):
+             req = json.loads(request.body.decode('utf-8'))
+             req_key = {'FRUserId'}
+             if all(k in req for k in req_key) and all(req.values()):
+-                """
+-                enter code
+-                """
+-                return JsonResponse(result_success)
++                if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                    fruser = Frusers.objects.get(FRUserId = req['FRUserId'])
++                    if fruser:
++                        fruser.delete()
++                        logContent = "FRUser Delete Successfully"
++                        return JsonResponse(dict(result_success))
++                    else:
++                        logContent = "FRUser Delete error"
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++                else:
++                    logContent = 'Need accept'
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+             else:
+-                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
+-        except Exception as e:
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
++                logContent = 'Request parameter error'
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++        except Exception as error:
++            print(str(error))
++            logContent = str(error) + 'Exception'
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++        finally:
++            try:
++                print("Writing system log..." + logContent)
++                Systemlogs.objects.create(Category = "Frusers", LogContent = logContent)
++            except Exception as error:
++                print(str(error))
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+ 
+@@ -69,10 +140,30 @@ def delete(request):
+ def list(request):
+     if request.method == 'POST':
+         try:
+-            """
+-            enter code
+-            """
+-        except Exception as e:
+-            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
++            if Devices.objects.get(IP = request.META['REMOTE_ADDR']).State != 'Proposed':
++                frusers = Frusers.objects.filter(State = "Enable")
++                if frusers:
++                    return JsonResponse(dict(ChainMap(result_success, {
++                        'Number':len(frusers),
++                        'Users': [{
++                            'FRUserId':i.FRUserId,
++                            'Name' : i.Name,
++                            'Gender' : i.Gender,
++                            'Age' : i.Age,
++                            'RFIDCard' : i.RFIDCard,
++                            'State' : i.State,
++                            'Groups' : [{
++                                'Oid' : j.GroupOId.OId,
++                                'Name' : j.GroupOId.Name
++                            } for j in i.frusergroupmember_set.filter(FRUserOId = i.OId)]
++                        } for i in frusers]
++                    })))
++                else:
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Frusers matching query does not exist.'})))
++            else:
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Need accept'})))
++        except Exception as error:
++            print(str(error))
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+-- 
+1.9.1
+

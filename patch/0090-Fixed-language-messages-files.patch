@@ -1,0 +1,521 @@
+From ee5fe232ae697bcf006764ce50a99cbfab860e24 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 25 May 2016 18:46:05 +0800
+Subject: [PATCH 090/443] Fixed language messages files.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 6883 -> 6732 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  59 ++++++++++++---------------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 6883 -> 6732 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  59 ++++++++++++---------------
+ 8 files changed, 54 insertions(+), 68 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 66b29105eeb28138304283c0bdcbf2afa8a1c40f..b37811288fd011a6b3b22af226cf24bd7de51fb5 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc_!##CYRJK}G;6j0GD2
+
+delta 15
+WcmZo-X=0i1mc`V{*lgoRK}G;6eFYi-
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index b17d722..de3f2f4 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 15:43+0800\n"
++"POT-Creation-Date: 2016-05-25 18:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index ea95cd95ddfef3f6b5eacce4d01c907a3d352f11..b37811288fd011a6b3b22af226cf24bd7de51fb5 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc_!##CYRJK}G;6j0GD2
+
+delta 15
+WcmZo-X=0i1mc`V{*mUDZK}G;6cm){%
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index b17d722..de3f2f4 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 15:43+0800\n"
++"POT-Creation-Date: 2016-05-25 18:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 2ca4d7d4f698a30448de1a012241c270eb5f730d..b339fad226d466e1ab6b6f6010a0c1de76e6a2c4 100644
+GIT binary patch
+delta 2739
+zcmZYAe@vBC9LMp)^-6`}O-z0$YLpZjMhYm`2rx{608t_Qff{58mYDgY*wlwMT2^z}
+z5SU{thMP7sjop~mXe`^@S`F%toEv3pBGG29n*C#A>;1X+OMlea{oL1i&hz7(=RD^=
+z_j>j>S>Clcf4ieJlVmb7$+?qw_Ab6CIWf*fV-VF;fN@xa9O^dXG~9-<*ks!W(a-kV
+zsPm8E-PnouVs}K(^-`Ha!zB#hpm`0|(Jh>gQ5>WbXCO^(KHh^FW)Rg;p;>}DZY}b0
+zHD-gk4+G9~u7!#YJZ3w(P#vAdc)W<Z@DS>buHa-G#`XBK?a!VXnSor?fJ^W`tU=w#
+z9<$ZjJ8>%gyR)j`r+n$e%g8m|Rn&}(pr-CNCgC`0013>u20q73L!Fn2nwfmmBPvEc
+zx-#2eW!9pn6LwM2oi(F6I*jz;-asE7M_s5BbzB!}0NtqLPvLAlk8|*AoPob$1&(7q
+zma|YalYM6YH0ED-{3Q*V>hDn<+(g~MALievnV8I%20RnhaSE!Vg{brLP*Yxr^yxOB
+zZloS{-d<FH9%@G34KV+@&<PrJfgaQdPooBK&bBWiA2(nQ;Via)LJj;5s)Ok)obV$-
+zT`vt8yIX|nI2Sq8m77~V+tGyTumyFYw@?G?u<iFzQ~n|D#9n+DlewzyWF_iRm7+RY
+z!<UY)HFsb^6ptEpgXdV0((9w5DeAX|uWb8U)JT6cf3yALrk{D&1*V|Rk2B|)>8SIA
+zX0f@^Y>eo+W-7YCo3^9Fwojot2$`Q*`xoY*Ic$!Zf0;fOg034dlaaBz1-6}w(fa)t
+zTSEm_bHJAH4pu2@Rri}$QP1)=Cg7x*k^QrgCbtavxKeAcLmhwE+K*cMNz{!Es9nGR
+z%hvD%YQ)#g->rSz^s~~!Q*Oqg?kEX$Ub-2y{i{%Gs?4mm_FA(6Jza3OH5@Pxp)TBN
+zcA`2sgHPfGT!(j1=a(@Z+FxnbqRwwZ?SIYMkC^RdPXhC=1J7H-CFEw^5bDGmwtds~
+z`w}A^1yGAC*|yVB#|O;<bG2EH8eo-e*P;4tOl1C5IY>hazJvM~>_we0Xbz*Matzh+
+zpVsc<eXIcoP-`U>b-fkVUTNDqQRf}9?W3scb$e7cQ#phDq+K*`72QdKITtmMRC9@$
+zkNlinIhiPWG&{&#YuJEVfR7P%uCg`4zu#Ja?s2k)EGK%;>jgAXa;fN@o@NaV*i7<C
+znYD>6M0Ye%s;E3cD#=Fj3VD`1Po5?!+_M*+?gNo+w;KxxkK3&vdq^$WOKOP9k_h3S
+z98bZmwCyId9(l>RXUGDgx8p*xjpUF<@+jF);`RG4q@tqdr&p$4yA!2^3N!5<w1%aq
+z*RNi^kC6LGHBotyWRS&V5h*7BE&5MT*+;U-Ce6Q|ze*j+Bc<d4qUWxn1*P&3Ssku9
+z_cE@xx>!rn$vpA`*-li}5nhPlqV+YOq!9f(rjp|4_zIFt@)FraCQ1yIBBB+ZO|&p8
+zh>yHVRF;va$g0r(m|MQKrr5ktD7HN+v?=hN&!4kAD>IZ4m*j8T9$yp+#WzHS7AIbb
+u${y|dWVGYsUygq;dgQ`bU+ZYc2{-cj0NZ0Nue0Mu&wK9whqNu7_0c~+d-Xp6
+
+delta 2844
+zcmZA3drXye9LMn=cmzc*NpU%e1mUH;CKoMlKxSr<*9@%`%?pwjOvI$DgBgpk8(}V|
+z2J;`?1V<fPOJSO;HX}D`PS#A;<Yp@^+-&A@_5Pgm#kPLq`@DX?-}5}b>+?K^?=m~G
+zeC@HG4;^VckwpC6&$&bRQ#c3Gwg~6KunbjIj<HyYT<Z2=G}dAi9<_24dMLM`?r+5b
+z*oJrD&p~~zm&_n4LOH}>w3&?RXdDj4T-1#Vkz3p<9Einc8LFe5W)<qXYUI!DHxHY~
+zFvj_uJ4Hqpw%UmcsE&Ft9&ex;j)@G;C?5M$9)b%o6?MK8wF28w1Fpima6f7ypO{}+
+zeH%v7zxz!Y{ELHb45JnLbcv`H8HQTAO!VS3)By5P17B*cHA_(UzlK_&D%4i(Ms49o
+zcD@dM8hO1{_|20T*gI6mt*8P1h@sexYVa4-byrXWx`w*`1`fdx9*m(l6z{|-I1lII
+z8mx<E{WXAarYWOQD-efT`jMy(rd$0C)QlFH1<0Q(;-DFqp$1Ta>hN9E{RdH7aR?ck
+zYeG%v+ZfhgH?~osjyq6GbRE^uEmQ+xJP;b-Ak+Y2t(=5h;?m3vyqoe2)C88H+Al?I
+z)ecm9ZzGG~s(obCaUH6mPtDU-{{yPSPE<ozQ3Jba<$m0(rH{cEFb+pzIcg$@QCrrC
+z{5d}dUH`S|Yax>p;@tPB8OE}1(u-Q66f2Llawck^x#oO3zrtK=7NhRpYVI`ON8NuQ
+zsLwT6MYDO<yohSxij{9#If9MU029n))OEwnbTiw`Gnbfa%#wiYe>oYwpYPa-I#dS@
+zRz8OLl)tokZ(Q){PBEvV_Hr>MV4>CfkXzh7<j*x){WqxVFR5Pdf3KYg=ZR6rX-JhD
+zW#t^y>of~B)0O5XJO8TrhPli905!3_R<1|g?>A3j;Qc>KMi1FJvmG^%%jWOqpXM#o
+z!*tcbATt@&!32C5r{e<LfokuZoxfmSPT>7l1J~_>0g1tx$6#Pj&2%#xb$y<d3s5Vy
+z9@W9?R({LQ*P8XHhwck2pFv%JK9TiT=Au<}n!nnG*R1>xs^c)eztW4TI0p5rIR`c1
+zb>=qIidLXHe$VP_Q3I|=ZRu$r88z5$Cwfsgg!2`V3Fb&tgOl)C%tbx{?f_~6N6pVr
+z18FkPnCFqVJdoCNEFfkRK6T!g^ub6cCihh!JL5`-`9vO(OKc%ZiTeqC-<4(rxqX~t
+zxyP~0^7?=&O(FFE2G5AkJ)jy(D{&(65K&AN5=DfTnrF@}CbZmq3IfXqfmcaiJf$(j
+z5+Z}Rm(WVxM=T^#2&LtOKE)e}H2wZ-KlDkRPP|C0Bkm!#5?bQ%#41AR5kjBSr&S<n
+z=@$iZ!R>m5{1e1dVmPsym_X>${1h>d$R~yoN(1TN%?f1yJ1iqR*NRikY<!;3&#sa_
+zEPZLSWwv3a<&!as*kI++ID%MX<ps#2=6q{8jJ3)f)Wf462&GLy0>4<i0Jqa~<VF$t
+zDSerEkXS)HNjyV5O1wloMoc64X$d5r!P{vPxtZFDaeY<(tca_jp1h)xEj39|GsE(V
+z3yVv)_?JiR35gt$GH><f4Mim-Ma3Kae?+&1da@>GO!T)5_Imm^SN9y*Tay|WU(*pc
+zJFI8#iLN(~`$xwYh16U~i11e?TnZWAb>eu>kzL(;8hdsh?ymgYbvB<Qce%WRs;+|{
+MyZ@c9sr5Ge3zIMslK=n!
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 7583029..2cd176a 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 15:43+0800\n"
++"POT-Creation-Date: 2016-05-25 18:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -47,7 +47,7 @@ msgstr "关闭"
+ #: templates/device_settings.html:151 templates/frusergroup_add.html.py:48
+ #: templates/frusergroup_edit.html:65 templates/logsetting.html.py:124
+ #: templates/role_add.html:62 templates/role_permission.html.py:38
+-#: templates/role_rename.html:51 templates/user_add.html.py:98
++#: templates/role_rename.html:50 templates/user_add.html.py:98
+ #: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+ #: templates/user_setting.html:119 templates/user_update.html.py:95
+ msgid "Save"
+@@ -101,7 +101,7 @@ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+ #: templates/device_frusergroups.html:87 templates/device_list.html.py:99
+-#: templates/frusergroups_list.html:72 templates/role_list.html.py:100
++#: templates/frusergroups_list.html:72 templates/role_list.html.py:105
+ #: templates/user_group_devices.html:89 templates/user_group_list.html:72
+ #: templates/user_group_members.html:89 templates/user_list.html.py:100
+ msgid "Delete"
+@@ -254,7 +254,7 @@ msgid "Create new group"
+ msgstr "建立新群组"
+ 
+ #: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+-#: templates/role_list.html:67 templates/systemlog_list.html.py:68
++#: templates/role_list.html:72 templates/systemlog_list.html.py:68
+ #: templates/user_list.html:67
+ msgid "No."
+ msgstr "编号"
+@@ -289,8 +289,9 @@ msgid "Languages"
+ msgstr "语言"
+ 
+ #: templates/logsetting.html:8 templates/menu.html.py:36
+-#: templates/user_add.html:8 templates/user_list.html.py:25
+-#: templates/user_list.html:31 templates/user_setting.html.py:8
++#: templates/role_list.html:24 templates/user_add.html.py:8
++#: templates/user_list.html:25 templates/user_list.html.py:31
++#: templates/user_setting.html:8
+ msgid "User List"
+ msgstr "网站使用者管理"
+ 
+@@ -311,12 +312,13 @@ msgstr "系统"
+ msgid "Dashboard"
+ msgstr "系统仪表板"
+ 
+-#: templates/menu.html:37
+-msgid "Group List"
++#: templates/menu.html:37 templates/user_group_list.html.py:10
++#: templates/user_group_list.html:18 templates/user_group_list.html.py:24
++msgid "User Group List"
+ msgstr "网站使用者群组管理"
+ 
+ #: templates/menu.html:38
+-msgid "Role & Permission"
++msgid "Role and Permission"
+ msgstr "角色管理与权限"
+ 
+ #: templates/menu.html:39 templates/user_setting.html.py:23
+@@ -409,7 +411,7 @@ msgid "confirm"
+ msgstr "确认"
+ 
+ #: templates/role_add.html:8 templates/role_list.html.py:10
+-#: templates/role_list.html:30
++#: templates/role_list.html:35
+ msgid "Role List"
+ msgstr "角色管理"
+ 
+@@ -421,45 +423,41 @@ msgstr "增加角色"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:34 templates/role_list.html.py:72
++#: templates/role_add.html:34 templates/role_list.html.py:77
+ msgid "Role Name"
+ msgstr "角色名称"
+ 
+-#: templates/role_add.html:46 templates/role_list.html.py:77
++#: templates/role_add.html:46 templates/role_list.html.py:82
+ msgid "Sort"
+ msgstr "排序"
+ 
+ #: templates/role_add.html:61 templates/role_permission.html.py:37
+-#: templates/role_rename.html:50 templates/user_add.html.py:97
++#: templates/role_rename.html:49 templates/user_add.html.py:97
+ #: templates/user_setting.html:118 templates/user_update.html.py:94
+ msgid "Back"
+ msgstr "返回"
+ 
+-#: templates/role_list.html:19
+-msgid "Role and Permission"
+-msgstr "角色管理与权限"
+-
+-#: templates/role_list.html:24
++#: templates/role_list.html:29
+ msgid "Create new Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_list.html:25
++#: templates/role_list.html:30
+ msgid "Role Permission"
+ msgstr "角色权限"
+ 
+-#: templates/role_list.html:82 templates/systemlog_list.html.py:73
++#: templates/role_list.html:87 templates/systemlog_list.html.py:73
+ msgid "Category"
+ msgstr "类别"
+ 
+-#: templates/role_list.html:87
++#: templates/role_list.html:92
+ msgid "Create Date"
+ msgstr "创立时间"
+ 
+-#: templates/role_list.html:92
++#: templates/role_list.html:97
+ msgid "Update Date"
+ msgstr "更新时间"
+ 
+-#: templates/role_list.html:99
++#: templates/role_list.html:104
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+@@ -480,12 +478,12 @@ msgstr "设备使用者管理"
+ msgid "FR User Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/role_rename.html:8 templates/role_rename.html.py:18
+-#: templates/role_rename.html:24
++#: templates/role_rename.html:8 templates/role_rename.html.py:17
++#: templates/role_rename.html:23
+ msgid "Role Rename"
+ msgstr "角色重新命名"
+ 
+-#: templates/role_rename.html:35
++#: templates/role_rename.html:34
+ msgid "New Name"
+ msgstr "新名称"
+ 
+@@ -545,11 +543,6 @@ msgstr "设备管理"
+ msgid "User Group Edit"
+ msgstr "使用者群组修改"
+ 
+-#: templates/user_group_list.html:10 templates/user_group_list.html.py:18
+-#: templates/user_group_list.html:24
+-msgid "User Group List"
+-msgstr "网站使用者群组管理"
+-
+ #: templates/user_group_list.html:54
+ msgid "No"
+ msgstr "编号"
+@@ -580,8 +573,8 @@ msgstr "确认密码"
+ 
+ #: templates/user_update.html:8 templates/user_update.html.py:23
+ msgid "User Update"
+-msgstr "建立新用户"
++msgstr "更新用户资料"
+ 
+ #: templates/user_update.html:17 templates/user_update.html.py:31
+ msgid "User update"
+-msgstr "建立新用户"
++msgstr "更新用户资料"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index b58c73b521476db1a3f5591f42fb7ad9bd7268b0..1d2f6ce2779ed39f5424bc71d16aefe7e2cbb570 100644
+GIT binary patch
+delta 2739
+zcmZYAe@vBC9LMp)^-6`}O-z0${-C7LFj7FdMu1`p1c(aZ57Zz-u*A$C#il;E*|eI=
+zhQJ(KG2FD7Y3ycMqp@srYc;4pa&DBZiA0;ZYW9zft@r2NFa1$x_j6z8InR%Cp7Wgh
+z+#A{7WO>)){B4fXOp?jaIOk5`xqJAc<it1^jX_jX0mfkwa;V#glW+^hVv}v}M?c$d
+zqRu~#_hJX$k6jTx*F$9j4VN*1{pNL4N4Ie@Msbi%oPspDId~stm_bxWg=PurxYfwV
+z)tC+D9t=3oxfUuq@VM>hM0Ioq<M9&e!UL!~x{Bj*5ZB_*wm*AfWCn6k11`Y_um*J_
+zyUfGZ-hmV8-<?whKjlj&UO}$uuAydR2sL$gFbPLd14v-LHSif`8tS}E)Xe0g9#Jvs
+z(UsZ$Dzg?nov?$7?yMQr(LtmScLaTS0(GGd)N!4t0d%2`KaJDz0?xp%aSHy56*!9Z
+zSk6MxOkOm5Co%uJ<1cB@RDX}^;1=o*{xJVW&BS=VG~lVIj#E$_%|o4+hnn(2q))dF
+zbtCnt^LC^9^H4MLc7XZUg-+6-3v{DKcm_3q^R|5n`M5rF0H?A26KddhQ5{TX;e;Ov
+z>UwF&*xh_o$GOO%uH4-0*^VYuhb^cJy@487yKTRVn)3H?JNDosn9NmmC(BWfsub1H
+zD!z1lt+@>gqIlG(8$8d7l-@-unxbB7_{z4wMUC`F^EcZ+YWkUXU0?$0{5W%#nT|R?
+zXcn96&BlnHYo?+Lyly+%ZTmE;gOK@|wSQsun}g<v`IqTqA?UgRGZ`7Xn`_&-7_Hxb
+zu{Bg+H3w`8?_iapR&}p=4fQPVU;>Vt8reS`X>yB^k1MtII@Iw8t^Js_pF-VOpW5~N
+zzhVtPphkSd{N36|O+PCwJmqE_>W-37=cSuL+rI*}rpnA}Yp*pM(9;EXTEjl`0P4br
+z%??xtXK@*Rf@|<D>ijaML;EYuTGaVXsQrhm{ixYyb|*0ZI`D!uTt;rz4WLfEY1_AK
+zzb`S;Q2@2Ll5IO3b$rk)Fjt!8r~y{lb{(qU#zf{{mHjlN;9IDF!5-8J{pKKQDo0Qq
+z|7q<$-p3kn0JT<9QP*2)?UlB@9d+IT+dhW6UYAE@BbBqrPufNER?(d#m@`oWNi`Rm
+z`N+@Nm6NfeN3)I0w1#!41^75o=PH{c{QIr-=bj*|$P%LWyk0<KC6|ic>1o!`fXyVI
+zlv$hDM07`ErHaavq>`*BuaIZS^W<rw!aaN8>E0LFb~~|v@VMPlvWwJ`-K2)7EQ}ET
+z$?+82a@%e)>yek7dxp#<dOOY|TSyLRB#)83BwoM&LMkeHetKo<wL4Zys4&y+A!}HK
+zdj0Cv`zV=Bs)@>rB!es<^GPxJZ_$5(${vzMHfa9!{8j2m9w{Xc5<PbnEhv?T$;xoe
+zxtDRR)x~O(PG*r8$X24VhVViR7p<>3B!%eTF_jcQ$5)VKl9$L1GFD=!6cMfPY@&r(
+zL44#@qOzDgMOK9N#@zO`HpS+JLa}X8p$&oWeEyszS(%}XxFmn;*7%}OD83;ov>@?n
+vRQ7P^N5kzO{&M2I;iDgqgpLfipL9c?_pv?F@)|pCcE98Pe@N@1X&?LpKXLUx
+
+delta 2843
+zcmZA3drXye9LMn=cmhQ(Ny70Y5{8%Znq0EHA(@#)-pJHS(Y(OP3npSv*1?QL+RZSR
+zQ-k@BY=R??x#eYER&7RZ)SRr5tSN}Cv~aVT%hmgH&KKMIjqmgN{eI8${I1XQ9KOrC
+zlpSbG^nBt-8;KO+?;g(W!=Iu#kji45i^6hLRRtzu6>_QDh4EN}ad^PW$IwH$33Y!n
+z_QV#v8-ETPa9w12QxVA_0prb7R7az*59Xq7%tvl<%di&~o8_pEHk(^e*KI@o+-|eZ
+zJcJ1@;M_?vy0F<!w4yrd#ALjQYB(V_Jfmd1i*kR=$APHxrKlCyh#K$~?2Efm6Zzcy
+z%IaG%mj2yu%HUrdbYm2)(5LH%T9HAhrOQGePDBl09%|qV%_6e|b^n{F721N@s_m#P
+z{M63ZVn8FWw~C;70z-R;>bMy-z#lOZFQXd#1$Et3)PSy|uD^->F@gtU01m)=a6Hb!
+znYaRL<5_<VAew2)c+?6cp_YCqs)I>ZKLs_Txn=?K=lmQr<8sshDp4JNfVzJ#YAg03
+zV{^w)6Z$rR_1BFpRH)-is3p3AYUnnqfhZmb4X`(A0Et#kK`wFWW+vWCc?xO*i%{*C
+zqPA)is=fD+MR3~!WYlpjs-c7CX{-MM)nPlTp=+pt-Li5IZr0K#;LDhVL$Lxikvi0t
+zH6nj5$U)bCZ3ddiOpb8wd(;dQSvToJEm4}4M_M@xHPBphww+&M7MaDU`!|@I&5uy`
+z?+F`l4OVg7JZoM+HE`9+x2zn)MrwdwGZl5+U^BzaG4sp?<_fbUB>P`MM(^kQcA^&5
+zL4%bK;XKNxtlpOte!A1l38=lCk6tXa`T%l^+lBnOMyvk@b^S%v>;3Pt6VW^|>Np*#
+za>J}V8TC3%L(O!lxz^6VVZLo{H9tm8Y^Rm$QTGSUlNfsc&yvwYcFt@=4djaXyZNVi
+z+w?G9b<o>PMRhO+AHzvF2REVGJ7?!x%`0Bse>HH!F6h}WJo5w$?Wvhz=Af?6vvL7y
+zrB<Ojc+1M~+W8u@9`(?DY2`Dh>(BRN{gt_3747D)cHwm^|AXo{itn%V;XoXL`qi9)
+z8t_W947H+_sE$9h`Wn=L>rq>JIzUDZw%Lg;)D6*mMWojpifV8yzJR&NC&2ANP2hm}
+z1!^G2%roYB<Sh@SRU8Y5=|n)CcPD)?GKg{A70AxG5@I%yN8}RgiBjT0Lf?0#DPis$
+zXISnjEVsNqU`pc&{lCF85^xWx#?n%Jn0S;ZCJG5Zp{3@TbMpx;H=lyg@<HfT(icx@
+z1hIg~B<?4)QV$UML>i&An9!$q4Uw+jf9;1psgsCTh?T^B#0El3JepWWC_PT-bNZYL
+zBrW~iP%gY(uake8SV#;emJ?$LeVU&oW)bs<L4;B-`ghYp+5ZlU$j-Fl1TzO;BJ{JX
+zqz_AXT4$Lu%(8qcW)rKeJRFA*E37;RdDL8>h{H&$oQ!&S^aG)^HcaRjix=QddXd~P
+zLO-Ri5swf{h-ZlBi6@9xi6@DP1V1gI#4~s&jU_i#J29%eDwrK}Ez*<cFIium5;rv}
+zueh+dbbWAf+>VIYA!)OguUqXeDe)Jt3H}k^66whvmzf=G>f`fx4j=5?Uwx{txB61j
+z^r+6AM?2m*5*(iFkEm|-#ssUp7b8Y@96i#xf9vHPjh)-;E>|6P?Z;1$yHZg}Rma}X
+M-2cv3*Z3O#1-Q}@umAu6
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 1523980..980ebbf 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-25 15:43+0800\n"
++"POT-Creation-Date: 2016-05-25 18:43+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -47,7 +47,7 @@ msgstr "關閉"
+ #: templates/device_settings.html:151 templates/frusergroup_add.html.py:48
+ #: templates/frusergroup_edit.html:65 templates/logsetting.html.py:124
+ #: templates/role_add.html:62 templates/role_permission.html.py:38
+-#: templates/role_rename.html:51 templates/user_add.html.py:98
++#: templates/role_rename.html:50 templates/user_add.html.py:98
+ #: templates/user_group_add.html:48 templates/user_group_edit.html.py:65
+ #: templates/user_setting.html:119 templates/user_update.html.py:95
+ msgid "Save"
+@@ -101,7 +101,7 @@ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+ #: templates/device_frusergroups.html:87 templates/device_list.html.py:99
+-#: templates/frusergroups_list.html:72 templates/role_list.html.py:100
++#: templates/frusergroups_list.html:72 templates/role_list.html.py:105
+ #: templates/user_group_devices.html:89 templates/user_group_list.html:72
+ #: templates/user_group_members.html:89 templates/user_list.html.py:100
+ msgid "Delete"
+@@ -254,7 +254,7 @@ msgid "Create new group"
+ msgstr "建立新群組"
+ 
+ #: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+-#: templates/role_list.html:67 templates/systemlog_list.html.py:68
++#: templates/role_list.html:72 templates/systemlog_list.html.py:68
+ #: templates/user_list.html:67
+ msgid "No."
+ msgstr "編號"
+@@ -289,8 +289,9 @@ msgid "Languages"
+ msgstr "語言"
+ 
+ #: templates/logsetting.html:8 templates/menu.html.py:36
+-#: templates/user_add.html:8 templates/user_list.html.py:25
+-#: templates/user_list.html:31 templates/user_setting.html.py:8
++#: templates/role_list.html:24 templates/user_add.html.py:8
++#: templates/user_list.html:25 templates/user_list.html.py:31
++#: templates/user_setting.html:8
+ msgid "User List"
+ msgstr "網站使用者管理"
+ 
+@@ -311,12 +312,13 @@ msgstr "系統"
+ msgid "Dashboard"
+ msgstr "系統儀表板"
+ 
+-#: templates/menu.html:37
+-msgid "Group List"
++#: templates/menu.html:37 templates/user_group_list.html.py:10
++#: templates/user_group_list.html:18 templates/user_group_list.html.py:24
++msgid "User Group List"
+ msgstr "網站使用者群組管理"
+ 
+ #: templates/menu.html:38
+-msgid "Role & Permission"
++msgid "Role and Permission"
+ msgstr "角色管理與權限"
+ 
+ #: templates/menu.html:39 templates/user_setting.html.py:23
+@@ -409,7 +411,7 @@ msgid "confirm"
+ msgstr "確認"
+ 
+ #: templates/role_add.html:8 templates/role_list.html.py:10
+-#: templates/role_list.html:30
++#: templates/role_list.html:35
+ msgid "Role List"
+ msgstr "角色管理"
+ 
+@@ -421,45 +423,41 @@ msgstr "增加角色"
+ msgid "Create New Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_add.html:34 templates/role_list.html.py:72
++#: templates/role_add.html:34 templates/role_list.html.py:77
+ msgid "Role Name"
+ msgstr "角色名稱"
+ 
+-#: templates/role_add.html:46 templates/role_list.html.py:77
++#: templates/role_add.html:46 templates/role_list.html.py:82
+ msgid "Sort"
+ msgstr "排序"
+ 
+ #: templates/role_add.html:61 templates/role_permission.html.py:37
+-#: templates/role_rename.html:50 templates/user_add.html.py:97
++#: templates/role_rename.html:49 templates/user_add.html.py:97
+ #: templates/user_setting.html:118 templates/user_update.html.py:94
+ msgid "Back"
+ msgstr "返回"
+ 
+-#: templates/role_list.html:19
+-msgid "Role and Permission"
+-msgstr "角色管理與權限"
+-
+-#: templates/role_list.html:24
++#: templates/role_list.html:29
+ msgid "Create new Role"
+ msgstr "建立新角色"
+ 
+-#: templates/role_list.html:25
++#: templates/role_list.html:30
+ msgid "Role Permission"
+ msgstr "角色權限"
+ 
+-#: templates/role_list.html:82 templates/systemlog_list.html.py:73
++#: templates/role_list.html:87 templates/systemlog_list.html.py:73
+ msgid "Category"
+ msgstr "類別"
+ 
+-#: templates/role_list.html:87
++#: templates/role_list.html:92
+ msgid "Create Date"
+ msgstr "創立時間"
+ 
+-#: templates/role_list.html:92
++#: templates/role_list.html:97
+ msgid "Update Date"
+ msgstr "更新時間"
+ 
+-#: templates/role_list.html:99
++#: templates/role_list.html:104
+ msgid "Rename"
+ msgstr "重新命名"
+ 
+@@ -480,12 +478,12 @@ msgstr "設備使用者管理"
+ msgid "FR User Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/role_rename.html:8 templates/role_rename.html.py:18
+-#: templates/role_rename.html:24
++#: templates/role_rename.html:8 templates/role_rename.html.py:17
++#: templates/role_rename.html:23
+ msgid "Role Rename"
+ msgstr "角色重新命名"
+ 
+-#: templates/role_rename.html:35
++#: templates/role_rename.html:34
+ msgid "New Name"
+ msgstr "新名稱"
+ 
+@@ -545,11 +543,6 @@ msgstr "設備管理"
+ msgid "User Group Edit"
+ msgstr "使用者群組修改"
+ 
+-#: templates/user_group_list.html:10 templates/user_group_list.html.py:18
+-#: templates/user_group_list.html:24
+-msgid "User Group List"
+-msgstr "網站使用者群組管理"
+-
+ #: templates/user_group_list.html:54
+ msgid "No"
+ msgstr "編號"
+@@ -580,8 +573,8 @@ msgstr "確認密碼"
+ 
+ #: templates/user_update.html:8 templates/user_update.html.py:23
+ msgid "User Update"
+-msgstr "建立新用戶"
++msgstr "更新用戶資料"
+ 
+ #: templates/user_update.html:17 templates/user_update.html.py:31
+ msgid "User update"
+-msgstr "建立新用戶"
++msgstr "更新用戶資料"
+-- 
+1.9.1
+

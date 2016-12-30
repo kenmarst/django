@@ -1,0 +1,236 @@
+From a9f4627842f19e6ed052e924bf9c0f2e6ebcc432 Mon Sep 17 00:00:00 2001
+From: jesse <jesse@shuttle.com>
+Date: Fri, 13 May 2016 18:21:18 +0800
+Subject: [PATCH 035/443] commit lost logsetting.html
+
+---
+ templates/logsetting.html | 217 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 217 insertions(+)
+ create mode 100644 templates/logsetting.html
+
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+new file mode 100644
+index 0000000..4cf6dcf
+--- /dev/null
++++ b/templates/logsetting.html
+@@ -0,0 +1,217 @@
++<!DOCTYPE html>
++{% include 'commons_js.html' %}
++<html>
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<title>User List</title>
++
++<!--[if lt IE 9]>
++<script src="js/html5shiv.js"></script>
++<script src="js/respond.min.js"></script>
++<![endif]-->
++
++</head>
++
++<body>
++	{% include 'menu.html' %}
++	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">			
++		<div class="row">
++			<ol class="breadcrumb">
++				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
++				<li class="active">Log Setting</li>
++			</ol>
++		</div><!--/.row-->
++		
++		<div class="row">
++			<div class="col-lg-12">
++				<h1 class="page-header">Log Setting</h1>
++			</div>
++		</div><!--/.row-->
++		
++		<div class="row">
++			<div class="col-lg-12">
++				<div class="panel panel-default">
++					<!-- <div class="panel-heading">Advanced Table</div> -->
++					<div class="panel-body">
++                            <div class="form-body">
++                                <div class="container">
++                                    <h4>Separator Options</h4>
++									<br>
++                                    <!--p>Separator Options</p-->
++                                    <form role="form">
++                                        <div class="radio">
++                                            <label><input type="radio" name="optradio" value="tab">tab</label>
++                                        </div>
++                                        <div class="radio">
++                                            <label><input type="radio" name="optradio" value="comma">comma</label>
++                                        </div>
++                                        <div class="radio">
++                                            <label><input type="radio" name="optradio" value="dot">dot</label>
++                                        </div>
++                                        <div class="radio">
++                                            <label><input type="radio" name="optradio" value="space">space</label>
++                                        </div>
++                                        <div class="radio">
++                                            <label><input type="radio" name="optradio" value="5">custom <input type="text" name="customsymbol" <p> 1 character</p></label>
++                                        </div>
++                                        <!--div class="radio disabled">
++                                            <label><input type="radio" name="optradio" disabled>Option 3</label>
++                                        </div-->
++                                     </form>
++                                     <br><br>
++
++                                     <table>
++                                     <tr>
++                                     <td>
++                                     <select id="select1" multiple="multiple" style="width:200px;">
++                                        <option value="OId">OId</option>
++                                        <option value="FRUserId">FRUserId</option>
++                                        <option value="FRUserName">FRUserName</option>
++										<option value="Category">Category</option>
++                                        <option value="DeviceOId">DeviceOId</option>
++                                        <option value="LogContent">LogContent</option>
++                                        <option value="LogDateTime">LogDateTime</option>
++                                     </select>
++                                     </td>
++                                     <td>
++                                         <button id="add">>|</button><br />
++                                         <!--button id="add_all">>></button><br /-->
++                                         <!--button id="remove_all"><<</button><br /-->
++                                         <button id="remove">|<</button>
++                                     </td>
++                                      <td>
++                                        <select id="select2" multiple="multiple" style="width:200px;"></select>
++                                      </td>
++                                     </tr>
++                                     </table>
++                               </div>
++                                 
++                                <!--div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">Account
++                                        <span class="required"> </span>
++                                    </label>
++                                    <div class="col-md-6">
++                                    	<div class="input-icon"> 
++                                        	<input readonly type="text" class="form-control" placeholder="" name="Account" value="{{obj.Account}}">
++                                        	<div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++
++                                    </div>
++                                </div-->
++                                <!--div class="form-group form-md-line-input">
++                                    <label class="col-md-3 control-label" for="form_control_1">Name
++                                        <span class="required">*</span>
++                                    </label>
++                                    <div class="col-md-6">
++                                    	<div class="input-icon"> 
++                                        	<input type="text" class="form-control" placeholder="" name="name" value="{{obj.Name}}">
++                                        	<div class="form-control-focus"> </div>
++                                            <i class="fa fa-envelope"></i>
++                                        </div>
++                                    </div>
++                                </div-->
++                               
++                                
++                               
++                                   <br><br>
++                            
++                            <div class="form-actions">
++                                <div class="row">
++                                    <div class="col-md-offset-3 col-md-9">
++                                       <a onClick="onSaveClick()" type="" class="btn green">Save</a>
++                                    </div>
++                                </div>
++                            </div>
++                        </form>
++					</div>
++				</div>
++			</div>
++		</div><!--/.row-->	
++	</div><!--/.main-->
++
++	{% load static %}
++	<script src="{% static "md5.js" %}"></script>
++    <script src="{% static "jquery-1.11.1.min.js" %}"></script>
++	<script>
++	$(function () {
++      $("#add").click(function () {
++	    var $option = $("#select1 option:selected");  
++        $option.appendTo("#select2");  
++      });
++      //$("#add_all").click(function () {
++      //  var $option = $("#select1 option");
++      //  $option.appendTo("#select2");
++      //});
++      $("#remove").click(function () {
++        var $option = $("#select2 option:selected");
++        $option.appendTo("#select1");
++      });
++      //$("#remove_all").click(function () {
++      //  var $option = $("#select2 option");
++      //  $option.appendTo("#select1");
++     // });
++    });
++	//For getting CSRF token
++	function getCookie(name) {
++		var cookieValue = null;
++		if (document.cookie && document.cookie != '') {
++			var cookies = document.cookie.split(';');
++			for (var i = 0; i < cookies.length; i++) {
++				var cookie = jQuery.trim(cookies[i]);
++				// Does this cookie string begin with the name we want?
++				if (cookie.substring(0, name.length + 1) == (name + '=')) {
++					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
++					break;
++				}
++			}
++		}
++		return cookieValue;
++	}
++
++	function onSaveClick(){
++		var csrftoken = getCookie('csrftoken');
++		var symbol1 = $('input[name=optradio]').filter(":checked").val()
++		var symbol2 = $('input[name=customsymbol]').val()
++		var s = $("#select2").val();
++	    console.log(symbol1)
++	    symbol=symbol1;
++		if((symbol1==5 && (symbol2=="")||(symbol2.length>1))||(symbol1==undefined)||s==null){
++			alert("input error");
++			return
++		}
++		if (symbol1==5) {
++			var symbol=symbol2;
++		}
++		$.ajax({
++			type: 'post',
++            traditional: true,
++			url: '/logsetting/',
++			async: true,
++			dataType: 'json',
++			data: {
++				csrfmiddlewaretoken : csrftoken,
++				'separator':symbol,
++				'fields': s,
++			},
++			success: function(data) {
++				console.log("CODE = ",data.CODE);
++				if (data.CODE == "0") {
++					alert("successfully");
++					location.href = '/';
++				}else if (data.CODE == "2") {
++					alert("Wrong");
++				}else{
++					alert("Fail");
++				}
++			},
++			error: function(data) {
++				console.log('why nunu');
++			}
++		});
++	}
++	</script>	
++</body>
++
++</html>
+-- 
+1.9.1
+

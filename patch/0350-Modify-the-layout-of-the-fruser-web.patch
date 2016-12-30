@@ -1,0 +1,72 @@
+From 52a39a58cda27f0a6850a0ff3cd0a29b191af21b Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 4 Nov 2016 11:49:09 +0800
+Subject: [PATCH 350/443] Modify the layout of the fruser web.
+
+---
+ templates/fruser_edit.html | 8 ++++----
+ templates/fruser_list.html | 8 ++++----
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index 7933de0..ed470d7 100755
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -73,24 +73,24 @@
+                                     </div>
+                                     <div class="form-group">
+                                         <div class="col-md-2 control-label">
+-                                            {% if obj.FR == 'archived' %}
++                                            {% if obj.RFID == 'archived' %}
+                                                 <i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>
+                                             {% else %}
+                                                 <i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>
+                                             {% endif %}
+                                         </div>
+                                         <label class="col-md-2 control-label">
+-                                            <p class="text-left">{% trans "FR" %}</p>
++                                            <p class="text-left">{% trans "RFID" %}</p>
+                                         </label>
+                                         <div class="col-md-1 control-label">
+-                                            {% if obj.RFID == 'archived' %}
++                                            {% if obj.FR == 'archived' %}
+                                                 <i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>
+                                             {% else %}
+                                                 <i class="fa fa-square-o fa-lg" aria-hidden="true" style="color:gray"></i>
+                                             {% endif %}
+                                         </div>
+                                         <label class="col-md-2 control-label">
+-                                            <p class="text-left">{% trans "RFID" %}</p>
++                                            <p class="text-left">{% trans "FR" %}</p>
+                                         </label>
+                                         <div class="col-md-1 control-label">
+                                             {% if obj.FP == 'archived' %}
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index fa9f95d..6e4a8a0 100755
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -125,8 +125,8 @@
+                         sortable: true
+                     },
+                     {
+-                        field: 'FR',
+-                        title: '{% trans "FR" %}',
++                        field: 'RFID',
++                        title: '{% trans "RFID" %}',
+                         formatter: function(value, row) {
+                             if (value == 'archived') {
+                                 return '<i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>';
+@@ -136,8 +136,8 @@
+                         }
+                     },
+                     {
+-                        field: 'RFID',
+-                        title: '{% trans "RFID" %}',
++                        field: 'FR',
++                        title: '{% trans "FR" %}',
+                         formatter: function(value, row) {
+                             if (value == 'archived') {
+                                 return '<i class="fa fa-check-square-o fa-lg" aria-hidden="true" style="color:green"></i>';
+-- 
+1.9.1
+

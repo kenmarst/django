@@ -1,0 +1,37 @@
+From eeb727df3b3c2226331013abeccba948a2a8aa9d Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 1 Sep 2016 14:52:31 +0800
+Subject: [PATCH 251/443] Modify get_result api: rename -> set_result
+
+---
+ api/recognition.py | 2 +-
+ br06/urls.py       | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/recognition.py b/api/recognition.py
+index 0d5dd5f..1ef3d11 100644
+--- a/api/recognition.py
++++ b/api/recognition.py
+@@ -287,7 +287,7 @@ def rfid_delete(request):
+ 
+ 
+ @csrf_exempt
+-def get_result(request):
++def set_result(request):
+     if not request.method == 'POST':
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+     try:
+diff --git a/br06/urls.py b/br06/urls.py
+index 8a7ca0f..3398562 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -205,5 +205,5 @@ urlpatterns += [
+ 
+ # 4G
+ urlpatterns += [
+-    url(r'^api/recognition/getResult/?$', recognition.get_result),
++    url(r'^api/recognition/setResult/?$', recognition.set_result),
+ ]
+-- 
+1.9.1
+

@@ -1,0 +1,53 @@
+From a641d0d62b2ba56c330efff8e2790ec9c49de8a2 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Wed, 21 Dec 2016 12:54:59 +0800
+Subject: [PATCH 433/443] Modify the action after edit data of web.
+
+---
+ templates/device_edit.html      | 2 +-
+ templates/frusergroup_edit.html | 2 +-
+ templates/role_rename.html      | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 04429d4..62ad03c 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -243,7 +243,7 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("{% trans "The device name is changed successfully" %}");
+-                        location.reload();
++                        location.href = '/device_list/';
+                     } else if (data.CODE == "1") {
+                         alert("{% trans "Fail to change the device name" %}");
+                     } else if (data.CODE == "2") {
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index 2e4004b..eba09ba 100755
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -89,7 +89,7 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("{% trans "Change group name successfully" %}");
+-                        location.reload();
++                        location.href = '/fruser_group/';
+                     } else {
+                         alert("{% trans "Fail to change group name" %}");
+                     }
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index dda36aa..cc04aff 100755
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -73,7 +73,7 @@
+                     console.log("CODE = ",data.CODE);
+                     if (data.CODE == "0") {
+                         alert("{% trans "Role Rename successfully" %}");
+-                        location.reload();
++                        location.href = '/role_list/';
+                     } else if (data.CODE == "2"){
+                         alert("{% trans "Default role cannot rename" %}")
+                         location.reload();
+-- 
+1.9.1
+

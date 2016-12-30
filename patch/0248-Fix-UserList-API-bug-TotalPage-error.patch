@@ -1,0 +1,25 @@
+From e1839f1c68fb42b27eedc35f884a2f6b02c7abc4 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 31 Aug 2016 19:04:22 +0800
+Subject: [PATCH 248/443] Fix UserList API bug: TotalPage error
+
+---
+ api/user.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/user.py b/api/user.py
+index d695e73..b7153e6 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -252,7 +252,7 @@ def list(request):
+                     return JsonResponse(dict(ChainMap(result_success, {
+                         'Numbers' : numbers,
+                         'CurrentPage' : int(req['FlipPage']),
+-                        'TotalPage' : int(numbers / 5) + 1,
++                        'TotalPage' : int(numbers / 5) + 1 if not numbers % 5 == 0 else numbers / 5,
+                         'Users' : [{
+                             'FRUserId' : i.FRUserId,
+                             'Name' : i.Name,
+-- 
+1.9.1
+

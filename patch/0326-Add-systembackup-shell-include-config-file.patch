@@ -1,0 +1,36 @@
+From 82b5b5d849c16dd40296ed18c737e7215facea2d Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Wed, 19 Oct 2016 17:05:59 +0800
+Subject: [PATCH 326/443] Add systembackup shell include config file.
+
+---
+ systembackup/backup.conf  | 7 +++++++
+ systembackup/picsave.conf | 2 ++
+ 2 files changed, 9 insertions(+)
+ create mode 100644 systembackup/backup.conf
+ create mode 100644 systembackup/picsave.conf
+
+diff --git a/systembackup/backup.conf b/systembackup/backup.conf
+new file mode 100644
+index 0000000..4c81ea6
+--- /dev/null
++++ b/systembackup/backup.conf
+@@ -0,0 +1,7 @@
++BackupMethod=Automatic
++BackupScheduling=Weekly
++BackupWeeklyDateSh="1 3 5"
++BackupTime_hours=3
++BackupTime_mins=15
++BackupLocal=/opt/backup
++BackupLocation=local
+diff --git a/systembackup/picsave.conf b/systembackup/picsave.conf
+new file mode 100644
+index 0000000..5c93512
+--- /dev/null
++++ b/systembackup/picsave.conf
+@@ -0,0 +1,2 @@
++PicCreateSave=true
++PicFaceSave=true
+-- 
+1.9.1
+

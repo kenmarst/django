@@ -1,0 +1,691 @@
+From f8a462aef4772831d8107088938920be1bae4ed1 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 22 Jun 2016 17:31:41 +0800
+Subject: [PATCH 146/443] Modify devices for specification
+
+Modify device model.
+Modify device UI:
+    device_edit
+    device_settings
+---
+ api/models.py                  | 204 +++++++++++++++++++++-------------------
+ devices/views.py               |  11 ++-
+ templates/device_edit.html     |  68 ++++++--------
+ templates/device_settings.html | 206 ++++++++++++++++++++++++++++++-----------
+ 4 files changed, 301 insertions(+), 188 deletions(-)
+
+diff --git a/api/models.py b/api/models.py
+index 4f6a412..9348c69 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -6,21 +6,21 @@ import uuid
+ 
+ class Config(models.Model):
+     config_name = (
+-            ('BackupMethod', 'BackupMethod'),
+-            ('BackupScheduling', 'BackupScheduling'),
+-            ('BackupMonthlyDate', 'BackupMonthlyDate'),
+-            ('BackupWeeklyDate', 'BackupWeeklyDate'),
+-            ('BackupTime', 'BackupTime'),
+-            ('BackupLocation', 'BackupLocation'),
+-            ('BackupLocal', 'BackupLocal'),
+-            ('BackupRemoteHost', 'BackupRemoteHost'),
+-            ('BackupRemotePort', 'BackupRemotePort'),
+-            ('BackupRemoteAccount', 'BackupRemoteAccount'),
+-            ('BackupRemotePassword', 'BackupRemotePassword'),
+-            ('LogLimit', 'LogLimit'),
+-            ('LogPreservation', 'LogPreservation'),
+-            ('PicCreateSave', 'PicCreateSave'),
+-            ('PicFaceSave', 'PicFaceSave'),
++        ('BackupMethod', 'BackupMethod'),
++        ('BackupScheduling', 'BackupScheduling'),
++        ('BackupMonthlyDate', 'BackupMonthlyDate'),
++        ('BackupWeeklyDate', 'BackupWeeklyDate'),
++        ('BackupTime', 'BackupTime'),
++        ('BackupLocation', 'BackupLocation'),
++        ('BackupLocal', 'BackupLocal'),
++        ('BackupRemoteHost', 'BackupRemoteHost'),
++        ('BackupRemotePort', 'BackupRemotePort'),
++        ('BackupRemoteAccount', 'BackupRemoteAccount'),
++        ('BackupRemotePassword', 'BackupRemotePassword'),
++        ('LogLimit', 'LogLimit'),
++        ('LogPreservation', 'LogPreservation'),
++        ('PicCreateSave', 'PicCreateSave'),
++        ('PicFaceSave', 'PicFaceSave'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', choices = config_name, unique = True, max_length = 32)
+@@ -38,8 +38,8 @@ class Config(models.Model):
+ 
+ class Role(models.Model):
+     role_category = (
+-            ('System', 'System'),
+-            ('User', 'User'),
++        ('System', 'System'),
++        ('User', 'User'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+@@ -69,8 +69,8 @@ class Role(models.Model):
+ 
+ class Acl(models.Model):
+     acl_acl = (
+-            ('Enable', 'Enable'),
+-            ('Disable', 'Disable'),
++        ('Enable', 'Enable'),
++        ('Disable', 'Disable'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     FunctionName = models.CharField(db_column = 'FunctionName', max_length = 32)
+@@ -100,89 +100,98 @@ class Acl(models.Model):
+ 
+ class Devices(models.Model):
+     devices_state = (
+-            ('Proposed', 'Proposed'),
+-            ('Approved', 'Approved'),
+-            ('Setting', 'Setting'),
+-            ('Getting', 'Getting'),
+-            ('Online', 'Online'),
+-            ('Offline', 'Offline'),
++        ('Proposed', 'Proposed'),
++        ('Approved', 'Approved'),
++        ('Setting', 'Setting'),
++        ('Getting', 'Getting'),
++        ('Online', 'Online'),
++        ('Offline', 'Offline'),
+     )
+-    devices_welcome = (
+-            ('', ''),
+-            ('Do0', 'None'),
+-            ('Do1', 'Pulse 3 Sec'),
++    devices_model = (
++        ('FR', 'FR'),
++        ('RFID+FR', 'RFID+FR'),
++        ('FR+FP', 'FR+FP'),
++        ('RFID+FR+FP', 'RFID+FR+FP'),
+     )
+-    devices_accessdenied = (
+-            ('', ''),
+-            ('Do0', 'On'),
+-            ('Do1', 'Off'),
++    devices_action = (
++        ('None', 'None'),
++        ('On', 'On'),
++        ('Off', 'Off'),
++        ('Pulse', 'Pulse'),
++    )
++    devices_pulse = (
++        ('1', '1'),
++        ('3', '3'),
++        ('5', '5'),
+     )
+     devices_screensaver = (
+-            ('', ''),
+-            ('5', '5 Minutes'),
+-            ('30', '30 Minutes'),
+-            ('60', '60 Minutes'),
++        ('5', '5 Minutes'),
++        ('30', '30 Minutes'),
++        ('60', '60 Minutes'),
+     )
+     devices_timezone = (
+-            ('', ''),
+-            ('UTC-12', 'UTC-12'),
+-            ('UTC-11', 'UTC-11'),
+-            ('UTC-10', 'UTC-10'),
+-            ('UTC-9', 'UTC-9'),
+-            ('UTC-8', 'UTC-8'),
+-            ('UTC-7', 'UTC-7'),
+-            ('UTC-6', 'UTC-6'),
+-            ('UTC-5', 'UTC-5'),
+-            ('UTC-4', 'UTC-4'),
+-            ('UTC-3', 'UTC-3'),
+-            ('UTC-2', 'UTC-2'),
+-            ('UTC-1', 'UTC-1'),
+-            ('UTC+0', 'UTC+0'),
+-            ('UTC+1', 'UTC+1'),
+-            ('UTC+2', 'UTC+2'),
+-            ('UTC+3', 'UTC+3'),
+-            ('UTC+4', 'UTC+4'),
+-            ('UTC+5', 'UTC+5'),
+-            ('UTC+6', 'UTC+6'),
+-            ('UTC+7', 'UTC+7'),
+-            ('UTC+8', 'UTC+8'),
+-            ('UTC+9', 'UTC+9'),
+-            ('UTC+10', 'UTC+10'),
+-            ('UTC+11', 'UTC+11'),
+-            ('UTC+12', 'UTC+12'),
+-            ('UTC+13', 'UTC+13'),
+-            ('UTC+14', 'UTC+14'),
++        ('UTC-12', 'UTC-12'),
++        ('UTC-11', 'UTC-11'),
++        ('UTC-10', 'UTC-10'),
++        ('UTC-9', 'UTC-9'),
++        ('UTC-8', 'UTC-8'),
++        ('UTC-7', 'UTC-7'),
++        ('UTC-6', 'UTC-6'),
++        ('UTC-5', 'UTC-5'),
++        ('UTC-4', 'UTC-4'),
++        ('UTC-3', 'UTC-3'),
++        ('UTC-2', 'UTC-2'),
++        ('UTC-1', 'UTC-1'),
++        ('UTC+0', 'UTC+0'),
++        ('UTC+1', 'UTC+1'),
++        ('UTC+2', 'UTC+2'),
++        ('UTC+3', 'UTC+3'),
++        ('UTC+4', 'UTC+4'),
++        ('UTC+5', 'UTC+5'),
++        ('UTC+6', 'UTC+6'),
++        ('UTC+7', 'UTC+7'),
++        ('UTC+8', 'UTC+8'),
++        ('UTC+9', 'UTC+9'),
++        ('UTC+10', 'UTC+10'),
++        ('UTC+11', 'UTC+11'),
++        ('UTC+12', 'UTC+12'),
++        ('UTC+13', 'UTC+13'),
++        ('UTC+14', 'UTC+14'),
+     )
+     devices_audio = (
+-            ('', ''),
+-            ('Enable', 'Enable'),
+-            ('Disable', 'Disable'),
++        ('Enable', 'Enable'),
++        ('Disable', 'Disable'),
+     )
+     devices_bioscore = (
+-            ('', ''),
+-            ('Low', 'Low'),
+-            ('Medium', 'Medium'),
+-            ('High', 'High'),
++        ('Low', 'Low'),
++        ('Medium', 'Medium'),
++        ('High', 'High'),
+     )
+     devices_language = (
+-            ('', ''),
+-            ('en', 'en'),
+-            ('zh-cn', 'zh-cn'),
+-            ('zh-tw', 'zh-tw'),
++        ('en', 'en'),
++        ('zh-cn', 'zh-cn'),
++        ('zh-tw', 'zh-tw'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', unique = True, max_length = 32)
+     State = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
+     MAC = models.CharField(db_column = 'MAC', default = '', max_length = 32, blank = True, null = True)
+     IP = models.GenericIPAddressField(db_column = 'IP', default = '', max_length = 32, blank = True, null = True)
+-    Welcome = models.CharField(db_column = 'Welcome', choices = devices_welcome, max_length = 8, blank = True)
+-    AccessDenied = models.CharField(db_column = 'AccessDenied', choices = devices_accessdenied, max_length = 8, blank = True)
+-    ScreenSaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, max_length = 8, blank = True)
++    Model = models.CharField(db_column = 'Model', choices = devices_model, default = 'FR', max_length = 8, blank = True)
++    WelcomeR0Action = models.CharField(db_column = 'WelcomeR0Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
++    WelcomeR0Pulse = models.CharField(db_column = 'WelcomeR0Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
++    WelcomeR1Action = models.CharField(db_column = 'WelcomeR1Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
++    WelcomeR1Pulse = models.CharField(db_column = 'WelcomeR1Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
++    AccessDeniedR0Action = models.CharField(db_column = 'AccessDeniedR0Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
++    AccessDeniedR0Pulse = models.CharField(db_column = 'AccessDeniedR0Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
++    AccessDeniedR1Action = models.CharField(db_column = 'AccessDeniedR1Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
++    AccessDeniedR1Pulse = models.CharField(db_column = 'AccessDeniedR1Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
++    ScreenSaver = models.CharField(db_column = 'ScreenSaver', choices = devices_screensaver, default = '5', max_length = 8, blank = True)
+     NTP = models.CharField(db_column = 'NTP', default = '', max_length = 256, blank = True, null = True)
+-    Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, max_length = 8, blank = True)
+-    Audio = models.CharField(db_column = 'Audio', choices = devices_audio, max_length = 8, blank = True)
+-    BioScore = models.CharField(db_column = 'BioScore', choices = devices_bioscore, max_length = 8, blank = True)
+-    Language = models.CharField(db_column = 'Language', choices = devices_language, max_length = 8, blank = True)
++    Timezone = models.CharField(db_column = 'Timezone', choices = devices_timezone, default = 'UTC+8', max_length = 8, blank = True)
++    Audio = models.CharField(db_column = 'Audio', choices = devices_audio, default = 'Enable', max_length = 8, blank = True)
++    BioScore = models.CharField(db_column = 'BioScore', choices = devices_bioscore, default = 'Low', max_length = 8, blank = True)
++    Language = models.CharField(db_column = 'Language', choices = devices_language, default = 'en', max_length = 8, blank = True)
+     CreateDate = models.DateTimeField(db_column = 'CreateDate', auto_now_add = True)
+     UpdateDate = models.DateTimeField(db_column = 'UpdateDate', auto_now = True)
+ 
+@@ -201,8 +210,15 @@ class Devices(models.Model):
+             State = self.State,
+             MAC = self.MAC,
+             IP = self.IP,
+-            Welcome = self.Welcome,
+-            AccessDenied = self.AccessDenied,
++            Model = self.Model,
++            WelcomeR0Action = self.WelcomeR0Action,
++            WelcomeR0Pulse = self.WelcomeR0Pulse,
++            WelcomeR1Action = self.WelcomeR1Action,
++            WelcomeR1Pulse = self.WelcomeR1Pulse,
++            AccessDeniedR0Action = self.AccessDeniedR0Action,
++            AccessDeniedR0Pulse = self.AccessDeniedR0Pulse,
++            AccessDeniedR1Action = self.AccessDeniedR1Action,
++            AccessDeniedR1Pulse = self.AccessDeniedR1Pulse,
+             ScreenSaver = self.ScreenSaver,
+             NTP = self.NTP,
+             Timezone = self.Timezone,
+@@ -302,13 +318,13 @@ class Usergroupdevices(models.Model):
+ 
+ class Frusers(models.Model):
+     frusers_gender = (
+-            ('', ''),
+-            ('Male', 'Male'),
+-            ('Female', 'Female'),
++        ('', ''),
++        ('Male', 'Male'),
++        ('Female', 'Female'),
+     )
+     frusers_state = (
+-            ('Enable', 'Enable'),
+-            ('Disable', 'Disable'),
++        ('Enable', 'Enable'),
++        ('Disable', 'Disable'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     FRUserId = models.CharField(db_column = 'FRUserId', unique = True, max_length = 16)
+@@ -444,10 +460,10 @@ class Fruserlogs(models.Model):
+ 
+ class Systemlogs(models.Model):
+     systemlogs_category = (
+-            ('System', 'System'),
+-            ('Device', 'Device'),
+-            ('User', 'User'),
+-            ('FRUser', 'FRUser'),
++        ('System', 'System'),
++        ('Device', 'Device'),
++        ('User', 'User'),
++        ('FRUser', 'FRUser'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     LogDateTime = models.DateTimeField(db_column = 'LogDateTime', auto_now_add = True)
+diff --git a/devices/views.py b/devices/views.py
+index 4d5b6bf..206a6a2 100644
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -190,8 +190,15 @@ def settings_device(request):
+         return HttpResponseRedirect("/home")
+     try:
+         Devices.objects.filter(OId = request.POST['OId']).update(
+-            Welcome = request.POST['Welcome'],
+-            AccessDenied = request.POST['AccessDenied'],
++            Model = request.POST['Model'],
++            WelcomeR0Action = request.POST['WelcomeR0Action'],
++            WelcomeR0Pulse = request.POST['WelcomeR0Pulse'],
++            WelcomeR1Action = request.POST['WelcomeR1Action'],
++            WelcomeR1Pulse = request.POST['WelcomeR1Pulse'],
++            AccessDeniedR0Action = request.POST['AccessDeniedR0Action'],
++            AccessDeniedR0Pulse = request.POST['AccessDeniedR0Pulse'],
++            AccessDeniedR1Action = request.POST['AccessDeniedR1Action'],
++            AccessDeniedR1Pulse = request.POST['AccessDeniedR1Pulse'],
+             ScreenSaver = request.POST['ScreenSaver'],
+             NTP = request.POST['NTP'],
+             Timezone = request.POST['Timezone'],
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index b994110..2bbdfd3 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -91,19 +91,30 @@
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+-                                    <!--<div class="form-group">
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">Model :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">{{obj.Model}}</p>
++                                        </label>
++                                    </div>
++                                    <div class="form-group">
+                                         <label class="col-md-3 control-label">Event :</label>
+                                         <div class="col-md-9">
+                                             <div class="form-group">
+                                                 <label class="col-md-3 control-label">Welcome :</label>
+                                                 <label class="col-md-6 control-label">
+                                                     <p class="text-left">
+-                                                        {% if obj.Welcome == 'Do0' %}
+-                                                            None
+-                                                        {% endif %}
+-                                                        {% if obj.Welcome == 'Do1' %}
+-                                                            Pulse 3 sec
+-                                                        {% endif %}
++                                                        {% if obj.WelcomeR0Action == 'Pulse' %}
++                                                            Relay0(pulse {{obj.WelcomeR0Pulse}} sec)
++                                                        {% else %}
++                                                            Relay0({{obj.WelcomeR0Action}})
++                                                        {% endif%}
++                                                        ,
++                                                        {% if obj.WelcomeR1Action == 'Pulse' %}
++                                                            Relay1(pulse {{obj.WelcomeR1Pulse}} sec)
++                                                        {% else %}
++                                                            Relay1({{obj.WelcomeR1Action}})
++                                                        {% endif%}
+                                                     </p>
+                                                 </label>
+                                             </div>
+@@ -111,42 +122,21 @@
+                                                 <label class="col-md-3 control-label">Access Denied :</label>
+                                                 <label class="col-md-6 control-label">
+                                                     <p class="text-left">
+-                                                        {% if obj.AccessDenied == 'Do0' %}
+-                                                            On
+-                                                        {% endif %}
+-                                                        {% if obj.AccessDenied == 'Do1' %}
+-                                                            Off
+-                                                        {% endif %}
++                                                        {% if obj.AccessDeniedR0Action == 'Pulse' %}
++                                                            Relay0(pulse {{obj.AccessDeniedR0Pulse}} sec)
++                                                        {% else %}
++                                                            Relay0({{obj.AccessDeniedR0Action}})
++                                                        {% endif%}
++                                                        ,
++                                                        {% if obj.AccessDeniedR1Action == 'Pulse' %}
++                                                            Relay1(pulse {{obj.AccessDeniedR1Pulse}} sec)
++                                                        {% else %}
++                                                            Relay1({{obj.AccessDeniedR1Action}})
++                                                        {% endif%}
+                                                     </p>
+                                                 </label>
+                                             </div>
+                                         </div>
+-                                    </div>-->
+-                                    <div class="form-group">
+-                                        <label class="col-md-3 control-label">Welcome :</label>
+-                                        <label class="col-md-6 control-label">
+-                                            <p class="text-left">
+-                                                {% if obj.Welcome == 'Do0' %}
+-                                                    None
+-                                                {% endif %}
+-                                                {% if obj.Welcome == 'Do1' %}
+-                                                    Pulse 3 sec
+-                                                {% endif %}
+-                                            </p>
+-                                        </label>
+-                                    </div>
+-                                    <div class="form-group">
+-                                        <label class="col-md-3 control-label">Access Denied :</label>
+-                                        <label class="col-md-6 control-label">
+-                                            <p class="text-left">
+-                                                {% if obj.AccessDenied == 'Do0' %}
+-                                                    On
+-                                                {% endif %}
+-                                                {% if obj.AccessDenied == 'Do1' %}
+-                                                    Off
+-                                                {% endif %}
+-                                            </p>
+-                                        </label>
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">Screen saver :</label>
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 7c666d8..f1e9c7b 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -6,6 +6,7 @@
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+         <title>{% trans "Device Settings" %}</title>
++        <link rel="stylesheet" href="/static/css/bootstrap-table.css">
+ 
+     </head>
+ 
+@@ -35,60 +36,141 @@
+                         <div class="panel-body">
+                             <form class="form-horizontal">{% csrf_token %}
+                                 <div class="form-body">
+-                                    <!--<div class="form-group">
+-                                        <label class="col-md-3 control-label">Event :</label>
+-                                        <div class="col-md-9">
+-                                            <div class="form-group">
+-                                                <label class="col-md-3 control-label">Welcome</label>
+-                                                <div class="col-md-6">
+-                                                    <label class="col-md-3 radio-inline">
+-                                                        <input type="radio" value="Do0" name="Welcome">None
+-                                                    </label>
+-                                                    <label class="col-md-3 radio-inline">
+-                                                        <input type="radio" value="Do1" name="Welcome">Pulse
+-                                                    </label>
+-                                                </div>
+-                                            </div>
+-                                            <div class="form-group">
+-                                                <label class="col-md-3 control-label">Access Denied</label>
+-                                                <div class="col-md-6">
+-                                                    <label class="col-md-3 radio-inline">
+-                                                        <input type="radio" value="Do0" name="AccessDenied">On
+-                                                    </label>
+-                                                    <label class="col-md-3 radio-inline">
+-                                                        <input type="radio" value="Do1" name="AccessDenied">Off
+-                                                    </label>
+-                                                </div>
+-                                            </div>
+-                                        </div>
+-                                    </div>-->
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Welcome</label>
+-                                        <div class="col-md-6">
+-                                            <label class="col-md-3 radio-inline">
+-                                                <input type="radio" value="Do0" name="Welcome">None
+-                                            </label>
+-                                            <label class="col-md-3 radio-inline">
+-                                                <input type="radio" value="Do1" name="Welcome">Pulse
+-                                            </label>
++                                        <label class="col-md-3 control-label">Model :</label>
++                                        <div class="col-md-3">
++                                            <select class="form-control" name="Model">
++                                                <option value="FR">FR</option>
++                                                <option value="RFID+FR">RFID+FR</option>
++                                                <option value="FR+FP">FR+FP</option>
++                                                <option value="RFID+FR+FP">RFID+FR+FP</option>
++                                            </select>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="col-md-3 control-label">Access Denied</label>
+-                                        <div class="col-md-6">
+-                                            <label class="col-md-3 radio-inline">
+-                                                <input type="radio" value="Do0" name="AccessDenied">On
+-                                            </label>
+-                                            <label class="col-md-3 radio-inline">
+-                                                <input type="radio" value="Do1" name="AccessDenied">Off
+-                                            </label>
++                                        <label class="col-md-3 control-label">Event :</label>
++                                        <div class="col-md-8">
++                                            <table class="table table-bordered table-condensed" style="background-color:#f1f4f7">
++                                                <tbody>
++                                                    <tr>
++                                                        <td align="center" style="vertical-align:middle" rowspan="2">
++                                                            <label class="control-label">Welcome</label>
++                                                        </td>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="control-label">Relay 0</label>
++                                                        </td>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="None" name="WelcomeR0Action">None
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="On" name="WelcomeR0Action">On
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Off" name="WelcomeR0Action">Off
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Pulse" name="WelcomeR0Action">Pulse
++                                                            </label>
++                                                            <div class="col-sm-3">
++                                                                <select class="form-control" name="WelcomeR0Pulse">
++                                                                    <option value="1">1 Sec</option>
++                                                                    <option value="3">3 Sec</option>
++                                                                    <option value="5">5 Sec</option>
++                                                                </select>
++                                                            </div>
++                                                        </td>
++                                                    </tr>
++                                                    <tr>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="control-label">Relay 1</label>
++                                                        </td>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="None" name="WelcomeR1Action">None
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="On" name="WelcomeR1Action">On
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Off" name="WelcomeR1Action">Off
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Pulse" name="WelcomeR1Action">Pulse
++                                                            </label>
++                                                            <div class="col-sm-3">
++                                                                <select class="form-control" name="WelcomeR1Pulse">
++                                                                    <option value="1">1 Sec</option>
++                                                                    <option value="3">3 Sec</option>
++                                                                    <option value="5">5 Sec</option>
++                                                                </select>
++                                                            </div>
++                                                        </td>
++                                                    </tr>
++                                                    <tr>
++                                                        <td align="center" style="vertical-align:middle" rowspan="2">
++                                                            <label class="control-label">Access Denied</label>
++                                                        </td>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="control-label">Relay 0</label>
++                                                        </td>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="None" name="AccessDeniedR0Action">None
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="On" name="AccessDeniedR0Action">On
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Off" name="AccessDeniedR0Action">Off
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Pulse" name="AccessDeniedR0Action">Pulse
++                                                            </label>
++                                                            <div class="col-sm-3">
++                                                                <select class="form-control" name="AccessDeniedR0Pulse">
++                                                                    <option value="1">1 Sec</option>
++                                                                    <option value="3">3 Sec</option>
++                                                                    <option value="5">5 Sec</option>
++                                                                </select>
++                                                            </div>
++                                                        </td>
++                                                    </tr>
++                                                    <tr>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="control-label">Relay 1</label>
++                                                        </td>
++                                                        <td align="center" style="vertical-align:middle">
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="None" name="AccessDeniedR1Action">None
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="On" name="AccessDeniedR1Action">On
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Off" name="AccessDeniedR1Action">Off
++                                                            </label>
++                                                            <label class="col-sm-2 radio-inline">
++                                                                <input type="radio" value="Pulse" name="AccessDeniedR1Action">Pulse
++                                                            </label>
++                                                            <div class="col-sm-3">
++                                                                <select class="form-control" name="AccessDeniedR1Pulse">
++                                                                    <option value="1">1 Sec</option>
++                                                                    <option value="3">3 Sec</option>
++                                                                    <option value="5">5 Sec</option>
++                                                                </select>
++                                                            </div>
++                                                        </td>
++                                                    </tr>
++
++                                                <tbody>
++                                            </table>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+                                         <label class="col-md-3 control-label">Screen saver :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="ScreenSaver">
+-                                                <option value=""></option>
+                                                 <option value="5">5 Minutes</option>
+                                                 <option value="30">30 Minutes</option>
+                                                 <option value="60">60 Minutes</option>
+@@ -105,7 +187,6 @@
+                                         <label class="col-md-3 control-label">Timezone :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Timezone">
+-                                                <option value=""></option>
+                                                 <option value="UTC-12">(UTC-12)</option>
+                                                 <option value="UTC-11">(UTC-11)</option>
+                                                 <option value="UTC-10">(UTC-10)</option>
+@@ -148,7 +229,6 @@
+                                         <label class="col-md-3 control-label">Bio score :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="BioScore">
+-                                                <option value=""></option>
+                                                 <option value="Low">Low</option>
+                                                 <option value="Medium">Medium</option>
+                                                 <option value="High">High</option>
+@@ -159,7 +239,6 @@
+                                         <label class="col-md-3 control-label">Multi-language :</label>
+                                         <div class="col-md-3">
+                                             <select class="form-control" name="Language">
+-                                                <option value=""></option>
+                                                 <option value="en">{% trans "en" %}</option>
+                                                 <option value="zh-cn">{% trans "zh-cn" %}</option>
+                                                 <option value="zh-tw">{% trans "zh-tw" %}</option>
+@@ -201,8 +280,15 @@
+         }
+ 
+         function onSaveClick(){
+-            var Welcome = $('input[name=Welcome]:checked').val();
+-            var AccessDenied = $('input[name=AccessDenied]:checked').val();
++            var Model = $('select[name=Model]').val();
++            var WelcomeR0Action = $('input[name=WelcomeR0Action]:checked').val();
++            var WelcomeR0Pulse = $('select[name=WelcomeR0Pulse]').val();
++            var WelcomeR1Action = $('input[name=WelcomeR1Action]:checked').val();
++            var WelcomeR1Pulse = $('select[name=WelcomeR1Pulse]').val();
++            var AccessDeniedR0Action = $('input[name=AccessDeniedR0Action]:checked').val();
++            var AccessDeniedR0Pulse = $('select[name=AccessDeniedR0Pulse]').val();
++            var AccessDeniedR1Action = $('input[name=AccessDeniedR1Action]:checked').val();
++            var AccessDeniedR1Pulse = $('select[name=AccessDeniedR1Pulse]').val();
+             var ScreenSaver = $('select[name=ScreenSaver]').val();
+             var NTP = $('input[name=NTP]').val();
+             var Timezone = $('select[name=Timezone]').val();
+@@ -225,8 +311,15 @@
+                 data: {
+                     csrfmiddlewaretoken : getCookie('csrftoken'),
+                     'OId': {{obj|safe}}.OId,
+-                    'Welcome': Welcome,
+-                    'AccessDenied': AccessDenied,
++                    'Model': Model,
++                    'WelcomeR0Action': WelcomeR0Action,
++                    'WelcomeR0Pulse': WelcomeR0Pulse,
++                    'WelcomeR1Action': WelcomeR1Action,
++                    'WelcomeR1Pulse': WelcomeR1Pulse,
++                    'AccessDeniedR0Action': AccessDeniedR0Action,
++                    'AccessDeniedR0Pulse': AccessDeniedR0Pulse,
++                    'AccessDeniedR1Action': AccessDeniedR1Action,
++                    'AccessDeniedR1Pulse': AccessDeniedR1Pulse,
+                     'ScreenSaver': ScreenSaver,
+                     'NTP': NTP,
+                     'Timezone': Timezone,
+@@ -248,8 +341,15 @@
+         }
+ 
+         $(document).ready(function() {
+-            $('input[name="Welcome"][value=' + {{obj|safe}}.Welcome + ']').prop('checked', true);
+-            $('input[name="AccessDenied"][value=' + {{obj|safe}}.AccessDenied + ']').prop('checked', true);
++            $('select[name="Model"]').val({{obj|safe}}.Model);
++            $('input[name="WelcomeR0Action"][value=' + {{obj|safe}}.WelcomeR0Action + ']').prop('checked', true);
++            $('select[name="WelcomeR0Pulse"]').val({{obj|safe}}.WelcomeR0Pulse);
++            $('input[name="WelcomeR1Action"][value=' + {{obj|safe}}.WelcomeR1Action + ']').prop('checked', true);
++            $('select[name="WelcomeR1Pulse"]').val({{obj|safe}}.WelcomeR1Pulse);
++            $('input[name="AccessDeniedR0Action"][value=' + {{obj|safe}}.AccessDeniedR0Action + ']').prop('checked', true);
++            $('select[name="AccessDeniedR0Pulse"]').val({{obj|safe}}.AccessDeniedR0Pulse);
++            $('input[name="AccessDeniedR1Action"][value=' + {{obj|safe}}.AccessDeniedR1Action + ']').prop('checked', true);
++            $('select[name="AccessDeniedR1Pulse"]').val({{obj|safe}}.AccessDeniedR1Pulse);
+             $('select[name="ScreenSaver"]').val({{obj|safe}}.ScreenSaver);
+             $('select[name="Timezone"]').val({{obj|safe}}.Timezone);
+             if ({{obj|safe}}.Audio == 'Enable') {
+-- 
+1.9.1
+

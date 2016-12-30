@@ -1,0 +1,1016 @@
+From 65709c73e9fbd687663a3db1e700522119b5e462 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Fri, 27 May 2016 17:43:57 +0800
+Subject: [PATCH 107/443] Add internationalization (i18n) to system settings.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 7295 -> 8951 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po | 186 +++++++++++++++++++++++----
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 7295 -> 8945 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po | 186 +++++++++++++++++++++++----
+ templates/system_settings.html               |  63 ++++-----
+ 9 files changed, 350 insertions(+), 89 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index d2ee2452a610e6a3bca9d3a527665d2ffbdea4a9..1fb8ec0d67ef4811fab999f46f80c45459bf7a7e 100644
+GIT binary patch
+delta 15
+WcmZo-X=0i1mc`u4(0JoVK}G;6as?Lv
+
+delta 15
+WcmZo-X=0i1mc_uzz+~e`K}G;6IRy{^
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 6ee395c..9ff4e99 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 10:04+0800\n"
++"POT-Creation-Date: 2016-05-27 17:31+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 9818e2d1bf70c62dc810701c5468dabc6a2fc3d1..55d422dfcc5c343861d4e3746f09af960f24a42a 100644
+GIT binary patch
+delta 16
+XcmZo-X=0i1hSkvA%GhAzM?ppaEwu$l
+
+delta 16
+XcmZo-X=0i1hSk8*%G7k@M?ppaE#U=E
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index dcdfbef..3801349 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 09:55+0800\n"
++"POT-Creation-Date: 2016-05-27 17:30+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index b183d34874444ec2f7347777ce14ca6a09ce63be..1b6e8186521684323545cb9f9e2d163e8f33c3ea 100644
+GIT binary patch
+literal 8951
+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
+
+delta 3142
+zcmZA3ZBP|e9LMoPf~X||3W$ILqN0WxBBEkGpeBfqkYYZCa=GFI7$Rkw7az(}d!d_-
+z)}&22>XbH<*U3>Q%Q0Wn8<}BzD4T3zP;0Wr>|wOBzQ4<#rs)j7`#I<Ao;|x~_wMEQ
+ziGSw>zK#vw?I>GFGRY5jE{O9x@IlFZ*tz!DA0u%Hw!=J(!hGzEQ>;A~IfPq^I>bth
+z#(Hxr^5^#Q(Z#udJJ?!rCoq-`pJEJNK@I#4JK=roh!Kyp+68rDiDoKlzkbM{%jSb2
+zZj3p_oMSG*F3j(0sAyooHf%#pya(g)ux&q!n(#B!6*gi7UcwT*X4?m|99ofFa{}su
+zW??t1Kwaos$^34IZ8(4&!<|6>+&ODsL>=HOWXar*sHJ^?i5SU!(21mBXa&q{)C!D7
+ztz02$;u6#?ti*us=`t$XvDVyRZbO~W9@G`TgPQn=^?!g5(LReh;5pQO7f>hkIcma2
+z)VO9$!XGdNJ81p8Qt8WO&A^dZiQ7?2{j+%wwF0^?x+SrwiTb1Z2cfQTtXYH%aiypW
+zt3b`O3N>yE>Q=lG&HA&7Za*Em(xa#Wr%(sJfLfs|s4KXRI>0T|3EoCc{EM|8peBl7
+zu#S_6bh$pL6Us%+H_6(i0V+M{s6btr+8VeAbuZsWO?V7hHFq5ObLaTb0h`Qb>%WUS
+z;Rx1UC)U|aKpi&?bs<^S4&+kNy&8|pa5DD8AnHKZQ1`eQHSh*%|DViXacr1#f1p+*
+zpLLZ5W)W&-XQEDcp;_I!J>WL9R@{rI9e0@f%tNSwLG!%XWHy_3QRCaiweBB{YNw)3
+zD9g;T{!tkE{!g}!GSg?)ngMf%xz9Xg29b+*pO{V7e*-n~U2EURIkY3W&+1=<UG)90
+zq@u4yy}1i@uiwW6{K)z*As6ZHAjfj;*(j4y<FirYrdfLdYNEBM{Ti&j2emS9qF#FL
+zUE6TdJd3)b3)a4BUbp@msB!nq_T5{b>aM5>(@+mzrkQR1`DTGx)Sd6Y2F#>G2Q0G<
+zKGX@UFax%I7mla@0M5d1QR9d48r1lFvk*0YHfnnn>KR&P+Z)VR6Ip)^e4P#rIE-4V
+z)2M-s*1m$;@3wg#b-+lzyXsFs?Vn)|G_%bSsQt!Tdn#(a(tvI7qn51BHf%6=ng=nB
+z?I%$`(_f$t_?y{|2SDSaQ76^|wS55Uf`%i1ZYm#|xC(W`f%R0h!)EK)XFI%wp|72_
+z&!Z-|jPvjt)SE4zv(bU3nx&}y=All&XVxOG371Yrk>!LEaHIJwB-NyjsML~mWRe<`
+ztX4v2UO`<apfZcF0B#X^icBUO$rB`#JW3XjsbmIG$tC$@6=~4#|57S7WF~1Vk5l1I
+z>c&`y-yDj10Jo4~WCCd`c~;R|RAnTYO{xfwi%TUNh{_r=oJ?na_Y9dv+DacP>TfH0
+z?W*V}Q>B=Mhic9}h69LR(F@5YGL{S`ZAG`Ci1a5TNH5|eQ%GPnA1jFNrGB||FP|p*
+zu~3=citCHnR&Qe*l>%$%S51XiLa59!2b%xqSvorDI!mbNpNB#J*<&&Fm83VxAv|lL
+zr(bWkQlhtD8Cg%BBl@ALBzlmS5MB%a7G9Qa2<c}%&!Zmfo}soLMT&mW+R9og6Uk<h
+zLCVRK<ONbs<`N!e*U`JsxgdOe`I6;cW>l89IBH|?W>kEb*Dd;v*D)qJu5e{#P3_9^
+zx~iILS6p80UsLY)t@avX;^X|TxW=D4eNA1+5?@_iRkh#yGN!K=9-9^189Ok{yWDkq
+zLcPzGl-K)G%d0C=$5m8dP2Eyot#`aznHLo|(kqGcdyR3&y_e$md%lF4@F63I<OHuK
+z^bL#n__dZd_IoLb>0WW-*5H-Ip<%)9Nx5O(tmNL|4YyuC>Rn7u^8QLr^G2m)dj6C=
+zFQsR*7vF1l(xxLV$M(9G5G|)Zym{vE%`?YZ&YZsa-gfWLUZq}XYL2%%b(5Ey_Pv*p
+KzRqh(&-e$B$3Dpb
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index a9bd829..48fdd33 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 10:04+0800\n"
++"POT-Creation-Date: 2016-05-27 17:31+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,77 +17,77 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: templates/dashboard.html:10 templates/dashboard.html.py:19
+-#: templates/dashboard.html:25 templates/menu.html.py:35
++#: templates/dashboard.html:14 templates/dashboard.html.py:27
++#: templates/dashboard.html:33 templates/menu.html.py:35
+ msgid "Dashboard"
+ msgstr "系统仪表板"
+ 
+-#: templates/dashboard.html:32
++#: templates/dashboard.html:40
+ msgid "System Info"
+ msgstr "系统资讯"
+ 
+-#: templates/dashboard.html:35
+-msgid "System Uptime"
+-msgstr "开机多久时间"
+-
+-#: templates/dashboard.html:37
++#: templates/dashboard.html:46
+ msgid "Disk Usage"
+ msgstr "硬碟使用空间"
+ 
+-#: templates/dashboard.html:39
++#: templates/dashboard.html:57
+ msgid "Memory Usage"
+ msgstr "RAM 使用量"
+ 
+-#: templates/dashboard.html:41 templates/dashboard.html.py:65
++#: templates/dashboard.html:68 templates/dashboard.html.py:113
+ msgid "FR User Count"
+ msgstr "建档总人数"
+ 
+-#: templates/dashboard.html:43
++#: templates/dashboard.html:79
+ msgid "System Log Count"
+ msgstr "Log笔数"
+ 
+-#: templates/dashboard.html:45
++#: templates/dashboard.html:90
++msgid "System Uptime"
++msgstr "开机多久时间"
++
++#: templates/dashboard.html:92
+ msgid "System Current Time"
+ msgstr "系统当地时间"
+ 
+-#: templates/dashboard.html:51
++#: templates/dashboard.html:99
+ msgid "Device Info"
+ msgstr "设备资讯"
+ 
+-#: templates/dashboard.html:53
++#: templates/dashboard.html:101
+ msgid "Device Count"
+ msgstr "设备总数量"
+ 
+-#: templates/dashboard.html:53
++#: templates/dashboard.html:101
+ msgid "proposed"
+ msgstr "待审数"
+ 
+-#: templates/dashboard.html:63
++#: templates/dashboard.html:111
+ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+-#: templates/dashboard.html:89 templates/dashboard.html.py:107
++#: templates/dashboard.html:144 templates/dashboard.html.py:162
+ #: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+ #: templates/role_list.html:72 templates/systemlog_list.html.py:68
+ #: templates/user_list.html:68
+ msgid "No."
+ msgstr "编号"
+ 
+-#: templates/dashboard.html:93 templates/device_add.html.py:39
++#: templates/dashboard.html:148 templates/device_add.html.py:39
+ #: templates/device_edit.html:53 templates/device_list.html.py:65
+ #: templates/fruserlog_list.html:93
+ msgid "Device Name"
+ msgstr "设备名称"
+ 
+-#: templates/dashboard.html:97 templates/dashboard.html.py:119
++#: templates/dashboard.html:152 templates/dashboard.html.py:174
+ msgid "Latest Update Time"
+ msgstr "最后更新时间"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:166
+ msgid "User ID"
+ msgstr "工号"
+ 
+-#: templates/dashboard.html:115
++#: templates/dashboard.html:170
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -220,7 +220,9 @@ msgstr "拒绝"
+ msgid "Edit"
+ msgstr "编辑"
+ 
+-#: templates/device_list.html:98
++#: templates/device_list.html:98 templates/menu.html.py:39
++#: templates/system_settings.html:10 templates/system_settings.html.py:19
++#: templates/system_settings.html:25
+ msgid "Settings"
+ msgstr "设置"
+ 
+@@ -382,11 +384,6 @@ msgstr "网站使用者群组管理"
+ msgid "Role and Permission"
+ msgstr "角色管理与权限"
+ 
+-#: templates/menu.html:39 templates/user_setting.html.py:23
+-#: templates/user_setting.html:29
+-msgid "Setting"
+-msgstr "设置"
+-
+ #: templates/menu.html:47 templates/role_permission.html.py:88
+ msgid "FR User List"
+ msgstr "设备使用者管理"
+@@ -535,6 +532,135 @@ msgstr "角色重新命名"
+ msgid "New Name"
+ msgstr "新名称"
+ 
++#: templates/system_settings.html:32
++msgid "Backup Scheduling"
++msgstr "备份排程"
++
++#: templates/system_settings.html:37
++msgid "Manually"
++msgstr "手动备份"
++
++#: templates/system_settings.html:42
++msgid "Automatic"
++msgstr "自动备份"
++
++#: templates/system_settings.html:50
++msgid "Every Month"
++msgstr "每月"
++
++#: templates/system_settings.html:51
++msgid "Day"
++msgstr "日"
++
++#: templates/system_settings.html:51
++msgid "Time"
++msgstr "时间"
++
++#: templates/system_settings.html:90
++msgid "Every Week"
++msgstr "每周"
++
++#: templates/system_settings.html:91
++msgid "Sun"
++msgstr "日"
++
++#: templates/system_settings.html:92
++msgid "Mon"
++msgstr "一"
++
++#: templates/system_settings.html:93
++msgid "Tue"
++msgstr "二"
++
++#: templates/system_settings.html:94
++msgid "Wed"
++msgstr "三"
++
++#: templates/system_settings.html:95
++msgid "Thu"
++msgstr "四"
++
++#: templates/system_settings.html:96
++msgid "Fri"
++msgstr "五"
++
++#: templates/system_settings.html:97
++msgid "Sat"
++msgstr "六"
++
++#: templates/system_settings.html:140
++msgid "Local backup location"
++msgstr "本地备份地点"
++
++#: templates/system_settings.html:148
++msgid "Remote backup FTP Setting"
++msgstr "异地备份FTP设置"
++
++#: templates/system_settings.html:149
++msgid "HOST"
++msgstr "主机"
++
++#: templates/system_settings.html:150
++msgid "USERNAME"
++msgstr "使用者名称"
++
++#: templates/system_settings.html:151
++msgid "PASSWORD"
++msgstr "密码"
++
++#: templates/system_settings.html:152
++msgid "PORT"
++msgstr "连接埠"
++
++#: templates/system_settings.html:153
++msgid "Connect Test"
++msgstr "测试连线"
++
++#: templates/system_settings.html:163
++msgid "System Log"
++msgstr "系统纪录"
++
++#: templates/system_settings.html:167
++msgid "Log count limit"
++msgstr "Log笔数限制"
++
++#: templates/system_settings.html:169
++msgid "if the logs exceeds limit"
++msgstr "若超过笔数限制"
++
++#: templates/system_settings.html:169
++msgid "keep"
++msgstr "保留"
++
++#: templates/system_settings.html:171
++msgid "month data"
++msgstr "月资料"
++
++#: templates/system_settings.html:171
++msgid "others will be remove."
++msgstr "其他移除"
++
++#: templates/system_settings.html:172
++#, python-format
++msgid "In limit duration, the logs can be record to 150%% amount."
++msgstr "若期限内超过笔数限制，最多可以纪录到1.5倍的笔数限制。"
++
++#: templates/system_settings.html:173
++#, python-format
++msgid ""
++"Over 150%% amount, system will keep latest logs, and remove the other older "
++"logs."
++msgstr ""
++"若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
++
++#: templates/system_settings.html:176
++msgid "Save user photo image"
++msgstr "储存建档资料"
++
++#: templates/system_settings.html:179
++msgid "Save FR recognition photo image"
++msgstr "储存脸部辨识成功照片"
++
+ #: templates/systemlog_list.html:31
+ msgid "System log List"
+ msgstr "系统事件纪录"
+@@ -611,6 +737,10 @@ msgstr "更新时间"
+ msgid "Email"
+ msgstr "电子信箱"
+ 
++#: templates/user_setting.html:23 templates/user_setting.html.py:29
++msgid "Setting"
++msgstr "设置"
++
+ #: templates/user_setting.html:91
+ msgid "New Password"
+ msgstr "新密码"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 712315fa0a11ba67e8ab28150367b42efe2d21d3..491d50acb5dbc1e01d87fe582b51ed8a2f703614 100644
+GIT binary patch
+literal 8945
+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
+YKTX%QKXN2<c4u;In1=G-UpuM%Kc`T6EdT%j
+
+delta 3097
+zcmZA3drVhl9LMp81o4vG1QA8KsE8U$B#4Mfq9!QbATN0f<svGV2r1L}q0%h1wLHnR
+zmbP-*n!4rB&DECWj6Za9QD)X`*<zZtteKV5HtYTQ{l2u;Gd{o9^E~G~=Q-y&=XZYG
+zoc?#N@7tKrJ&w{w5=nljbADXbiw{bAU*~$_C=AC;?18x$f%(`EXIXm*atOBub%<Jw
+z!e(<j^5^#Q5$T-I9Sm0735;RGCm4;FPy>I&K6n><W7z#cBT*-oU?!vX8;Sh6EIt_G
+zrkJzLMdoUZWPVpqMFV}dVFzmBb{v3*ZTl(IglAD#*ok3y5liv1Z6C*SXhm|&X{ZZY
+zfU#JCy3mc1`Q0wtZ~!@mJAwSU)7JhJb%1Y>C3C-^mi8VdU^w?dCz67J6)>|<D=-<g
+zaz&_#OHsG53Vph#YpH0*Mzh7-fjXgf)D^#tn)n^-e-H1YeF}BJ)2RJAP$zT_HDM=e
+zTo(?;pK%EG()#zOlE!7t!#u3Qov5Y$&AfwJ0o@nfk{HxPqfq^0QCC=C79&Gk8S26+
+zQ1djP#<iht#fwp_Kdb2W)1fOpf*SBX>cAbS6}p7Ff-9&4Tt}VY4b;THTl*erqA&*Q
+zI0;CX8-Y5Z9MpU>tX<}#GKh`})Rn2Nf$gY!`4(!zqsXec<H(;o&4&(n!R)gBTc{Hb
+zW8HOP{mgjOaZ^wil3{IM4i(+2skjzr;z;zP4s;oHkGoI<uc7w;)%*hsLY(^xwIcbf
+zt1L8&Q7bzib;2vmy5M%7YYA4|^QawnnfuH`sDXa-jCsNAGH;>A_lOJbABAcsqfRKp
+z9B=)TF!24KX&sBrO0&`QnY+w=<{{IMT)g|(ykPy;P!r#>_FY^=JDmHh{*@T1?|&5)
+zeJz^J-Kcwg4CC=b>%WLxq`Qe6%k^ZVOhk>(LXDea?d7P6Hlp@xwRSsdW!^x&^xV6)
+z;iP#AbwwT4{>r>!{nt?A?wCCX2A}Hws0mY04_~^OW&QbPp;<hT@4p7jr$Yx^Y#S<3
+zC$Qf1+4kKymHq>`0KZ3#&*n9#@%d&EYWzaf_8QbP)L`3N&6g5be+_(%4h=YrTB;9F
+z13RsK3ANu1^DgRu;e2=1ACKC9xH-nmGAE+;E3kG6YQ8d`ZKy^qS(9yOF<&tcVhY<&
+zqJE~oMjh}^vj-1=#z&z}Y!GVuXw(HwK>l0_ADXxZb;7>QRJ6l3>)2;IyorIYowd)P
+zCioJU;&-SwTRvx_1C^L%sQs3rPN33kL|zjvl}sY*2*u|n^I1gdNE1<MB%8<#H7FTD
+z0%u-9T_>QjfUp2=C3&38BwNU%B%M4!mXi`PkErC3e9}N#_4~huN<EoRy34~<c$2y*
+z)=_Ofgn9tmNH&>9x=XHA^cGdgBMV6l;c;=vq=l$#AQQ-3=66q$Ii$OcprZcnqSvm9
+zelk^Nlh8oTxd(AH(JOid*-8q?IMQ8o8;Z#&GLa;aN-~T1p5kLY(Y@3!m+s{gL_ZcP
+z%YwKx%(8knk5DPJhJMvlcqIhNB6E!Sf1akJkFK+nivD>R`=32lQLiP#$auoD7I^yg
+zb}J)#3oa&`$umShR8>R|@@m3s;ori`(q)p7*7Gdt!5$iD>rtfW7p=Q&q%xgsBg08K
+zd5k<qn#mHv!|Zx{9sLSJr<Si?=cPwvc&j3|_<x8P5aPu~-Sm1#C-yC>t*URVEpMu+
+zuk#wBljEx0?E32Dxf_}SmR2@3)znpcUqq*Q_o6fWJ7dO#c%A)shBSMvu>-whu?xLk
+zad}=zT(x&D?zq=FV86FAzAh|tVqSK(|MU2?kg$(lz54ooFFqmFn~|{H|5-v-h(CJp
+zgb;6b;;_)x>n|Mf&L$4_ZYQRA*+bI3@*%li{Ln5hDrrwx+wrSM_j>1(;=S8RrQV$6
+W@!reHTfNMbpS+=|o4oU>!~X%YlqX35
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 5bbc11c..a9054f3 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-05-27 09:55+0800\n"
++"POT-Creation-Date: 2016-05-27 17:30+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,77 +17,77 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: templates/dashboard.html:10 templates/dashboard.html.py:19
+-#: templates/dashboard.html:25 templates/menu.html.py:35
++#: templates/dashboard.html:14 templates/dashboard.html.py:27
++#: templates/dashboard.html:33 templates/menu.html.py:35
+ msgid "Dashboard"
+ msgstr "系統儀表板"
+ 
+-#: templates/dashboard.html:32
++#: templates/dashboard.html:40
+ msgid "System Info"
+ msgstr "系統資訊"
+ 
+-#: templates/dashboard.html:35
+-msgid "System Uptime"
+-msgstr "開機多久時間"
+-
+-#: templates/dashboard.html:37
++#: templates/dashboard.html:46
+ msgid "Disk Usage"
+ msgstr "硬碟使用空間"
+ 
+-#: templates/dashboard.html:39
++#: templates/dashboard.html:57
+ msgid "Memory Usage"
+ msgstr "RAM 使用量"
+ 
+-#: templates/dashboard.html:41 templates/dashboard.html.py:65
++#: templates/dashboard.html:68 templates/dashboard.html.py:113
+ msgid "FR User Count"
+ msgstr "建檔總人數"
+ 
+-#: templates/dashboard.html:43
++#: templates/dashboard.html:79
+ msgid "System Log Count"
+ msgstr "Log筆數"
+ 
+-#: templates/dashboard.html:45
++#: templates/dashboard.html:90
++msgid "System Uptime"
++msgstr "開機多久時間"
++
++#: templates/dashboard.html:92
+ msgid "System Current Time"
+ msgstr "系統當地時間"
+ 
+-#: templates/dashboard.html:51
++#: templates/dashboard.html:99
+ msgid "Device Info"
+ msgstr "設備資訊"
+ 
+-#: templates/dashboard.html:53
++#: templates/dashboard.html:101
+ msgid "Device Count"
+ msgstr "設備總數量"
+ 
+-#: templates/dashboard.html:53
++#: templates/dashboard.html:101
+ msgid "proposed"
+ msgstr "待審數"
+ 
+-#: templates/dashboard.html:63
++#: templates/dashboard.html:111
+ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+-#: templates/dashboard.html:89 templates/dashboard.html.py:107
++#: templates/dashboard.html:144 templates/dashboard.html.py:162
+ #: templates/frusergroups_list.html:54 templates/fruserlog_list.html.py:81
+ #: templates/role_list.html:72 templates/systemlog_list.html.py:68
+ #: templates/user_list.html:68
+ msgid "No."
+ msgstr "編號"
+ 
+-#: templates/dashboard.html:93 templates/device_add.html.py:39
++#: templates/dashboard.html:148 templates/device_add.html.py:39
+ #: templates/device_edit.html:53 templates/device_list.html.py:65
+ #: templates/fruserlog_list.html:93
+ msgid "Device Name"
+ msgstr "設備名稱"
+ 
+-#: templates/dashboard.html:97 templates/dashboard.html.py:119
++#: templates/dashboard.html:152 templates/dashboard.html.py:174
+ msgid "Latest Update Time"
+ msgstr "最後更新時間"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:166
+ msgid "User ID"
+ msgstr "工號"
+ 
+-#: templates/dashboard.html:115
++#: templates/dashboard.html:170
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -220,7 +220,9 @@ msgstr "拒絕"
+ msgid "Edit"
+ msgstr "編輯"
+ 
+-#: templates/device_list.html:98
++#: templates/device_list.html:98 templates/menu.html.py:39
++#: templates/system_settings.html:10 templates/system_settings.html.py:19
++#: templates/system_settings.html:25
+ msgid "Settings"
+ msgstr "設定"
+ 
+@@ -382,11 +384,6 @@ msgstr "網站使用者群組管理"
+ msgid "Role and Permission"
+ msgstr "角色管理與權限"
+ 
+-#: templates/menu.html:39 templates/user_setting.html.py:23
+-#: templates/user_setting.html:29
+-msgid "Setting"
+-msgstr "設定"
+-
+ #: templates/menu.html:47 templates/role_permission.html.py:88
+ msgid "FR User List"
+ msgstr "設備使用者管理"
+@@ -535,6 +532,135 @@ msgstr "角色重新命名"
+ msgid "New Name"
+ msgstr "新名稱"
+ 
++#: templates/system_settings.html:32
++msgid "Backup Scheduling"
++msgstr "備份排程"
++
++#: templates/system_settings.html:37
++msgid "Manually"
++msgstr "手動備份"
++
++#: templates/system_settings.html:42
++msgid "Automatic"
++msgstr "自動備份"
++
++#: templates/system_settings.html:50
++msgid "Every Month"
++msgstr "每月"
++
++#: templates/system_settings.html:51
++msgid "Day"
++msgstr "日"
++
++#: templates/system_settings.html:51
++msgid "Time"
++msgstr "時間"
++
++#: templates/system_settings.html:90
++msgid "Every Week"
++msgstr "每週"
++
++#: templates/system_settings.html:91
++msgid "Sun"
++msgstr "日"
++
++#: templates/system_settings.html:92
++msgid "Mon"
++msgstr "一"
++
++#: templates/system_settings.html:93
++msgid "Tue"
++msgstr "二"
++
++#: templates/system_settings.html:94
++msgid "Wed"
++msgstr "三"
++
++#: templates/system_settings.html:95
++msgid "Thu"
++msgstr "四"
++
++#: templates/system_settings.html:96
++msgid "Fri"
++msgstr "五"
++
++#: templates/system_settings.html:97
++msgid "Sat"
++msgstr "六"
++
++#: templates/system_settings.html:140
++msgid "Local backup location"
++msgstr "本地備份地點"
++
++#: templates/system_settings.html:148
++msgid "Remote backup FTP Setting"
++msgstr "異地備份FTP設定"
++
++#: templates/system_settings.html:149
++msgid "HOST"
++msgstr "主機"
++
++#: templates/system_settings.html:150
++msgid "USERNAME"
++msgstr "使用者名稱"
++
++#: templates/system_settings.html:151
++msgid "PASSWORD"
++msgstr "密碼"
++
++#: templates/system_settings.html:152
++msgid "PORT"
++msgstr "連接埠"
++
++#: templates/system_settings.html:153
++msgid "Connect Test"
++msgstr "測試連線"
++
++#: templates/system_settings.html:163
++msgid "System Log"
++msgstr "系統紀錄"
++
++#: templates/system_settings.html:167
++msgid "Log count limit"
++msgstr "Log筆數限制"
++
++#: templates/system_settings.html:169
++msgid "if the logs exceeds limit"
++msgstr "若超過筆數限制"
++
++#: templates/system_settings.html:169
++msgid "keep"
++msgstr "保留"
++
++#: templates/system_settings.html:171
++msgid "month data"
++msgstr "月資料"
++
++#: templates/system_settings.html:171
++msgid "others will be remove."
++msgstr "其他移除"
++
++#: templates/system_settings.html:172
++#, python-format
++msgid "In limit duration, the logs can be record to 150%% amount."
++msgstr "若期限內超過筆數限制，最多可以紀錄到1.5倍的筆數限制。"
++
++#: templates/system_settings.html:173
++#, python-format
++msgid ""
++"Over 150%% amount, system will keep latest logs, and remove the other older "
++"logs."
++msgstr ""
++"若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
++
++#: templates/system_settings.html:176
++msgid "Save user photo image"
++msgstr "儲存建檔資料"
++
++#: templates/system_settings.html:179
++msgid "Save FR recognition photo image"
++msgstr "儲存臉部辨識成功照片"
++
+ #: templates/systemlog_list.html:31
+ msgid "System log List"
+ msgstr "系統事件紀錄"
+@@ -611,6 +737,10 @@ msgstr "更新時間"
+ msgid "Email"
+ msgstr "電子信箱"
+ 
++#: templates/user_setting.html:23 templates/user_setting.html.py:29
++msgid "Setting"
++msgstr "設定"
++
+ #: templates/user_setting.html:91
+ msgid "New Password"
+ msgstr "新密碼"
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 922d0da..0345b20 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -1,4 +1,5 @@
+ <!DOCTYPE html>
++{% load i18n %}
+ {% include 'commons_js.html' %}
+ {% load static %}
+ 
+@@ -6,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>Dashboard</title>
++        <title>{% trans "Settings" %}</title>
+     </head>
+ 
+     <body>
+@@ -15,30 +16,30 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                   <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                  <li class="active">Settings</li>
++                  <li class="active">{% trans "Settings" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>Settings</small></h1>
++                    <h1 class="page-header"><small>{% trans "Settings" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-md-12 col-lg-12">
+                     <div class="panel panel-default" style="background-color:lavender;">
+-                        <div class="panel-heading">Backup Scheduling</div>
++                        <div class="panel-heading">{% trans "Backup Scheduling" %}</div>
+                         <div class="panel-body">
+                             <form role="form">
+                                 <div class = "form-group" >
+                                     <div class="radio">
+-                                        <label><input type="radio" name="optradio">Manually</label>
++                                        <label><input type="radio" name="optradio">{% trans "Manually" %}</label>
+                                     </div>
+                                 </div>
+                                 <div class = "form-group" >
+                                     <div class="radio">
+-                                        <label><input type="radio" name="optradio">Automatic</label>
++                                        <label><input type="radio" name="optradio">{% trans "Automatic" %}</label>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -46,8 +47,8 @@
+                                 <form role="form">
+                                     <div class = "form-group" >
+                                         <div>
+-                                            <input type="radio" name="optradio">Every Month
+-                                            <input type="text" maxlength=2 size=1 id="day">Day, Time:
++                                            <input type="radio" name="optradio">{% trans "Every Month" %}
++                                            <input type="text" maxlength=2 size=1 id="day">{% trans "Day" %}, {% trans "Time" %}:
+                                             <select id="ampm">
+                                                 <option>AM</option>
+                                                 <option>PM</option>
+@@ -86,14 +87,14 @@
+                                     </div>
+                                     <div class = "form-group">
+                                         <div>
+-                                            <input type="radio" name="optradio">Every Week
+-                                            <input type="checkbox" value="">Sun,
+-                                            <input type="checkbox" value="">Mon,
+-                                            <input type="checkbox" value="">Tue,
+-                                            <input type="checkbox" value="">Wed,
+-                                            <input type="checkbox" value="">Thu,
+-                                            <input type="checkbox" value="">Fri,
+-                                            <input type="checkbox" value="">Sat,
++                                            <input type="radio" name="optradio">{% trans "Every Week" %}
++                                            <input type="checkbox" value="">{% trans "Sun" %},
++                                            <input type="checkbox" value="">{% trans "Mon" %},
++                                            <input type="checkbox" value="">{% trans "Tue" %},
++                                            <input type="checkbox" value="">{% trans "Wed" %},
++                                            <input type="checkbox" value="">{% trans "Thu" %},
++                                            <input type="checkbox" value="">{% trans "Fri" %},
++                                            <input type="checkbox" value="">{% trans "Sat" %},
+                                             Time:
+                                             <select id="ampm">
+                                                 <option>AM</option>
+@@ -136,7 +137,7 @@
+                             <div class="col-sm-12">
+                                 <form class="form-inline" role="form">
+                                     <div class="form-group">
+-                                        <input type="checkbox" value="">Local backup location:
++                                        <input type="checkbox" value="">{% trans "Local backup location" %}:
+                                     </div>
+                                     <div class="form-group">
+                                         <input type="button" class="btn btn-info btn-sm" value="...">
+@@ -144,12 +145,12 @@
+                                 </form>
+                                 <br>
+                                 <form class="form-inline" role="form">
+-                                    <div class="checkbox"><input type="checkbox" value="">Remote backup FTP Setting:</div><br>
+-                                    <div class="form-group">HOST(H):<input type="text" maxlength=20 size=10 id="HOST"></div>
+-                                    <div class="form-group">USERNAME(U):<input type="text" maxlength=20 size=10 id="USERNAME"></div>
+-                                    <div class="form-group">PASSWORD(W):<input type="text" maxlength=20 size=10 id="PASSWORD"></div>
+-                                    <div class="form-group">PORT(P):<input type="text" maxlength=20 size=5 id="PORT"></div>
+-                                    <div class="form-group"><input type="button" class="btn btn-info btn-sm" value="Connect Test"></div>
++                                    <div class="checkbox"><input type="checkbox" value="">{% trans "Remote backup FTP Setting" %}:</div><br>
++                                    <div class="form-group">{% trans "HOST" %}(H):<input type="text" maxlength=20 size=10 id="HOST"></div>
++                                    <div class="form-group">{% trans "USERNAME" %}(U):<input type="text" maxlength=20 size=10 id="USERNAME"></div>
++                                    <div class="form-group">{% trans "PASSWORD" %}(W):<input type="text" maxlength=20 size=10 id="PASSWORD"></div>
++                                    <div class="form-group">{% trans "PORT" %}(P):<input type="text" maxlength=20 size=5 id="PORT"></div>
++                                    <div class="form-group"><input type="button" class="btn btn-info btn-sm" value="{% trans "Connect Test" %}"></div>
+                                 </form>
+                             </div>
+                         </div><!--panel-body-->
+@@ -159,23 +160,23 @@
+             <div class="row">
+                 <div class="col-md-12 col-lg-12">
+                     <div class="panel panel-default" style="background-color:lavenderblush;">
+-                        <div class="panel-heading">System Log</div>
++                        <div class="panel-heading">{% trans "System Log" %}</div>
+                         <div class="panel-body">
+                             <form role="form">
+                                 <div class="form-group">
+-                                    <p>Log count limit:
++                                    <p>{% trans "Log count limit" %}:
+                                     <input type="text" maxlength=7 size=10 id="HOST">
+-                                    , if the logs exceeds limit, keep
++                                    , {% trans "if the logs exceeds limit" %}, {% trans "keep" %}
+                                     <input type="text" maxlength=2 size=1 id="HOST">
+-                                    month data(default=1), others will be remove.</p>
+-                                    <p>* In limit duration, the logs can be record to 150% amount.<br>
+-                                    * Over 150% amount, system will keep latest logs, and remove the other older logs.</p>
++                                    {% trans "month data" %}(default=1), {% trans "others will be remove." %}</p>
++                                    <p>* {% trans "In limit duration, the logs can be record to 150% amount." %}<br>
++                                    * {% trans "Over 150% amount, system will keep latest logs, and remove the other older logs." %}</p>
+                                     </div>
+                                 <div class="form-group">
+-                                        <input type="checkbox" value="aaa">Save user photo image
++                                        <input type="checkbox" value="aaa">{% trans "Save user photo image" %}
+                                 </div>
+                                 <div class="form-group">
+-                                        <input type="checkbox" value="aaa">Save FR recognition photo image
++                                        <input type="checkbox" value="aaa">{% trans "Save FR recognition photo image" %}
+                                 </div>
+                             </form>
+                         </div><!--panel-body-->
+-- 
+1.9.1
+

@@ -1,0 +1,44 @@
+From e946b6abfdd8bbcd452e89c0fd4f3cacaabc2b70 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 23 Sep 2016 16:32:50 +0800
+Subject: [PATCH 293/443] Modify models for specification.
+
+---
+ api/models.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/api/models.py b/api/models.py
+index 7639088..a29bc62 100644
+--- a/api/models.py
++++ b/api/models.py
+@@ -23,6 +23,8 @@ class Config(models.Model):
+         ('LogPreservation', 'LogPreservation'),
+         ('PicCreateSave', 'PicCreateSave'),
+         ('PicFaceSave', 'PicFaceSave'),
++        ('LogSettingSeparator', 'LogSettingSeparator'),
++        ('LogSettingField', 'LogSettingField'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', choices = config_name, unique = True, max_length = 32)
+@@ -109,6 +111,10 @@ class Devices(models.Model):
+         ('Online', 'Online'),
+         ('Offline', 'Offline'),
+     )
++    devices_type = (
++        ('Register', 'Register').
++        ('Recognition', 'Recognition').
++    )
+     devices_model = (
+         ('FR', 'FR'),
+         ('RFID+FR', 'RFID+FR'),
+@@ -212,6 +218,7 @@ class Devices(models.Model):
+     State = models.CharField(db_column = 'State', choices = devices_state, default = 'Proposed', max_length = 8)
+     MAC = models.CharField(db_column = 'MAC', default = '', max_length = 32, blank = True, null = True)
+     IP = models.GenericIPAddressField(db_column = 'IP', default = '', max_length = 32, blank = True, null = True)
++    Type = models.CharField(db_column = 'Type', choices = devices_type, default = 'Register', max_length = 16, blank = True)
+     Model = models.CharField(db_column = 'Model', choices = devices_model, default = 'FR', max_length = 10, blank = True)
+     WelcomeR0Action = models.CharField(db_column = 'WelcomeR0Action', choices = devices_action, default = 'None', max_length = 8, blank = True)
+     WelcomeR0Pulse = models.CharField(db_column = 'WelcomeR0Pulse', choices = devices_pulse, default = '1', max_length = 8, blank = True)
+-- 
+1.9.1
+

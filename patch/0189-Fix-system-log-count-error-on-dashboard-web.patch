@@ -1,0 +1,24 @@
+From df617b1b4d0e98fec48408f8f872ce73083a5922 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Wed, 20 Jul 2016 17:04:29 +0800
+Subject: [PATCH 189/443] Fix system log count error on dashboard web.
+
+---
+ dashboard/views.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index cb72a53..6d75aa2 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -74,6 +74,7 @@ def dashboard_views(request):
+ 
+     frusers_percent = Decimal(frusers_total_count) / Decimal(frusers_limit / 100)
+     syslog_percent = Decimal(syslogs_total_count) / Decimal(int(syslog_limit) / 100)
++    syslog_percent = round(syslog_percent,1)
+ 
+     device_total_count = Devices.objects.count()
+     device_proposed_count = Devices.objects.filter(State='Proposed').count()
+-- 
+1.9.1
+

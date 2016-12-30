@@ -1,0 +1,623 @@
+From ebeaa45c3018bdc30179f23b92a81710595e68df Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 7 Sep 2016 14:55:00 +0800
+Subject: [PATCH 259/443] Update language messages files.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   8 ++--
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   8 ++--
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 9848 -> 10065 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  58 ++++++++++++++++-----------
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 9848 -> 10065 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  58 ++++++++++++++++-----------
+ templates/system_settings.html               |   2 +-
+ 9 files changed, 77 insertions(+), 57 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 35bcef45a9b55d47b1b618f125fb19d36609396b..45c4d3b0da33ea03576ca6203981caf5685824c1 100644
+GIT binary patch
+delta 21
+ccmZo-X=0i1oXb+zz+A!5#LCoY<3~Y807bY4H2?qr
+
+delta 21
+ccmZo-X=0i1oXcF-&_uz|%*xne<3~Y807a<=Hvj+t
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 4920a00..53e5f03 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-07-14 16:38+0800\n"
++"POT-Creation-Date: 2016-09-07 14:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:140
++#: br06/settings.py:144
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:141
++#: br06/settings.py:145
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:142
++#: br06/settings.py:146
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 6fe0cf42bfcd6ac872b65751d4b43e78dee43a37..45c4d3b0da33ea03576ca6203981caf5685824c1 100644
+GIT binary patch
+delta 21
+ccmZo-X=0i1oXb+zz+A!5#LCoY<3~Y807bY4H2?qr
+
+delta 21
+ccmZo-X=0i1oXcF-&_uz|%*xnc<3~Y807ZcYF8}}l
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index cf1a4ca..53e5f03 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-07-14 16:30+0800\n"
++"POT-Creation-Date: 2016-09-07 14:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,14 +17,14 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: br06/settings.py:140
++#: br06/settings.py:144
+ msgid "English"
+ msgstr "英語"
+ 
+-#: br06/settings.py:141
++#: br06/settings.py:145
+ msgid "繁體中文"
+ msgstr "Traditional Chinese"
+ 
+-#: br06/settings.py:142
++#: br06/settings.py:146
+ msgid "筒体中文"
+ msgstr "Simplified Chinese"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index f5c91857e7ffa380887fa5f13cbc39f75a54f4e8..d78f512ec6a51b83896de787fd803dd857e30c92 100644
+GIT binary patch
+delta 3567
+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
+
+delta 3338
+zcmXxn3rv+|9LMqJ0Lt|sAfkwbC|;VlaG4iOG@G;BnSh3rISVhPVwxGINxo@n8rt06
+zG?dCqfvDu|q@~VkO>(BSZrIwKIc?Pxrmi_%YU}&s{5#`0pXc^I&;R+q?+fFH3AaPu
+zg|wJWj?WQF56amN&fUT4M85dU?&MrYoP)9WB1Yp9OvY*qVvV)8*mxtx)8B+Kcmz}N
+zIL6_($X1>^M<s=h^JW`r;=h=MDGVlIJ}Rc+$dDUrmSGz0S*YulAV2Ocz7ntw6-a}5
+z0Cj+4*pdC+=j|2eno$>=MQ!*CYQx{n>*ifEj@=YUI_kPS)cgmKDQ*O2U<j4D8K`-c
+zsEjVg81{FsQ6Uv>B~HS%sD;j>F8B*|!QZG<|6|5+Y^p8;)3HA)6C=$M>z{!-&=S=3
+ztF7&$rv<iC(Mb-W?#)-I4bNaE{)kFhtMy+;1$fKa(VZg)NI(UgVrHT4eP7i40jPC{
+zq5>)EO#Tb0gy_h_H?jSpLDqIhunV3>1@Idxm6uTqUPT3d3$;-!Y0v?ZP~%<9TvP@I
+zqSh%y%`ZwP|GMB&n-Ib%+E3ZUsW$Oh)GeBYrC5o&?u3nhjSBdT^<O|eynkXgMso^c
+zbh%i958-pT#-pMO+fb>|6Qh*JqT0ErTht%<afN&-@>1)cjLO(-^CeV9s!<tOkJ`8v
+zb@C?E^#?Eqy~9)p(zPHlxGSi8<GMytmW)~`3l&H|)GZi}%D^M21;?WTE=FxM85P(R
+z>z|1Vq!P8Bhde8utD&OTWiu-BU8n#)wRSUhr`>|Y=B}eQi0u~HI1$xOK?RhK+8`VC
+zFy4;}Y%nU&5vX5WqcK(Qe=!wpTwyM3A8>93>ZCsEBz0yzYJ>f#4Ub#<B<dOY-rDC-
+zfnCD6_y_jGQtq$TU5Zh9|5s2^23Da0*@RlC9{F*5`BLP~s1tpI%0vq)fL7G}o8}!H
+z9dIr{+H~?UJc;sgvjp`vl%uB&XHt<b+k{m%p~l*^*4}3ACNpgP$IMg6A>GfIhi%rM
+z#vc}Kn1k9U-+Z_S`Bz8CI;NWQP#08Nd!4nnpi<g^I?*2UppAcqTCdsKE#@Wjnt9iZ
+z&nExcD1(<&_BIPpujNS8MkUrRxAD2w|BAJjV>$C`tpBok#k_$E>^71V7k6L8JdaBI
+z(}+CSuGj{iN4=JBpkB*bbDxc$L|u2$+SgElCh}4%Lush%GOV4C3ZMXWu+gab-XyC`
+zL1m!AoNxWh%$4Rk)WREa0ydydbkoLDdqy_sW)47YRAi2|{tyz7=boXWh!>y&SY*C#
+zZb1D$*ovChh+41-^;(9_6R7@E=67a`c^>CE{&rZqBv;pa+&3!iCr2$XAC;mibFGcn
+z;TZZGaUx!|@uFUl>q=3Xc@nkWd~+FUy|t+I>rl61r^eae9a06qFwdec_!YHaE9&G?
+zy(0^BL~geWqQ>)4^T(jpDKn>|Hd<h94;8?A(??GoTdiXUM$>LYE!1TFM^PJmY5hN$
+z7g4vM&Bkw;3B3H8pN%BR6(Db%n~2f40JZO;Jo2xOSLsls%TXJ@ZPwYuM$|_8QS*-4
+z_-RxI&Y>Q{R@BCEeIgrVp~ibzdl+hb6l$G`eaOE$rqiJfs!#!VsKD0a)3_1!E4mdG
+z`8_kHZ={`QrkR<jjeA;q2x|S2sP)HL`-uYUm}XXDfC+0T`h+RtDN0{8Wv{<Gaa>@B
+ze<Lv`;QZ92u9+XxTSZw#(Pt^;eacS%k)+;%cl=pNBjUHxuA}(=?xcPl4p6K0Tard)
+z@1wSwGL)j1Ss^Z@C?y~GgM!5!Hd8z7uMXw}Hu?3zQNdlbiz$mKANe<e<(a#w=_%G<
+zru~$`l$n(G{EFnxf$e@(a!zhN?GnoWpFLFc>$1!`n*77b;{sd!d&ya42kC31=uf3S
+zdVoHp%%KdSR8Sfy(<s|0`W%YT{!dIP^(mBhDKjXAluyDhbZUwVZ|D|^N*FqD(BPhf
+Uh7>+HEPT0pN<#RtKJiii0r??5KL7v#
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 642af6e..e8ebe02 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-07-14 16:38+0800\n"
++"POT-Creation-Date: 2016-09-07 14:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -110,7 +110,7 @@ msgid "Device"
+ msgstr "设备"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:252 templates/fruser_edit.html.py:101
++#: templates/device_settings.html:300 templates/fruser_edit.html.py:101
+ #: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
+ #: templates/role_add.html:46 templates/role_permission.html.py:37
+ #: templates/role_rename.html:42 templates/user_add.html.py:96
+@@ -120,11 +120,11 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:253 templates/fruser_edit.html.py:102
++#: templates/device_settings.html:301 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+ #: templates/logsetting.html:87 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
+-#: templates/system_settings.html:159 templates/system_settings.html.py:196
++#: templates/system_settings.html:162 templates/system_settings.html.py:199
+ #: templates/user_add.html:97 templates/user_group_add.html.py:49
+ #: templates/user_group_edit.html:66 templates/user_setting.html.py:119
+ #: templates/user_update.html:94
+@@ -152,7 +152,7 @@ msgstr "FR群组管理"
+ msgid "Device parameter"
+ msgstr "设备参数"
+ 
+-#: templates/device_edit.html:181
++#: templates/device_edit.html:187
+ msgid "Parameter Settings"
+ msgstr "设置参数"
+ 
+@@ -178,7 +178,7 @@ msgstr "新增"
+ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/device_frusergroups.html:106 templates/device_list.html.py:119
++#: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+ #: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
+ #: templates/role_list.html:121 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+@@ -186,14 +186,14 @@ msgstr "设备使用者群组管理"
+ msgid "Delete"
+ msgstr "删除"
+ 
+-#: templates/device_frusergroups.html:137 templates/fruser_list.html.py:113
++#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:113
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+ msgid "Group"
+ msgstr "群组"
+ 
+-#: templates/device_frusergroups.html:163 templates/device_list.html.py:173
++#: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+ #: templates/fruser_list.html:191 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+@@ -201,7 +201,7 @@ msgstr "群组"
+ msgid "Confirm to delete"
+ msgstr "您是否确认要删除"
+ 
+-#: templates/device_frusergroups.html:163
++#: templates/device_frusergroups.html:164
+ msgid "from this device"
+ msgstr "设备"
+ 
+@@ -254,15 +254,15 @@ msgstr "设备设置"
+ msgid "Device parameter setup"
+ msgstr "建立设备参数"
+ 
+-#: templates/device_settings.html:242
++#: templates/device_settings.html:290
+ msgid "en"
+ msgstr "英文"
+ 
+-#: templates/device_settings.html:243
++#: templates/device_settings.html:291
+ msgid "zh-cn"
+ msgstr "简体中文"
+ 
+-#: templates/device_settings.html:244
++#: templates/device_settings.html:292
+ msgid "zh-tw"
+ msgstr "繁体中文"
+ 
+@@ -696,47 +696,51 @@ msgid "PORT"
+ msgstr "连接埠"
+ 
+ #: templates/system_settings.html:151
++msgid "PATH"
++msgstr ""
++
++#: templates/system_settings.html:154
+ msgid "USERNAME"
+ msgstr "使用者名称"
+ 
+-#: templates/system_settings.html:152
++#: templates/system_settings.html:155
+ msgid "PASSWORD"
+ msgstr "密码"
+ 
+-#: templates/system_settings.html:153
++#: templates/system_settings.html:156
+ msgid "Connect Test"
+ msgstr "测试连线"
+ 
+-#: templates/system_settings.html:176
++#: templates/system_settings.html:179
+ msgid "System Log"
+ msgstr "系统纪录"
+ 
+-#: templates/system_settings.html:180
++#: templates/system_settings.html:183
+ msgid "Log count limit"
+ msgstr "Log笔数限制"
+ 
+-#: templates/system_settings.html:182
++#: templates/system_settings.html:185
+ msgid "if the logs exceeds limit"
+ msgstr "若超过笔数限制"
+ 
+-#: templates/system_settings.html:182
++#: templates/system_settings.html:185
+ msgid "keep"
+ msgstr "保留"
+ 
+-#: templates/system_settings.html:184
++#: templates/system_settings.html:187
+ msgid "month data"
+ msgstr "月资料"
+ 
+-#: templates/system_settings.html:184
++#: templates/system_settings.html:187
+ msgid "others will be remove."
+ msgstr "其他移除"
+ 
+-#: templates/system_settings.html:185
++#: templates/system_settings.html:188
+ #, python-format
+ msgid "In limit duration, the logs can be record to 150%% amount."
+ msgstr "若期限内超过笔数限制，最多可以纪录到1.5倍的笔数限制。"
+ 
+-#: templates/system_settings.html:186
++#: templates/system_settings.html:189
+ #, python-format
+ msgid ""
+ "Over 150%% amount, system will keep latest logs, and remove the other older "
+@@ -744,14 +748,20 @@ msgid ""
+ msgstr ""
+ "若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删除。"
+ 
+-#: templates/system_settings.html:189
++#: templates/system_settings.html:192
+ msgid "Save user photo image"
+ msgstr "储存建档资料"
+ 
+-#: templates/system_settings.html:192
++#: templates/system_settings.html:195
+ msgid "Save FR recognition photo image"
+ msgstr "储存脸部辨识成功照片"
+ 
++#: templates/system_settings.html:294
++msgid ""
++"The backup may not be processed monthly, if you choose monthly date from 29 "
++"to 31 !\\n\\nWould you want to continue ?"
++msgstr "选择每月 29~31 日，可能无法每月进行自动备份,您确定要继续吗?"
++
+ #: templates/systemlog_list.html:31
+ msgid "System log List"
+ msgstr "系统事件纪录"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 5e70ace159b7da02a9cac91b6c0af0af859c7495..f248085f28dfe5661e39918fbc64bb88e994122c 100644
+GIT binary patch
+delta 3567
+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
+
+delta 3338
+zcmXxn3rv+|9LMqJ0LmQ!5k(|K@zTVF%QP|Z(wyba1T>_~S$HWG)66hU@=a6I(B}50
+zp;TT9L_K*sX{obXlbmU-8@4uQPFppFscTM`+WP)D|IT>M=efPl^MC&D`@;BP!tJ1U
+zAw6c3<8y@4gL1Zmb9b;NkuN^8J2}@8=U^<ph|#zNQ?Le;vDVsKY`h8M=?`HH9>Fv`
+zj&b-cvX$q~QAwrayxE4D_%CK-DuYQ_fQo4tGUUdZ<(N);7V5es$d7xAuLP_|1=469
+zKpo&1c4U9|d3(jVX4C~|Q5*h(+VFStx_Q@(V>bnofx0dqHU9x*iW`oZ7(``m25Mdv
+zDx-@rhW*`ZR7izeiIZ?GYN7L}3;se~@HZ;e|Cn(co2tvi4D64}#0az0`e&dHv;=ki
+zYHR!GX@Tujbdp1;d-D})!!wwLKcZ6BYW>$y0p7B9bmzzc5>NrBn%Ss(-xoE10BYT#
+zs6dK4lm8+rK|1pBO>BQ?khR?r?1HCJ0sMwa<z>`@S5blALTwaF8gzgp)OZ&&50!y|
+zsC9}^^NTaczb<&xCIm5x_ER=-s!e<rb&F<U8CIdLJ7MErqXIr-{TEOV@1K~1(VT)9
+zT^^R=L--u7@u=v+HdJc##3<#lsCFLe7WGGdToGT2yv+J1qcS$zd<m728dL_>qc*NX
+zojioP{s88pcbE!6x)vk`cLjBCT-Qj-Qcw$JqXOxNx&^~f85oUPa6BsD64XYMQGrdd
+z{+Xyis!;2B$g|?PS}J;7Hlrfng$m$PYd2$e+AT<I?mB9N*lv-H6H)C{R6rT14RTNq
+z<Nc_>2BQKUj{3zl3e)udmr&8hmFB|s0q0hrPU@phQg1e(HrS8a@VK>4qMniOt$hv^
+z*d?5ce_%f><Nj*hr5L66e+3m~U==EmO{j$$kRP{~FGb#rI?*?%Othc^XhqGxY2Lw6
+z0p|jwO(!42lPDiIOHpq_1$x?WCKdUzO;}|UYOP&o?QPZ$nPKZcW}ZS0>3+t1Y_tA!
+z{;+7nT+}`V<|94GzdC}}G1Z)hx}e6|>#V&6mC{DkiT0QWZTvITdd=2uF)x|d%)4fM
+z4*AzcnY^U3w^@jKEk~d>Dz$cnjnB3ISFF7pE0|Yn{g=%v<_%O}w~?f{xcegJdsNz=
+zM&!YEB{uLp>a~0W^;*`M`)vFq>bi^8zJ>}kk(XK-N=IFnY3%}30EMW7jY7@$CRt?)
+zDg%|~eCuCkt~A%77T$;xun~2ln>L=-GqOQ9a{y|iVsotZ2a$k0_Y4(9yZ{xzBJ*`~
+z1M2s|R@A&E)Pf<@YZ*3Ap!!dl-<d7ud7S6?+hOg}JYDZ`->9^o9JRoFREnz2wKiUl
+zW9V<fiFnn<i+e?`D??@GNz{7t&1I<d)}q$0N8O5@8fSlZNEQ6TJd3*ESJZ;7sFO$a
+zjx5j-x!o=qHC}+4KL)i<xj7xR(E@9Gr~uZRK6>idY8^W;nsyUvp^)_-MQ!k<_5WmE
+zMBRcm8^2{H@bYVZ4w58Sh`e!bB1Yo^)V_=I$-g>Yr9+V}M{WGJS#J}YP#f(>%{yx2
+zr%@R=hk6KGQ5(ngiENOK8t-N8hf(7rQR__XL;lq<oephKjS9d+1-2fa#*L_7(XFV+
+z@0l@uBke>p-ONI5+|$}aQ0tFCtv}A%PZV0mG_wi=OjtwFCrlYnQTl2qd;Q&s;{rSU
+z8;Q9A=cgrg&H9+$YRW2#K1(U@Q+E2JlX?f<@n<CskKanWp5ptvllpZyK&{SiNgA26
+zkJ@U=P>Nn=g}9KSlziY1N-pWJnc880b#iWCli!d$GI<y663SxANB)iEimct#^c3qa
+z(|*ce%1p|8eq~DMz;?enB{#2ub}8lm&mJoJby;p5A^&j7xWE?wUP^ZPLHe2~`ctWo
+z9-t2?b0|Y7m6S%xG|D!LK8GT-{}WS2eG27W$_z>o<&*FWokDTp4c&rK2}1`C8r*Zx
+TkfH|*!<W0KCWIgB6Cd>-_{lyu
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index b671873..a14382d 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-07-14 16:30+0800\n"
++"POT-Creation-Date: 2016-09-07 14:52+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -110,7 +110,7 @@ msgid "Device"
+ msgstr "設備"
+ 
+ #: templates/device_add.html:65 templates/device_edit.html.py:76
+-#: templates/device_settings.html:252 templates/fruser_edit.html.py:101
++#: templates/device_settings.html:300 templates/fruser_edit.html.py:101
+ #: templates/frusergroup_add.html:48 templates/frusergroup_edit.html.py:65
+ #: templates/role_add.html:46 templates/role_permission.html.py:37
+ #: templates/role_rename.html:42 templates/user_add.html.py:96
+@@ -120,11 +120,11 @@ msgid "Back"
+ msgstr "返回"
+ 
+ #: templates/device_add.html:66 templates/device_edit.html.py:77
+-#: templates/device_settings.html:253 templates/fruser_edit.html.py:102
++#: templates/device_settings.html:301 templates/fruser_edit.html.py:102
+ #: templates/frusergroup_add.html:49 templates/frusergroup_edit.html.py:66
+ #: templates/logsetting.html:87 templates/role_add.html.py:47
+ #: templates/role_permission.html:38 templates/role_rename.html.py:43
+-#: templates/system_settings.html:159 templates/system_settings.html.py:196
++#: templates/system_settings.html:162 templates/system_settings.html.py:199
+ #: templates/user_add.html:97 templates/user_group_add.html.py:49
+ #: templates/user_group_edit.html:66 templates/user_setting.html.py:119
+ #: templates/user_update.html:94
+@@ -152,7 +152,7 @@ msgstr "FR群組管理"
+ msgid "Device parameter"
+ msgstr "設備參數"
+ 
+-#: templates/device_edit.html:181
++#: templates/device_edit.html:187
+ msgid "Parameter Settings"
+ msgstr "設定參數"
+ 
+@@ -178,7 +178,7 @@ msgstr "新增"
+ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/device_frusergroups.html:106 templates/device_list.html.py:119
++#: templates/device_frusergroups.html:107 templates/device_list.html.py:119
+ #: templates/fruser_list.html:132 templates/frusergroups_list.html.py:90
+ #: templates/role_list.html:121 templates/user_group_devices.html.py:110
+ #: templates/user_group_list.html:90 templates/user_group_members.html:110
+@@ -186,14 +186,14 @@ msgstr "設備使用者群組管理"
+ msgid "Delete"
+ msgstr "刪除"
+ 
+-#: templates/device_frusergroups.html:137 templates/fruser_list.html.py:113
++#: templates/device_frusergroups.html:138 templates/fruser_list.html.py:113
+ #: templates/frusergroup_add.html:31 templates/frusergroup_edit.html.py:48
+ #: templates/frusergroups_list.html:76 templates/user_group_add.html.py:31
+ #: templates/user_group_edit.html:48 templates/user_group_list.html.py:76
+ msgid "Group"
+ msgstr "群組"
+ 
+-#: templates/device_frusergroups.html:163 templates/device_list.html.py:173
++#: templates/device_frusergroups.html:164 templates/device_list.html.py:173
+ #: templates/fruser_list.html:191 templates/frusergroup_devices.html.py:167
+ #: templates/frusergroup_member.html:167 templates/frusergroups_list.html:115
+ #: templates/user_group_devices.html:167 templates/user_group_list.html:116
+@@ -201,7 +201,7 @@ msgstr "群組"
+ msgid "Confirm to delete"
+ msgstr "您是否確認要刪除"
+ 
+-#: templates/device_frusergroups.html:163
++#: templates/device_frusergroups.html:164
+ msgid "from this device"
+ msgstr "設備"
+ 
+@@ -254,15 +254,15 @@ msgstr "設備設定"
+ msgid "Device parameter setup"
+ msgstr "建立設備參數"
+ 
+-#: templates/device_settings.html:242
++#: templates/device_settings.html:290
+ msgid "en"
+ msgstr "英文"
+ 
+-#: templates/device_settings.html:243
++#: templates/device_settings.html:291
+ msgid "zh-cn"
+ msgstr "簡體中文"
+ 
+-#: templates/device_settings.html:244
++#: templates/device_settings.html:292
+ msgid "zh-tw"
+ msgstr "繁體中文"
+ 
+@@ -696,47 +696,51 @@ msgid "PORT"
+ msgstr "連接埠"
+ 
+ #: templates/system_settings.html:151
++msgid "PATH"
++msgstr ""
++
++#: templates/system_settings.html:154
+ msgid "USERNAME"
+ msgstr "使用者名稱"
+ 
+-#: templates/system_settings.html:152
++#: templates/system_settings.html:155
+ msgid "PASSWORD"
+ msgstr "密碼"
+ 
+-#: templates/system_settings.html:153
++#: templates/system_settings.html:156
+ msgid "Connect Test"
+ msgstr "測試連線"
+ 
+-#: templates/system_settings.html:176
++#: templates/system_settings.html:179
+ msgid "System Log"
+ msgstr "系統紀錄"
+ 
+-#: templates/system_settings.html:180
++#: templates/system_settings.html:183
+ msgid "Log count limit"
+ msgstr "Log筆數限制"
+ 
+-#: templates/system_settings.html:182
++#: templates/system_settings.html:185
+ msgid "if the logs exceeds limit"
+ msgstr "若超過筆數限制"
+ 
+-#: templates/system_settings.html:182
++#: templates/system_settings.html:185
+ msgid "keep"
+ msgstr "保留"
+ 
+-#: templates/system_settings.html:184
++#: templates/system_settings.html:187
+ msgid "month data"
+ msgstr "月資料"
+ 
+-#: templates/system_settings.html:184
++#: templates/system_settings.html:187
+ msgid "others will be remove."
+ msgstr "其他移除"
+ 
+-#: templates/system_settings.html:185
++#: templates/system_settings.html:188
+ #, python-format
+ msgid "In limit duration, the logs can be record to 150%% amount."
+ msgstr "若期限內超過筆數限制，最多可以紀錄到1.5倍的筆數限制。"
+ 
+-#: templates/system_settings.html:186
++#: templates/system_settings.html:189
+ #, python-format
+ msgid ""
+ "Over 150%% amount, system will keep latest logs, and remove the other older "
+@@ -744,14 +748,20 @@ msgid ""
+ msgstr ""
+ "若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪除。"
+ 
+-#: templates/system_settings.html:189
++#: templates/system_settings.html:192
+ msgid "Save user photo image"
+ msgstr "儲存建檔資料"
+ 
+-#: templates/system_settings.html:192
++#: templates/system_settings.html:195
+ msgid "Save FR recognition photo image"
+ msgstr "儲存臉部辨識成功照片"
+ 
++#: templates/system_settings.html:294
++msgid ""
++"The backup may not be processed monthly, if you choose monthly date from 29 "
++"to 31 !\\n\\nWould you want to continue ?"
++msgstr "選擇每月 29~31 日，可能無法每月進行自動備份,您確定要繼續嗎?"
++
+ #: templates/systemlog_list.html:31
+ msgid "System log List"
+ msgstr "系統事件紀錄"
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index f7997dc..c9d3c93 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -291,7 +291,7 @@
+             }
+ 
+             if (BackupMonthlyDate > 28) {
+-                var ret = confirm("The backup may not be processed monthly, if you choose monthly date from 29 to 31 !\n\nWould you want to continue ?");
++                var ret = confirm("{% trans "The backup may not be processed monthly, if you choose monthly date from 29 to 31 !\n\nWould you want to continue ?" %}");
+                 if (ret != true) {
+                     return;
+                 }
+-- 
+1.9.1
+

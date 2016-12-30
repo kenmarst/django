@@ -1,0 +1,132 @@
+From a11c99790e6bf7ce1bbcec29f9dc0138da1f858b Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 25 May 2016 15:01:08 +0800
+Subject: [PATCH 079/443] Fixed internationalization (i18n) to login method.
+
+---
+ br06/urls.py              |  3 ++-
+ login/views.py            |  3 +++
+ templates/login.html      | 26 ++++----------------------
+ templates/login_i18n.html | 25 +++++++++++++++++++++++++
+ 4 files changed, 34 insertions(+), 23 deletions(-)
+ create mode 100644 templates/login_i18n.html
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 730af9f..387575e 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -26,7 +26,7 @@ from devices.views import device_list_view, device_add_view, device_edit_view, d
+ from usergroups.views import user_group_list_view, user_group_add_view, user_group_edit_view, user_group_members_view, user_group_devices_view, add_user_group, change_user_group_name, delete_user_group, add_user_group_member, delete_user_group_member, add_user_group_device, delete_user_group_device
+ from role.views import role_list_view, role_add_view, role_rename_view, role_permission_view, rename_role, add_role, delete_role, permission_save
+ from frusergroups.views import frusergroups_list, delete_frusergroup, frusergroup_add_view, add_frusergroup, frusergroup_edit_view, change_frusergroup_name, frusergroup_member_view, add_frusergroup_member, delete_frusergroup_member, frusergroup_devices_view, add_frusergroup_device, delete_frusergroup_device
+-from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView
++from login.views import login, logout, password_reset_confirm, ResetPasswordRequestView, login_i18n
+ 
+ 
+ urlpatterns = [
+@@ -47,6 +47,7 @@ urlpatterns += [
+     url(r'^logout/?$', logout),
+     url(r'^reset_password/(?P<uidb64>[0-9A-Za-z]+)/(?P<times>.+)/(?P<token>.+)/$', password_reset_confirm, name='password_reset_confirm'),
+     url(r'^account/forget_password', ResetPasswordRequestView),
++    url(r'^login_i18n', login_i18n),
+ ]
+ 
+ urlpatterns += [
+diff --git a/login/views.py b/login/views.py
+index 5553443..0ef28f4 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -186,3 +186,6 @@ def ResetPasswordRequestView(request):
+             return render(request, 'registration/forget_password.html', {'Result':"Fail",'Code': "0000"})
+ 
+     return render(request, 'registration/forget_password.html', {'CODE': ""})
++
++def login_i18n(request):
++    return render(request, 'login_i18n.html')
+diff --git a/templates/login.html b/templates/login.html
+index f8e3432..00fb3b7 100644
+--- a/templates/login.html
++++ b/templates/login.html
+@@ -1,5 +1,4 @@
+ <!DOCTYPE html>
+-{% load i18n %}
+ <html xml:lang="{{ LANGUAGE_CODE }}" lang="{{ LANGUAGE_CODE }}">
+ {% include 'commons_js.html' %}
+ 
+@@ -7,17 +6,7 @@
+ <!-- http://bootsnipp.com/snippets/featured/password-strength-meter -->
+ <!-- <body background="{% static "background.jpg" %}"> -->
+ <head>
+-	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+ 	<script src="https://www.google.com/recaptcha/api.js" async defer ></script>
+-	<script type="text/javascript">
+-		function selectdo(obj) {
+-			      str="/i18n/setlang/";
+-			      myform = document.getElementById('testform');
+-			      myform.method = "POST";
+-			      myform.action = str;
+-			      myform.submit();
+-		}
+-	</script>
+ </head>
+ 
+ <div class="container">
+@@ -32,20 +21,13 @@
+ 					<div class="pwstrength_viewport_progress"></div>
+ 
+ 					<div class="g-recaptcha" data-sitekey="6LcOCx4TAAAAAFOXKwUeBw4cg97vfmkOmEq9cxEY" style="transform:scale(0.8);-webkit-transform:scale(0.8);transform-origin:0 0;-webkit-transform-origin:0 0;" align="center"></div>
+-					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">{% trans "Sign in" %}</button>
++					<br>
++					<iframe src="login_i18n" style="width:160px;height:40px" frameborder="0" scrolling="no"></iframe>
++					<button type="submit" name="go" class="btn btn-lg btn-primary btn-block">Sign in</button>
+ 					<div>
+-						<a href="account/forget_password">{% trans "Forget password" %}</a>
++						<a href="account/forget_password">Forget password</a>
+ 					</div>
+ 				</form>
+-				 <br>
+-				<form name="testform" id="testform" method='post'>{% csrf_token %}
+-				  <select id="language" name="language" class="form-control input-lg" style="width:160px;height:40px;font-size:14px;" onchange="selectdo(this)">
+-				  <option value="" >{% trans "Languages" %}</option>
+-				    {% for lang in LANGUAGES %}
+-				    <option value="{{ lang.0 }}" > {{ lang.1 }} </option>
+-				    {% endfor %}
+-				  </select>
+-				</form>
+ 				<!-- <div class="form-links">
+ 					<a href="#">www.website.com</a>
+ 				</div> -->
+diff --git a/templates/login_i18n.html b/templates/login_i18n.html
+new file mode 100644
+index 0000000..bd13492
+--- /dev/null
++++ b/templates/login_i18n.html
+@@ -0,0 +1,25 @@
++<!DOCTYPE html>
++{% load i18n %}
++{% include 'commons_js.html' %}
++
++<head>
++	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
++	<script type="text/javascript">
++		function selectdo(obj) {
++			      str="/i18n/setlang/";
++			      myform = document.getElementById('testform');
++			      myform.method = "POST";
++			      myform.action = str;
++			      myform.submit();
++		}
++	</script>
++</head>
++
++<form name="testform" id="testform" method='post'>{% csrf_token %}
++	<select id="language" name="language" class="form-control input-lg" style="width:160px;height:40px;font-size:14px;" onchange="selectdo(this)">
++	<option value="" >{% trans "Languages" %}</option>
++		{% for lang in LANGUAGES %}
++		<option value="{{ lang.0 }}" > {{ lang.1 }} </option>
++		{% endfor %}
++	</select>
++</form>
+-- 
+1.9.1
+

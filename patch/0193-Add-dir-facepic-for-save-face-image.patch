@@ -1,0 +1,33 @@
+From 95d9da5bfe33a80b0286b0137e65aa9a4e002dc0 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 21 Jul 2016 19:12:24 +0800
+Subject: [PATCH 193/443] Add dir facepic for save face image.
+
+---
+ br06/settings.py         | 1 +
+ media/facepic/.gitignore | 1 +
+ 2 files changed, 2 insertions(+)
+ create mode 100644 media/facepic/.gitignore
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 0c58411..fd0cb85 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -166,6 +166,7 @@ STATICFILES_DIRS = [
+ ]
+ 
+ PIC_DIR = 'fruserpic/'
++PIC_DIR_FACE = 'facepic/'
+ 
+ LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ 
+diff --git a/media/facepic/.gitignore b/media/facepic/.gitignore
+new file mode 100644
+index 0000000..f935021
+--- /dev/null
++++ b/media/facepic/.gitignore
+@@ -0,0 +1 @@
++!.gitignore
+-- 
+1.9.1
+

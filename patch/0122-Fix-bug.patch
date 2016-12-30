@@ -1,0 +1,26 @@
+From eb55d745fd99a9ce6424257955ef5e393021e7a7 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 8 Jun 2016 16:15:27 +0800
+Subject: [PATCH 122/443] Fix bug
+
+Bug Fix - settings variable name error.
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 4550a47..26ff461 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -28,7 +28,7 @@ SECRET_KEY = '6LcOCx4TAAAAAPE6AF6FY3ZNe-v8ze6fp-PDBvch'
+ DEBUG = True
+ 
+ # Set to False when DEBUG=False, but default do not set
+-#TEMPLATE_DEBddUG = False
++#TEMPLATE_DEBUG = False
+ 
+ # Default admin login email & password
+ ADMIN_MAIL = 'admin@tw.shuttle.com'
+-- 
+1.9.1
+

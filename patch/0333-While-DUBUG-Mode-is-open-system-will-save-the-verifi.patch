@@ -1,0 +1,39 @@
+From a9ee4a855f26fd402bb5168aed915bbc1ce92a9a Mon Sep 17 00:00:00 2001
+From: Jeffery <jeffery_wu@tw.shuttle.com>
+Date: Thu, 27 Oct 2016 16:24:12 +0800
+Subject: [PATCH 333/443] While DUBUG Mode is open, system will save the
+ verified fingerprint image to media folder.
+
+---
+ api/fingerprint.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index d1cdcb4..ee7fdbe 100755
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -7,6 +7,7 @@ from django.conf import settings
+ from operator import itemgetter
+ import socket
+ import sys
++import time,datetime
+ 
+ result_success = {'Result' : 'Success'}
+ result_pass = {'Result' : 'Pass'}
+@@ -27,7 +28,12 @@ def verify(request):
+                 if (check == None):
+                     fruser = Frusers.objects.get(FRUserId = request.POST.get('FRUserId'), State = 'Enable')
+                     FingerDir = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_verify.bmp'])
+-
++                    if (settings.DEBUG == True):
++                        dt = datetime.datetime.now()
++                        FingerDir2 = ''.join([settings.FP_PIC_DIR, fruser.FRUserId, '_',dt.strftime("%m%d%H%M%S%f"), '_verify.bmp'])
++                        k = open(os.path.join(settings.MEDIA_DIR,FingerDir2),'wb+')
++                        k.write(request.FILES['image'].file.getvalue())
++                        k.close()
+                     f = open(os.path.join(settings.MEDIA_DIR,FingerDir),'wb+')
+                     f.write(request.FILES['image'].file.getvalue())
+                     f.close()
+-- 
+1.9.1
+

@@ -1,0 +1,25 @@
+From 6afd19a54ae9d21be8b1aa16ba9cfeb84b905e60 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 14 Jul 2016 15:29:48 +0800
+Subject: [PATCH 182/443] Modify system setting web connect test
+
+Take out the refresh after connect test successfully.
+---
+ templates/system_settings.html | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 1232e8d..8f1a3d3 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -242,7 +242,6 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         alert("FTP connect test successfully");
+-                        location.href = '/system_settings/';
+                     } else {
+                         alert("Fail to connect FTP");
+                     }
+-- 
+1.9.1
+

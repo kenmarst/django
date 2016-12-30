@@ -1,0 +1,1135 @@
+From dbcd95151b45a1c38e4df3194cbdb188ddbdd740 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 20 Dec 2016 14:46:10 +0800
+Subject: [PATCH 428/443] Modify import/export method of web.
+
+Modify the import and export method of fruser list web.
+Modify the export method of fruserlogs list web.
+Modify the export method of systemlogs list web.
+---
+ br06/urls.py                                 |  15 ++--
+ fruserlogs/views.py                          |  86 +++++++++++++------
+ frusers/views.py                             | 118 +++++++++++++++------------
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 378 -> 378 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 378 -> 378 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ systemlogs/views.py                          |  83 +++++++++++++------
+ templates/fruser_list.html                   |  61 +++++++-------
+ templates/fruserlog_list.html                |  38 ++++++---
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 21552 -> 21486 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  23 +++---
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 21552 -> 21486 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  23 +++---
+ templates/systemlog_list.html                |  36 ++++++--
+ 15 files changed, 301 insertions(+), 186 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index 203ee06..0ddf644 100755
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -17,9 +17,9 @@ from django.conf.urls import url, include
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection, views, fingerprint
+ from user.views import user_setting, user_list_view, user_list_data, user_add_view, user_update_view, add_user, update_user, delete_user
+-from frusers.views import fruser_list_view, fruser_add_view, fruser_edit_view, import_fruser, export_fruser, add_fruser, update_fruser, delete_fruser, fruser_data
+-from systemlogs.views import systemlog_list_view, systemlog_export, systemlog_data
+-from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_data
++from frusers.views import fruser_list_view, fruser_add_view, fruser_edit_view, import_fruser, produce_fruser, export_fruser, add_fruser, update_fruser, delete_fruser, fruser_data
++from systemlogs.views import systemlog_list_view, produce_systemlog, export_systemlog, systemlog_data
++from fruserlogs.views import fruserlog_list_view, produce_fruserlog, export_fruserlog, fruserlog_data
+ from logsetting.views import logsetting_view, settinglog
+ from downloads.views import device_update
+ from systemsettings.views import system_settings_views, settings_system_backup, settings_system_connect_test, settings_system_log
+@@ -60,13 +60,15 @@ urlpatterns += [
+ urlpatterns += [
+     url(r'^systemlog_list/?$', systemlog_list_view),
+     url(r'^systemlog_data/?$', systemlog_data),
+-    url(r'^systemlog_export/?$', systemlog_export),
++    url(r'^produce_systemlog/?$', produce_systemlog),
++    url(r'^export_systemlog/?$', export_systemlog),
+ ]
+ 
+ urlpatterns += [
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_data/?$', fruserlog_data),
+-    url(r'^fruserlog_export/?$', fruserlog_export),
++    url(r'^produce_fruserlog/?$', produce_fruserlog),
++    url(r'^export_fruserlog/?$', export_fruserlog),
+ ]
+ 
+ urlpatterns += [
+@@ -165,6 +167,7 @@ urlpatterns += [
+     url(r'^fruser_add/?$', fruser_add_view),
+     url(r'^fruser_edit/?$', fruser_edit_view),
+     url(r'^import_fruser/?$', import_fruser),
++    url(r'^produce_fruser/?$', produce_fruser),
+     url(r'^export_fruser/?$', export_fruser),
+     url(r'^add_fruser/?$', add_fruser),
+     url(r'^update_fruser/?$', update_fruser),
+@@ -219,5 +222,5 @@ urlpatterns += [
+ ]
+ 
+ urlpatterns += [
+-    url(r'^ITEPKG03_NO_WIPE.PKG?$', device_update),
++    url(r'^ITEPKG03_NO_WIPE.PKG/?$', device_update),
+ ]
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index b3507e9..5e58f91 100755
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -1,13 +1,14 @@
+ from django.shortcuts import render
+ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+-from api.models import Fruserlogs, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
++from django.db.models import Q
+ from django.conf import settings
++from wsgiref.util import FileWrapper
++from api.models import Fruserlogs, Systemlogs
+ from login.views import check_login, check_login_redirect
+-from django.db.models import Q
+-import datetime,types
+-import csv, json, os
++from collections import ChainMap
++import json, datetime, csv, os
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_log'
+@@ -45,33 +46,68 @@ def fruserlog_data(request):
+     return JsonResponse({'total': fruserlog_count, 'rows': fruserlogs})
+ 
+ @csrf_exempt
+-def fruserlog_export(request):
++def produce_fruserlog(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
++    
++    try:
++        request.session.set_expiry(0)
+ 
+-    symbolcover = {'tab' : '\t', 'comma' : ','}
++        export_dir = '/tmp/export_fruserlog'
++        while os.path.exists(export_dir):
++            export_dir = '{0}_{1}'.format(export_dir[:21], int(export_dir[22:] or '0') + 1)
++        os.mkdir(export_dir, 0o777)
+ 
+-    try:
+-        with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
+-            json_data = json.loads(f.read())
+-
+-        if json_data['symbol']:
+-            symbol = symbolcover.get(json_data['symbol'], json_data['symbol'])
+-            header = [field for field in json_data.get('fields') if field not in {'Category'}]
+-        else:
+-            raise
+-    except:
+-        header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
+-        symbol = "\t"
+-
+-    response = HttpResponse(content_type = 'text/csv')
+-    response['Content-Disposition'] = 'attachment; filename=fruserlog-export-{0}.csv'.format(
++        csv_path = os.path.join(export_dir, 'fruserlog.csv')
++
++        with open(csv_path, 'w', encoding = 'utf-8') as csvfile:
++            symbolcover = {'tab' : '\t', 'comma' : ','}
++            try:
++                with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
++                    json_data = json.loads(f.read())
++
++                if json_data['symbol']:
++                    symbol = symbolcover.get(json_data['symbol'], json_data['symbol'])
++                    header = [field for field in json_data.get('fields') if field not in {'Category'}]
++                else:
++                    raise
++            except:
++                header=['OId', 'LogDateTime', 'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName', 'LogContent']
++                symbol = "\t"
++
++            writer = csv.writer(csvfile, delimiter = symbol)
++            writer.writerow(header)
++            writer.writerows([[res.as_json()[column] for column in header] for res in Fruserlogs.objects.all().order_by('-LogDateTime')])
++        raise Exception(0)
++
++    except Exception as e:
++        try:
++            request.session.set_expiry(request.session.get_expiry_age())
++        finally:
++            try:
++                return JsonResponse(dict(ChainMap(res_code[int(e.__str__())], {'csv' : csv_path or ''})))
++            except Exception as e:
++                return JsonResponse(res_code[1])
++
++@csrf_exempt
++def export_fruserlog(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
++    request.session.set_expiry(0)
++
++    csv_path = request.GET.get('csv', '')
++    if not os.path.exists(csv_path):
++        return render(request, 'registration/not_found.html')
++        
++    with open(csv_path, 'rb') as f:
++        response = HttpResponse(FileWrapper(f), content_type = 'text/csv')
++    response['Content-Disposition'] = 'attachment; filename=fruserlog-{0}.csv'.format(
+         datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+     )
++    response['Content-Length'] = os.path.getsize(csv_path)
+ 
+-    writer = csv.writer(response, delimiter = symbol)
+-    writer.writerow(header)
+-    writer.writerows([[res.as_json()[column] for column in header] for res in Fruserlogs.objects.all().order_by('-LogDateTime')])
+-
++    request.session.set_expiry(request.session.get_expiry_age())
+     return response
+diff --git a/frusers/views.py b/frusers/views.py
+index 2bf180d..1f1e91b 100755
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -1,13 +1,13 @@
+ from django.shortcuts import render
+-
+-from collections import ChainMap
+ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+-from api.models import *
+-from datetime import datetime
+-from login.views import check_login, check_login_redirect
+ from django.conf import settings
+ from django.db.models import Q
+-import csv, zipfile, tempfile, os, sys, json, requests
++from wsgiref.util import FileWrapper
++from datetime import datetime
++from api.models import *
++from login.views import check_login, check_login_redirect
++from collections import ChainMap
++import csv, zipfile, os, sys, json, requests
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_fruserlist'
+@@ -101,29 +101,30 @@ def import_fruser(request):
+         import_success = 0
+         import_fail = 0
+         if not 'file' in request.FILES:
+-            raise Exception(3)
++            raise Exception(2)
+ 
+         mediadir = settings.MEDIA_DIR
+-        csvdir = os.path.join(mediadir, 'frusers.csv')
+-        zipfile_dir = os.path.join(mediadir, request.FILES['file'].name)
+-        with open(zipfile_dir, 'wb+') as destination:
++        import_dir = '/tmp/import_fruser'
++        while os.path.exists(import_dir):
++            import_dir = '{0}_{1}'.format(import_dir[:18], int(import_dir[19:] or '0') + 1)
++        os.mkdir(import_dir, 0o777)
++        zipfile_path = os.path.join(import_dir, request.FILES['file'].name)
++        with open(zipfile_path, 'wb+') as destination:
+             for chunk in request.FILES['file'].chunks():
+                 destination.write(chunk)
+ 
+-        if not zipfile.is_zipfile(zipfile_dir):
++        if not zipfile.is_zipfile(zipfile_path):
+             raise Exception(2)
+ 
+-        with zipfile.ZipFile(zipfile_dir) as zipFile:
++        with zipfile.ZipFile(zipfile_path) as zipFile:
+             try:
+-                members = [zipFile.getinfo('frusers.csv')]
+-                for fileinfo in zipFile.infolist():
+-                    if fileinfo.filename[:10] == 'fruserpic/':
+-                        members.append(fileinfo)
++                zipFile.extractall(import_dir, [zipFile.getinfo('frusers.csv')])
++                members = [fileinfo for fileinfo in zipFile.infolist() if fileinfo.filename[:10] == 'fruserpic/']
+                 zipFile.extractall(mediadir, members)
+             except:
+                 raise Exception(2)
+ 
+-        with open(csvdir, 'r', encoding='utf-8') as csvfile:
++        with open(os.path.join(import_dir, 'frusers.csv'), 'r', encoding='utf-8') as csvfile:
+             for row in csv.DictReader(csvfile):
+                 fail = False
+                 fruser, result = Frusers.objects.get_or_create(FRUserId = row['FRUserId'])
+@@ -183,8 +184,6 @@ def import_fruser(request):
+ 
+     except Exception as e:
+         try:
+-            os.remove(zipfile_dir)
+-            os.remove(csvdir)
+             request.session.set_expiry(request.session.get_expiry_age())
+         finally:
+             try:
+@@ -192,58 +191,71 @@ def import_fruser(request):
+             except Exception as e:
+                 return JsonResponse(res_code[1])
+ 
+-def export_fruser(request):
++def produce_fruser(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+ 
+     try:
++        request.session.set_expiry(0)
+         mediadir = settings.MEDIA_DIR
+-        csvdir = os.path.join(mediadir, 'frusers.csv')
++
++        export_dir = '/tmp/export_fruser'
++        while os.path.exists(export_dir):
++            export_dir = '{0}_{1}'.format(export_dir[:18], int(export_dir[19:] or '0') + 1)
++        os.mkdir(export_dir, 0o777)
++
++        csv_path = os.path.join(export_dir, 'frusers.csv')
++        fruser_path = os.path.join(export_dir, 'fruser.zip')
+         picdir = os.path.join(mediadir, 'fruserpic')
+ 
+-        if not os.path.exists(csvdir):
+-            with open(csvdir, 'w', encoding = 'utf-8') as csvfile:
+-                header = ['FRUserId', 'Name', 'Group', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
+-                writer = csv.writer(csvfile)
+-                writer.writerow(header)
+-                writer.writerows([[res.as_json()[column] for column in header] for res in Frusers.objects.all()])
+-
+-            temp = tempfile.TemporaryFile()
+-            with zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as archive:
+-                archive.write(csvdir, os.path.split(csvdir)[-1])
+-                root = ''
+-                for dirname, subdirs, files in os.walk(picdir):
+-                    root = os.path.join(root, os.path.split(dirname)[-1])
+-                    archive.write(dirname, root)
+-                    for filename in files:
+-                        archive.write(os.path.join(dirname, filename), os.path.join(root, filename))
+-
+-            frusers_zip = open(temp.name, 'rb')
+-            temp.seek(0)
+-            response = HttpResponse(frusers_zip, content_type = 'application/zip')
+-            response['Content-Disposition'] = 'attachment; filename=fruser-%s.zip' % (
+-                datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+-            )
+-        else:
+-            raise Exception(2)
++        with open(csv_path, 'w', encoding = 'utf-8') as csvfile:
++            header = ['FRUserId', 'Name', 'Group', 'Gender', 'Age', 'Face1', 'Face2', 'RFIDCard', 'State', 'DisableCauses']
++            writer = csv.writer(csvfile)
++            writer.writerow(header)
++            writer.writerows([[res.as_json()[column] for column in header] for res in Frusers.objects.all()])
+ 
++        with zipfile.ZipFile(fruser_path, 'w', zipfile.ZIP_DEFLATED) as archive:
++            archive.write(csv_path, os.path.split(csv_path)[-1])
++            root = ''
++            for dirname, subdirs, files in os.walk(picdir):
++                root = os.path.join(root, os.path.split(dirname)[-1])
++                archive.write(dirname, root)
++                for filename in files:
++                    archive.write(os.path.join(dirname, filename), os.path.join(root, filename))
+         raise Exception(0)
+ 
+     except Exception as e:
+         try:
+-            os.remove(csvdir)
++            request.session.set_expiry(request.session.get_expiry_age())
+         finally:
+             try:
+-                if int(e.__str__()) == 0:
+-                    return response
+-                elif int(e.__str__()) == 2:
+-                    return render(request, 'fruser_list.html', {'active' : 'fruser_list', 'export_error' : 'true'})
+-                else:
+-                    raise
++                return JsonResponse(dict(ChainMap(res_code[int(e.__str__())], {'fruser' : fruser_path or ''})))
+             except:
+                 return JsonResponse(res_code[1])
+ 
++def export_fruser(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
++    request.session.set_expiry(0)
++
++    fruser_path = request.GET.get('fruser', '')
++    if not os.path.exists(fruser_path):
++        return render(request, 'registration/not_found.html')
++        
++    with open(fruser_path, 'rb') as f:
++        response = HttpResponse(FileWrapper(f), content_type = 'application/zip')
++    response['Content-Disposition'] = 'attachment; filename=fruser-%s.zip' % (
++        datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
++    )
++    response['Content-Length'] = os.path.getsize(fruser_path)
++
++    request.session.set_expiry(request.session.get_expiry_age())
++    return response
++
++
+ def add_fruser(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 059a06c0eb1bec3d95099e8e3f723b256ba6d8bc..7196cdb8d697cff8339eeb293799b18efb677037 100755
+GIT binary patch
+delta 12
+Ucmeyx^owc2R3>ASiPIkg03+fBk^lez
+
+delta 12
+Ucmeyx^owc2R3<~qiPIkg03+-Ll>h($
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 01ad1a7..d93daf5 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 14:19+0800\n"
++"POT-Creation-Date: 2016-12-20 14:34+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index ed8a50c68fde0860906fc8468fa986e1458cc723..7196cdb8d697cff8339eeb293799b18efb677037 100755
+GIT binary patch
+delta 12
+Ucmeyx^owc2R3>ASiPIkg03+fBk^lez
+
+delta 12
+Ucmeyx^owc2R3<~yiPIkg03+N5kpKVy
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index fe0288e..82b1aca 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 14:15+0800\n"
++"POT-Creation-Date: 2016-12-20 14:34+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/systemlogs/views.py b/systemlogs/views.py
+index 416fa89..ee40851 100755
+--- a/systemlogs/views.py
++++ b/systemlogs/views.py
+@@ -1,12 +1,14 @@
+ from django.shortcuts import render
+ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+ from django.core.exceptions import ObjectDoesNotExist
+-from django.views.decorators.csrf import csrf_exempt, csrf_protect, requires_csrf_token
+-from api.models import Users, Frusers, Systemlogs
++from django.views.decorators.csrf import csrf_exempt
++from django.db.models import Q
+ from django.conf import settings
++from wsgiref.util import FileWrapper
++from api.models import Users, Frusers, Systemlogs
+ from login.views import check_login, check_login_redirect
+-from django.db.models import Q
+-import json, urllib, datetime, types, csv, os
++from collections import ChainMap
++import json, datetime, csv, os
+ 
+ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}, {"CODE": "3"}]
+ permission = 'permission_log'
+@@ -44,33 +46,68 @@ def systemlog_data(request):
+     return JsonResponse({'total': systemlog_count, 'rows': systemlogs})
+ 
+ @csrf_exempt
+-def systemlog_export(request):
++def produce_systemlog(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
++    
++    try:
++        request.session.set_expiry(0)
+ 
+-    symbolcover = {'tab' : '\t', 'comma' : ','}
++        export_dir = '/tmp/export_systemlog'
++        while os.path.exists(export_dir):
++            export_dir = '{0}_{1}'.format(export_dir[:21], int(export_dir[22:] or '0') + 1)
++        os.mkdir(export_dir, 0o777)
+ 
+-    try:
+-        with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
+-            json_data = json.loads(f.read())
++        csv_path = os.path.join(export_dir, 'systemlog.csv')
++
++        with open(csv_path, 'w', encoding = 'utf-8') as csvfile:
++            symbolcover = {'tab' : '\t', 'comma' : ','}
++            try:
++                with open(os.path.join(settings.LOGSETTING_DIR, 'logsetting.json'), 'r') as f:
++                    json_data = json.loads(f.read())
++
++                if json_data['symbol']:
++                    symbol = symbolcover.get(json_data['symbol'], json_data['symbol'])
++                    header = [field for field in json_data.get('fields') if field not in {'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName'}]
++                else:
++                    raise
++            except:
++                header = ['OId', 'LogDateTime', 'Category', 'LogContent']
++                symbol = "\t"
+ 
+-        if json_data['symbol']:
+-            symbol = symbolcover.get(json_data['symbol'], json_data['symbol'])
+-            header = [field for field in json_data.get('fields') if field not in {'FRUserOId', 'FRUserId', 'FRUserName', 'DeviceOId', 'DeviceName'}]
+-        else:
+-            raise
+-    except:
+-        header = ['OId', 'LogDateTime', 'Category', 'LogContent']
+-        symbol = "\t"
++            writer = csv.writer(csvfile, delimiter = symbol)
++            writer.writerow(header)
++            writer.writerows([[res.as_json()[column] for column in header] for res in Systemlogs.objects.all().order_by('-LogDateTime')])
++            raise Exception(0)
++    except Exception as e:
++        try:
++            request.session.set_expiry(request.session.get_expiry_age())
++        finally:
++            try:
++                return JsonResponse(dict(ChainMap(res_code[int(e.__str__())], {'csv' : csv_path or ''})))
++            except Exception as e:
++                print(e)
++                return JsonResponse(res_code[1])
+ 
+-    response = HttpResponse(content_type = 'text/csv')
+-    response['Content-Disposition'] = 'attachment; filename=systemlog-export-{0}.csv'.format(
++@csrf_exempt
++def export_systemlog(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] != "0":
++        return check_login_redirect(request, login_request["CODE"])
++
++    request.session.set_expiry(0)
++
++    csv_path = request.GET.get('csv', '')
++    if not os.path.exists(csv_path):
++        return render(request, 'registration/not_found.html')
++        
++    with open(csv_path, 'rb') as f:
++        response = HttpResponse(FileWrapper(f), content_type = 'text/csv')
++    response['Content-Disposition'] = 'attachment; filename=systemlog-{0}.csv'.format(
+         datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+     )
++    response['Content-Length'] = os.path.getsize(csv_path)
+ 
+-    writer = csv.writer(response, delimiter = symbol)
+-    writer.writerow(header)
+-    writer.writerows([[res.as_json()[column] for column in header] for res in Systemlogs.objects.all().order_by('-LogDateTime')])
+-
++    request.session.set_expiry(request.session.get_expiry_age())
+     return response
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index d1df34b..11df6ca 100755
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -193,29 +193,11 @@
+                 ],
+             });
+ 
+-            //For getting CSRF token
+-            function getCookie(name) {
+-                var cookieValue = null;
+-
+-                if (document.cookie && document.cookie != '') {
+-                    var cookies = document.cookie.split(';');
+-                    for (var i = 0; i < cookies.length; i++) {
+-                        var cookie = jQuery.trim(cookies[i]);
+-                        // Does this cookie string begin with the name we want?
+-                        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+-                            break;
+-                        }
+-                    }
+-                }
+-                return cookieValue;
+-            }
+-
+             {% if not EN_4G %}
+                 function ImportFruser() {
+                     if ($('#ImportFile').val()) {
+                         var data = new FormData($('#ImportForm')[0]);
+-                        data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
++                        data.append('csrfmiddlewaretoken', '{{csrf_token}}');
+ 
+                         $('#ImportFormBody').html('\
+                             <div class="col-sm-offset-1">\
+@@ -241,8 +223,6 @@
+                                     $('#ImportModal').modal("hide");
+                                 } else if (data.CODE == "2") {
+                                     alert("{% trans "The file format is not correct!" %}");
+-                                } else if (data.CODE == "3") {
+-                                    alert("{% trans "Please wait for uploading!" %}");
+                                 } else {
+                                     alert("{% trans "Fail to import fruser!" %}");
+                                 }
+@@ -262,12 +242,32 @@
+ 
+                 function ExportFruser() {
+                     $('#ExportModal').modal({"toggle": true, backdrop: "static", keyboard: false});
+-                    var export_iframe = document.getElementById('export_iframe');
+-                    export_iframe.onload = function() { 
+-                        $('#ExportModal').modal("hide");
+-                    }
+-                    export_iframe.src = '/export_fruser/';
+-                    document.body.appendChild(export_iframe);
++                    clearTimeout(timeoutVar);
++                    $.ajax({
++                        type: 'post',
++                        traditional: true,
++                        url: '/produce_fruser/',
++                        async: true,
++                        dataType: 'json',
++                        data: {
++                            csrfmiddlewaretoken : '{{csrf_token}}',
++                        },
++                        success: function(data) {
++                            if (data.CODE == "0") {
++                                var export_iframe = document.getElementById('export_iframe');
++                                export_iframe.src = '/export_fruser/?fruser=' + data.fruser;
++                                document.body.appendChild(export_iframe);
++                            } else {
++                                alert("{% trans "Export failed" %}");
++                            }
++                            $('#ExportModal').modal("hide");
++                            timeoutVar = timeoutStart();
++                        },
++                        error: function(data) {
++                            $('#ExportModal').modal("hide");
++                            timeoutVar = timeoutStart();
++                        }
++                    });
+                 }
+ 
+                 function delete_fruser(OId, Name) {
+@@ -280,7 +280,7 @@
+                             async: true,
+                             dataType: 'json',
+                             data: {
+-                                csrfmiddlewaretoken : getCookie('csrftoken'),
++                                csrfmiddlewaretoken : '{{csrf_token}}',
+                                 'OId': OId
+                             },
+                             success: function(data) {
+@@ -295,11 +295,6 @@
+                         });
+                     }
+                 }
+-                $(document).ready(function() {
+-                    if ({{export_error}}) {
+-                        alert('{% trans "Duplicate export!" %}');
+-                    }
+-                });
+             {% endif %}
+         </script>
+     </body>
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 477ae58..5e36f0e 100755
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -37,7 +37,7 @@
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+ 				     <div class="panel-body">
+-                         <button id="logexport" class="btn btn-primary pull-right" onclick="fruserlog_export()">{% trans "Export" %}</button>
++                         <button id="logexport" class="btn btn-primary pull-right" onclick="export_fruserlog()">{% trans "Export" %}</button>
+ 						 <table id="FRUserloglist"></table>
+                          <iframe id="export_iframe" style="display:none;"></iframe>
+ 					</div>
+@@ -131,17 +131,35 @@
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+ 
+-        function fruserlog_export() {
++        function export_fruserlog() {
+             $('#ExportModal').modal({"toggle": true, backdrop: "static", keyboard: false});
+-            //$('#ExportModal').modal("toggle");
+-            var export_iframe = document.getElementById('export_iframe');
+-            export_iframe.onload = function() { 
+-                $('#ExportModal').modal("hide");
+-            }
+-            export_iframe.src = '/fruserlog_export/';
+-            document.body.appendChild(export_iframe);
++            clearTimeout(timeoutVar);
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/produce_fruserlog/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : '{{csrf_token}}',
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        var export_iframe = document.getElementById('export_iframe');
++                        export_iframe.src = '/export_fruserlog/?csv=' + data.csv;
++                        document.body.appendChild(export_iframe);
++                    } else {
++                        alert("{% trans "Export failed" %}");
++                    }
++                    $('#ExportModal').modal("hide");
++                    timeoutVar = timeoutStart();
++                },
++                error: function(data) {
++                    $('#ExportModal').modal("hide");
++                    timeoutVar = timeoutStart();
++                }
++            });
+         }
+-
+ 	</script>
+ </body>
+ 
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index 400eb9976f28f0475c3fc28351a7e864ebc52036..7effa56cb9b444f594bf8b8a0cf5e0bfbae81dba 100755
+GIT binary patch
+delta 6908
+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
+Vdi92{H?FCDs;?JQTUv2G`hO=?<&*#b
+
+delta 6958
+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
+U?DnN+YhJio^F;M;gT8C>KlwNHegFUf
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 94ab4ff..83eda1d 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 14:19+0800\n"
++"POT-Creation-Date: 2016-12-20 14:34+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -150,7 +150,7 @@ msgid "Password incorrect"
+ msgstr "密码错误"
+ 
+ #: templates/dashboard.html:258 templates/dashboard.html.py:311
+-#: templates/fruser_list.html:243
++#: templates/fruser_list.html:225
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正确"
+ 
+@@ -162,7 +162,7 @@ msgstr "无法连线到FTP"
+ msgid "Fail to upgrade server!"
+ msgstr "升级系统失败"
+ 
+-#: templates/dashboard.html:324 templates/fruser_list.html.py:259
++#: templates/dashboard.html:324 templates/fruser_list.html.py:239
+ msgid "Please choose a file!"
+ msgstr "请选择档案"
+ 
+@@ -772,26 +772,23 @@ msgstr "建立时间"
+ msgid "Recently used Date"
+ msgstr "最后使用时间"
+ 
+-#: templates/fruser_list.html:222
++#: templates/fruser_list.html:204
+ msgid "Please do not leave this page and wait for uploading!"
+ msgstr "请等待上传且勿离开此页面！"
+ 
+-#: templates/fruser_list.html:245
+-msgid "Please wait for uploading!"
+-msgstr "请等待上传！"
+-
+-#: templates/fruser_list.html:247
++#: templates/fruser_list.html:227
+ msgid "Fail to import fruser!"
+ msgstr "汇入设备使用者失败"
+ 
++#: templates/fruser_list.html:261 templates/fruserlog_list.html.py:152
++#: templates/systemlog_list.html:140
++msgid "Export failed"
++msgstr "汇出失败"
++
+ #: templates/fruser_list.html:290
+ msgid "Fail to delete fruser"
+ msgstr "删除设备使用者失败"
+ 
+-#: templates/fruser_list.html:300
+-msgid "Duplicate export!"
+-msgstr "重复汇出"
+-
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index c7c306686c93be91e72f142121cd15a98ea5a404..86b7f574de7695b476eae5dd7cdd07588dc2a16f 100755
+GIT binary patch
+delta 6909
+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
+VyJpj=rORuc?B~VSl$4)~`9GnT=0X4f
+
+delta 6957
+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
+U-L~}H<JFgUJXZbNpzj<14}J9XEdT%j
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 0016e52..abfda0c 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-20 14:15+0800\n"
++"POT-Creation-Date: 2016-12-20 14:34+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -150,7 +150,7 @@ msgid "Password incorrect"
+ msgstr "密碼錯誤"
+ 
+ #: templates/dashboard.html:258 templates/dashboard.html.py:311
+-#: templates/fruser_list.html:243
++#: templates/fruser_list.html:225
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正確"
+ 
+@@ -162,7 +162,7 @@ msgstr "無法連線到FTP"
+ msgid "Fail to upgrade server!"
+ msgstr "升級系統失敗"
+ 
+-#: templates/dashboard.html:324 templates/fruser_list.html.py:259
++#: templates/dashboard.html:324 templates/fruser_list.html.py:239
+ msgid "Please choose a file!"
+ msgstr "請選擇檔案"
+ 
+@@ -772,26 +772,23 @@ msgstr "建立時間"
+ msgid "Recently used Date"
+ msgstr "最後使用時間"
+ 
+-#: templates/fruser_list.html:222
++#: templates/fruser_list.html:204
+ msgid "Please do not leave this page and wait for uploading!"
+ msgstr "請等待上傳且勿離開此頁面！"
+ 
+-#: templates/fruser_list.html:245
+-msgid "Please wait for uploading!"
+-msgstr "請等待上傳！"
+-
+-#: templates/fruser_list.html:247
++#: templates/fruser_list.html:227
+ msgid "Fail to import fruser!"
+ msgstr "匯入設備使用者失敗"
+ 
++#: templates/fruser_list.html:261 templates/fruserlog_list.html.py:152
++#: templates/systemlog_list.html:140
++msgid "Export failed"
++msgstr "匯出失敗"
++
+ #: templates/fruser_list.html:290
+ msgid "Fail to delete fruser"
+ msgstr "刪除設備使用者失敗"
+ 
+-#: templates/fruser_list.html:300
+-msgid "Duplicate export!"
+-msgstr "重複匯出"
+-
+ #: templates/frusergroup_add.html:8 templates/frusergroup_add.html.py:17
+ #: templates/frusergroup_add.html:23
+ msgid "FR User Group Add"
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index 85a73e7..2185f07 100755
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -31,7 +31,7 @@
+ 			<div class="col-lg-12">
+ 				<div class="panel panel-default">
+ 					<div class="panel-body">
+-					    <button id="logexport" class="btn btn-primary pull-right" onclick="systemlog_export()">{% trans "Export" %}</button>
++					    <button id="logexport" class="btn btn-primary pull-right" onclick="export_systemlog()">{% trans "Export" %}</button>
+ 						<table id="SystemLogList"></table>
+                         <iframe id="export_iframe" style="display:none;"></iframe>
+                     </div>
+@@ -119,14 +119,34 @@
+ 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+ 		})
+ 
+-        function systemlog_export() {
++        function export_systemlog() {
+             $('#ExportModal').modal({"toggle": true, backdrop: "static", keyboard: false});
+-            var export_iframe = document.getElementById('export_iframe');
+-            export_iframe.onload = function() { 
+-                $('#ExportModal').modal("hide");
+-            }
+-            export_iframe.src = '/systemlog_export/';
+-            document.body.appendChild(export_iframe);
++            clearTimeout(timeoutVar);
++            $.ajax({
++                type: 'post',
++                traditional: true,
++                url: '/produce_systemlog/',
++                async: true,
++                dataType: 'json',
++                data: {
++                    csrfmiddlewaretoken : '{{csrf_token}}',
++                },
++                success: function(data) {
++                    if (data.CODE == "0") {
++                        var export_iframe = document.getElementById('export_iframe');
++                        export_iframe.src = '/export_systemlog/?csv=' + data.csv;
++                        document.body.appendChild(export_iframe);
++                    } else {
++                        alert("{% trans "Export failed" %}");
++                    }
++                    $('#ExportModal').modal("hide");
++                    timeoutVar = timeoutStart();
++                },
++                error: function(data) {
++                    $('#ExportModal').modal("hide");
++                    timeoutVar = timeoutStart();
++                }
++            });
+         }
+ 	</script>
+ </body>
+-- 
+1.9.1
+

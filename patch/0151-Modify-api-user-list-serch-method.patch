@@ -1,0 +1,35 @@
+From 0ad6111e7a70c86438f253b89f1ea679d1906ea8 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Fri, 24 Jun 2016 18:06:47 +0800
+Subject: [PATCH 151/443] Modify api user list serch method
+
+Modify api user list serch method with contains.
+---
+ api/user.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/api/user.py b/api/user.py
+index 01719d1..cb64e1f 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -208,7 +208,7 @@ def list(request):
+                     #print('Field : ', req['Field'], 'Keyword : ',req['Keyword'])
+ 
+                     FlipPage = ( int( req['FlipPage'] ) - 1 ) * 5
+-                    numbers = Frusers.objects.filter(State = "Enable", **{req['Field']:req['Keyword']}).count()
++                    numbers = Frusers.objects.filter(State = "Enable", **{req['Field'] + '__contains' : req['Keyword']}).count()
+ 
+                     return JsonResponse(dict(ChainMap(result_success, {
+                         'Numbers' : numbers,
+@@ -227,7 +227,7 @@ def list(request):
+                                 ).values('OId', 'Name')
+                             ]
+                         } for i in Frusers.objects.filter( State = "Enable" ) \
+-                            .filter( **{ req['Field'] : req['Keyword'] } ) \
++                            .filter( **{ req['Field'] + '__contains' : req['Keyword'] } ) \
+                             [ FlipPage : FlipPage + 5 ] ] # ex:[ 0 : 5 ] => 5 frusers / 1 page
+                     })))
+                 else:
+-- 
+1.9.1
+

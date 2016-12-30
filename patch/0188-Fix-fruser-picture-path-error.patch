@@ -1,0 +1,26 @@
+From be44940990cb19b0025f8fe36424c0580328b894 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 19 Jul 2016 18:04:53 +0800
+Subject: [PATCH 188/443] Fix fruser picture path error
+
+Bug Fix - fruser picture path not found.
+---
+ br06/settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/br06/settings.py b/br06/settings.py
+index 57ee45f..2ec9ec2 100644
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -165,7 +165,7 @@ STATICFILES_DIRS = [
+     os.path.join(BASE_DIR, 'static')
+ ]
+ 
+-PIC_DIR = 'fruserpic'
++PIC_DIR = 'fruserpic/'
+ 
+ LOGSETTING_DIR = os.path.join(MEDIA_DIR, 'logsetting')
+ 
+-- 
+1.9.1
+

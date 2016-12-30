@@ -1,0 +1,81 @@
+From eb8f079154d5a7c9a83d9f06f63319070bdd749d Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Tue, 13 Dec 2016 19:21:13 +0800
+Subject: [PATCH 415/443] Fix bug - device updated on web error.
+
+---
+ devices/views.py           | 1 -
+ templates/device_edit.html | 8 ++++----
+ templates/device_list.html | 4 ++--
+ 3 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/devices/views.py b/devices/views.py
+index f716b42..886adbf 100755
+--- a/devices/views.py
++++ b/devices/views.py
+@@ -238,7 +238,6 @@ def delete_frusergroupdevice(request):
+     except:
+         return JsonResponse(res_code[1])
+ 
+-@csrf_exempt
+ def update_all_device(request):
+     login_request = json.loads(check_login(request, permission))
+     if login_request["CODE"] != "0":
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 9facc39..39fb5b8 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -197,7 +197,7 @@
+                                         <label class="col-md-3 control-label">{% trans "Software Version" %} :</label>
+                                         <label class="col-md-6 control-label">
+                                             <p class="text-left">v1.0.0.9
+-                                                <a onclick="confirm('{% trans "Confirm to upgrade this device?" %}');">
++                                                <a onclick="update_device()">
+                                                     (<em>{% trans "There is a newer version can be upgraded." %}</em>)
+                                                     {% trans "Upgrade here" %}
+                                                 </a>
+@@ -263,7 +263,7 @@
+         }
+ 
+         function update_device() {
+-            var ret = confirm('Confirm to upgrade all the Devices?');
++            var ret = confirm('Confirm to upgrade the device?');
+ 
+             if(ret) {
+                 $.ajax({ 
+@@ -272,8 +272,8 @@
+                     url: '/update_device/',
+                     async: true,
+                     dataTypde: 'json',
+-                    date: {
+-                        csrfmiddlewaretoken : getCookie('csrftoken')
++                    data: {
++                        csrfmiddlewaretoken : getCookie('csrftoken'),
+                         'OId': {{obj|safe}}.OId,
+                     },
+                     success: function(data) {
+diff --git a/templates/device_list.html b/templates/device_list.html
+index bfd7c3b..16eb96f 100755
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -32,7 +32,7 @@
+                         <div class="panel-body">
+                             <div id="DeviceAction">
+                                 <button id="AddDevice" class="btn btn-success" onclick="location.href='/device_add/'">{% trans "Create new device" %}</button>
+-                                <button id="UpgradeDevices" class="btn btn-primary" onclick="confirm('{% trans "Confirm to upgrade software of all the devices?" %}');">{% trans "Upgrade all the devices" %}</button>
++                                <button id="UpgradeDevices" class="btn btn-primary" onclick="update_all_device()">{% trans "Upgrade all the devices" %}</button>
+                             </div>
+                             <table id="DeviceList"></table>
+                         </div>
+@@ -205,7 +205,7 @@
+                         url: '/update_all_device/',
+                         async: true,
+                         dataTypde: 'json',
+-                        date: {
++                        data: {
+                             csrfmiddlewaretoken : getCookie('csrftoken')
+                         },
+                         success: function(data) {
+-- 
+1.9.1
+

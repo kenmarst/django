@@ -1,0 +1,25 @@
+From ffbf2773c338c23932b567052dd7d15d332ef75d Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 1 Dec 2016 15:05:05 +0800
+Subject: [PATCH 384/443] Fix bug - error log of connection check API.
+
+---
+ api/connection.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/api/connection.py b/api/connection.py
+index 1428491..f36ff70 100755
+--- a/api/connection.py
++++ b/api/connection.py
+@@ -23,7 +23,7 @@ def check(request):
+             elif devices.count() == 0:
+                 Devices.objects.create(Name = request.POST.get('Name', ''), MAC = request.POST.get('MAC', ''), IP = client_ip)
+                 return JsonResponse({'Result' : 0})
+-            raise Exception('Duplicate IP address conflicts, please check the number of devices in the server.')
++            raise Exception('Duplicate MAC address conflicts, please check the number of devices in the server.')
+         except Exception as e:
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(e)})))
+     else:
+-- 
+1.9.1
+

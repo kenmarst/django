@@ -1,0 +1,3648 @@
+From a208f3439d716466d9ef8ee6f96498b655bea992 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 8 Dec 2016 14:15:07 +0800
+Subject: [PATCH 404/443] Add upgrade templates of device and Modify Version.
+
+Add upgrade templates of device:
+  -  Add upgrade all the devices button.
+  -  Add upgrade the device of each device edit web.
+
+Synchronize version name of dashboard web.
+---
+ dashboard/views.py                           |    2 +-
+ locale/zh_CN/LC_MESSAGES/django.mo           |  Bin 514 -> 724 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           | 1069 +++++++++++++++++++++++++-
+ locale/zh_TW/LC_MESSAGES/django.mo           |  Bin 514 -> 724 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           | 1069 +++++++++++++++++++++++++-
+ templates/dashboard.html                     |   72 +-
+ templates/device_edit.html                   |   11 +
+ templates/device_list.html                   |    7 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo |  Bin 20967 -> 21407 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  210 ++---
+ templates/locale/zh_TW/LC_MESSAGES/django.mo |  Bin 20967 -> 21407 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  213 ++---
+ 12 files changed, 2423 insertions(+), 230 deletions(-)
+ mode change 100755 => 100644 templates/device_list.html
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 842dc10..04a87c0 100755
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -126,7 +126,7 @@ def dashboard_views(request):
+                       'devices': devices,
+                       'frusers': frusers,
+                       'softwave_version' : settings.VERSION,
+-                      'NewVersion' : Config.objects.filter(Name = 'NewVersion')[0].Value
++                      'NewServerVersion' : Config.objects.filter(Name = 'NewServerVersion')[0].Value
+                       }
+                   )
+ def update_br06(request, tmpfile, setupdir, update_method = ''):
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 55713bd0b8ecdd740041fc6c708bb50ce9c1b882..1961e27207fcc4e3f7acb00fd1a4d94871116089 100755
+GIT binary patch
+delta 424
+zcmXwz&r1S96vtns8Q7tuAgIIAA5aDzs#B*<L4lVJU6yT>h1Fel$D)%V{V*fUN(c*5
+z%&5o>ArM8SV;$<$sY92V-Sya|b8p1H@Zt03y?M;UUGMJLr_YrEOdm3atRi0I0^xZ^
+zT*wQ;`)|l7@_`H?zX+duy8s5!1L%JAIC>tLM0)Y8bp!a&8|V>q5<LtMg8~-(LKV#y
+zpE~DPH14)P#vkBuBiL@o(=p%e;q`(jE3l}BgaDybj)Y)YA)-M9Iif|WAgQ`eBq{_|
+zJuK4ync*i2@5+>fjR^>d>jVNs6LpcQy0D~CS&bNAL?wwBMlh-<o9W{f&x|nTpPQad
+z|9q{ntFrT01iN;}8X2p+$M$ND*<@xGoQI0jJYhRUt5mS_rk&lka&=Zu@j+{A-#WOp
+la;fjeVJly?&rM+Q8&*04me_4&Pwo3_ma2f2IAY05_yg7_eCq%J
+
+delta 215
+zcmcb@+Qd?SPl#nI0}!wPu?!H~05K~N#{e-16aX<h5ElY54-i*E={6wkz{tQb8A!7M
+z@f9Fj2uR-s(!xOc9gqehFaVj&48%+zo@-uuPG)fi!}E0wPxek0ezIfjvuW)N&v!Py
+zTs;NCnXJbc!EUBtXl`X>Jh_+gvEGaBjW1TsV+hX7Ey&4C%S=sCaL&lgOD#@i2q{WT
+O$t=mt&r8gKiva+b@ii9!
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 5c570a3..07bcaa1 100755
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-06 17:23+0800\n"
++"POT-Creation-Date: 2016-12-08 10:49+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -19,12 +19,1073 @@ msgstr ""
+ 
+ #: br06/settings.py:171
+ msgid "English"
+-msgstr "英語"
++msgstr ""
+ 
+ #: br06/settings.py:172
+ msgid "繁體中文"
+-msgstr "Traditional Chinese"
++msgstr ""
+ 
+ #: br06/settings.py:173
+ msgid "简体中文"
+-msgstr "Simplified Chinese"
++msgstr ""
++
++#: logsetting.html:8 logsetting.html.py:22 logsetting.html.py:28
++msgid "Log Setting"
++msgstr "纪录汇出设定"
++
++#: logsetting.html:38
++msgid "Separator Options"
++msgstr "分隔符号"
++
++#: logsetting.html:85
++msgid "Save"
++msgstr "储存"
++
++#: logsetting.html:132
++msgid "Please select items."
++msgstr "请选择栏位项目"
++
++#: logsetting.html:136
++msgid "Please input correct format"
++msgstr "请输入正确的格式"
++
++#: logsetting.html:155
++msgid "successfully"
++msgstr "成功"
++
++#: logsetting.html:157
++msgid "Fail"
++msgstr "失败"
++
++#~ msgid "Dashboard"
++#~ msgstr "系统仪表板"
++
++#~ msgid "System Info"
++#~ msgstr "系统资讯"
++
++#~ msgid "Disk Usage"
++#~ msgstr "硬碟使用空间"
++
++#~ msgid "Memory Usage"
++#~ msgstr "RAM 使用量"
++
++#~ msgid "FR User Count"
++#~ msgstr "建档总人数"
++
++#~ msgid "System Log Count"
++#~ msgstr "Log笔数"
++
++#~ msgid "System Uptime"
++#~ msgstr "开机多久时间"
++
++#~ msgid "System Current Time"
++#~ msgstr "系统当地时间"
++
++#~ msgid "Software Version"
++#~ msgstr "软件版号"
++
++#~ msgid "There is a newer version can be updated."
++#~ msgstr "有新版本可供更新"
++
++#~ msgid "Update here"
++#~ msgstr "更新"
++
++#~ msgid "Device Info"
++#~ msgstr "设备资讯"
++
++#~ msgid "Device Count"
++#~ msgstr "设备总数量"
++
++#~ msgid "proposed"
++#~ msgstr "待审数"
++
++#~ msgid "View Detail"
++#~ msgstr "查看详情"
++
++#~ msgid "FR Users Info"
++#~ msgstr "设备使用者资讯"
++
++#~ msgid "System Update"
++#~ msgstr "系统更新"
++
++#~ msgid "Note"
++#~ msgstr "注意"
++
++#~ msgid "The system cannot be operated when updating!"
++#~ msgstr "更新时系统会暂时停止运作"
++
++#~ msgid "Update from server"
++#~ msgstr "从伺服器更新"
++
++#~ msgid "The latest version is"
++#~ msgstr "最後的版本為"
++
++#~ msgid "Update"
++#~ msgstr "更新"
++
++#~ msgid "There are no newer versions."
++#~ msgstr "无更新版本"
++
++#~ msgid "Update from the choosed file"
++#~ msgstr "从选择的档案更新"
++
++#~ msgid "Close"
++#~ msgstr "关闭"
++
++#~ msgid "Please enter server password"
++#~ msgstr "请输入服务主机密码"
++
++#~ msgid "Updating! Improper actions may cause damage to the system!"
++#~ msgstr "更新中！ 不正确的操作可能会导致系统损坏！"
++
++#~ msgid "Update completed"
++#~ msgstr "更新完成"
++
++#~ msgid "Password incorrect"
++#~ msgstr "密码错误"
++
++#~ msgid "The file format is not correct!"
++#~ msgstr "文件格式不正确"
++
++#~ msgid "Connect to FTP failed!"
++#~ msgstr "无法连线到FTP"
++
++#~ msgid "Fail to update server!"
++#~ msgstr "更新系统失败"
++
++#~ msgid "Please choose a file!"
++#~ msgstr "请选择档案"
++
++#~ msgid "No."
++#~ msgstr "编号"
++
++#~ msgid "Device Name"
++#~ msgstr "设备名称"
++
++#~ msgid "Latest Update Time"
++#~ msgstr "最后更新时间"
++
++#~ msgid "User ID"
++#~ msgstr "工号"
++
++#~ msgid "User Name"
++#~ msgstr "姓名"
++
++#~ msgid "Device Add"
++#~ msgstr "新增设备"
++
++#~ msgid "Device add"
++#~ msgstr "新增设备"
++
++#~ msgid "Device"
++#~ msgstr "设备"
++
++#~ msgid "Please input the device name"
++#~ msgstr "请输入设备名称"
++
++#~ msgid ""
++#~ "The device name can only contain 0 to 25 bit of Chinese or English or "
++#~ "Number or '_' or '-'"
++#~ msgstr "名称只能包含0到25码的中文、英文、数字、'_'、'-'"
++
++#~ msgid "Please input the device MAC-Address"
++#~ msgstr "请输入MAC地址"
++
++#~ msgid ""
++#~ "Please input the correct device MAC-Address format! Only Hexadecimal and "
++#~ "'-' are allowed."
++#~ msgstr "请输入正确的设备MAC-Address格式！使用16进位与'-'"
++
++#~ msgid "Please input the device IP"
++#~ msgstr "请输入设备IP"
++
++#~ msgid ""
++#~ "Please input the correct device IP format! Only numbers and '.' are "
++#~ "allowed."
++#~ msgstr "请输入正确的设备IP格式！使用数字与'.'"
++
++#~ msgid "Back"
++#~ msgstr "返回"
++
++#~ msgid "The device is added successfully"
++#~ msgstr "设备新增成功"
++
++#~ msgid "The device name is duplicated!"
++#~ msgstr "设备名称已重复！"
++
++#~ msgid "The device MAC-Address is duplicated!"
++#~ msgstr "设备MAC地址已重复！"
++
++#~ msgid "The device IP address is duplicated!"
++#~ msgstr "设备IP地址已重复！"
++
++#~ msgid "Fail to add the device"
++#~ msgstr "新增设备失败"
++
++#~ msgid "Device Edit"
++#~ msgstr "设备修改"
++
++#~ msgid "Information"
++#~ msgstr "一般"
++
++#~ msgid "FRUser Group List"
++#~ msgstr "FR群组管理"
++
++#~ msgid "Device parameter"
++#~ msgstr "设备参数"
++
++#~ msgid "Type"
++#~ msgstr "机种"
++
++#~ msgid "Model"
++#~ msgstr "模式"
++
++#~ msgid "Event"
++#~ msgstr "事件"
++
++#~ msgid "Welcome"
++#~ msgstr "允许进入"
++
++#~ msgid "Relay"
++#~ msgstr "开关"
++
++#~ msgid "pulse"
++#~ msgstr "延后"
++
++#~ msgid "sec"
++#~ msgstr "秒"
++
++#~ msgid "Access Denied"
++#~ msgstr "拒绝进入"
++
++#~ msgid "Time out"
++#~ msgstr "逾时"
++
++#~ msgid "Seconds"
++#~ msgstr "秒"
++
++#~ msgid "Screen saver"
++#~ msgstr "萤幕保护"
++
++#~ msgid "minutes"
++#~ msgstr "分钟"
++
++#~ msgid "NTP Server"
++#~ msgstr "NTP 服务器"
++
++#~ msgid "Timezone"
++#~ msgstr "时区"
++
++#~ msgid "Audio"
++#~ msgstr "音效"
++
++#~ msgid "Face Bio score"
++#~ msgstr "脸部辨识分数"
++
++#~ msgid "Finger Bio score"
++#~ msgstr "指纹辨识分数"
++
++#~ msgid "Multi-language"
++#~ msgstr "语言"
++
++#~ msgid "Parameter Settings"
++#~ msgstr "设定参数"
++
++#~ msgid "The device name is changed successfully"
++#~ msgstr "设备名称变更成功"
++
++#~ msgid "Fail to change the device name"
++#~ msgstr "设备名称变更失败"
++
++#~ msgid "Group list"
++#~ msgstr "群组管理"
++
++#~ msgid "Add New Group"
++#~ msgstr "建立新群组"
++
++#~ msgid "Search Group"
++#~ msgstr "搜寻群组"
++
++#~ msgid "Add"
++#~ msgstr "新增"
++
++#~ msgid "FRUser Group"
++#~ msgstr "设备使用者群组管理"
++
++#~ msgid "Delete"
++#~ msgstr "删除"
++
++#~ msgid "Group"
++#~ msgstr "群组"
++
++#~ msgid "Confirm to delete"
++#~ msgstr "确认要删除"
++
++#~ msgid "from this device"
++#~ msgstr " "
++
++#~ msgid "Fail to delete group"
++#~ msgstr "删除群组失败"
++
++#~ msgid "Fail to add group"
++#~ msgstr "新增群组失败"
++
++#~ msgid "Device List"
++#~ msgstr "设备管理"
++
++#~ msgid "Create new device"
++#~ msgstr "建立新设备"
++
++#~ msgid "Status"
++#~ msgstr "状态"
++
++#~ msgid "Sync time"
++#~ msgstr "同步时间"
++
++#~ msgid "Accept"
++#~ msgstr "接受"
++
++#~ msgid "Reject"
++#~ msgstr "拒绝"
++
++#~ msgid "Edit"
++#~ msgstr "编辑"
++
++#~ msgid "Settings"
++#~ msgstr "设定"
++
++#~ msgid "Fail to accept device"
++#~ msgstr "接受设备失败"
++
++#~ msgid "Fail to delete device"
++#~ msgstr "删除设备失败"
++
++#~ msgid "Device Settings"
++#~ msgstr "设备设定"
++
++#~ msgid "Device parameter setup"
++#~ msgstr "设备参数设定"
++
++#~ msgid "Register"
++#~ msgstr "注册机"
++
++#~ msgid "Recognition"
++#~ msgstr "辨识机"
++
++#~ msgid "FR"
++#~ msgstr "人脸辨识"
++
++#~ msgid "RFID+FR"
++#~ msgstr "RFID卡+人脸辨识"
++
++#~ msgid "FR+FP"
++#~ msgstr "人脸辨识+指纹辨识"
++
++#~ msgid "RFID+FR+FP"
++#~ msgstr "RFID卡+人脸辨识+指纹辨识"
++
++#~ msgid "None"
++#~ msgstr "无效"
++
++#~ msgid "On"
++#~ msgstr "启用"
++
++#~ msgid "Off"
++#~ msgstr "关闭"
++
++#~ msgid "Pulse"
++#~ msgstr "持续"
++
++#~ msgid "Sec"
++#~ msgstr "秒"
++
++#~ msgid "Minutes"
++#~ msgstr "分钟"
++
++#~ msgid "Please input the correct IP address format of NTP server"
++#~ msgstr "请输入NTP伺服器的正确IP格式"
++
++#~ msgid "Enable"
++#~ msgstr "启用"
++
++#~ msgid "Low"
++#~ msgstr "低"
++
++#~ msgid "Medium"
++#~ msgstr "中"
++
++#~ msgid "High"
++#~ msgstr "高"
++
++#~ msgid "Device setting successfully"
++#~ msgstr "设备设定成功"
++
++#~ msgid "Fail to setting device"
++#~ msgstr "设备设定失败"
++
++#~ msgid "Fruser Add"
++#~ msgstr "新增设备使用者"
++
++#~ msgid "Fruser"
++#~ msgstr "设备使用者"
++
++#~ msgid "FRUserId"
++#~ msgstr "工号"
++
++#~ msgid "Input the user ID"
++#~ msgstr "请输入使用者ID"
++
++#~ msgid ""
++#~ "The user ID can only contain 1 to 16 bit of English or Number or '_' or "
++#~ "'-'"
++#~ msgstr "使用者ID只能包含1到16码的英文、数字、'_'、'-'"
++
++#~ msgid "Name"
++#~ msgstr "姓名"
++
++#~ msgid "Input your name"
++#~ msgstr "请输入姓名"
++
++#~ msgid ""
++#~ "The name can only contain 1 to 25 bit of Chinese or English or Number or "
++#~ "'_' or '-'"
++#~ msgstr "名称只能包含25码的中文、英文、数字、'_'、'-'"
++
++#~ msgid "Disable"
++#~ msgstr "停用"
++
++#~ msgid "Please input disable causes"
++#~ msgstr "请输入停用原因"
++
++#~ msgid "Gender"
++#~ msgstr "性别"
++
++#~ msgid "Male"
++#~ msgstr "男"
++
++#~ msgid "Female"
++#~ msgstr "女"
++
++#~ msgid "Age"
++#~ msgstr "年龄"
++
++#~ msgid "Ex : 25"
++#~ msgstr "例如 : 25"
++
++#~ msgid "The age can only be positive integers"
++#~ msgstr "年龄只能是正整数"
++
++#~ msgid "Create fruser successfully"
++#~ msgstr "建立设备使用者成功"
++
++#~ msgid "Fruser exists"
++#~ msgstr "设备使用者存在"
++
++#~ msgid "Fail to add fruser"
++#~ msgstr "设备使用者新增失败"
++
++#~ msgid "Fruser Edit"
++#~ msgstr "修改用户资讯"
++
++#~ msgid "Please input your name"
++#~ msgstr "请输入姓名"
++
++#~ msgid "RFID"
++#~ msgstr "RFID卡"
++
++#~ msgid "FP"
++#~ msgstr "指纹辨识"
++
++#~ msgid "Update fruser successfully"
++#~ msgstr "更新设备使用者成功"
++
++#~ msgid "Fail to update fruser"
++#~ msgstr "更新设备使用者失败"
++
++#~ msgid "FR User List"
++#~ msgstr "设备使用者管理"
++
++#~ msgid "Create FR User"
++#~ msgstr "建立设备使用者"
++
++#~ msgid "Import"
++#~ msgstr "汇入"
++
++#~ msgid "Export"
++#~ msgstr "汇出"
++
++#~ msgid "Import Fruser"
++#~ msgstr "汇入设备使用者"
++
++#~ msgid "Upload"
++#~ msgstr "上传"
++
++#~ msgid "Create Date"
++#~ msgstr "建立时间"
++
++#~ msgid "Recently used Date"
++#~ msgstr "最后使用时间"
++
++#~ msgid "Please do not leave this page and wait for uploading!"
++#~ msgstr "请等待上传且勿离开此页面！"
++
++#~ msgid "Please wait for uploading!"
++#~ msgstr "请等待上传！"
++
++#~ msgid "Fail to import fruser!"
++#~ msgstr "汇入设备使用者失败"
++
++#~ msgid "Fail to delete fruser"
++#~ msgstr "删除设备使用者失败"
++
++#~ msgid "Duplicate export!"
++#~ msgstr "重复汇出"
++
++#~ msgid "FR User Group Add"
++#~ msgstr "新增设备使用者群组"
++
++#~ msgid "Group Name"
++#~ msgstr "群组名称"
++
++#~ msgid "Please input the group name"
++#~ msgstr "请输入群组名称"
++
++#~ msgid "Save and Add another"
++#~ msgstr "储存并继续建立"
++
++#~ msgid "Group add successfully"
++#~ msgstr "群组新增成功"
++
++#~ msgid "Can not add a group with the name 'Default'"
++#~ msgstr "无法新增名称为Default的群组"
++
++#~ msgid "Group name exists"
++#~ msgstr "群组名称存在"
++
++#~ msgid "FR User Group Device"
++#~ msgstr "FR设备管理"
++
++#~ msgid "FR User Group Edit"
++#~ msgstr "FR使用者群组修改"
++
++#~ msgid "Member List"
++#~ msgstr "成员管理"
++
++#~ msgid "Device list"
++#~ msgstr "设备管理"
++
++#~ msgid "Add New Device"
++#~ msgstr "新增设备"
++
++#~ msgid "Search Device"
++#~ msgstr "搜寻设备"
++
++#~ msgid "from this group"
++#~ msgstr "群组"
++
++#~ msgid "Fail to add device"
++#~ msgstr "新增设备失败"
++
++#~ msgid "Change group name successfully"
++#~ msgstr "群组名称变更成功"
++
++#~ msgid "Fail to change group name"
++#~ msgstr "变更群组名称失败"
++
++#~ msgid "FR User Group Member"
++#~ msgstr "FR群组成员管理"
++
++#~ msgid "Member list"
++#~ msgstr "成员管理"
++
++#~ msgid "Add New Member"
++#~ msgstr "建立新成员"
++
++#~ msgid "Search User"
++#~ msgstr "搜寻使用者"
++
++#~ msgid "User"
++#~ msgstr "使用者"
++
++#~ msgid "Fail to delete user"
++#~ msgstr "删除使用者失败"
++
++#~ msgid "Fail to add user"
++#~ msgstr "使用者新增失败"
++
++#~ msgid "FR User Group List"
++#~ msgstr "设备使用者群组管理"
++
++#~ msgid "Create new group"
++#~ msgstr "建立新群组"
++
++#~ msgid "Users"
++#~ msgstr "使用者"
++
++#~ msgid "group"
++#~ msgstr "群组"
++
++#~ msgid "FRUser Log List"
++#~ msgstr "设备使用者登入纪录"
++
++#~ msgid "CreateDate"
++#~ msgstr "建立时间"
++
++#~ msgid "Notes"
++#~ msgstr "摘要"
++
++#~ msgid "Wrong password or account"
++#~ msgstr "帐户或密码有误"
++
++#~ msgid "reCAPTCHA validation failed"
++#~ msgstr "reCAPTCHA 验证错误"
++
++#~ msgid "Repeat Sign-in, Logout!"
++#~ msgstr "重复登入!"
++
++#~ msgid "Login Expired! Please Login Again."
++#~ msgstr "登入逾时"
++
++#~ msgid "Languages"
++#~ msgstr "语言"
++
++#~ msgid "System"
++#~ msgstr "系统"
++
++#~ msgid "User List"
++#~ msgstr "网站使用者管理"
++
++#~ msgid "User Group List"
++#~ msgstr "网站使用者群组管理"
++
++#~ msgid "Role and Permission"
++#~ msgstr "角色管理与权限"
++
++#~ msgid "FR User Group"
++#~ msgstr "设备使用者群组管理"
++
++#~ msgid "Log"
++#~ msgstr "纪录"
++
++#~ msgid "System Log List"
++#~ msgstr "系统事件纪录"
++
++#~ msgid "Log Out"
++#~ msgstr "登出"
++
++#~ msgid "Longin timeout!"
++#~ msgstr "登入逾时"
++
++#~ msgid "Forgotten your password ?"
++#~ msgstr "忘记您的密码？"
++
++#~ msgid ""
++#~ "Enter your E-Mail address below, and we'll sent instructions for setting "
++#~ "a new one."
++#~ msgstr "在下面输入您的电子邮件，我们将透过电子邮件通知重设密码说明"
++
++#~ msgid "Reset my password"
++#~ msgstr "重设密码"
++
++#~ msgid "Returns sign-in screen"
++#~ msgstr "回到登入页面"
++
++#~ msgid "Reset password link has been sent to your E-Mail address"
++#~ msgstr "重置密码连结已发送到您的电子信箱"
++
++#~ msgid "E-Mail address does not exist"
++#~ msgstr "电子信箱不存在"
++
++#~ msgid "Password updated successfully"
++#~ msgstr "密码更新成功"
++
++#~ msgid ""
++#~ "You're receiving this E-Mail because you requested a password reset for "
++#~ "your user account at %(site_name)s."
++#~ msgstr "您收到这封邮件是因为您要求在 %(site_name)s 网站上重新设定新的密码 "
++
++#~ msgid ""
++#~ "Please reset your password in %(expired)s minutes, go to the following "
++#~ "page and choose a new password:"
++#~ msgstr "请在 %(expired)s 分钟内变更密码，点选下列网址重新设定新密码"
++
++#~ msgid "Your account, in case you've forgotten:"
++#~ msgstr "您的帐号是:"
++
++#~ msgid "Thanks for using our site!"
++#~ msgstr "谢谢您使用我们的网站！"
++
++#~ msgid "The %(site_name)s team"
++#~ msgstr " %(site_name)s 团队 敬上"
++
++#~ msgid "Password reset confirmation"
++#~ msgstr "密码重置确认"
++
++#~ msgid ""
++#~ "Please enter your new password twice so we can verify you typed it in "
++#~ "correctly."
++#~ msgstr "请输入两次新密码，以便我们确认您输入是否一致"
++
++#~ msgid "confirm"
++#~ msgstr "确认"
++
++#~ msgid "Update error. Please contact us."
++#~ msgstr "更新错误，请跟我们联络"
++
++#~ msgid ""
++#~ "Password not match, plase check 'New Password' and 'Confirm Password'."
++#~ msgstr "请确认输入的'新密码'与'确认密码'是否一致"
++
++#~ msgid "Create New Role"
++#~ msgstr "建立新角色"
++
++#~ msgid "Role Name"
++#~ msgstr "角色名称"
++
++#~ msgid "Please input the role name"
++#~ msgstr "请输入角色名称"
++
++#~ msgid "Sort"
++#~ msgstr "排序"
++
++#~ msgid "Please input the sort number."
++#~ msgstr "请输入排序号码"
++
++#~ msgid "The sort number can only be positive integer."
++#~ msgstr "排序号码只能是正整数"
++
++#~ msgid "Role add successfully"
++#~ msgstr "角色新增成功"
++
++#~ msgid "Fail to add Role"
++#~ msgstr "角色新增失败"
++
++#~ msgid "Role List"
++#~ msgstr "角色管理"
++
++#~ msgid "Create new Role"
++#~ msgstr "建立新角色"
++
++#~ msgid "Role Permission"
++#~ msgstr "角色权限"
++
++#~ msgid "Category"
++#~ msgstr "类别"
++
++#~ msgid "Update Date"
++#~ msgstr "更新时间"
++
++#~ msgid "Rename"
++#~ msgstr "重新命名"
++
++#~ msgid "Confirm to delete this Role"
++#~ msgstr "您是否确认要删除这个角色"
++
++#~ msgid "Default role cannot delete"
++#~ msgstr "预设的角色无法删除"
++
++#~ msgid "Fail to delete role"
++#~ msgstr "删除这个角色失败"
++
++#~ msgid "Permission Settings"
++#~ msgstr "权限设定"
++
++#~ msgid "Role / Permission"
++#~ msgstr "角色 / 权限"
++
++#~ msgid "permission save successfully"
++#~ msgstr "权限储存成功"
++
++#~ msgid "Role Rename"
++#~ msgstr "角色重新命名"
++
++#~ msgid "Role Rename successfully"
++#~ msgstr "角色重新命名成功"
++
++#~ msgid "Default role cannot rename"
++#~ msgstr "预设角色不能重新命名"
++
++#~ msgid "Fail to rename Role"
++#~ msgstr "角色重新命名失败"
++
++#~ msgid "Backup Scheduling"
++#~ msgstr "备份排程"
++
++#~ msgid "Manually"
++#~ msgstr "手动备份"
++
++#~ msgid "Instantly backup after clicking save"
++#~ msgstr "点击储存后立即备份"
++
++#~ msgid "Automatic"
++#~ msgstr "自动备份"
++
++#~ msgid "Every Month"
++#~ msgstr "每月"
++
++#~ msgid "Day"
++#~ msgstr "日"
++
++#~ msgid "Time"
++#~ msgstr "时间"
++
++#~ msgid "Every Week"
++#~ msgstr "每周"
++
++#~ msgid "Sun"
++#~ msgstr "日"
++
++#~ msgid "Mon"
++#~ msgstr "一"
++
++#~ msgid "Tue"
++#~ msgstr "二"
++
++#~ msgid "Wed"
++#~ msgstr "三"
++
++#~ msgid "Thu"
++#~ msgstr "四"
++
++#~ msgid "Fri"
++#~ msgstr "五"
++
++#~ msgid "Sat"
++#~ msgstr "六"
++
++#~ msgid "Local backup location"
++#~ msgstr "本地备份地点"
++
++#~ msgid "Remote backup FTP Setting"
++#~ msgstr "异地备份FTP设定"
++
++#~ msgid "HOST"
++#~ msgstr "主机"
++
++#~ msgid "PORT"
++#~ msgstr "连接埠"
++
++#~ msgid "PATH"
++#~ msgstr "路径"
++
++#~ msgid "USERNAME"
++#~ msgstr "使用者名称"
++
++#~ msgid "PASSWORD"
++#~ msgstr "密码"
++
++#~ msgid "Connect Test"
++#~ msgstr "测试连线"
++
++#~ msgid "System Log"
++#~ msgstr "系统纪录"
++
++#~ msgid "Log count limit"
++#~ msgstr "Log笔数限制"
++
++#~ msgid "if the logs exceeds limit"
++#~ msgstr "若超过笔数限制"
++
++#~ msgid "keep"
++#~ msgstr "保留"
++
++#~ msgid "month data"
++#~ msgstr "月资料"
++
++#~ msgid "others will be remove."
++#~ msgstr "其他移除"
++
++#~ msgid "In limit duration, the logs can be record to 150%% amount."
++#~ msgstr "若期限内超过笔数限制，最多可以纪录到1.5倍的笔数限制。"
++
++#~ msgid ""
++#~ "Over 150%% amount, system will keep latest logs, and remove the other "
++#~ "older logs."
++#~ msgstr ""
++#~ "若期限内超过1.5倍的笔数限制Log，则保留最新的笔数限制资料，其余Log纪录删"
++#~ "除。"
++
++#~ msgid "Save FR user register photo image"
++#~ msgstr "储存脸部注册成功照片"
++
++#~ msgid "Save FR user recognition photo image"
++#~ msgstr "储存脸部辨识成功照片"
++
++#~ msgid "Testing"
++#~ msgstr "测试中"
++
++#~ msgid "FTP connect test successfully"
++#~ msgstr "FTP连线测试成功"
++
++#~ msgid "Connect to FTP fail"
++#~ msgstr "无法连线到FTP"
++
++#~ msgid "Login incorrect"
++#~ msgstr "无法登入"
++
++#~ msgid "The path does not exist or can not be accessed"
++#~ msgstr "路径不存在或无法进入"
++
++#~ msgid "Written permission denied"
++#~ msgstr "写入权限不足"
++
++#~ msgid "Unknown error"
++#~ msgstr "未知错误"
++
++#~ msgid "Must select one week day!"
++#~ msgstr "必须选择一个工作日"
++
++#~ msgid "Must select correct monthly day!"
++#~ msgstr "必须选择正确的月份日期！"
++
++#~ msgid ""
++#~ "The backup may not be processed monthly, if you choose monthly date from "
++#~ "29 to 31 !\\n\\nWould you want to continue ?"
++#~ msgstr "选择每月 29~31 日，可能无法每月进行自动备份，您确定要继续吗?"
++
++#~ msgid "Must input correct FTP remote path!"
++#~ msgstr "必须输入正确的远端 FTP 路径！"
++
++#~ msgid "Backup successfully"
++#~ msgstr "备份成功"
++
++#~ msgid "Backup setting successfully"
++#~ msgstr "备份设定成功"
++
++#~ msgid "Fail to setting Backup"
++#~ msgstr "备份设定失败"
++
++#~ msgid "Must input correct log limit value!"
++#~ msgstr "必须输入正确的Log笔数限制值！"
++
++#~ msgid "Must input correct month value for log preservation!"
++#~ msgstr "Log的保留月份必须输入正确的值！"
++
++#~ msgid "Log setting successfully"
++#~ msgstr "Log设定成功"
++
++#~ msgid "Fail to setting Log"
++#~ msgstr "Log设定失败"
++
++#~ msgid "System log List"
++#~ msgstr "系统事件纪录"
++
++#~ msgid "Date/Time"
++#~ msgstr "日期时间"
++
++#~ msgid "User add"
++#~ msgstr "使用者新增"
++
++#~ msgid "Account"
++#~ msgstr "帐号"
++
++#~ msgid "Please input your account"
++#~ msgstr "请输入帐号"
++
++#~ msgid ""
++#~ "The account can only contain 1 to 16 bit of English or Number or '_' or "
++#~ "'-'"
++#~ msgstr "帐号只能包含1到16码的英文、数字、'_'、'-'"
++
++#~ msgid "E-Mail address"
++#~ msgstr "电子信箱"
++
++#~ msgid "Please input your E-Mail address"
++#~ msgstr "请输入电子信箱"
++
++#~ msgid "Please enter the correct E-Mail format!"
++#~ msgstr "请输入正确的电子邮件格式"
++
++#~ msgid "Password"
++#~ msgstr "密码"
++
++#~ msgid "Please input your password"
++#~ msgstr "请输入你的密码"
++
++#~ msgid "Confirm password"
++#~ msgstr "确认密码"
++
++#~ msgid "Role"
++#~ msgstr "角色"
++
++#~ msgid "Password does not match"
++#~ msgstr "密码不一致"
++
++#~ msgid "Create user successfully"
++#~ msgstr "建立使用者成功"
++
++#~ msgid "Can not create admin account"
++#~ msgstr "管理员帐号无法被建立"
++
++#~ msgid "E-Mail address already exists"
++#~ msgstr "电子邮件已经存在"
++
++#~ msgid "Account already exists"
++#~ msgstr "帐号已经存在"
++
++#~ msgid "Fail to create User"
++#~ msgstr "使用者建立失败"
++
++#~ msgid "User Group Add"
++#~ msgstr "建立新群组"
++
++#~ msgid "User Group Device"
++#~ msgstr "设备管理"
++
++#~ msgid "User Group Edit"
++#~ msgstr "使用者群组修改"
++
++#~ msgid "No"
++#~ msgstr "编号"
++
++#~ msgid "User Group Member"
++#~ msgstr "群组成员管理"
++
++#~ msgid "Create new account"
++#~ msgstr "建立新帐号"
++
++#~ msgid "Email"
++#~ msgstr "电子邮件"
++
++#~ msgid "UpdateDate"
++#~ msgstr "更新时间"
++
++#~ msgid "Permission denied"
++#~ msgstr "权限不足"
++
++#~ msgid "Setting"
++#~ msgstr "设定"
++
++#~ msgid "New Password"
++#~ msgstr "新密码"
++
++#~ msgid "Confirm Password"
++#~ msgstr "确认密码"
++
++#~ msgid "please enter your name"
++#~ msgstr "请输入你的名字"
++
++#~ msgid "please enter your password"
++#~ msgstr "请输入你的密码"
++
++#~ msgid ""
++#~ "password not match, please check 'New Password' and 'Confirm Password'"
++#~ msgstr "输入的'新密码'与'确认密码'不一致"
++
++#~ msgid "Change password successfully"
++#~ msgstr "密码变更成功"
++
++#~ msgid "Fail to change password"
++#~ msgstr "密码变更失败"
++
++#~ msgid "User Update"
++#~ msgstr "更新用户资料"
++
++#~ msgid "User update"
++#~ msgstr "更新用户资料"
++
++#~ msgid "Update user successfully"
++#~ msgstr "使用者更新成功"
++
++#~ msgid "Fail to update User"
++#~ msgstr "使用者更新失败"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 55713bd0b8ecdd740041fc6c708bb50ce9c1b882..9f705532a386e6aac3881e1d9506dc8de5ee372e 100755
+GIT binary patch
+delta 424
+zcmXwzzb`{k6vq!*mDE5(B4K#(2T+LtlgT6@>0+?FJh#nDUi+H&Zi%VLt2R}kXi$<i
+zib%8-VyLDPBLkDkVBx+Wqs8pproPE1pL5T-C--i+-rey}pDPELE@TK<M7+o;!t;!{
+zkQapa-;hD%1L;G45kB{}0raAK(B0@^^fWSxbmBSM4&Xztpa;-tbU#2GN?7m<4`{yl
+z)H=VSaku#~{s4~~!FDsAmicZ6uV+MAfmt;q1PG;aBn0yc5p^QSk!XwxlB#J$qC!yB
+z!Xo{j>3*W{u1rZ-AAx|lOdvp_q9#&R6Xv2+RwFv-F-ao29*il<YIbkIGa-!mr^Y9<
+zKVM7i{MO7Jf_1;<WDJ(MVad9ERbkaU*w<Tjqs9^!W~F4E)vdf?78|Uw!w1fK&D>9#
+kW#jvC+bJfjlPWOdj#Z9;r8b@XfmOb=j|*U?c3HXre~cA->;M1&
+
+delta 215
+zcmcb@+Qd?SPl#nI0}!wPu?!H~05K~N#{e-16aX<h5ElY54-i*E={6wkz{tQb8A!7M
+z@f9Fj2uR-s(!xOc9gqehFaVj&48%+zo@-uuPG)fi!}E0wPxek0ezIfjvuW)N&v!Py
+zTs;NCnXJbc!EUBtXl`X>Jh_+gvEGaBjW1TsV+hX7Ey&4C%S=sCaL&lgOD#@i2q{WT
+O$t=mt&r8gKiva+b@ii9!
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 5c570a3..9a77df3 100755
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-06 17:23+0800\n"
++"POT-Creation-Date: 2016-12-08 10:49+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -19,12 +19,1073 @@ msgstr ""
+ 
+ #: br06/settings.py:171
+ msgid "English"
+-msgstr "英語"
++msgstr ""
+ 
+ #: br06/settings.py:172
+ msgid "繁體中文"
+-msgstr "Traditional Chinese"
++msgstr ""
+ 
+ #: br06/settings.py:173
+ msgid "简体中文"
+-msgstr "Simplified Chinese"
++msgstr ""
++
++#: logsetting.html:8 logsetting.html.py:22 logsetting.html.py:28
++msgid "Log Setting"
++msgstr "紀錄匯出設定"
++
++#: logsetting.html:38
++msgid "Separator Options"
++msgstr "分隔符號"
++
++#: logsetting.html:85
++msgid "Save"
++msgstr "儲存"
++
++#: logsetting.html:132
++msgid "Please select items."
++msgstr "請選擇欄位項目"
++
++#: logsetting.html:136
++msgid "Please input correct format"
++msgstr "請輸入正確的格式"
++
++#: logsetting.html:155
++msgid "successfully"
++msgstr "成功"
++
++#: logsetting.html:157
++msgid "Fail"
++msgstr "失敗"
++
++#~ msgid "Dashboard"
++#~ msgstr "系統儀表板"
++
++#~ msgid "System Info"
++#~ msgstr "系統資訊"
++
++#~ msgid "Disk Usage"
++#~ msgstr "硬碟使用空間"
++
++#~ msgid "Memory Usage"
++#~ msgstr "RAM 使用量"
++
++#~ msgid "FR User Count"
++#~ msgstr "建檔總人數"
++
++#~ msgid "System Log Count"
++#~ msgstr "Log筆數"
++
++#~ msgid "System Uptime"
++#~ msgstr "開機多久時間"
++
++#~ msgid "System Current Time"
++#~ msgstr "系統當地時間"
++
++#~ msgid "Software Version"
++#~ msgstr "軟體版號"
++
++#~ msgid "There is a newer version can be updated."
++#~ msgstr "有新版本可供更新"
++
++#~ msgid "Update here"
++#~ msgstr "更新"
++
++#~ msgid "Device Info"
++#~ msgstr "設備資訊"
++
++#~ msgid "Device Count"
++#~ msgstr "設備總數量"
++
++#~ msgid "proposed"
++#~ msgstr "待審數"
++
++#~ msgid "View Detail"
++#~ msgstr "查看詳情"
++
++#~ msgid "FR Users Info"
++#~ msgstr "設備使用者資訊"
++
++#~ msgid "System Update"
++#~ msgstr "系統更新"
++
++#~ msgid "Note"
++#~ msgstr "注意"
++
++#~ msgid "The system cannot be operated when updating!"
++#~ msgstr "更新時系統會暫時停止運作"
++
++#~ msgid "Update from server"
++#~ msgstr "從伺服器更新"
++
++#~ msgid "The latest version is"
++#~ msgstr "最後的版本為"
++
++#~ msgid "Update"
++#~ msgstr "更新"
++
++#~ msgid "There are no newer versions."
++#~ msgstr "無更新版本"
++
++#~ msgid "Update from the choosed file"
++#~ msgstr "從選擇的檔案更新"
++
++#~ msgid "Close"
++#~ msgstr "關閉"
++
++#~ msgid "Please enter server password"
++#~ msgstr "請輸入服務主機密碼"
++
++#~ msgid "Updating! Improper actions may cause damage to the system!"
++#~ msgstr "更新中！ 不正確的操作可能會導致系統損壞！"
++
++#~ msgid "Update completed"
++#~ msgstr "更新完成"
++
++#~ msgid "Password incorrect"
++#~ msgstr "密碼錯誤"
++
++#~ msgid "The file format is not correct!"
++#~ msgstr "文件格式不正確"
++
++#~ msgid "Connect to FTP failed!"
++#~ msgstr "無法連線到FTP"
++
++#~ msgid "Fail to update server!"
++#~ msgstr "更新系統失敗"
++
++#~ msgid "Please choose a file!"
++#~ msgstr "請選擇檔案"
++
++#~ msgid "No."
++#~ msgstr "編號"
++
++#~ msgid "Device Name"
++#~ msgstr "設備名稱"
++
++#~ msgid "Latest Update Time"
++#~ msgstr "最後更新時間"
++
++#~ msgid "User ID"
++#~ msgstr "工號"
++
++#~ msgid "User Name"
++#~ msgstr "姓名"
++
++#~ msgid "Device Add"
++#~ msgstr "新增設備"
++
++#~ msgid "Device add"
++#~ msgstr "新增設備"
++
++#~ msgid "Device"
++#~ msgstr "設備"
++
++#~ msgid "Please input the device name"
++#~ msgstr "請輸入設備名稱"
++
++#~ msgid ""
++#~ "The device name can only contain 0 to 25 bit of Chinese or English or "
++#~ "Number or '_' or '-'"
++#~ msgstr "名稱只能包含0到25碼的中文、英文、數字、'_'、'-'"
++
++#~ msgid "Please input the device MAC-Address"
++#~ msgstr "請輸入設備MAC位址"
++
++#~ msgid ""
++#~ "Please input the correct device MAC-Address format! Only Hexadecimal and "
++#~ "'-' are allowed."
++#~ msgstr "請輸入正確的MAC-Address格式！使用16進位與'-'"
++
++#~ msgid "Please input the device IP"
++#~ msgstr "請輸入設備IP"
++
++#~ msgid ""
++#~ "Please input the correct device IP format! Only numbers and '.' are "
++#~ "allowed."
++#~ msgstr "請輸入正確的設備IP格式！使用數字與'.'"
++
++#~ msgid "Back"
++#~ msgstr "返回"
++
++#~ msgid "The device is added successfully"
++#~ msgstr "設備新增成功"
++
++#~ msgid "The device name is duplicated!"
++#~ msgstr "設備名稱已重複！"
++
++#~ msgid "The device MAC-Address is duplicated!"
++#~ msgstr "設備MAC位址已重複！"
++
++#~ msgid "The device IP address is duplicated!"
++#~ msgstr "設備IP位址已重複！"
++
++#~ msgid "Fail to add the device"
++#~ msgstr "新增設備失敗"
++
++#~ msgid "Device Edit"
++#~ msgstr "設備修改"
++
++#~ msgid "Information"
++#~ msgstr "一般"
++
++#~ msgid "FRUser Group List"
++#~ msgstr "FR群組管理"
++
++#~ msgid "Device parameter"
++#~ msgstr "設備參數"
++
++#~ msgid "Type"
++#~ msgstr "機種"
++
++#~ msgid "Model"
++#~ msgstr "模式"
++
++#~ msgid "Event"
++#~ msgstr "事件"
++
++#~ msgid "Welcome"
++#~ msgstr "允許進入"
++
++#~ msgid "Relay"
++#~ msgstr "開關"
++
++#~ msgid "pulse"
++#~ msgstr "延後"
++
++#~ msgid "sec"
++#~ msgstr "秒"
++
++#~ msgid "Access Denied"
++#~ msgstr "拒絕進入"
++
++#~ msgid "Time out"
++#~ msgstr "逾時"
++
++#~ msgid "Seconds"
++#~ msgstr "秒"
++
++#~ msgid "Screen saver"
++#~ msgstr "螢幕保護"
++
++#~ msgid "minutes"
++#~ msgstr "分鐘"
++
++#~ msgid "NTP Server"
++#~ msgstr "NTP 伺服器"
++
++#~ msgid "Timezone"
++#~ msgstr "時區"
++
++#~ msgid "Audio"
++#~ msgstr "音效"
++
++#~ msgid "Face Bio score"
++#~ msgstr "臉部辨識分數"
++
++#~ msgid "Finger Bio score"
++#~ msgstr "指紋辨識分數"
++
++#~ msgid "Multi-language"
++#~ msgstr "語言"
++
++#~ msgid "Parameter Settings"
++#~ msgstr "設定參數"
++
++#~ msgid "The device name is changed successfully"
++#~ msgstr "設備名稱變更成功"
++
++#~ msgid "Fail to change the device name"
++#~ msgstr "設備名稱變更失敗"
++
++#~ msgid "Group list"
++#~ msgstr "群組管理"
++
++#~ msgid "Add New Group"
++#~ msgstr "建立新群組"
++
++#~ msgid "Search Group"
++#~ msgstr "搜尋群組"
++
++#~ msgid "Add"
++#~ msgstr "新增"
++
++#~ msgid "FRUser Group"
++#~ msgstr "設備使用者群組管理"
++
++#~ msgid "Delete"
++#~ msgstr "刪除"
++
++#~ msgid "Group"
++#~ msgstr "群組"
++
++#~ msgid "Confirm to delete"
++#~ msgstr "確認要刪除"
++
++#~ msgid "from this device"
++#~ msgstr " "
++
++#~ msgid "Fail to delete group"
++#~ msgstr "刪除群組失敗"
++
++#~ msgid "Fail to add group"
++#~ msgstr "新增群組失敗"
++
++#~ msgid "Device List"
++#~ msgstr "設備管理"
++
++#~ msgid "Create new device"
++#~ msgstr "建立新設備"
++
++#~ msgid "Status"
++#~ msgstr "狀態"
++
++#~ msgid "Sync time"
++#~ msgstr "同步時間"
++
++#~ msgid "Accept"
++#~ msgstr "接受"
++
++#~ msgid "Reject"
++#~ msgstr "拒絕"
++
++#~ msgid "Edit"
++#~ msgstr "編輯"
++
++#~ msgid "Settings"
++#~ msgstr "設定"
++
++#~ msgid "Fail to accept device"
++#~ msgstr "接受設備失敗"
++
++#~ msgid "Fail to delete device"
++#~ msgstr "刪除設備失敗"
++
++#~ msgid "Device Settings"
++#~ msgstr "設備設定"
++
++#~ msgid "Device parameter setup"
++#~ msgstr "設備參數設定"
++
++#~ msgid "Register"
++#~ msgstr "註冊機"
++
++#~ msgid "Recognition"
++#~ msgstr "辨識機"
++
++#~ msgid "FR"
++#~ msgstr "人臉辨識"
++
++#~ msgid "RFID+FR"
++#~ msgstr "RFID卡+人臉辨識"
++
++#~ msgid "FR+FP"
++#~ msgstr "人臉辨識+指紋辨識"
++
++#~ msgid "RFID+FR+FP"
++#~ msgstr "RFID卡+人臉辨識+指紋辨識"
++
++#~ msgid "None"
++#~ msgstr "無效"
++
++#~ msgid "On"
++#~ msgstr "啟用"
++
++#~ msgid "Off"
++#~ msgstr "關閉"
++
++#~ msgid "Pulse"
++#~ msgstr "持續"
++
++#~ msgid "Sec"
++#~ msgstr "秒"
++
++#~ msgid "Minutes"
++#~ msgstr "分鐘"
++
++#~ msgid "Please input the correct IP address format of NTP server"
++#~ msgstr "請輸入NTP伺服器的正確IP格式"
++
++#~ msgid "Enable"
++#~ msgstr "啟用"
++
++#~ msgid "Low"
++#~ msgstr "低"
++
++#~ msgid "Medium"
++#~ msgstr "中"
++
++#~ msgid "High"
++#~ msgstr "高"
++
++#~ msgid "Device setting successfully"
++#~ msgstr "設備設定成功"
++
++#~ msgid "Fail to setting device"
++#~ msgstr "設備設定失敗"
++
++#~ msgid "Fruser Add"
++#~ msgstr "新增設備使用者"
++
++#~ msgid "Fruser"
++#~ msgstr "設備使用者"
++
++#~ msgid "FRUserId"
++#~ msgstr "工號"
++
++#~ msgid "Input the user ID"
++#~ msgstr "請輸入使用者ID"
++
++#~ msgid ""
++#~ "The user ID can only contain 1 to 16 bit of English or Number or '_' or "
++#~ "'-'"
++#~ msgstr "使用者ID只能包含1到16碼的英文、數字、'_'、'-'"
++
++#~ msgid "Name"
++#~ msgstr "姓名"
++
++#~ msgid "Input your name"
++#~ msgstr "請輸入姓名"
++
++#~ msgid ""
++#~ "The name can only contain 1 to 25 bit of Chinese or English or Number or "
++#~ "'_' or '-'"
++#~ msgstr "名稱只能包含25碼的中文、英文、數字、'_'、'-'"
++
++#~ msgid "Disable"
++#~ msgstr "停用"
++
++#~ msgid "Please input disable causes"
++#~ msgstr "請輸入停用原因"
++
++#~ msgid "Gender"
++#~ msgstr "性別"
++
++#~ msgid "Male"
++#~ msgstr "男"
++
++#~ msgid "Female"
++#~ msgstr "女"
++
++#~ msgid "Age"
++#~ msgstr "年齡"
++
++#~ msgid "Ex : 25"
++#~ msgstr "例如 : 25"
++
++#~ msgid "The age can only be positive integers"
++#~ msgstr "年齡只能是正整數"
++
++#~ msgid "Create fruser successfully"
++#~ msgstr "建立設備使用者成功"
++
++#~ msgid "Fruser exists"
++#~ msgstr "設備使用者存在"
++
++#~ msgid "Fail to add fruser"
++#~ msgstr "設備使用者新增失敗"
++
++#~ msgid "Fruser Edit"
++#~ msgstr "修改用戶資訊"
++
++#~ msgid "Please input your name"
++#~ msgstr "請輸入姓名"
++
++#~ msgid "RFID"
++#~ msgstr "RFID卡"
++
++#~ msgid "FP"
++#~ msgstr "指紋辨識"
++
++#~ msgid "Update fruser successfully"
++#~ msgstr "更新設備使用者成功"
++
++#~ msgid "Fail to update fruser"
++#~ msgstr "更新設備使用者失敗"
++
++#~ msgid "FR User List"
++#~ msgstr "設備使用者管理"
++
++#~ msgid "Create FR User"
++#~ msgstr "建立設備使用者"
++
++#~ msgid "Import"
++#~ msgstr "匯入"
++
++#~ msgid "Export"
++#~ msgstr "匯出"
++
++#~ msgid "Import Fruser"
++#~ msgstr "匯入設備使用者"
++
++#~ msgid "Upload"
++#~ msgstr "上傳"
++
++#~ msgid "Create Date"
++#~ msgstr "建立時間"
++
++#~ msgid "Recently used Date"
++#~ msgstr "最後使用時間"
++
++#~ msgid "Please do not leave this page and wait for uploading!"
++#~ msgstr "請等待上傳且勿離開此頁面！"
++
++#~ msgid "Please wait for uploading!"
++#~ msgstr "請等待上傳！"
++
++#~ msgid "Fail to import fruser!"
++#~ msgstr "匯入設備使用者失敗"
++
++#~ msgid "Fail to delete fruser"
++#~ msgstr "刪除設備使用者失敗"
++
++#~ msgid "Duplicate export!"
++#~ msgstr "重複匯出"
++
++#~ msgid "FR User Group Add"
++#~ msgstr "新增設備使用者群組"
++
++#~ msgid "Group Name"
++#~ msgstr "群組名稱"
++
++#~ msgid "Please input the group name"
++#~ msgstr "請輸入群組名稱"
++
++#~ msgid "Save and Add another"
++#~ msgstr "儲存並繼續建立"
++
++#~ msgid "Group add successfully"
++#~ msgstr "群組新增成功"
++
++#~ msgid "Can not add a group with the name 'Default'"
++#~ msgstr "無法新增名稱為Default的群組"
++
++#~ msgid "Group name exists"
++#~ msgstr "群組名稱存在"
++
++#~ msgid "FR User Group Device"
++#~ msgstr "FR設備管理"
++
++#~ msgid "FR User Group Edit"
++#~ msgstr "FR使用者群組修改"
++
++#~ msgid "Member List"
++#~ msgstr "成員管理"
++
++#~ msgid "Device list"
++#~ msgstr "設備管理"
++
++#~ msgid "Add New Device"
++#~ msgstr "新增設備"
++
++#~ msgid "Search Device"
++#~ msgstr "搜尋設備"
++
++#~ msgid "from this group"
++#~ msgstr "群組"
++
++#~ msgid "Fail to add device"
++#~ msgstr "新增設備失敗"
++
++#~ msgid "Change group name successfully"
++#~ msgstr "群組名稱變更成功"
++
++#~ msgid "Fail to change group name"
++#~ msgstr "變更群組名稱失敗"
++
++#~ msgid "FR User Group Member"
++#~ msgstr "FR群組成員管理"
++
++#~ msgid "Member list"
++#~ msgstr "成員管理"
++
++#~ msgid "Add New Member"
++#~ msgstr "建立新成員"
++
++#~ msgid "Search User"
++#~ msgstr "搜尋使用者"
++
++#~ msgid "User"
++#~ msgstr "使用者"
++
++#~ msgid "Fail to delete user"
++#~ msgstr "刪除使用者失敗"
++
++#~ msgid "Fail to add user"
++#~ msgstr "使用者新增失敗"
++
++#~ msgid "FR User Group List"
++#~ msgstr "設備使用者群組管理"
++
++#~ msgid "Create new group"
++#~ msgstr "建立新群組"
++
++#~ msgid "Users"
++#~ msgstr "使用者"
++
++#~ msgid "group"
++#~ msgstr "群組"
++
++#~ msgid "FRUser Log List"
++#~ msgstr "設備使用者登入紀錄"
++
++#~ msgid "CreateDate"
++#~ msgstr "建立時間"
++
++#~ msgid "Notes"
++#~ msgstr "摘要"
++
++#~ msgid "Wrong password or account"
++#~ msgstr "帳戶或密碼有誤"
++
++#~ msgid "reCAPTCHA validation failed"
++#~ msgstr "reCAPTCHA 驗證錯誤"
++
++#~ msgid "Repeat Sign-in, Logout!"
++#~ msgstr "重複登入!"
++
++#~ msgid "Login Expired! Please Login Again."
++#~ msgstr "登入逾時"
++
++#~ msgid "Languages"
++#~ msgstr "語言"
++
++#~ msgid "System"
++#~ msgstr "系統"
++
++#~ msgid "User List"
++#~ msgstr "網站使用者管理"
++
++#~ msgid "User Group List"
++#~ msgstr "網站使用者群組管理"
++
++#~ msgid "Role and Permission"
++#~ msgstr "角色管理與權限"
++
++#~ msgid "FR User Group"
++#~ msgstr "設備使用者群組管理"
++
++#~ msgid "Log"
++#~ msgstr "紀錄"
++
++#~ msgid "System Log List"
++#~ msgstr "系統事件紀錄"
++
++#~ msgid "Log Out"
++#~ msgstr "登出"
++
++#~ msgid "Longin timeout!"
++#~ msgstr "登入逾時"
++
++#~ msgid "Forgotten your password ?"
++#~ msgstr "忘記您的密碼？"
++
++#~ msgid ""
++#~ "Enter your E-Mail address below, and we'll sent instructions for setting "
++#~ "a new one."
++#~ msgstr "在下面輸入您的電子信箱，我們將透過電子郵件通知重設密碼說明"
++
++#~ msgid "Reset my password"
++#~ msgstr "重設密碼"
++
++#~ msgid "Returns sign-in screen"
++#~ msgstr "回到登入頁面"
++
++#~ msgid "Reset password link has been sent to your E-Mail address"
++#~ msgstr "重置密碼連結已發送到您的電子信箱"
++
++#~ msgid "E-Mail address does not exist"
++#~ msgstr "電子信箱不存在"
++
++#~ msgid "Password updated successfully"
++#~ msgstr "密碼更新成功"
++
++#~ msgid ""
++#~ "You're receiving this E-Mail because you requested a password reset for "
++#~ "your user account at %(site_name)s."
++#~ msgstr "您收到這封郵件是因為您要求在 %(site_name)s 網站上重新設定新的密碼 "
++
++#~ msgid ""
++#~ "Please reset your password in %(expired)s minutes, go to the following "
++#~ "page and choose a new password:"
++#~ msgstr "請在 %(expired)s 分鐘內變更密碼，點選下列網址重新設定新密碼"
++
++#~ msgid "Your account, in case you've forgotten:"
++#~ msgstr "您的帳號是:"
++
++#~ msgid "Thanks for using our site!"
++#~ msgstr "謝謝您使用我們的網站！"
++
++#~ msgid "The %(site_name)s team"
++#~ msgstr " %(site_name)s 團隊 敬上"
++
++#~ msgid "Password reset confirmation"
++#~ msgstr "密碼重置確認"
++
++#~ msgid ""
++#~ "Please enter your new password twice so we can verify you typed it in "
++#~ "correctly."
++#~ msgstr "請輸入兩次新密碼，以便我們確認您輸入是否一致"
++
++#~ msgid "confirm"
++#~ msgstr "確認"
++
++#~ msgid "Update error. Please contact us."
++#~ msgstr "更新錯誤，請跟我們聯絡"
++
++#~ msgid ""
++#~ "Password not match, plase check 'New Password' and 'Confirm Password'."
++#~ msgstr "請確認輸入的'新密碼'與'確認密碼'是否一致"
++
++#~ msgid "Create New Role"
++#~ msgstr "建立新角色"
++
++#~ msgid "Role Name"
++#~ msgstr "角色名稱"
++
++#~ msgid "Please input the role name"
++#~ msgstr "請輸入角色名稱"
++
++#~ msgid "Sort"
++#~ msgstr "排序"
++
++#~ msgid "Please input the sort number."
++#~ msgstr "請輸入排序號碼"
++
++#~ msgid "The sort number can only be positive integer."
++#~ msgstr "排序號碼只能是正整數"
++
++#~ msgid "Role add successfully"
++#~ msgstr "角色新增成功"
++
++#~ msgid "Fail to add Role"
++#~ msgstr "角色新增失敗"
++
++#~ msgid "Role List"
++#~ msgstr "角色管理"
++
++#~ msgid "Create new Role"
++#~ msgstr "建立新角色"
++
++#~ msgid "Role Permission"
++#~ msgstr "角色權限"
++
++#~ msgid "Category"
++#~ msgstr "類別"
++
++#~ msgid "Update Date"
++#~ msgstr "更新時間"
++
++#~ msgid "Rename"
++#~ msgstr "重新命名"
++
++#~ msgid "Confirm to delete this Role"
++#~ msgstr "您是否確認要刪除這個角色"
++
++#~ msgid "Default role cannot delete"
++#~ msgstr "預設的角色無法刪除"
++
++#~ msgid "Fail to delete role"
++#~ msgstr "刪除這個角色失敗"
++
++#~ msgid "Permission Settings"
++#~ msgstr "權限設定"
++
++#~ msgid "Role / Permission"
++#~ msgstr "角色 / 權限"
++
++#~ msgid "permission save successfully"
++#~ msgstr "權限儲存成功"
++
++#~ msgid "Role Rename"
++#~ msgstr "角色重新命名"
++
++#~ msgid "Role Rename successfully"
++#~ msgstr "角色重新命名成功"
++
++#~ msgid "Default role cannot rename"
++#~ msgstr "預設角色不能重新命名"
++
++#~ msgid "Fail to rename Role"
++#~ msgstr "角色重新命名失敗"
++
++#~ msgid "Backup Scheduling"
++#~ msgstr "備份排程"
++
++#~ msgid "Manually"
++#~ msgstr "手動備份"
++
++#~ msgid "Instantly backup after clicking save"
++#~ msgstr "點擊儲存後立即備份"
++
++#~ msgid "Automatic"
++#~ msgstr "自動備份"
++
++#~ msgid "Every Month"
++#~ msgstr "每月"
++
++#~ msgid "Day"
++#~ msgstr "日"
++
++#~ msgid "Time"
++#~ msgstr "時間"
++
++#~ msgid "Every Week"
++#~ msgstr "每週"
++
++#~ msgid "Sun"
++#~ msgstr "日"
++
++#~ msgid "Mon"
++#~ msgstr "一"
++
++#~ msgid "Tue"
++#~ msgstr "二"
++
++#~ msgid "Wed"
++#~ msgstr "三"
++
++#~ msgid "Thu"
++#~ msgstr "四"
++
++#~ msgid "Fri"
++#~ msgstr "五"
++
++#~ msgid "Sat"
++#~ msgstr "六"
++
++#~ msgid "Local backup location"
++#~ msgstr "本地備份地點"
++
++#~ msgid "Remote backup FTP Setting"
++#~ msgstr "異地備份FTP設定"
++
++#~ msgid "HOST"
++#~ msgstr "主機"
++
++#~ msgid "PORT"
++#~ msgstr "連接埠"
++
++#~ msgid "PATH"
++#~ msgstr "路徑"
++
++#~ msgid "USERNAME"
++#~ msgstr "使用者名稱"
++
++#~ msgid "PASSWORD"
++#~ msgstr "密碼"
++
++#~ msgid "Connect Test"
++#~ msgstr "測試連線"
++
++#~ msgid "System Log"
++#~ msgstr "系統紀錄"
++
++#~ msgid "Log count limit"
++#~ msgstr "Log筆數限制"
++
++#~ msgid "if the logs exceeds limit"
++#~ msgstr "若超過筆數限制"
++
++#~ msgid "keep"
++#~ msgstr "保留"
++
++#~ msgid "month data"
++#~ msgstr "月資料"
++
++#~ msgid "others will be remove."
++#~ msgstr "其他移除"
++
++#~ msgid "In limit duration, the logs can be record to 150%% amount."
++#~ msgstr "若期限內超過筆數限制，最多可以紀錄到1.5倍的筆數限制。"
++
++#~ msgid ""
++#~ "Over 150%% amount, system will keep latest logs, and remove the other "
++#~ "older logs."
++#~ msgstr ""
++#~ "若期限內超過1.5倍的筆數限制Log，則保留最新的筆數限制資料，其餘Log紀錄刪"
++#~ "除。"
++
++#~ msgid "Save FR user register photo image"
++#~ msgstr "儲存臉部註冊成功照片"
++
++#~ msgid "Save FR user recognition photo image"
++#~ msgstr "儲存臉部辨識成功照片"
++
++#~ msgid "Testing"
++#~ msgstr "測試中"
++
++#~ msgid "FTP connect test successfully"
++#~ msgstr "FTP連線測試成功"
++
++#~ msgid "Connect to FTP fail"
++#~ msgstr "無法連線到FTP"
++
++#~ msgid "Login incorrect"
++#~ msgstr "無法登入"
++
++#~ msgid "The path does not exist or can not be accessed"
++#~ msgstr "路徑不存在或無法進入"
++
++#~ msgid "Written permission denied"
++#~ msgstr "寫入權限不足"
++
++#~ msgid "Unknown error"
++#~ msgstr "未知錯誤"
++
++#~ msgid "Must select one week day!"
++#~ msgstr "必須選擇一個工作日"
++
++#~ msgid "Must select correct monthly day!"
++#~ msgstr "必須選擇正確的月份日期！"
++
++#~ msgid ""
++#~ "The backup may not be processed monthly, if you choose monthly date from "
++#~ "29 to 31 !\\n\\nWould you want to continue ?"
++#~ msgstr "選擇每月 29~31 日，可能無法每月進行自動備份，您確定要繼續嗎?"
++
++#~ msgid "Must input correct FTP remote path!"
++#~ msgstr "必須輸入正確的遠端 FTP 路徑！"
++
++#~ msgid "Backup successfully"
++#~ msgstr "備份成功"
++
++#~ msgid "Backup setting successfully"
++#~ msgstr "備份設定成功"
++
++#~ msgid "Fail to setting Backup"
++#~ msgstr "備份設定失敗"
++
++#~ msgid "Must input correct log limit value!"
++#~ msgstr "必須輸入正確的Log筆數限制值！"
++
++#~ msgid "Must input correct month value for log preservation!"
++#~ msgstr "Log的保留月份必須輸入正確的值！"
++
++#~ msgid "Log setting successfully"
++#~ msgstr "Log設定成功"
++
++#~ msgid "Fail to setting Log"
++#~ msgstr "Log設定失敗"
++
++#~ msgid "System log List"
++#~ msgstr "系統事件紀錄"
++
++#~ msgid "Date/Time"
++#~ msgstr "日期時間"
++
++#~ msgid "User add"
++#~ msgstr "使用者新增"
++
++#~ msgid "Account"
++#~ msgstr "帳號"
++
++#~ msgid "Please input your account"
++#~ msgstr "請輸入帳號"
++
++#~ msgid ""
++#~ "The account can only contain 1 to 16 bit of English or Number or '_' or "
++#~ "'-'"
++#~ msgstr "帳號只能包含1到16碼的英文、數字、'_'、'-'"
++
++#~ msgid "E-Mail address"
++#~ msgstr "電子信箱"
++
++#~ msgid "Please input your E-Mail address"
++#~ msgstr "請輸入電子信箱"
++
++#~ msgid "Please enter the correct E-Mail format!"
++#~ msgstr "請輸入正確的電子郵件格式"
++
++#~ msgid "Password"
++#~ msgstr "密碼"
++
++#~ msgid "Please input your password"
++#~ msgstr "請輸入你的密碼"
++
++#~ msgid "Confirm password"
++#~ msgstr "確認密碼"
++
++#~ msgid "Role"
++#~ msgstr "角色"
++
++#~ msgid "Password does not match"
++#~ msgstr "密碼不一致"
++
++#~ msgid "Create user successfully"
++#~ msgstr "建立使用者成功"
++
++#~ msgid "Can not create admin account"
++#~ msgstr "管理員帳號無法被建立"
++
++#~ msgid "E-Mail address already exists"
++#~ msgstr "電子信箱已經存在"
++
++#~ msgid "Account already exists"
++#~ msgstr "帳號已經存在"
++
++#~ msgid "Fail to create User"
++#~ msgstr "使用者建立失敗"
++
++#~ msgid "User Group Add"
++#~ msgstr "建立新群組"
++
++#~ msgid "User Group Device"
++#~ msgstr "設備管理"
++
++#~ msgid "User Group Edit"
++#~ msgstr "使用者群組修改"
++
++#~ msgid "No"
++#~ msgstr "編號"
++
++#~ msgid "User Group Member"
++#~ msgstr "群組成員管理"
++
++#~ msgid "Create new account"
++#~ msgstr "建立新帳號"
++
++#~ msgid "Email"
++#~ msgstr "電子信箱"
++
++#~ msgid "UpdateDate"
++#~ msgstr "更新時間"
++
++#~ msgid "Permission denied"
++#~ msgstr "權限不足"
++
++#~ msgid "Setting"
++#~ msgstr "設定"
++
++#~ msgid "New Password"
++#~ msgstr "新密碼"
++
++#~ msgid "Confirm Password"
++#~ msgstr "確認密碼"
++
++#~ msgid "please enter your name"
++#~ msgstr "請輸入你的名字"
++
++#~ msgid "please enter your password"
++#~ msgstr "請輸入你的密碼"
++
++#~ msgid ""
++#~ "password not match, please check 'New Password' and 'Confirm Password'"
++#~ msgstr "輸入的'新密碼'與'確認密碼'不一致"
++
++#~ msgid "Change password successfully"
++#~ msgstr "密碼變更成功"
++
++#~ msgid "Fail to change password"
++#~ msgstr "密碼變更失敗"
++
++#~ msgid "User Update"
++#~ msgstr "更新用戶資料"
++
++#~ msgid "User update"
++#~ msgstr "更新用戶資料"
++
++#~ msgid "Update user successfully"
++#~ msgstr "使用者更新成功"
++
++#~ msgid "Fail to update User"
++#~ msgstr "使用者更新失敗"
+diff --git a/templates/dashboard.html b/templates/dashboard.html
+index fb5660a..a984012 100755
+--- a/templates/dashboard.html
++++ b/templates/dashboard.html
+@@ -18,10 +18,6 @@
+     <body>
+         {% include 'menu.html' %}
+         <div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+-          <link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}">
+-          <link rel="stylesheet" href="{% static "css/datepicker3.css" %}">
+-          <link rel="stylesheet" href="{% static "css/bootstrap-table.css" %}">
+-          <link rel="stylesheet" href="{% static "css/styles.css" %}">
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+@@ -95,10 +91,10 @@
+                                 <dt>{% trans "Software Version" %}</dt>
+                                 <dd>{{softwave_version}}
+                                     <a data-toggle="modal" data-target="#Br06UpdateModal" data-backdrop="static" data-keyboard="false">
+-                                        {% if NewVersion != softwave_version %}
+-                                            (<em>{% trans "There is a newer version can be updated." %}</em>)
++                                        {% if NewServerVersion != softwave_version %}
++                                            (<em>{% trans "There is a newer version can be upgraded." %}</em>)
+                                         {% endif %}
+-                                        {% trans "Update here" %}
++                                        {% trans "Upgrade here" %}
+                                     </a>
+                                 </dd>
+                             </dl>
+@@ -139,29 +135,29 @@
+             <div class="modal-dialog" role="document">
+                 <div class="modal-content">
+                     <div class="modal-header">
+-                        <h4 class="modal-title">{% trans "System Update" %}</h4>
++                        <h4 class="modal-title">{% trans "System Upgrade" %}</h4>
+                     </div>
+                     <div class="modal-body">
+                         <div class="row">
+                             <form id="Br06UpdateForm" class="form-horizontal col-md-offset-1 col-md-10" enctype="multipart/form-data" >{% csrf_token %}
+                                 <div id="Br06UpdateBody" class="form-body">
+                                     <div class="form-group">
+-                                        <h4><strong>{% trans "Note" %}:</strong> {% trans "The system cannot be operated when updating!" %}</h4>
++                                        <h4><strong>{% trans "Note" %}:</strong> {% trans "The system cannot be operated when upgrading!" %}</h4>
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="label label-default control-label">{% trans "Update from server" %}</label><br>
+-                                        {% if NewVersion != softwave_version %}
+-                                            <label class="control-label">{% trans "The latest version is" %} <em>'{{NewVersion}}'</em></label>
+-                                            <button type="button" id="UpdateBr06ServerButton" class="btn btn-default pull-right" onclick="UpdateBr06Server()">{% trans "Update" %}</button>
++                                        <label class="label label-default control-label">{% trans "Upgrade from server" %}</label><br>
++                                        {% if NewServerVersion != softwave_version %}
++                                            <label class="control-label">{% trans "The latest version is" %} <em>'{{NewServerVersion}}'</em></label>
++                                            <button type="button" id="UpdateBr06ServerButton" class="btn btn-default pull-right" onclick="UpdateBr06Server()">{% trans "Upgrade" %}</button>
+                                         {% else %}
+                                             <label class="control-label">{% trans "There are no newer versions." %}</label>
+-                                            <button type="button" class="btn btn-default pull-right" disabled>{% trans "Update" %}</button>
++                                            <button type="button" class="btn btn-default pull-right" disabled>{% trans "Upgrade" %}</button>
+                                         {% endif %}
+                                     </div>
+                                     <div class="form-group">
+-                                        <label class="label label-default control-label">{% trans "Update from the choosed file" %}</label><br>
++                                        <label class="label label-default control-label">{% trans "Upgrade from the choosed file" %}</label><br>
+                                         <label class="control-label"><input id="Br06UpdateFile" type="file" name="file" title="Select File"></label>
+-                                        <button type="button" id="UpdateBr06FileButton" class="btn btn-default pull-right" onclick="UpdateBr06File()">{% trans "Update" %}</button>
++                                        <button type="button" id="UpdateBr06FileButton" class="btn btn-default pull-right" onclick="UpdateBr06File()">{% trans "Upgrade" %}</button>
+                                     </div>
+                                 </div>
+                             </form>
+@@ -178,6 +174,8 @@
+             </div>
+         </div>
+ 
++        <script src="{% static "js/easypiechart.js" %}"></script>
++        <script src="{% static "js/easypiechart-data.js" %}"></script>
+         <script>
+             var language = "{{ LANGUAGE_CODE }}";
+             if (language == "zh-tw") {
+@@ -206,8 +204,26 @@
+                 }
+                 return cookieValue;
+             }
++            function updateTimer(updateCount) {
++                setTimeout(function() {
++                    if (updateCount--) {
++                        $('#Br06UpdateBody').html('\
++                            <div class="col-md-offset-1 col-md-10">\
++                                {% trans "Setting the system! Improper actions may cause damage to the system!" %}\
++                                ' + updateCount + ' {% trans "Sec" %}...\
++                                <i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
++                            </div>\
++                        ');
++                        updateTimer(updateCount);
++                    } else {
++                        alert("{% trans "Upgrade completed" %}");
++                        location.reload();
++                    }
++                }, 1000);
++            }
++
+ 
+-            {% if NewVersion != softwave_version %}
++            {% if NewServerVersion != softwave_version %}
+                 function UpdateBr06Server() {
+                     ret = prompt("{% trans "Please enter server password" %}");
+                     if (ret) {
+@@ -217,7 +233,7 @@
+                         $('#UpdateBr06Close').prop('disabled', true);
+                         $('#Br06UpdateBody').html('\
+                             <div class="col-md-offset-1 col-md-10">\
+-                                {% trans "Updating! Improper actions may cause damage to the system!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
++                                {% trans "Upgrading! Improper actions may cause damage to the system!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
+                             </div>\
+                         ');
+ 
+@@ -232,18 +248,22 @@
+                                 password : ret,
+                             },
+                             success: function(data) {
++                                timeoutVar = timeoutStart();
+                                 if (data.CODE == "0") {
+-                                    alert("{% trans "Update completed" %}")
++                                    updateTimer(31);
+                                 } else if (data.CODE == "2") {
+                                     alert("{% trans "Password incorrect" %}");
++                                    location.reload();
+                                 } else if (data.CODE == "3") {
+                                     alert("{% trans "The file format is not correct!" %}");
++                                    location.reload();
+                                 } else if (data.CODE == "4") {
+                                     alert("{% trans "Connect to FTP failed!" %}");
++                                    location.reload();
+                                 } else {
+-                                    alert("{% trans "Fail to update server!" %}");
++                                    alert("{% trans "Fail to upgrade server!" %}");
++                                    location.reload();
+                                 }
+-                                location.reload();
+                             },
+                             error: function(data) {
+                                 location.reload();
+@@ -267,7 +287,7 @@
+                         $('#UpdateBr06Close').prop('disabled', true);
+                         $('#Br06UpdateBody').html('\
+                             <div class="col-md-12">\
+-                                {% trans "Updating! Improper actions may cause damage to the system!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
++                                {% trans "Upgrading! Improper actions may cause damage to the system!" %}...<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>\
+                             </div>\
+                         ');
+ 
+@@ -283,15 +303,17 @@
+                             success: function(data) {
+                                 timeoutVar = timeoutStart();
+                                 if (data.CODE == "0") {
+-                                    alert("{% trans "Update completed" %}")
++                                    updateTimer(31);
+                                 } else if (data.CODE == "2") {
+                                     alert("{% trans "Password incorrect" %}");
++                                    location.reload();
+                                 } else if (data.CODE == "3") {
+                                     alert("{% trans "The file format is not correct!" %}");
++                                    location.reload();
+                                 } else {
+-                                    alert("{% trans "Fail to update server!" %}");
++                                    alert("{% trans "Fail to upgrade server!" %}");
++                                    location.reload();
+                                 }
+-                                location.reload();
+                             },
+                             error: function(data) {
+                                 location.reload();
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 027a489..1249898 100755
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -193,6 +193,17 @@
+                                             <p class="text-left" name="testtt"></p>
+                                         </label>
+                                     </div>
++                                    <div class="form-group">
++                                        <label class="col-md-3 control-label">{% trans "Version" %} :</label>
++                                        <label class="col-md-6 control-label">
++                                            <p class="text-left">v1.0.0.9
++                                                <a onclick="confirm('Confirm to upgrade this Device?');">
++                                                    (<em>{% trans "There is a newer version can be upgraded." %}</em>)
++                                                    {% trans "Upgrade here" %}
++                                                </a>
++                                            </p>
++                                        </label>
++                                    </div>
+                                 </div>
+                             </form>
+                             <div class="col-md-offset-3 col-md-9">
+diff --git a/templates/device_list.html b/templates/device_list.html
+old mode 100755
+new mode 100644
+index 718ab96..7ebec37
+--- a/templates/device_list.html
++++ b/templates/device_list.html
+@@ -30,7 +30,10 @@
+                 <div class="col-lg-12">
+                     <div class="panel panel-default">
+                         <div class="panel-body">
+-                            <button id="AddDevice" class="btn btn-default pull-right" onclick="location.href='/device_add/'">{% trans "Create new device" %}</button>
++                            <div id="DeviceAction">
++                                <button id="AddDevice" class="btn btn-default" onclick="location.href='/device_add/'">{% trans "Create new device" %}</button>
++                                <button id="UpgradeDevices" class="btn btn-default" onclick="confirm('Confirm to upgrade all the Devices?');" disabled>{% trans "Upgrade all the devices" %}</button>
++                            </div>
+                             <table id="DeviceList"></table>
+                         </div>
+                     </div>
+@@ -53,7 +56,7 @@
+                 url: '/device_list_data',
+                 search: true,
+                 pagination: true,
+-                toolbar: '#AddDevice',
++                toolbar: '#DeviceAction',
+                 pageSize: 10,
+                 sortName: 'Name',
+                 sortOrder: 'asc',
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index c4e35fd365d40dac58e667b6bb0f2a42e57477f8..bed5c944feaa5f2a532b3fec0993cd6bbfd091c7 100755
+GIT binary patch
+delta 8047
+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
+J#AWOb`WLT#<pux%
+
+delta 7750
+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
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index 6a029d3..3dfccc7 100755
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-06 17:23+0800\n"
++"POT-Creation-Date: 2016-12-08 10:49+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,163 +17,177 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: templates/dashboard.html:15 templates/dashboard.html.py:28
+-#: templates/dashboard.html:34 templates/menu.html.py:35
++#: templates/dashboard.html:15 templates/dashboard.html.py:24
++#: templates/dashboard.html:30 templates/menu.html.py:35
+ msgid "Dashboard"
+ msgstr "系统仪表板"
+ 
+-#: templates/dashboard.html:41
++#: templates/dashboard.html:37
+ msgid "System Info"
+ msgstr "系统资讯"
+ 
+-#: templates/dashboard.html:47
++#: templates/dashboard.html:43
+ msgid "Disk Usage"
+ msgstr "硬碟使用空间"
+ 
+-#: templates/dashboard.html:58
++#: templates/dashboard.html:54
+ msgid "Memory Usage"
+ msgstr "RAM 使用量"
+ 
+-#: templates/dashboard.html:69 templates/dashboard.html.py:123
++#: templates/dashboard.html:65 templates/dashboard.html.py:119
+ msgid "FR User Count"
+ msgstr "建档总人数"
+ 
+-#: templates/dashboard.html:80
++#: templates/dashboard.html:76
+ msgid "System Log Count"
+ msgstr "Log笔数"
+ 
+-#: templates/dashboard.html:91
++#: templates/dashboard.html:87
+ msgid "System Uptime"
+ msgstr "开机多久时间"
+ 
+-#: templates/dashboard.html:93
++#: templates/dashboard.html:89
+ msgid "System Current Time"
+ msgstr "系统当地时间"
+ 
+-#: templates/dashboard.html:95
++#: templates/dashboard.html:91 templates/device_edit.html.py:197
+ msgid "Software Version"
+ msgstr "软件版号"
+ 
+-#: templates/dashboard.html:99
+-msgid "There is a newer version can be updated."
+-msgstr "有新版本可供更新"
++#: templates/dashboard.html:95 templates/device_edit.html.py:201
++msgid "There is a newer version can be upgraded."
++msgstr "有新版本可供升级"
+ 
+-#: templates/dashboard.html:101
+-msgid "Update here"
+-msgstr "更新"
++#: templates/dashboard.html:97 templates/device_edit.html.py:202
++msgid "Upgrade here"
++msgstr "升级"
+ 
+-#: templates/dashboard.html:109
++#: templates/dashboard.html:105
+ msgid "Device Info"
+ msgstr "设备资讯"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:107
+ msgid "Device Count"
+ msgstr "设备总数量"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:107
+ msgid "proposed"
+ msgstr "待审数"
+ 
+-#: templates/dashboard.html:114 templates/dashboard.html.py:126
++#: templates/dashboard.html:110 templates/dashboard.html.py:122
+ msgid "View Detail"
+ msgstr "查看详情"
+ 
+-#: templates/dashboard.html:121
++#: templates/dashboard.html:117
+ msgid "FR Users Info"
+ msgstr "设备使用者资讯"
+ 
+-#: templates/dashboard.html:142
+-msgid "System Update"
+-msgstr "系统更新"
++#: templates/dashboard.html:138
++msgid "System Upgrade"
++msgstr "系统升级"
+ 
+-#: templates/dashboard.html:149
++#: templates/dashboard.html:145
+ msgid "Note"
+ msgstr "注意"
+ 
+-#: templates/dashboard.html:149
+-msgid "The system cannot be operated when updating!"
+-msgstr "更新时系统会暂时停止运作"
++#: templates/dashboard.html:145
++msgid "The system cannot be operated when upgrading!"
++msgstr "升级时系统会暂时停止运作"
+ 
+-#: templates/dashboard.html:152
+-msgid "Update from server"
+-msgstr "从伺服器更新"
++#: templates/dashboard.html:148
++msgid "Upgrade from server"
++msgstr "从伺服器升级"
+ 
+-#: templates/dashboard.html:154
++#: templates/dashboard.html:150
+ msgid "The latest version is"
+ msgstr "最後的版本為"
+ 
+-#: templates/dashboard.html:155 templates/dashboard.html.py:158
+-#: templates/dashboard.html:164
+-msgid "Update"
+-msgstr "更新"
++#: templates/dashboard.html:151 templates/dashboard.html.py:154
++#: templates/dashboard.html:160
++msgid "Upgrade"
++msgstr "升级"
+ 
+-#: templates/dashboard.html:157
++#: templates/dashboard.html:153
+ msgid "There are no newer versions."
+ msgstr "无更新版本"
+ 
+-#: templates/dashboard.html:162
+-msgid "Update from the choosed file"
+-msgstr "从选择的档案更新"
++#: templates/dashboard.html:158
++msgid "Upgrade from the choosed file"
++msgstr "从选择的档案升级"
+ 
+-#: templates/dashboard.html:173 templates/fruser_list.html.py:62
++#: templates/dashboard.html:169 templates/fruser_list.html.py:62
+ msgid "Close"
+ msgstr "关闭"
+ 
+-#: templates/dashboard.html:212 templates/dashboard.html.py:261
++#: templates/dashboard.html:212
++msgid "Setting the system! Improper actions may cause damage to the system!"
++msgstr "设定主机中！ 不正确的操作可能会导致系统损坏！"
++
++#: templates/dashboard.html:213 templates/device_settings.html.py:86
++#: templates/device_settings.html:87 templates/device_settings.html.py:88
++#: templates/device_settings.html:112 templates/device_settings.html.py:113
++#: templates/device_settings.html:114 templates/device_settings.html.py:141
++#: templates/device_settings.html:142 templates/device_settings.html.py:143
++#: templates/device_settings.html:167 templates/device_settings.html.py:168
++#: templates/device_settings.html:169
++msgid "Sec"
++msgstr "秒"
++
++#: templates/dashboard.html:219
++msgid "Upgrade completed"
++msgstr "升级完成"
++
++#: templates/dashboard.html:228 templates/dashboard.html.py:281
+ msgid "Please enter server password"
+ msgstr "请输入服务主机密码"
+ 
+-#: templates/dashboard.html:220 templates/dashboard.html.py:270
+-msgid "Updating! Improper actions may cause damage to the system!"
+-msgstr "更新中！ 不正确的操作可能会导致系统损坏！"
+-
+-#: templates/dashboard.html:236 templates/dashboard.html.py:286
+-msgid "Update completed"
+-msgstr "更新完成"
++#: templates/dashboard.html:236 templates/dashboard.html.py:290
++msgid "Upgrading! Improper actions may cause damage to the system!"
++msgstr "升级中！ 不正确的操作可能会导致系统损坏！"
+ 
+-#: templates/dashboard.html:238 templates/dashboard.html.py:288
++#: templates/dashboard.html:255 templates/dashboard.html.py:308
+ msgid "Password incorrect"
+ msgstr "密码错误"
+ 
+-#: templates/dashboard.html:240 templates/dashboard.html.py:290
++#: templates/dashboard.html:258 templates/dashboard.html.py:311
+ #: templates/fruser_list.html:229
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正确"
+ 
+-#: templates/dashboard.html:242
++#: templates/dashboard.html:261
+ msgid "Connect to FTP failed!"
+ msgstr "无法连线到FTP"
+ 
+-#: templates/dashboard.html:244 templates/dashboard.html.py:292
+-msgid "Fail to update server!"
+-msgstr "更新系统失败"
++#: templates/dashboard.html:264 templates/dashboard.html.py:314
++msgid "Fail to upgrade server!"
++msgstr "升级系统失败"
+ 
+-#: templates/dashboard.html:302 templates/fruser_list.html.py:245
++#: templates/dashboard.html:324 templates/fruser_list.html.py:245
+ msgid "Please choose a file!"
+ msgstr "请选择档案"
+ 
+-#: templates/dashboard.html:313 templates/dashboard.html.py:331
++#: templates/dashboard.html:335 templates/dashboard.html.py:353
+ #: templates/fruser_list.html:102 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "编号"
+ 
+-#: templates/dashboard.html:317 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:83
++#: templates/dashboard.html:339 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:86
+ #: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "设备名称"
+ 
+-#: templates/dashboard.html:321 templates/dashboard.html.py:343
++#: templates/dashboard.html:343 templates/dashboard.html.py:365
+ msgid "Latest Update Time"
+ msgstr "最后更新时间"
+ 
+-#: templates/dashboard.html:335
++#: templates/dashboard.html:357
+ msgid "User ID"
+ msgstr "工号"
+ 
+-#: templates/dashboard.html:339
++#: templates/dashboard.html:361
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -186,7 +200,7 @@ msgid "Device add"
+ msgstr "新增设备"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:171 templates/frusergroup_devices.html.py:146
++#: templates/device_list.html:174 templates/frusergroup_devices.html.py:146
+ #: templates/user_group_devices.html:144
+ msgid "Device"
+ msgstr "设备"
+@@ -249,7 +263,7 @@ msgstr "储存"
+ msgid "The device is added successfully"
+ msgstr "设备新增成功"
+ 
+-#: templates/device_add.html:115 templates/device_edit.html.py:248
++#: templates/device_add.html:115 templates/device_edit.html.py:259
+ msgid "The device name is duplicated!"
+ msgstr "设备名称已重复！"
+ 
+@@ -298,7 +312,7 @@ msgstr "模式"
+ msgid "Event"
+ msgstr "事件"
+ 
+-#: templates/device_edit.html:109 templates/device_settings.html.py:66
++#: templates/device_edit.html:111 templates/device_settings.html.py:66
+ msgid "Welcome"
+ msgstr "允许进入"
+ 
+@@ -321,7 +335,7 @@ msgstr "延后"
+ msgid "sec"
+ msgstr "秒"
+ 
+-#: templates/device_edit.html:127 templates/device_settings.html.py:121
++#: templates/device_edit.html:129 templates/device_settings.html.py:121
+ msgid "Access Denied"
+ msgstr "拒绝进入"
+ 
+@@ -366,15 +380,19 @@ msgstr "指纹辨识分数"
+ msgid "Multi-language"
+ msgstr "语言"
+ 
+-#: templates/device_edit.html:199
++#: templates/device_edit.html:200
++msgid "Confirm to upgrade this device?"
++msgstr "您是否确认要升级此装置?"
++
++#: templates/device_edit.html:210
+ msgid "Parameter Settings"
+ msgstr "设定参数"
+ 
+-#: templates/device_edit.html:243
++#: templates/device_edit.html:254
+ msgid "The device name is changed successfully"
+ msgstr "设备名称变更成功"
+ 
+-#: templates/device_edit.html:246
++#: templates/device_edit.html:257
+ msgid "Fail to change the device name"
+ msgstr "设备名称变更失败"
+ 
+@@ -400,7 +418,7 @@ msgstr "新增"
+ msgid "FRUser Group"
+ msgstr "设备使用者群组管理"
+ 
+-#: templates/device_frusergroups.html:110 templates/device_list.html.py:119
++#: templates/device_frusergroups.html:110 templates/device_list.html.py:122
+ #: templates/fruser_list.html:174 templates/frusergroups_list.html.py:91
+ #: templates/role_list.html:121 templates/user_group_devices.html.py:113
+ #: templates/user_group_list.html:90 templates/user_group_members.html:113
+@@ -415,7 +433,7 @@ msgstr "删除"
+ msgid "Group"
+ msgstr "群组"
+ 
+-#: templates/device_frusergroups.html:167 templates/device_list.html.py:171
++#: templates/device_frusergroups.html:167 templates/device_list.html.py:174
+ #: templates/fruser_list.html:250 templates/frusergroup_devices.html.py:172
+ #: templates/frusergroup_member.html:170 templates/frusergroups_list.html:121
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+@@ -446,43 +464,51 @@ msgstr "新增群组失败"
+ msgid "Device List"
+ msgstr "设备管理"
+ 
+-#: templates/device_list.html:33
++#: templates/device_list.html:34
+ msgid "Create new device"
+ msgstr "建立新设备"
+ 
+-#: templates/device_list.html:88 templates/fruser_list.html.py:121
++#: templates/device_list.html:35
++msgid "Confirm to upgrade software of all the devices?"
++msgstr "您是否确认要升级所有装置的软体?"
++
++#: templates/device_list.html:35
++msgid "Upgrade all the devices"
++msgstr "升级所有装置"
++
++#: templates/device_list.html:91 templates/fruser_list.html.py:121
+ msgid "Status"
+ msgstr "状态"
+ 
+-#: templates/device_list.html:101
++#: templates/device_list.html:104
+ msgid "Sync time"
+ msgstr "同步时间"
+ 
+-#: templates/device_list.html:111
++#: templates/device_list.html:114
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:112
++#: templates/device_list.html:115
+ msgid "Reject"
+ msgstr "拒绝"
+ 
+-#: templates/device_list.html:117 templates/fruser_list.html.py:173
++#: templates/device_list.html:120 templates/fruser_list.html.py:173
+ #: templates/frusergroups_list.html:90 templates/frusergroups_list.html:96
+ #: templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "编辑"
+ 
+-#: templates/device_list.html:118 templates/menu.html.py:41
++#: templates/device_list.html:121 templates/menu.html.py:41
+ #: templates/system_settings.html:11 templates/system_settings.html.py:20
+ #: templates/system_settings.html:26
+ msgid "Settings"
+ msgstr "设定"
+ 
+-#: templates/device_list.html:163
++#: templates/device_list.html:166
+ msgid "Fail to accept device"
+ msgstr "接受设备失败"
+ 
+-#: templates/device_list.html:188 templates/frusergroup_devices.html.py:190
++#: templates/device_list.html:191 templates/frusergroup_devices.html.py:190
+ #: templates/user_group_devices.html:188
+ msgid "Fail to delete device"
+ msgstr "删除设备失败"
+@@ -541,15 +567,6 @@ msgstr "关闭"
+ msgid "Pulse"
+ msgstr "持续"
+ 
+-#: templates/device_settings.html:86 templates/device_settings.html.py:87
+-#: templates/device_settings.html:88 templates/device_settings.html.py:112
+-#: templates/device_settings.html:113 templates/device_settings.html.py:114
+-#: templates/device_settings.html:141 templates/device_settings.html.py:142
+-#: templates/device_settings.html:143 templates/device_settings.html.py:167
+-#: templates/device_settings.html:168 templates/device_settings.html.py:169
+-msgid "Sec"
+-msgstr "秒"
+-
+ #: templates/device_settings.html:193 templates/device_settings.html.py:194
+ #: templates/device_settings.html:195
+ msgid "Minutes"
+@@ -926,16 +943,11 @@ msgstr "分隔符号"
+ msgid "Please select items."
+ msgstr "请选择栏位项目"
+ 
+-#: templates/logsetting.html:157 templates/user_add.html.py:129
+-#: templates/user_update.html:130
+-msgid "Please input correct format"
+-msgstr "请输入正确的格式"
+-
+-#: templates/logsetting.html:176
++#: templates/logsetting.html:173
+ msgid "successfully"
+ msgstr "成功"
+ 
+-#: templates/logsetting.html:178
++#: templates/logsetting.html:175
+ msgid "Fail"
+ msgstr "失败"
+ 
+@@ -1434,6 +1446,10 @@ msgstr "确认密码"
+ msgid "Role"
+ msgstr "角色"
+ 
++#: templates/user_add.html:129 templates/user_update.html.py:130
++msgid "Please input correct format"
++msgstr "请输入正确的格式"
++
+ #: templates/user_add.html:136 templates/user_update.html.py:137
+ msgid "Password does not match"
+ msgstr "密码不一致"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index 6fbb0d63d5f9d709e47667e5d98a81374d806b29..3c383eea8e5d600eb2c820780854f41d986b1d2f 100755
+GIT binary patch
+delta 8047
+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
+NyLNp=LgucJe*tpB<L3YX
+
+delta 7750
+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
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index 093deef..201fef0 100755
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-12-06 17:23+0800\n"
++"POT-Creation-Date: 2016-12-08 10:49+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -17,163 +17,177 @@ msgstr ""
+ "Content-Type: text/plain; charset=UTF-8\n"
+ "Content-Transfer-Encoding: 8bit\n"
+ 
+-#: templates/dashboard.html:15 templates/dashboard.html.py:28
+-#: templates/dashboard.html:34 templates/menu.html.py:35
++#: templates/dashboard.html:15 templates/dashboard.html.py:24
++#: templates/dashboard.html:30 templates/menu.html.py:35
+ msgid "Dashboard"
+ msgstr "系統儀表板"
+ 
+-#: templates/dashboard.html:41
++#: templates/dashboard.html:37
+ msgid "System Info"
+ msgstr "系統資訊"
+ 
+-#: templates/dashboard.html:47
++#: templates/dashboard.html:43
+ msgid "Disk Usage"
+ msgstr "硬碟使用空間"
+ 
+-#: templates/dashboard.html:58
++#: templates/dashboard.html:54
+ msgid "Memory Usage"
+ msgstr "RAM 使用量"
+ 
+-#: templates/dashboard.html:69 templates/dashboard.html.py:123
++#: templates/dashboard.html:65 templates/dashboard.html.py:119
+ msgid "FR User Count"
+ msgstr "建檔總人數"
+ 
+-#: templates/dashboard.html:80
++#: templates/dashboard.html:76
+ msgid "System Log Count"
+ msgstr "Log筆數"
+ 
+-#: templates/dashboard.html:91
++#: templates/dashboard.html:87
+ msgid "System Uptime"
+ msgstr "開機多久時間"
+ 
+-#: templates/dashboard.html:93
++#: templates/dashboard.html:89
+ msgid "System Current Time"
+ msgstr "系統當地時間"
+ 
+-#: templates/dashboard.html:95
++#: templates/dashboard.html:91 templates/device_edit.html.py:197
+ msgid "Software Version"
+ msgstr "軟體版號"
+ 
+-#: templates/dashboard.html:99
+-msgid "There is a newer version can be updated."
+-msgstr "有新版本可供更新"
++#: templates/dashboard.html:95 templates/device_edit.html.py:201
++msgid "There is a newer version can be upgraded."
++msgstr "有新版本可供升級"
+ 
+-#: templates/dashboard.html:101
+-msgid "Update here"
+-msgstr "更新"
++#: templates/dashboard.html:97 templates/device_edit.html.py:202
++msgid "Upgrade here"
++msgstr "升級"
+ 
+-#: templates/dashboard.html:109
++#: templates/dashboard.html:105
+ msgid "Device Info"
+ msgstr "設備資訊"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:107
+ msgid "Device Count"
+ msgstr "設備總數量"
+ 
+-#: templates/dashboard.html:111
++#: templates/dashboard.html:107
+ msgid "proposed"
+ msgstr "待審數"
+ 
+-#: templates/dashboard.html:114 templates/dashboard.html.py:126
++#: templates/dashboard.html:110 templates/dashboard.html.py:122
+ msgid "View Detail"
+ msgstr "查看詳情"
+ 
+-#: templates/dashboard.html:121
++#: templates/dashboard.html:117
+ msgid "FR Users Info"
+ msgstr "設備使用者資訊"
+ 
+-#: templates/dashboard.html:142
+-msgid "System Update"
+-msgstr "系統更新"
++#: templates/dashboard.html:138
++msgid "System Upgrade"
++msgstr "系統升級"
+ 
+-#: templates/dashboard.html:149
++#: templates/dashboard.html:145
+ msgid "Note"
+ msgstr "注意"
+ 
+-#: templates/dashboard.html:149
+-msgid "The system cannot be operated when updating!"
+-msgstr "更新時系統會暫時停止運作"
++#: templates/dashboard.html:145
++msgid "The system cannot be operated when upgrading!"
++msgstr "升級時系統會暫時停止運作"
+ 
+-#: templates/dashboard.html:152
+-msgid "Update from server"
+-msgstr "從伺服器更新"
++#: templates/dashboard.html:148
++msgid "Upgrade from server"
++msgstr "從伺服器升級"
+ 
+-#: templates/dashboard.html:154
++#: templates/dashboard.html:150
+ msgid "The latest version is"
+ msgstr "最後的版本為"
+ 
+-#: templates/dashboard.html:155 templates/dashboard.html.py:158
+-#: templates/dashboard.html:164
+-msgid "Update"
+-msgstr "更新"
++#: templates/dashboard.html:151 templates/dashboard.html.py:154
++#: templates/dashboard.html:160
++msgid "Upgrade"
++msgstr "升級"
+ 
+-#: templates/dashboard.html:157
++#: templates/dashboard.html:153
+ msgid "There are no newer versions."
+ msgstr "無更新版本"
+ 
+-#: templates/dashboard.html:162
+-msgid "Update from the choosed file"
+-msgstr "從選擇的檔案更新"
++#: templates/dashboard.html:158
++msgid "Upgrade from the choosed file"
++msgstr "從選擇的檔案升級"
+ 
+-#: templates/dashboard.html:173 templates/fruser_list.html.py:62
++#: templates/dashboard.html:169 templates/fruser_list.html.py:62
+ msgid "Close"
+ msgstr "關閉"
+ 
+-#: templates/dashboard.html:212 templates/dashboard.html.py:261
++#: templates/dashboard.html:212
++msgid "Setting the system! Improper actions may cause damage to the system!"
++msgstr "設定主機中！ 不正確的操作可能會導致系統損壞！"
++
++#: templates/dashboard.html:213 templates/device_settings.html.py:86
++#: templates/device_settings.html:87 templates/device_settings.html.py:88
++#: templates/device_settings.html:112 templates/device_settings.html.py:113
++#: templates/device_settings.html:114 templates/device_settings.html.py:141
++#: templates/device_settings.html:142 templates/device_settings.html.py:143
++#: templates/device_settings.html:167 templates/device_settings.html.py:168
++#: templates/device_settings.html:169
++msgid "Sec"
++msgstr "秒"
++
++#: templates/dashboard.html:219
++msgid "Upgrade completed"
++msgstr "升級完成"
++
++#: templates/dashboard.html:228 templates/dashboard.html.py:281
+ msgid "Please enter server password"
+ msgstr "請輸入服務主機密碼"
+ 
+-#: templates/dashboard.html:220 templates/dashboard.html.py:270
+-msgid "Updating! Improper actions may cause damage to the system!"
+-msgstr "更新中！ 不正確的操作可能會導致系統損壞！"
+-
+-#: templates/dashboard.html:236 templates/dashboard.html.py:286
+-msgid "Update completed"
+-msgstr "更新完成"
++#: templates/dashboard.html:236 templates/dashboard.html.py:290
++msgid "Upgrading! Improper actions may cause damage to the system!"
++msgstr "升級中！ 不正確的操作可能會導致系統損壞！"
+ 
+-#: templates/dashboard.html:238 templates/dashboard.html.py:288
++#: templates/dashboard.html:255 templates/dashboard.html.py:308
+ msgid "Password incorrect"
+ msgstr "密碼錯誤"
+ 
+-#: templates/dashboard.html:240 templates/dashboard.html.py:290
++#: templates/dashboard.html:258 templates/dashboard.html.py:311
+ #: templates/fruser_list.html:229
+ msgid "The file format is not correct!"
+ msgstr "文件格式不正確"
+ 
+-#: templates/dashboard.html:242
++#: templates/dashboard.html:261
+ msgid "Connect to FTP failed!"
+ msgstr "無法連線到FTP"
+ 
+-#: templates/dashboard.html:244 templates/dashboard.html.py:292
+-msgid "Fail to update server!"
+-msgstr "更新系統失敗"
++#: templates/dashboard.html:264 templates/dashboard.html.py:314
++msgid "Fail to upgrade server!"
++msgstr "升級系統失敗"
+ 
+-#: templates/dashboard.html:302 templates/fruser_list.html.py:245
++#: templates/dashboard.html:324 templates/fruser_list.html.py:245
+ msgid "Please choose a file!"
+ msgstr "請選擇檔案"
+ 
+-#: templates/dashboard.html:313 templates/dashboard.html.py:331
++#: templates/dashboard.html:335 templates/dashboard.html.py:353
+ #: templates/fruser_list.html:102 templates/frusergroups_list.html.py:72
+ #: templates/fruserlog_list.html:93 templates/role_list.html.py:84
+ #: templates/systemlog_list.html:81 templates/user_list.html.py:79
+ msgid "No."
+ msgstr "編號"
+ 
+-#: templates/dashboard.html:317 templates/device_add.html.py:39
+-#: templates/device_edit.html:53 templates/device_list.html.py:83
++#: templates/dashboard.html:339 templates/device_add.html.py:39
++#: templates/device_edit.html:53 templates/device_list.html.py:86
+ #: templates/fruserlog_list.html:104
+ msgid "Device Name"
+ msgstr "設備名稱"
+ 
+-#: templates/dashboard.html:321 templates/dashboard.html.py:343
++#: templates/dashboard.html:343 templates/dashboard.html.py:365
+ msgid "Latest Update Time"
+ msgstr "最後更新時間"
+ 
+-#: templates/dashboard.html:335
++#: templates/dashboard.html:357
+ msgid "User ID"
+ msgstr "工號"
+ 
+-#: templates/dashboard.html:339
++#: templates/dashboard.html:361
+ msgid "User Name"
+ msgstr "姓名"
+ 
+@@ -186,7 +200,7 @@ msgid "Device add"
+ msgstr "新增設備"
+ 
+ #: templates/device_add.html:32 templates/device_edit.html.py:46
+-#: templates/device_list.html:171 templates/frusergroup_devices.html.py:146
++#: templates/device_list.html:174 templates/frusergroup_devices.html.py:146
+ #: templates/user_group_devices.html:144
+ msgid "Device"
+ msgstr "設備"
+@@ -249,7 +263,7 @@ msgstr "儲存"
+ msgid "The device is added successfully"
+ msgstr "設備新增成功"
+ 
+-#: templates/device_add.html:115 templates/device_edit.html.py:248
++#: templates/device_add.html:115 templates/device_edit.html.py:259
+ msgid "The device name is duplicated!"
+ msgstr "設備名稱已重複！"
+ 
+@@ -298,7 +312,7 @@ msgstr "模式"
+ msgid "Event"
+ msgstr "事件"
+ 
+-#: templates/device_edit.html:109 templates/device_settings.html.py:66
++#: templates/device_edit.html:111 templates/device_settings.html.py:66
+ msgid "Welcome"
+ msgstr "允許進入"
+ 
+@@ -321,7 +335,7 @@ msgstr "延後"
+ msgid "sec"
+ msgstr "秒"
+ 
+-#: templates/device_edit.html:127 templates/device_settings.html.py:121
++#: templates/device_edit.html:129 templates/device_settings.html.py:121
+ msgid "Access Denied"
+ msgstr "拒絕進入"
+ 
+@@ -366,15 +380,19 @@ msgstr "指紋辨識分數"
+ msgid "Multi-language"
+ msgstr "語言"
+ 
+-#: templates/device_edit.html:199
++#: templates/device_edit.html:200
++msgid "Confirm to upgrade this device?"
++msgstr "您是否確認要升級此裝置?"
++
++#: templates/device_edit.html:210
+ msgid "Parameter Settings"
+ msgstr "設定參數"
+ 
+-#: templates/device_edit.html:243
++#: templates/device_edit.html:254
+ msgid "The device name is changed successfully"
+ msgstr "設備名稱變更成功"
+ 
+-#: templates/device_edit.html:246
++#: templates/device_edit.html:257
+ msgid "Fail to change the device name"
+ msgstr "設備名稱變更失敗"
+ 
+@@ -400,7 +418,7 @@ msgstr "新增"
+ msgid "FRUser Group"
+ msgstr "設備使用者群組管理"
+ 
+-#: templates/device_frusergroups.html:110 templates/device_list.html.py:119
++#: templates/device_frusergroups.html:110 templates/device_list.html.py:122
+ #: templates/fruser_list.html:174 templates/frusergroups_list.html.py:91
+ #: templates/role_list.html:121 templates/user_group_devices.html.py:113
+ #: templates/user_group_list.html:90 templates/user_group_members.html:113
+@@ -415,7 +433,7 @@ msgstr "刪除"
+ msgid "Group"
+ msgstr "群組"
+ 
+-#: templates/device_frusergroups.html:167 templates/device_list.html.py:171
++#: templates/device_frusergroups.html:167 templates/device_list.html.py:174
+ #: templates/fruser_list.html:250 templates/frusergroup_devices.html.py:172
+ #: templates/frusergroup_member.html:170 templates/frusergroups_list.html:121
+ #: templates/user_group_devices.html:170 templates/user_group_list.html:116
+@@ -446,43 +464,51 @@ msgstr "新增群組失敗"
+ msgid "Device List"
+ msgstr "設備管理"
+ 
+-#: templates/device_list.html:33
++#: templates/device_list.html:34
+ msgid "Create new device"
+ msgstr "建立新設備"
+ 
+-#: templates/device_list.html:88 templates/fruser_list.html.py:121
++#: templates/device_list.html:35
++msgid "Confirm to upgrade software of all the devices?"
++msgstr "您是否確認要升級所有裝置的軟體?"
++
++#: templates/device_list.html:35
++msgid "Upgrade all the devices"
++msgstr "升級所有裝置"
++
++#: templates/device_list.html:91 templates/fruser_list.html.py:121
+ msgid "Status"
+ msgstr "狀態"
+ 
+-#: templates/device_list.html:101
++#: templates/device_list.html:104
+ msgid "Sync time"
+ msgstr "同步時間"
+ 
+-#: templates/device_list.html:111
++#: templates/device_list.html:114
+ msgid "Accept"
+ msgstr "接受"
+ 
+-#: templates/device_list.html:112
++#: templates/device_list.html:115
+ msgid "Reject"
+ msgstr "拒絕"
+ 
+-#: templates/device_list.html:117 templates/fruser_list.html.py:173
++#: templates/device_list.html:120 templates/fruser_list.html.py:173
+ #: templates/frusergroups_list.html:90 templates/frusergroups_list.html:96
+ #: templates/user_group_list.html.py:89
+ msgid "Edit"
+ msgstr "編輯"
+ 
+-#: templates/device_list.html:118 templates/menu.html.py:41
++#: templates/device_list.html:121 templates/menu.html.py:41
+ #: templates/system_settings.html:11 templates/system_settings.html.py:20
+ #: templates/system_settings.html:26
+ msgid "Settings"
+ msgstr "設定"
+ 
+-#: templates/device_list.html:163
++#: templates/device_list.html:166
+ msgid "Fail to accept device"
+ msgstr "接受設備失敗"
+ 
+-#: templates/device_list.html:188 templates/frusergroup_devices.html.py:190
++#: templates/device_list.html:191 templates/frusergroup_devices.html.py:190
+ #: templates/user_group_devices.html:188
+ msgid "Fail to delete device"
+ msgstr "刪除設備失敗"
+@@ -541,15 +567,6 @@ msgstr "關閉"
+ msgid "Pulse"
+ msgstr "持續"
+ 
+-#: templates/device_settings.html:86 templates/device_settings.html.py:87
+-#: templates/device_settings.html:88 templates/device_settings.html.py:112
+-#: templates/device_settings.html:113 templates/device_settings.html.py:114
+-#: templates/device_settings.html:141 templates/device_settings.html.py:142
+-#: templates/device_settings.html:143 templates/device_settings.html.py:167
+-#: templates/device_settings.html:168 templates/device_settings.html.py:169
+-msgid "Sec"
+-msgstr "秒"
+-
+ #: templates/device_settings.html:193 templates/device_settings.html.py:194
+ #: templates/device_settings.html:195
+ msgid "Minutes"
+@@ -926,16 +943,11 @@ msgstr "分隔符號"
+ msgid "Please select items."
+ msgstr "請選擇欄位項目"
+ 
+-#: templates/logsetting.html:157 templates/user_add.html.py:129
+-#: templates/user_update.html:130
+-msgid "Please input correct format"
+-msgstr "請輸入正確的格式"
+-
+-#: templates/logsetting.html:176
++#: templates/logsetting.html:173
+ msgid "successfully"
+ msgstr "成功"
+ 
+-#: templates/logsetting.html:178
++#: templates/logsetting.html:175
+ msgid "Fail"
+ msgstr "失敗"
+ 
+@@ -1434,6 +1446,10 @@ msgstr "確認密碼"
+ msgid "Role"
+ msgstr "角色"
+ 
++#: templates/user_add.html:129 templates/user_update.html.py:130
++msgid "Please input correct format"
++msgstr "請輸入正確的格式"
++
+ #: templates/user_add.html:136 templates/user_update.html.py:137
+ msgid "Password does not match"
+ msgstr "密碼不一致"
+@@ -1545,3 +1561,6 @@ msgstr "使用者更新成功"
+ #: templates/user_update.html:174
+ msgid "Fail to update User"
+ msgstr "使用者更新失敗"
++
++#~ msgid "There is a newer version can be updated."
++#~ msgstr "有新版本可供更新"
+-- 
+1.9.1
+

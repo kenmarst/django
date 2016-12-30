@@ -1,0 +1,55 @@
+From 9313e2fb220ea6ac17198dc148be4bdb4b8eff3c Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Mon, 28 Nov 2016 13:50:48 +0800
+Subject: [PATCH 375/443] In System Settings page, split backup.log to
+ manualbackup.log and autobackup.log
+
+---
+ systemsettings/views.py | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/systemsettings/views.py b/systemsettings/views.py
+index a5e08c8..e469c7b 100755
+--- a/systemsettings/views.py
++++ b/systemsettings/views.py
+@@ -365,14 +365,16 @@ def settings_system_backup(request):
+         print('backupdir :', backupdir)
+         backuplogdir = os.path.join(backupdir, 'log')
+         print('backuplogdir :', backuplogdir)
+-        newcrontabfile = os.path.join(backupdir, 'crontab.new')
++        newcrontabfile = os.path.join(backupdir, 'crontab.template')
+         print('newcrontabfile :', newcrontabfile)
+         newbackupconfile = os.path.join(backupdir, 'backup.conf')
+         print('newbackupconfile :', newbackupconfile)
+         backupshfile = os.path.join(backupdir, 'br06backup.sh')
+         print('backupshfile :', backupshfile)
+-        backuplogfile = os.path.join(backuplogdir, 'backup.log')
+-        print('backuplogfile :', backuplogfile)
++        autobackuplogfile = os.path.join(backuplogdir, 'autobackup.log')
++        print('autobackuplogfile :', autobackuplogfile)
++        manualbackuplogfile = os.path.join(backuplogdir, 'manualbackup.log')
++        print('manualbackuplogfile :', manualbackuplogfile)
+ 
+         #newcrontabfile = 'crontab.new'
+         #newbackupconfile = 'backup.conf.new'
+@@ -554,7 +556,7 @@ def settings_system_backup(request):
+             with open(newbackupconfile, mode='wt', encoding='utf-8') as f:
+                 f.write(''.join(backupconf_content))
+ 
+-            os.system('cd {0} && {1}'.format(settings.BASE_DIR, backupshfile))
++            os.system('cd {0} && {1} >> {2} 2>&1'.format(settings.BASE_DIR, backupshfile, manualbackuplogfile))
+ 
+             # backup Manually Done
+             backupconf_content=[]
+@@ -604,7 +606,7 @@ def settings_system_backup(request):
+             #    cmd = '{0} {1}\t{2} * *\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupMonthlyDate, settings.BASE_DIR, backupshfile)
+             #else:
+             #    cmd = '{0} {1}\t* * {2}\troot\tcd {3} && {4} >/dev/null 2>&1\n'.format(BackupTime_mins, BackupTime_hours, BackupWeeklyDate, settings.BASE_DIR, backupshfile)
+-            cmd = '*/5 *\t* * *\troot\tcd {0} && {1} >> {2} 2>&1\n'.format(settings.BASE_DIR, backupshfile, backuplogfile)
++            cmd = '*/5 *\t* * *\troot\tcd {0} && {1} >> {2} 2>&1\n'.format(settings.BASE_DIR, backupshfile, autobackuplogfile)
+ 
+             print('cmd:'+cmd)
+             if content2_idx != -1:
+-- 
+1.9.1
+

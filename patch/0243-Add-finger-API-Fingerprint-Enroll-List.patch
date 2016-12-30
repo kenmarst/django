@@ -1,0 +1,66 @@
+From babd449e804c056fb3cd68b0ae59437371eab8ee Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Wed, 31 Aug 2016 10:20:13 +0800
+Subject: [PATCH 243/443] Add finger API : Fingerprint Enroll List
+
+---
+ api/fingerprint.py | 26 ++++++++++++++++++++++++++
+ br06/urls.py       |  1 +
+ 2 files changed, 27 insertions(+)
+
+diff --git a/api/fingerprint.py b/api/fingerprint.py
+index f891899..83d2539 100644
+--- a/api/fingerprint.py
++++ b/api/fingerprint.py
+@@ -11,6 +11,7 @@ import sys
+ result_success = {'Result' : 'Success'}
+ result_pass = {'Result' : 'Pass'}
+ result_fail = {'Result' : 'Fail'}
++result_true = {'Result' : 'True'}
+ fail_code999 = {'Code' : '9999'}
+ message_method_error = {'Message' : 'method error'}
+ 
+@@ -207,3 +208,28 @@ def check(request):
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999,{'Message' : str(e)})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
++
++
++@csrf_exempt
++def list(request):
++    if request.method == 'POST':
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        try:
++            req = json.loads(request.body.decode('utf-8'))
++            req_key = {'FRUserId'}
++            if all(k in req for k in req_key) and all(req.values()):
++                ip_device = Devices.objects.get(IP = request_IP)
++                if ip_device.State != 'Proposed':
++                    fruser = Frusers.objects.get(FRUserId = req.get('FRUserId', ''))
++                    if fruser.FingerprintID1 != b'x00' or fruser.FingerprintID2 != b'x00' :
++                        return JsonResponse(result_true)
++                    else:
++                        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Finger already exists'})))
++                else:
++                    return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Device is proposed'})))
++            else:
++                return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : 'Request parameter error'})))
++        except Exception as error:
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : str(error)})))
++    else:
++        return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
+diff --git a/br06/urls.py b/br06/urls.py
+index 79be0d0..8a7ca0f 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -198,6 +198,7 @@ urlpatterns += [
+ urlpatterns += [
+     url(r'^api/finger/add/?$', fingerprint.add),
+     url(r'^api/finger/delete/?$', fingerprint.delete),
++    url(r'^api/finger/list/?$', fingerprint.list),
+     url(r'^api/recognition/finger/verify/?$', fingerprint.verify),
+     url(r'^api/recognition/finger/check/?$', fingerprint.check),
+ ]
+-- 
+1.9.1
+

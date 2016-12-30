@@ -1,0 +1,35 @@
+From ef17f0fc2f6016fdf119617eb63cc7952ec2d22c Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 18 Nov 2016 15:47:07 +0800
+Subject: [PATCH 362/443] Set FTP debug level.
+
+---
+ api/cron.py      | 2 +-
+ br06/settings.py | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 2ecf8e6..1ec1c40 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -83,7 +83,7 @@ def Update_4G_User():
+ def FTP_download_file(localpath, filepath, filename, ftphost, ftpport, ftpuser, ftppw):
+     try:
+         ftp = ftplib.FTP()
+-        ftp.set_debuglevel(2)
++        ftp.set_debuglevel(settings.FTP_DEBUG_LEVEL)
+         ftp.connect(ftphost, ftpport, 30)
+         ftp.login(ftpuser, ftppw)
+ 
+diff --git a/br06/settings.py b/br06/settings.py
+index cc25adb..468946d 100755
+--- a/br06/settings.py
++++ b/br06/settings.py
+@@ -249,3 +249,4 @@ FTP_HOST = '61.247.173.105'
+ FTP_PORT = 21
+ FTP_USER = 'rd@MobileSW'
+ FTP_PW = 'rd-2014'
++FTP_DEBUG_LEVEL = 0
+-- 
+1.9.1
+

@@ -1,0 +1,400 @@
+From 4b7cdb5773ed40660a44bfee54154454111930d8 Mon Sep 17 00:00:00 2001
+From: benson <bensonhuang@tw.shuttle.com>
+Date: Thu, 8 Sep 2016 10:29:18 +0800
+Subject: [PATCH 264/443] Update system settings web to language messages
+ files.
+
+---
+ locale/zh_CN/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_CN/LC_MESSAGES/django.po           |   2 +-
+ locale/zh_TW/LC_MESSAGES/django.mo           | Bin 514 -> 514 bytes
+ locale/zh_TW/LC_MESSAGES/django.po           |   2 +-
+ templates/locale/zh_CN/LC_MESSAGES/django.mo | Bin 10065 -> 10558 bytes
+ templates/locale/zh_CN/LC_MESSAGES/django.po |  34 ++++++++++++++++++++++++++-
+ templates/locale/zh_TW/LC_MESSAGES/django.mo | Bin 10065 -> 10558 bytes
+ templates/locale/zh_TW/LC_MESSAGES/django.po |  34 ++++++++++++++++++++++++++-
+ templates/system_settings.html               |  16 ++++++-------
+ 9 files changed, 76 insertions(+), 12 deletions(-)
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.mo b/locale/zh_CN/LC_MESSAGES/django.mo
+index 45c4d3b0da33ea03576ca6203981caf5685824c1..abf2e50e7d89616c9ce8562f6b0804e181595779 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irqrN(7?*bV&g|aMgTTp1)l%_
+
+delta 18
+ZcmZo-X=0i1irrkn(8S8rXyZpgMgTTy1)l%_
+
+diff --git a/locale/zh_CN/LC_MESSAGES/django.po b/locale/zh_CN/LC_MESSAGES/django.po
+index 53e5f03..e18dc10 100644
+--- a/locale/zh_CN/LC_MESSAGES/django.po
++++ b/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-07 14:52+0800\n"
++"POT-Creation-Date: 2016-09-08 10:28+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/locale/zh_TW/LC_MESSAGES/django.mo b/locale/zh_TW/LC_MESSAGES/django.mo
+index 45c4d3b0da33ea03576ca6203981caf5685824c1..abf2e50e7d89616c9ce8562f6b0804e181595779 100644
+GIT binary patch
+delta 18
+ZcmZo-X=0i1irqrN(7?*bV&g|aMgTTp1)l%_
+
+delta 18
+ZcmZo-X=0i1irrkn(8S8rXyZpgMgTTy1)l%_
+
+diff --git a/locale/zh_TW/LC_MESSAGES/django.po b/locale/zh_TW/LC_MESSAGES/django.po
+index 53e5f03..e18dc10 100644
+--- a/locale/zh_TW/LC_MESSAGES/django.po
++++ b/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-07 14:52+0800\n"
++"POT-Creation-Date: 2016-09-08 10:28+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.mo b/templates/locale/zh_CN/LC_MESSAGES/django.mo
+index d78f512ec6a51b83896de787fd803dd857e30c92..19eb1e4c6dcf3277fa8390e8e0e4986a37bca1ff 100644
+GIT binary patch
+delta 4539
+zcmZwJe^k}=9mnwx0a9tAh=o6pi-NPlUs)UeU|K1;5+g)24TEl1Fc|1AH#N7e&N)$A
+zYDPBG3<Z`}l0a#x;E%SkU!Bak?Q~k&0>q<hovlCSIpx{&b-!;s>};RI>ps4p&-eTN
+z{JP(JFQ;d><b^*?h^cmzRx*?%_Hr&N%DFy$)aqQne$LV4`ePg>VKn-%FQ(y5IKk?7
+z+xc9)f%bfi!9~~~{Wt_eIKa8E+seW9G}K`%9zgzFv-wNZjekPj*oB%~42`|9KgMIS
+zIT{nFXCZ$smltkvkK>IPL{03Oh+*fdIM9loN3HZla~JA{TGW6Ir~!|fZRQ`%^Qehj
+zM&0+dwZ}0VO<(}tjA^KyoQyXzzPpzL4LlpQRdZ20u>j{_A!^`eRL93r*Z&T+^&gq%
+zkulvDn26e64&6X=6smnPYC*XeRtE*vP>Skc1!^T5QE$x-Ovb&)pF6>eR&v(rmr)Z^
+z?}H!?wWF!1_H@(&GOV77THw?~-hZuV1`RS7wF3)LHx!~eC__y&h?8&)rr}Z4d-)k^
+zrI&CZUPVnHkxJyDMfK-HEi40*aLPdTKeFXCXr&A6Lcdvo+NxEk4y#Zrd=_<IJ?g&K
+zQP(x&b$9}G{rjlv+E6S013rXjQ1_*W*+*S42DO3-s1w<!r~N_H)|aBTego#>E?kUX
+zpzfP{i?>rHs0mhBeFN$(-GW@|_Mpal*V@A^9B2zaG(SddQ9EkOzCsPG{fcZUs)Hm<
+z!DM8&T^6z^mxp?*N>DrU6sn)KsEKSwy(KlsLc?w!2kNj9^<E!B4b*~~*hy>uJ!&Fn
+zP#s=CJv0A8eY~!sCLYi7HGvdVeKZcnEYuFn#~@Z<G~>I^InV?yL>l<~qTYfpQ3G8;
+z4HQc+nqWWF^|zqD0f(Yib~|doEHlU23s5VrKrLvwxdwad^S_A$4Y*wm_$umQdBf_B
+z7}*hglJ=AMEga1QqK@aH9=Zb5P86ahvJBPF8e|P_J!;}Ls0G!do<Dbx15Ka}b;D`%
+z&p3_Wg1@3xK8z<(rkfe4_jm$oz-eZ#oiDWW#a6Gh`YO~zTb0cItAm&Ag4fIjyYL<J
+z6!P}E4>1idT6^DN-UNoACNRp(G-sOg%@WjjE3Ce582hh=Y8te~dr&K^H{V2^Z$=Gp
+z!s@5ZPt8l_zs*=a8oDpROffT1E1!rOXI9u6=GX;`?L^S(PvgT}xZc{&nVsg}Q4{+L
+zd6!&_&(nu`IHw?=VD|v(ydU*(4WmA;;TP;+Kk9<xs2e}A`X$s%<5ImF`l1F*L#^aa
+ztKWy(!G}>DFSPnHJ0C(_zYf*kOP*o3n*(iCz1d_J95;V$et_!uEY8MDs0mLR?sYg1
+zH9&#6)Y{jY8?AjSY5}zo!@Rc~Xy)&uCemh}HUEbCLiq>kx^GYeM~(0XPDXvM)66l}
+zo@q`sv&|eV<NAEn8Q-1YKpnK9Ch(C?;5pQaI?XF~z7HRPduShodH5*mx(3vJCs8}~
+z8&rSi%*&|juAr{#lg|6Etr)<8E*xQwGqX@P+>h$80HZO8>R>tYz`JMc{4Uh>O{o5U
+zWu8HebKdG-qVE4DozK4xVn%umz0CyFK!Z>nC0qM#r~$@X`*iam)DAAP^Cjjg^Eu>k
+zaW$xaa!+ACo*&8nYoNRMKJA4QQT1u48Ba$|Am1!PU0048Foe1;Z09$lc4{Z;8EHgK
+z_yg2^pV|2?t6$ZPx*&Fx*HIFxJ_<F!WYh#^peB}w3vnLmyS@?C@hS7S=4taU<~h{F
+zI<5XSs{e5Gt=<4Pp&ABTJ<S}CQMBs^B#s;+^T{@%QbV+rbwvM|OdvgrpUODGZ<d>B
+zCmJz8)-ZmgNxw!aTL>ExDNHa@GI>oQFOxiSA7M`J`(!<NiKuKM)#S&72Ru@C@_H9J
+zK%OM}vD5D98&PGTjUU-UugTlyd#RL=$4KM}$9-fBsV8@nH^@<<|L0WrO>)JNBk$!p
+z7)u@?mE=vLvWzSt`e$ai*8g+TU2fw*ZOtUc8h7CW@)Xf;!A7!~s60yEC9jdu<bKjZ
+zULh(zGLk$<x=T3+E65W>W4S^yO9xiwm<P?}ILVHGh^=Ir)w@}02l@v_Urs7|aIYtP
+z+#_WQufMS4M{t$KU(CS{a@bCM7xf8Hd6gU^?~tCQg33H{2WjeYB9`M9Nhx{H+V!uQ
+zN<R-b0w<E^Nw(Ji0}iH>x5;iYgd~xv<Z-f<sKk>j@;dnu*+8}vl_H|wh(+WE(w7_|
+zD&HezWHy;h63IF;p3Go;7b4G+p5>=hhLY#Vw@HvR5S9HNk=GY^{SH}aZFia(csp55
+z_K+O%6VhD@IQSXSGvjK>)1*oj%33lva^&1wm`e7lzAY4AGWMP#e`#o`FBqt-TvA@_
+z3x@puKrpyCR93dqb)W0ew)d0x=!N;YK7U1ddB9)ks|*Ay|NExwq9tX%%8F}OWasC)
+z?zZkxypI2;c~(Vn)5i%}QAr&9-x+PYIWcokPDn!r$~1gMdBC?k5GeIMQM59(DJOAr
+zueeO#_;Hi&$ZYz2a86W8NA3FdBgeW9v~(QU(OI>nW8-e;HF=e$u|tcaXEMXC)>kgP
+z*V_5^rmlu+yY5<RNA1C`<~qC2>&lv#X3u(4b;_cs_-l<`KimH4n>x64-Nl+C7gulS
+d+_bO#@ap!%`#TQRwIAErxxKDwZ0hh{{{e=05AFZ}
+
+delta 4048
+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
+IwT%z?4>~<n<NyEw
+
+diff --git a/templates/locale/zh_CN/LC_MESSAGES/django.po b/templates/locale/zh_CN/LC_MESSAGES/django.po
+index e8ebe02..37d72ae 100644
+--- a/templates/locale/zh_CN/LC_MESSAGES/django.po
++++ b/templates/locale/zh_CN/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-07 14:52+0800\n"
++"POT-Creation-Date: 2016-09-08 10:28+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -756,12 +756,44 @@ msgstr "储存建档资料"
+ msgid "Save FR recognition photo image"
+ msgstr "储存脸部辨识成功照片"
+ 
++#: templates/system_settings.html:249
++msgid "FTP connect test successfully"
++msgstr "FTP连线测试成功"
++
++#: templates/system_settings.html:251
++msgid "Fail to connect FTP"
++msgstr "FTP连线失败"
++
++#: templates/system_settings.html:289
++msgid "Must select one week day!"
++msgstr "必须选择一个工作日"
++
+ #: templates/system_settings.html:294
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "选择每月 29~31 日，可能无法每月进行自动备份,您确定要继续吗?"
+ 
++#: templates/system_settings.html:338
++msgid "Backup successfully"
++msgstr "备份成功"
++
++#: templates/system_settings.html:340
++msgid "Backup setting successfully"
++msgstr "备份设定成功"
++
++#: templates/system_settings.html:344
++msgid "Fail to setting Backup"
++msgstr "备份设定失败"
++
++#: templates/system_settings.html:373
++msgid "Log setting successfully"
++msgstr "Log设定成功"
++
++#: templates/system_settings.html:376
++msgid "Fail to setting Log"
++msgstr "Log设定失败"
++
+ #: templates/systemlog_list.html:31
+ msgid "System log List"
+ msgstr "系统事件纪录"
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.mo b/templates/locale/zh_TW/LC_MESSAGES/django.mo
+index f248085f28dfe5661e39918fbc64bb88e994122c..a54b559d3bbf0096084460811fb0beb6d183921b 100644
+GIT binary patch
+delta 4539
+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
+b*|`IYTNkfv-M{_Zq4jNRw?~I&_V4sx+k*|x
+
+delta 4048
+zcmZYCd2miw9LDhz+0>GS5K9t45=D^MqGDev5mIY|QnVzf5)Cbl_M)XJL2aR-3u>#X
+zv{C$FS~a25c678v#{|=jc81YT=%A_5@AJOD{M9p_e9k%d+<VSF@4fHaem>^=Z0~BL
+zpe>GajKq)&!OqoSaee+!7Kb|*f=e(Imti0lVHg%;L)>od19tp4K0^Nq48k)QiQi&f
+zyn;;Sx$9IS=(uS<Kn)C|vn9r31MGuZQzkORjW=gvBif5l=M^FUTq%F*;X%|wj+!S?
+zH}DOHFu(iGS8=Wqb;4!TgukOEykqL>YBw;Op%#*WI<LF+_eV}~S=baOqjs(UHLeh~
+zqpL88`Q2J7Y=zs1V{sd5qMN7_?x9Wy<Tka{^~`3-A(w<v*bDjRMw-*CzW{YZMX2+)
+zSbH~mx<DBf-N`A`XY&JU!YXWzzo544U+Z^`{R<35jcbg$fflF*$D18dpM6i%4W*;T
+z4?`^^yD|IUo62N55^yW}9vWmWcLtl_CDa1`L~Z45)CFr$3lHV?HBmI`24Yah6U|iA
+z4)jG`XE<tnb`<-s6UN$r$ykT>Y#TV&2Iiyga1oBiLezO@?f6C1f~&0m7V6=>i?P_4
+zyI`#@6-VJv%*7IqicWlh+L{QS7;Skps-24Zh<YLa+;IMA<<qS{7qw%H%@wE}DMszU
+z4%Ec^QFnd<b^b|gh2Ci@EYe*=*5Lj@eKrx%{w<3`U8o~!A!(?OAQQC%qfr-}gj(=a
+z)I_<ch0U@4g{XxTqOP|dc~(5Por+$Uy{MHRLoMJdYgb|m+Sib^IoFI=38GOGtwAkd
+zy|p)^7PbvF(N5Guc?h+@<EZgpV3^+j3M#s@^QZ+}Gyk^!U_KAsaWv|VTAA%p6LdpO
+z*x%Y2sApxIwI`u(M{o}PbFdv&VyNE#2UPUX1#_F)iMptTG)G;iJu<{~L9IL!bw}B#
+z9hrz)Kt5{x64S#00nV*N-T4`wNO{)0fSz89Dk_@r5A&W4sLKz6j)$X8jInlGYp0lL
+z*5A*}LN?D$zyw@i{UzpZ)O=+z?7u1}t>c{elld2F0eXitt|6)&i`vo-sD*Vld)V<l
+zsPUQBo@nNp1?I9?_ForVYaONLKJy6b_52bw(FJQ)+3{P}Ut{e$an9v1E*v#J&zxs2
+zLM?15vdOO4v&w$d&uInnpu6+de*^V;hVruN^^7sQqArkuI&X%x3s4iUN9|Av>bz2G
+zm!TGL1a)Ix1r?p}qj?pzBiGDo>wjp5#QVoLL|r%vv#|qeK}%5A+k%>4hj|#)f6DyY
+z-|x9|RJ5XBQ7gWUTEJa1sI|WxiTYlMLyb#DT`&dpTBex;tv|~gV@@=u;atY&`Pv?z
+zDHUCy3VnC(JK$V3>JILk4chpRx57d6C*v5Lj~aIhwV+DW&Rj-auiAWw8rPt$e_SgJ
+zXMUGNMFV@9gUwN>6Q-apn2&+D3N_Jc<neGDP{+$q<IkY3cgeht+Tq*Q4&<HG`4Q-;
+z5^WuEW+DdCpNzUtiuLzJO)$jzbIcj29b90?3(a-rPGl3^5#)__7jYckPT>95L>Y<x
+z6^%f($D&r8gIYkIxe&GB<){gZP~$e*@m;8$IE;E2Pooz6GwQrMcD%;gkxA^o1~g0Z
+zU#KIhosOCy8?}H5sD;hMr*JmvtNJvC;6?L_`I~vetVS*DzO}>o0nqiEdQ>z)ymfT4
+zcA7Z^1312ls2m}~iMDYm`G~wgRP=T%CR(717Mx1>`uF{A%*R<|5Lrfs5l=rL%gHXH
+zqAwr)POEhB<JRIPt9Qc5B$x~(ACpDob)vF_yi0bI^`rygtK)y=ReH8CzwamUO&X7q
+zHRKgCgwz&x%%zakM89&iWjmD}WV3a2G(*jKSZH<e33;2eCHn7&jiil!|MRF!AkUE6
+z@;sH7Ya2M&>W6V9NhA8!(`UGV=$UzssAQ6sq@Nm;nSOjf;i|qy^z1xG;+fx9iugO%
+z>UvOAwvwa1n*Yy0tJgQ9u!N*rTXZFQo>cmi46=a?AS!Q>EMLw4$J>ujkQd1wQin_-
+z>qrlxqIXrLF9{>XYEWXySQ1G(liD(dN;pX-eaMGIH(HOBk?v#$dB@-F|Br=*bg1kk
+zFOfu&Pui0wiApZnOGc?-<sjye@zy?MPQ!^-7rm?=g8J5c!`Eh62~@g~$9)~nJ%&?B
+zDH&mXwXCqpr+9$0vvzCzfXpU6$#k-hJWbvwD&>BB|EE2g`XsVVpW(BlH~EaHjNH^P
+zVpjQ{h=+B`1ESIcHjQtRR=&5%x{%Pc_|)#bdvq;Nj~N+IzCSiMuso;rlz>eYZTgkR
+IwT%z?4>~<n<NyEw
+
+diff --git a/templates/locale/zh_TW/LC_MESSAGES/django.po b/templates/locale/zh_TW/LC_MESSAGES/django.po
+index a14382d..0648eee 100644
+--- a/templates/locale/zh_TW/LC_MESSAGES/django.po
++++ b/templates/locale/zh_TW/LC_MESSAGES/django.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: \n"
+-"POT-Creation-Date: 2016-09-07 14:52+0800\n"
++"POT-Creation-Date: 2016-09-08 10:28+0800\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -756,12 +756,44 @@ msgstr "儲存建檔資料"
+ msgid "Save FR recognition photo image"
+ msgstr "儲存臉部辨識成功照片"
+ 
++#: templates/system_settings.html:249
++msgid "FTP connect test successfully"
++msgstr "FTP連線測試成功"
++
++#: templates/system_settings.html:251
++msgid "Fail to connect FTP"
++msgstr "FTP連線失敗"
++
++#: templates/system_settings.html:289
++msgid "Must select one week day!"
++msgstr "必須選擇一個工作日"
++
+ #: templates/system_settings.html:294
+ msgid ""
+ "The backup may not be processed monthly, if you choose monthly date from 29 "
+ "to 31 !\\n\\nWould you want to continue ?"
+ msgstr "選擇每月 29~31 日，可能無法每月進行自動備份,您確定要繼續嗎?"
+ 
++#: templates/system_settings.html:338
++msgid "Backup successfully"
++msgstr "備份成功"
++
++#: templates/system_settings.html:340
++msgid "Backup setting successfully"
++msgstr "備份設定成功"
++
++#: templates/system_settings.html:344
++msgid "Fail to setting Backup"
++msgstr "備份設定失敗"
++
++#: templates/system_settings.html:373
++msgid "Log setting successfully"
++msgstr "Log設定成功"
++
++#: templates/system_settings.html:376
++msgid "Fail to setting Log"
++msgstr "Log設定失敗"
++
+ #: templates/systemlog_list.html:31
+ msgid "System log List"
+ msgstr "系統事件紀錄"
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index 97f6804..5a2f6b5 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -246,9 +246,9 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("FTP connect test successfully");
++                        alert("{% trans "FTP connect test successfully" %}");
+                     } else {
+-                        alert("Fail to connect FTP");
++                        alert("{% trans "Fail to connect FTP" %}");
+                     }
+                 },
+                 error: function(data) {
+@@ -286,7 +286,7 @@
+             var BackupRemotePassword = $('input[name=BackupRemotePassword]').val();
+ 
+             if (BackupScheduling == 'Weekly' && !(sun_chk || mon_chk || tue_chk || wed_chk || thu_chk || fri_chk || sat_chk)) {
+-                alert("Must select one week day!");
++                alert("{% trans "Must select one week day!" %}");
+                 return;
+             }
+ 
+@@ -335,13 +335,13 @@
+                 success: function(data) {
+                     if (data.CODE == "0") {
+                         if (BackupMethod == "Manually") {
+-                            alert("Backup successfully");
++                            alert("{% trans "Backup successfully" %}");
+                         } else {
+-                            alert("Backup setting successfully");
++                            alert("{% trans "Backup setting successfully" %}");
+                         }
+                         location.href = '/system_settings/';
+                     } else {
+-                        alert("Fail to setting Backup");
++                        alert("{% trans "Fail to setting Backup" %}");
+                     }
+                 },
+                 error: function(data) {
+@@ -370,10 +370,10 @@
+                 },
+                 success: function(data) {
+                     if (data.CODE == "0") {
+-                        alert("Log setting successfully");
++                        alert("{% trans "Log setting successfully" %}");
+                         location.href = '/system_settings/';
+                     } else {
+-                        alert("Fail to setting Log");
++                        alert("{% trans "Fail to setting Log" %}");
+                     }
+                 },
+                 error: function(data) {
+-- 
+1.9.1
+

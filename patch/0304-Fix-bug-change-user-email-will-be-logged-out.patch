@@ -1,0 +1,59 @@
+From 4d38793511428a7f359d126df2e5a34bc9950d44 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 4 Oct 2016 14:49:03 +0800
+Subject: [PATCH 304/443] Fix bug - change user email will be logged out
+
+---
+ login/views.py | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/login/views.py b/login/views.py
+index 850393b..016c45c 100644
+--- a/login/views.py
++++ b/login/views.py
+@@ -46,13 +46,13 @@ def change_passwd(request):
+ 
+     check_result = json.loads(check_user(request))
+     if check_result["CODE"] == "0":
+-        mail = request.session['Email']
++        OId = request.session['OId']
+         name = request.POST.get('name', '')
+         password = md5(request.POST.get('password', ''))
+         new_password = request.POST.get('new_password', '')
+         confirm_password = request.POST.get('confirm_password', '')
+         obj = Users.objects.filter(Email = mail, Password = password)
+-        if len(obj) == 1:
++        if obj.count() == 1:
+             obj.update(
+                 Password = new_password,
+                 Name = name,
+@@ -70,7 +70,7 @@ def change_passwd(request):
+ def setSessionPermission(request):
+     try:
+         for x in PERMISSION:
+-            request.session[x] = Acl.objects.get(FunctionName = x, RoleOId = Users.objects.get(Email = request.session['Email']).RoleOId).ACL
++            request.session[x] = Acl.objects.get(FunctionName = x, RoleOId = Users.objects.get(OId = request.session['OId']).RoleOId).ACL
+     except Exception as e:
+         print('session permission error', e)
+ 
+@@ -82,7 +82,7 @@ def set_client_ip(request):
+     else:
+         ip = request.META.get('REMOTE_ADDR')
+     try:
+-        Users.objects.filter(Email = request.session['Email']).update(LoginIP = ip)
++        Users.objects.filter(OId = request.session['OId']).update(LoginIP = ip)
+         request.session['LoginIP'] = ip
+     except Exception as e:
+         print('set_client_ip error', e)
+@@ -127,7 +127,7 @@ def checkRecaptcha(response, secretkey):
+ def check_login(request, permission):
+     timeout = request.session.get_expiry_age()
+     try:
+-        if request.session['LoginIP'] != Users.objects.get(Email = request.session['Email']).LoginIP:
++        if request.session['LoginIP'] != Users.objects.get(OId = request.session['OId']).LoginIP:
+             request.session.flush()
+             return json.dumps(res_code[2])
+         elif request.session[permission] == 'Disable':
+-- 
+1.9.1
+

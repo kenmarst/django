@@ -1,0 +1,98 @@
+From 7c1dfc5ff14951c4bf6dfd96bcf234a6a13570fc Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 2 Dec 2016 18:58:55 +0800
+Subject: [PATCH 392/443] Add crontab job: Check new version for device update.
+
+---
+ api/cron.py | 47 ++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 38 insertions(+), 9 deletions(-)
+
+diff --git a/api/cron.py b/api/cron.py
+index 4c1be15..0819e0a 100755
+--- a/api/cron.py
++++ b/api/cron.py
+@@ -6,7 +6,9 @@ import json, requests
+ from django.http import JsonResponse
+ from django.conf import settings
+ from .utility import md5
++from hashlib import md5 as md5_file
+ 
++# 4G 
+ def QE_4G(sync_time):
+     try:
+         print('4G Updating: Post to 4G server')
+@@ -80,6 +82,7 @@ def Update_4G_User():
+         Systemlogs.objects.create(Category = '4GSync', LogContent = logContent)
+         return
+ 
++# br06
+ def FTP_download_file(localpath, filepath, filename, ftphost, ftpport, ftpuser, ftppw):
+     try:
+         ftp = ftplib.FTP()
+@@ -98,8 +101,10 @@ def FTP_download_file(localpath, filepath, filename, ftphost, ftpport, ftpuser,
+         print('FTP:' + str(error))
+ 
+ def chk_new_version():
+-    print('BR06 update check: check new version for update')
++    print('update check: Check new version for update.')
+     try:
++
++        """ Server update check"""
+         # download file
+         FTP_download_file(settings.UPDATE_DIR, settings.FTP_PATH, settings.FTP_FILE_NAME, settings.FTP_HOST,
+                             settings.FTP_PORT, settings.FTP_USER, settings.FTP_PW)
+@@ -108,19 +113,43 @@ def chk_new_version():
+ 
+         with open(update_file) as data_file:
+             data = json.load(data_file)
+-        new_version_date = data['VERSION'].split('.')[4]
+-        version_date = settings.VERSION.split('.')[4]
++        new_version_date = data['Server']['VERSION'].split('.')[-1]
++        version_date = settings.VERSION.split('.')[-1]
+ 
+-        print('VERSION: [new]:' + new_version_date + ' [now]:' + version_date)
++        print('update check: [Server VERSION]: [new]:' + new_version_date + ' [now]:' + version_date)
+ 
+         # check version
+         if new_version_date > version_date:
+-            print('BR06 update check: new version to update')
+-            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': data['VERSION']})
++            print('update check: Server has new version to update.')
++            Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': new_version_date})
+         else:
+-            print('BR06 update check: There hadn\'t new version to update')
++            print('update check: There hadn\'t new server version to update.')
+             Config.objects.update_or_create(Name = 'NewVersion', defaults = {'Value': settings.VERSION})
+ 
+-        #print('BR06 update check: check version for update end')
++        """ Device update check"""
++        # check version
++        DeviceVersion_New = ''.join( data['Device']['VERSION'][1:].split('.') ) # get from update file
++        DeviceVersion = ''.join( Config.objects.get(Name = 'NewDeviceVersion').Value[1:].split('.') ) # from database
++        print('update check: [Device VERSION]: [new]: ' + DeviceVersion_New + ' [now]: ' + DeviceVersion)
++        if not int(DeviceVersion_New) > int(DeviceVersion):
++            print('update check: There hadn\'t new device version to update.')
++            return
++
++        # download file
++        DeviceFile = data['Device']['file']
++        print('update check: [Device File]: ', DeviceFile)
++        FTP_download_file(settings.UPDATE_DIR, settings.FTP_PATH, DeviceFile, settings.FTP_HOST,
++                            settings.FTP_PORT, settings.FTP_USER, settings.FTP_PW)
++        # check md5
++        DeviceFile_md5 = data['Device']['md5']
++        localfile = os.path.join(settings.UPDATE_DIR, DeviceFile)
++        localfile_md5 = md5_file(open(localfile, 'rb').read()).hexdigest()
++        print('update check: [Device File md5]: ', localfile_md5, '[local file md5]: ', localfile_md5)
++        if localfile_md5 == DeviceFile_md5:
++            print('update check: Device update file md5 is correct.')
++        else:
++            print('update check: Device update file md5 is not correct.')
++            os.remove(localfile)
++
+     except Exception as error:
+-        print('BR06 update check Error:' + str(error))
++        print('BR06 update check [Error]:' + str(error))
+-- 
+1.9.1
+

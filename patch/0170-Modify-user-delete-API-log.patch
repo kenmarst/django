@@ -1,0 +1,33 @@
+From 2b59c4625ac771febf614d3f6875f2e4d4b672f1 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Tue, 12 Jul 2016 13:25:29 +0800
+Subject: [PATCH 170/443] Modify user delete API log
+
+Modify user delete API success log.
+---
+ api/user.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/api/user.py b/api/user.py
+index 775c93b..10a1485 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -179,6 +179,7 @@ def delete(request):
+                 res_delete = delete_fruser(request.POST.get('FRUserId'))
+                 logContent = res_delete['Message']
+                 if logContent == 'success':
++                    logContent = '{message_head}Delete fruser successfully'.format(message_head = message_head)
+                     return JsonResponse(result_success)
+                 else:
+                     logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = logContent)
+@@ -191,6 +192,7 @@ def delete(request):
+                     res_delete = delete_fruser(req['FRUserId'])
+                     logContent = res_delete['Message']
+                     if logContent == 'success':
++                        logContent = '{message_head}Delete fruser successfully'.format(message_head = message_head)
+                         return JsonResponse(result_success)
+                     else:
+                         logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = logContent)
+-- 
+1.9.1
+

@@ -1,0 +1,205 @@
+From 3310889ba7d80bf45d7b95a762b62b5ea4478657 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens_kuo@tw.shuttle.com>
+Date: Wed, 15 Jun 2016 18:49:02 +0800
+Subject: [PATCH 127/443] Modify fruserlogs method
+
+Modify fruserlogs method for large data load.
+---
+ br06/urls.py                  |  3 +-
+ fruserlogs/views.py           | 39 ++++++++++++++----
+ templates/fruserlog_list.html | 93 ++++++++++++++++++++++---------------------
+ 3 files changed, 81 insertions(+), 54 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index e702bf0..650c21d 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -19,7 +19,7 @@ from api import user, group, face, recognition, connection
+ from user.views import user_setting, user_list_view, user_add_view, user_update_view, add_user, update_user, delete_user
+ from frusers.views import fruser_list_view, fruser_edit_view, import_fruser, export_fruser, update_fruser, delete_fruser, fruser_data
+ from systemlogs.views import systemlog_list_view, systemlog_export
+-from fruserlogs.views import fruserlog_list_view, fruserlog_export
++from fruserlogs.views import fruserlog_list_view, fruserlog_export, fruserlog_data
+ from logsetting.views import logsetting
+ from systemsettings.views import settings_views
+ from dashboard.views import dashboard_views
+@@ -50,6 +50,7 @@ urlpatterns += [
+ urlpatterns += [
+     url(r'^fruserlog_list/?$', fruserlog_list_view),
+     url(r'^fruserlog_export/?$', fruserlog_export),
++    url(r'^fruserlog_data/?$', fruserlog_data),
+ ]
+ 
+ urlpatterns += [
+diff --git a/fruserlogs/views.py b/fruserlogs/views.py
+index 74e74f5..28fd5b8 100644
+--- a/fruserlogs/views.py
++++ b/fruserlogs/views.py
+@@ -5,6 +5,7 @@ from api.models import Fruserlogs, Systemlogs
+ from django.views.decorators.csrf import csrf_exempt
+ from django.conf import settings
+ from login.views import check_login
++from django.db.models import Q
+ import datetime,types
+ import csv, json
+ 
+@@ -17,13 +18,7 @@ def fruserlog_list_view(request):
+         return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
+     elif login_request["CODE"] == "1":
+         return HttpResponseRedirect("/home")
+-    obj = Fruserlogs.objects.all().order_by('LogDateTime')
+-    result = [res.as_json() for res in obj]
+-    index = 0
+-    for x in result:
+-        x['Index'] = index+1
+-        index += 1
+-    return render(request, 'fruserlog_list.html', {'active': "fruserlog_list", 'obj': result})
++    return render(request, 'fruserlog_list.html', {'active': "fruserlog_list"})
+ 
+ @csrf_exempt
+ def fruserlog_export(request):
+@@ -82,3 +77,33 @@ def fruserlog_export(request):
+        writer.writerow([symbol.join([x[i] for i in header])])
+ 
+     return response
++
++@csrf_exempt
++def fruserlog_data(request):
++    login_request = json.loads(check_login(request, permission))
++    if login_request["CODE"] == "0":
++        return render(request, 'login.html', {'Result':"Fail",'Code': "9997"})
++    elif login_request["CODE"] == "1":
++        return HttpResponseRedirect("/home")
++    search = request.GET.get('search', None)
++    offset = int(request.GET.get('offset', 0))
++    limit = int(request.GET.get('limit', 0))
++    sort = {'FRUserId' : 'FRUserOId__FRUserId', 'FRUserName' : 'FRUserOId__Name', 'DeviceOId' : 'DeviceOId__Name', 'LogDateTime' : 'LogDateTime', 'LogContent' : 'LogContent'}
++    if request.GET.get('sort', None) in sort.keys():
++        if request.GET.get('order', None) == 'asc':
++            order = sort[request.GET.get('sort')]
++        else:
++            order = '-' + sort[request.GET.get('sort')]
++    else:
++        order = 'LogDateTime'
++    if search:
++        fruserlogs = Fruserlogs.objects.filter(Q(FRUserOId__FRUserId__contains = search) | Q(FRUserOId__Name__contains = search) | Q(DeviceOId__Name__contains = search)).order_by(order)
++    else:
++        fruserlogs = Fruserlogs.objects.order_by(order)
++    fruserlog_count = fruserlogs.count()
++    fruserlogs = [fruserlog.as_json() for fruserlog in fruserlogs[offset : offset + limit]]
++    index = 0
++    for fruserlog in fruserlogs:
++        fruserlog['Index'] = index + 1
++        index += 1
++    return JsonResponse({'total': fruserlog_count, 'rows': fruserlogs})
+diff --git a/templates/fruserlog_list.html b/templates/fruserlog_list.html
+index 39a29db..8755606 100644
+--- a/templates/fruserlog_list.html
++++ b/templates/fruserlog_list.html
+@@ -57,56 +57,57 @@
+ 		</div><!--/.row-->
+ 	</div><!--/.main-->
+ 
+-	<script src="{% static "js/chart.min.js" %}"></script>
+-	<script src="{% static "js/chart-data.js" %}"></script>
+-	<script src="{% static "js/easypiechart.js" %}"></script>
+-	<script src="{% static "js/easypiechart-data.js" %}"></script>
+-	<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+ 	<script src="{% static "js/bootstrap-table.js" %}"></script>
+ 	<script>
+-		// var dataSet = {{test|safe}};
+-		var index
+-		var dataSet = {{obj|safe}};
+-		console.log(dataSet);
++		var index;
+         $('#FRUserloglist').bootstrapTable({
+-			    search: true,
+-                pagination: true,
+-                toolbar: '#logexport',
+-                pageSize: 10,
+-                pageList: [10, 25, 50, 100],
+-                sortName: 'Index',
+-                sortOrder: 'asc',
+-			columns: [{
+-				field: 'Index',
+-				title: '{% trans "No." %}',
+-				sortable: true,
+-			},{
+-				field: 'FRUserId',
+-				title: '{% trans "FRUserId" %}',
+-				sortable: true
+-			}, {
+-				field: 'FRUserName',
+-				title: '{% trans "Name" %}',
+-				sortable: true
+-			}, {
+-				field: 'DeviceOId',
+-				title: '{% trans "Device Name" %}',
+-				sortable: true,
+-				//formatter: function(value, row, index) {
+-				//	return 'Device 1';
+-				//}
+-			},{
+-				field: 'LogDateTime',
+-				title: '{% trans "CreateDate" %}',
+-				sortable: true
+-			},
+-			{
+-                                field: 'LogContent',
+-                                title: '{% trans "Note" %}',
+-                                sortable: true
+-                        },
++            url: '/fruserlog_data',
++            search: true,
++            pagination: true,
++            toolbar: '#logexport',
++            pageSize: 10,
++            sortName: 'LogDateTime',
++            sortOrder: 'asc',
++            sidePagination: 'server',
++            queryParams: function(params) {
++                return {
++                    limit: params.limit,
++                    offset: params.offset,
++                    search: params.search,
++                    sort: params.sort,
++                    order: params.order
++                };
++            },
++			columns: [
++                {
++                    field: 'Index',
++                    title: '{% trans "No." %}',
++                    sortable: true,
++                }, {
++                    field: 'FRUserId',
++                    title: '{% trans "FRUserId" %}',
++                    sortable: true
++                }, {
++                    field: 'FRUserName',
++                    title: '{% trans "Name" %}',
++                    sortable: true
++                }, {
++                    field: 'DeviceOId',
++                    title: '{% trans "Device Name" %}',
++                    sortable: true,
++                    //formatter: function(value, row, index) {
++                    //	return 'Device 1';
++                    //}
++                }, {
++                    field: 'LogDateTime',
++                    title: '{% trans "CreateDate" %}',
++                    sortable: true
++                }, {
++                    field: 'LogContent',
++                    title: '{% trans "Note" %}',
++                    sortable: true
++                },
+             ],
+-			data: dataSet
+ 		});
+ 
+ 		!function ($) {
+-- 
+1.9.1
+

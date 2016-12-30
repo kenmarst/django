@@ -1,0 +1,83 @@
+From 03b9a5db454477d4f8f7cd4eeb3f9808818a47ea Mon Sep 17 00:00:00 2001
+From: Bret Liu <Bret_liu@tw.shuttle.com>
+Date: Mon, 30 May 2016 12:19:50 +0800
+Subject: [PATCH 113/443] Add permission detect function to fr user list.
+
+---
+ frusers/views.py           | 4 ++++
+ templates/fruser_edit.html | 7 +++++--
+ templates/fruser_list.html | 6 +++---
+ 3 files changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/frusers/views.py b/frusers/views.py
+index b9bc727..c20e2d8 100644
+--- a/frusers/views.py
++++ b/frusers/views.py
+@@ -11,6 +11,8 @@ res_code = [{"CODE": "0"}, {"CODE": "1"}, {"CODE": "2"}]
+ def fruser_list_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_fruserlist'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         obj = Frusers.objects.all()
+         frusers = [res.as_json() for res in obj]
+@@ -29,6 +31,8 @@ def fruser_list_view(request):
+ def fruser_edit_view(request):
+     if not 'OId' in request.session:
+         return HttpResponseRedirect("/")
++    if request.session['permission_fruserlist'] == 'Disable':
++        return HttpResponseRedirect("/home")
+     try:
+         fruser = Frusers.objects.get(OId = request.GET['OId']).as_json()
+         fruser['Age'] = fruser['Age'] or ''
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index c0ad201..31f1f19 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -96,8 +96,11 @@
+                                     </div>
+                                 </div>
+                             </form>
+-                            <div class="col-md-11">
+-                                <button class="btn btn-default pull-right" onclick="onSaveClick()">{% trans "Save" %}</button>
++                            <div class="form-actions">
++                                <div class="col-md-offset-3 col-md-9">
++                                    <a class="btn default" onclick="location.href='/fruser_list'">{% trans "Back" %}</a>
++                                    <a class="btn default" onclick="onSaveClick()">{% trans "Save" %}</a>
++                                </div>
+                             </div>
+                         </div>
+                     </div>
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index a9659c9..d2a158f 100644
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -7,7 +7,7 @@
+     <head>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+-        <title>{% trans "Fruser List" %}</title>
++        <title>{% trans "FR User List" %}</title>
+     </head>
+     <body>
+         {% include 'menu.html' %}
+@@ -15,13 +15,13 @@
+             <div class="row">
+                 <ol class="breadcrumb">
+                     <li><a href="/fruser_list"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+-                    <li class="active">{% trans "Fruser List" %}</li>
++                    <li class="active">{% trans "FR User List" %}</li>
+                 </ol>
+             </div><!--/.row-->
+ 
+             <div class="row">
+                 <div class="col-lg-12">
+-                    <h1 class="page-header"><small>{% trans "Fruser List" %}</small></h1>
++                    <h1 class="page-header"><small>{% trans "FR User List" %}</small></h1>
+                 </div>
+             </div><!--/.row-->
+ 
+-- 
+1.9.1
+

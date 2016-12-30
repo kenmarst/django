@@ -1,0 +1,43 @@
+From 42197495a9ef466f21391290375589cfd1b154ba Mon Sep 17 00:00:00 2001
+From: wellens <wellens_kuo@tw.shuttle.com>
+Date: Thu, 28 Apr 2016 11:09:00 +0800
+Subject: [PATCH 017/443] Change url import method
+
+Change import methods of br06/urls.py.
+---
+ br06/urls.py | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/br06/urls.py b/br06/urls.py
+index e67b086..2d82141 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -17,9 +17,9 @@ from django.conf.urls import url
+ from django.contrib import admin
+ from api import user, group, face, recognition, connection
+ from user.views import user_list_view, user_setting, login, logout, change_passwd
+-import frusers.views
+-import systemlogs.views
+-import fruserlogs.views
++from frusers.views import fruser_list_view
++from systemlogs.views import log_list_view
++from fruserlogs.views import log_list_view
+ 
+ urlpatterns = [
+     url(r'^admin/', admin.site.urls),
+@@ -27,9 +27,9 @@ urlpatterns = [
+     url(r'^logout/?$', logout),
+     url(r'^user_list/?$', user_list_view),
+     url(r'^setting/?$', user_setting),
+-    url(r'^fruser_list/?$', frusers.views.fruser_list_view),
+-    url(r'^log_list/?$', systemlogs.views.log_list_view),
+-    url(r'^FRlog_list/?$', fruserlogs.views.log_list_view),
++    url(r'^fruser_list/?$', fruser_list_view),
++    url(r'^log_list/?$', log_list_view),
++    url(r'^FRlog_list/?$', log_list_view),
+ ]
+ 
+ urlpatterns += [
+-- 
+1.9.1
+

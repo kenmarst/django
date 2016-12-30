@@ -1,0 +1,51 @@
+From 34f3eb598294a83887ca23a72205d24a90d8a657 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Thu, 14 Jul 2016 17:15:31 +0800
+Subject: [PATCH 185/443] Add Users Management API : User Sum
+
+---
+ api/user.py  | 18 ++++++++++++++++++
+ br06/urls.py |  1 +
+ 2 files changed, 19 insertions(+)
+
+diff --git a/api/user.py b/api/user.py
+index 33ec091..42f2e02 100644
+--- a/api/user.py
++++ b/api/user.py
+@@ -265,3 +265,21 @@ def list(request):
+             return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+     else:
+         return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
++
++@csrf_exempt
++def sum(request):
++    if request.method == 'POST':
++        request_IP = request.META.get('REMOTE_ADDR',  '')
++        message_head = 'API[{API_name}][Request IP : {request_IP}] : '.format(API_name = 'User Sum', request_IP = request_IP)
++    else:
++        return JsonResponse(dict(ChainMap(result_fail, fail_code999, message_method_error)))
++    try:
++        if Devices.objects.get(IP = request_IP).State != 'Proposed':
++            numbers = Frusers.objects.all().count()
++            return JsonResponse({"Numbers": numbers})
++        else:
++            logContent = '{message_head}Device is proposed'.format(message_head = message_head)
++            return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
++    except Exception as error:
++        logContent = '{message_head}Error cause by {error}'.format(message_head = message_head, error = str(error))
++        return JsonResponse(dict(ChainMap(result_fail, fail_code999, {'Message' : logContent})))
+diff --git a/br06/urls.py b/br06/urls.py
+index 4ac5272..21e8013 100644
+--- a/br06/urls.py
++++ b/br06/urls.py
+@@ -167,6 +167,7 @@ urlpatterns += [
+     url(r'^api/user/update/?$', user.update),
+     url(r'^api/user/delete/?$', user.delete),
+     url(r'^api/user/list/?$', user.list),
++    url(r'^api/user/sum/?$', user.sum),
+ ]
+ 
+ urlpatterns += [
+-- 
+1.9.1
+

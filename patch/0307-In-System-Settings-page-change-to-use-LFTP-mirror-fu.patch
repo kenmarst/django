@@ -1,0 +1,86 @@
+From ddb8a8593a9d5f1bb892b95b161318ab3f989381 Mon Sep 17 00:00:00 2001
+From: Indy Lin <indy_lin@tw.shuttle.com>
+Date: Thu, 6 Oct 2016 16:56:36 +0800
+Subject: [PATCH 307/443] In System Settings page, change to use LFTP mirror
+ function to backup DB, and create remote specific directories automatically.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+(BZ #1516)
+BR06 Server - 備份時, 設定了Remote backup FTP 路徑, 但備份時卻存在FTP根目錄
+---
+ systembackup/br06backup.sh | 34 +++++++++++++++++++++++-----------
+ 1 file changed, 23 insertions(+), 11 deletions(-)
+
+diff --git a/systembackup/br06backup.sh b/systembackup/br06backup.sh
+index 9ba2d98..19b32a2 100755
+--- a/systembackup/br06backup.sh
++++ b/systembackup/br06backup.sh
+@@ -64,7 +64,7 @@ TIMEMATCH="false"
+ ACTION="false"
+ 
+ if [ $BackupMethod = 'Manually' ]; then
+-  ACTION="ok"
++  ACTION="Manually"
+ fi
+ 
+ if [ $BackupMethod = 'Automatic' ]; then
+@@ -93,14 +93,14 @@ if [ $BackupMethod = 'Automatic' ]; then
+ fi
+ 
+ if [ $DAYMATCH = 'true' ] && [ $TIMEMATCH = 'true' ]; then
+-  ACTION="true"
++  ACTION="Automatic"
+ fi
+ 
+ echo "DAYMATCH:$DAYMATCH"
+ echo "TIMEMATCH:$TIMEMATCH"
+ echo "ACTION:$ACTION"
+ 
+-if [ $ACTION = 'ok' ] || [ $ACTION = 'true' ]; then
++if [ $ACTION = 'Manually' ] || [ $ACTION = 'Automatic' ]; then
+ 
+   [ ! -d "$LOCALBAKPATH" ] && mkdir -p "$LOCALBAKPATH"
+ 
+@@ -127,17 +127,29 @@ if [ $ACTION = 'ok' ] || [ $ACTION = 'true' ]; then
+     tar czf $FILE ./$FRUSERPICDIR
+   fi
+ 
+-  if [ $BackupLocation = 'ftp' ] && [ $BackupMethod = 'Automatic' ]; then
++  ListRemoteFolder=$(lftp -c "open $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword; renlist $BackupRemotePath/backupDB/$DATE")
++
++  CheckRemoteFolder=$(echo "$ListRemoteFolder" | head -1)
++
++#  if [ $ACTION = 'Manually' ]; then
++  if [ $BackupLocation = 'ftp' ] && [ $ACTION = 'Automatic' ]; then
+     echo "Uploading backup files to ftp..."
+-    lftp $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword << EOF
+-cd $BackupRemotePath
+-mkdir backupDB/$DATE
+-cd backupDB/$DATE
+-mput /opt/backup/$DATE/*
++    if [ $CheckRemoteFolder ] && [ $CheckRemoteFolder != '' ]; then
++      echo "Upload files to $BackupRemotePath/backupDB/$DATE"
++      lftp $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword << EOF
++mirror -R --only-newer --only-missing -v $LOCALBAKPATH $BackupRemotePath/backupDB/$DATE
+ bye
+ EOF
+-
+-    echo "complete."
++    else
++      echo "Make remote directories $BackupRemotePath/backupDB/$DATE"
++      echo "Upload files to $BackupRemotePath/backupDB/$DATE"
++      lftp $BackupRemoteHost -p $BackupRemotePort -u $BackupRemoteAccount,$BackupRemotePassword << EOF
++mkdir -p $BackupRemotePath/backupDB/$DATE
++mirror -R --only-newer --only-missing -v $LOCALBAKPATH $BackupRemotePath/backupDB/$DATE
++bye
++EOF
++    fi
++    echo "Uploading backup files complete."
+   fi
+ 
+   $RM -rf $BackupLocal/$DATE30
+-- 
+1.9.1
+

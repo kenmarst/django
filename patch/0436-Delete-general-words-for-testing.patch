@@ -1,0 +1,27 @@
+From 8b03e3287b700087299b2e064aa7dcaa7ca78f14 Mon Sep 17 00:00:00 2001
+From: Frank <frank_lin@tw.shuttle.com>
+Date: Thu, 22 Dec 2016 15:18:17 +0800
+Subject: [PATCH 436/443] Delete general words for testing.
+
+---
+ dashboard/views.py | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 4f04d3c..1bb7495 100755
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -37,10 +37,6 @@ def dashboard_views(request):
+     if login_request["CODE"] != "0":
+         return check_login_redirect(request, login_request["CODE"])
+ 
+-    food1 = { 'name':'cake', 'price':60, 'comment':'good', 'is_spicy':False }
+-    food2 = { 'name':'candy', 'price':100, 'comment':'not bad', 'is_spicy':True }
+-    foods = [food1, food2]
+-
+     with open('/proc/uptime', 'r') as f:
+         uptime = float(f.readline().split()[0])
+ 
+-- 
+1.9.1
+

@@ -1,0 +1,46 @@
+From 08a80eca0d4bac6918bb9a89e0bdab8ca2697957 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Mon, 12 Dec 2016 09:38:36 +0800
+Subject: [PATCH 406/443] Change the default permission of new file paths.
+
+---
+ downloads/__init__.py     |   0
+ downloads/views.py        |   0
+ media/default_face.jpg    | Bin
+ media/update/.gitignore   |   0
+ systembackup/.gitignore   |   0
+ systembackup/backup.conf  |   0
+ systembackup/picsave.conf |   0
+ 7 files changed, 0 insertions(+), 0 deletions(-)
+ mode change 100644 => 100755 downloads/__init__.py
+ mode change 100644 => 100755 downloads/views.py
+ mode change 100644 => 100755 media/default_face.jpg
+ mode change 100644 => 100755 media/update/.gitignore
+ mode change 100644 => 100755 systembackup/.gitignore
+ mode change 100644 => 100755 systembackup/backup.conf
+ mode change 100644 => 100755 systembackup/picsave.conf
+
+diff --git a/downloads/__init__.py b/downloads/__init__.py
+old mode 100644
+new mode 100755
+diff --git a/downloads/views.py b/downloads/views.py
+old mode 100644
+new mode 100755
+diff --git a/media/default_face.jpg b/media/default_face.jpg
+old mode 100644
+new mode 100755
+diff --git a/media/update/.gitignore b/media/update/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/systembackup/.gitignore b/systembackup/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/systembackup/backup.conf b/systembackup/backup.conf
+old mode 100644
+new mode 100755
+diff --git a/systembackup/picsave.conf b/systembackup/picsave.conf
+old mode 100644
+new mode 100755
+-- 
+1.9.1
+

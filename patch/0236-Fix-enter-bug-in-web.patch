@@ -1,0 +1,330 @@
+From 5212f13abf2b79201db0b454533007d97e155b42 Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Thu, 25 Aug 2016 17:30:47 +0800
+Subject: [PATCH 236/443] Fix enter bug in web
+
+Bug fix - when key enter in web form input will display error.
+---
+ templates/device_add.html       |  7 +++++++
+ templates/device_edit.html      |  7 +++++++
+ templates/device_settings.html  |  7 +++++++
+ templates/fruser_edit.html      |  7 +++++++
+ templates/frusergroup_add.html  |  7 +++++++
+ templates/frusergroup_edit.html |  7 +++++++
+ templates/logsetting.html       |  7 +++++++
+ templates/role_add.html         |  6 ++++++
+ templates/role_rename.html      |  7 +++++++
+ templates/system_settings.html  |  6 ++++++
+ templates/systemlog_list.html   | 10 +++++-----
+ templates/user_add.html         |  7 +++++++
+ templates/user_group_add.html   |  7 +++++++
+ templates/user_group_edit.html  |  7 +++++++
+ templates/user_setting.html     |  7 +++++++
+ templates/user_update.html      |  7 +++++++
+ 16 files changed, 108 insertions(+), 5 deletions(-)
+
+diff --git a/templates/device_add.html b/templates/device_add.html
+index d62328d..67e0dd6 100644
+--- a/templates/device_add.html
++++ b/templates/device_add.html
+@@ -125,6 +125,13 @@
+                 }
+             });
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ 
+diff --git a/templates/device_edit.html b/templates/device_edit.html
+index 057af00..70ba365 100644
+--- a/templates/device_edit.html
++++ b/templates/device_edit.html
+@@ -242,6 +242,13 @@
+                 alert("Please input device name");
+             }
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ 
+diff --git a/templates/device_settings.html b/templates/device_settings.html
+index 2f3b48a..845d580 100644
+--- a/templates/device_settings.html
++++ b/templates/device_settings.html
+@@ -392,6 +392,13 @@
+             });
+         }
+ 
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
++
+         $(document).ready(function() {
+             $('select[name="Model"]').val({{obj|safe}}.Model);
+             $('input[name="WelcomeR0Action"][value=' + {{obj|safe}}.WelcomeR0Action + ']').prop('checked', true);
+diff --git a/templates/fruser_edit.html b/templates/fruser_edit.html
+index fb27a27..ee63f3f 100644
+--- a/templates/fruser_edit.html
++++ b/templates/fruser_edit.html
+@@ -179,6 +179,13 @@
+             }
+             $('select[name="Gender"]').val({{obj|safe}}.Gender);
+         });
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ 
+diff --git a/templates/frusergroup_add.html b/templates/frusergroup_add.html
+index 097d350..8af7454 100644
+--- a/templates/frusergroup_add.html
++++ b/templates/frusergroup_add.html
+@@ -137,6 +137,13 @@
+                 }
+             });
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ 
+diff --git a/templates/frusergroup_edit.html b/templates/frusergroup_edit.html
+index 86180d7..51288e5 100644
+--- a/templates/frusergroup_edit.html
++++ b/templates/frusergroup_edit.html
+@@ -122,6 +122,13 @@
+                 alert("Please input group name");
+             }
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ 
+diff --git a/templates/logsetting.html b/templates/logsetting.html
+index cd65bb3..d6f2d66 100644
+--- a/templates/logsetting.html
++++ b/templates/logsetting.html
+@@ -158,6 +158,13 @@
+                 }
+             });
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ </html>
+diff --git a/templates/role_add.html b/templates/role_add.html
+index 68d6e1d..f5c87da 100644
+--- a/templates/role_add.html
++++ b/templates/role_add.html
+@@ -103,6 +103,12 @@
+             });
+         }
+ 
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ </html>
+diff --git a/templates/role_rename.html b/templates/role_rename.html
+index c23ffc9..f3b2526 100644
+--- a/templates/role_rename.html
++++ b/templates/role_rename.html
+@@ -104,6 +104,13 @@
+                 }
+             });
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ </html>
+diff --git a/templates/system_settings.html b/templates/system_settings.html
+index b90d68d..3171289 100644
+--- a/templates/system_settings.html
++++ b/templates/system_settings.html
+@@ -550,6 +550,12 @@
+             }
+         });
+ 
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ </html>
+diff --git a/templates/systemlog_list.html b/templates/systemlog_list.html
+index 66c752f..2a97a80 100644
+--- a/templates/systemlog_list.html
++++ b/templates/systemlog_list.html
+@@ -20,16 +20,16 @@
+ 	{% include 'menu.html' %}
+ 	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+ 		<div class="row">
+-			<ol class="breadcrumb">
++		    <ol class="breadcrumb">
+ 				<li><a href="/home"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
+ 				<li class="active">{% trans "System Log List" %}</li>
+ 			</ol>
+ 		</div><!--/.row-->
+ 
+ 		<div class="row">
+-                <div class="col-lg-12">
+-                   <h1 class="page-header"><small>{% trans "System log List" %}</small></h1>
+-                 </div>
++            <div class="col-lg-12">
++                <h1 class="page-header"><small>{% trans "System log List" %}</small></h1>
++            </div>
+         </div><!--/.row-->
+ 
+         <div class="row">
+@@ -37,7 +37,7 @@
+ 				<div class="panel panel-default">
+ 					<!-- <div class="panel-heading">Advanced Table</div> -->
+ 					<div class="panel-body">
+-						 <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/systemlog_export/'">{% trans "Export" %}</button>
++					    <button id="logexport" class="btn btn-default pull-right" onclick="location.href='/systemlog_export/'">{% trans "Export" %}</button>
+ 						<table id="SystemLogList"></table>
+                     </div>
+ 				</div>
+diff --git a/templates/user_add.html b/templates/user_add.html
+index 6f4644e..33232d5 100644
+--- a/templates/user_add.html
++++ b/templates/user_add.html
+@@ -164,6 +164,13 @@
+         } else
+             alert("Cannot be null");
+     }
++
++    $('input').keypress(function(e) {
++        code = e.keyCode ? e.keyCode : e.which;
++        if(code == 13) {
++            e.preventDefault();
++        }
++    });
+ 	</script>
+ </body>
+ 
+diff --git a/templates/user_group_add.html b/templates/user_group_add.html
+index 8911fd6..53ad3a3 100644
+--- a/templates/user_group_add.html
++++ b/templates/user_group_add.html
+@@ -137,6 +137,13 @@
+                 }
+             });
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ 
+diff --git a/templates/user_group_edit.html b/templates/user_group_edit.html
+index 4b24f34..1b84964 100644
+--- a/templates/user_group_edit.html
++++ b/templates/user_group_edit.html
+@@ -122,6 +122,13 @@
+                 alert("Please input group name");
+             }
+         }
++
++        $('input').keypress(function(e) {
++            code = e.keyCode ? e.keyCode : e.which;
++            if(code == 13) {
++                e.preventDefault();
++            }
++        });
+         </script>
+     </body>
+ 
+diff --git a/templates/user_setting.html b/templates/user_setting.html
+index 00f3536..132dc10 100644
+--- a/templates/user_setting.html
++++ b/templates/user_setting.html
+@@ -199,6 +199,13 @@
+ 			}
+ 		});
+ 	}
++
++    $('input').keypress(function(e) {
++        code = e.keyCode ? e.keyCode : e.which;
++        if(code == 13) {
++            e.preventDefault();
++        }
++    });
+ 	</script>
+ </body>
+ 
+diff --git a/templates/user_update.html b/templates/user_update.html
+index c6dd88f..ef18bd3 100644
+--- a/templates/user_update.html
++++ b/templates/user_update.html
+@@ -160,6 +160,13 @@
+         } else
+             alert("Cannot be null");
+     }
++
++    $('input').keypress(function(e) {
++        code = e.keyCode ? e.keyCode : e.which;
++        if(code == 13) {
++            e.preventDefault();
++        }
++    });
+ 	</script>
+ </body>
+ 
+-- 
+1.9.1
+

@@ -1,0 +1,24 @@
+From 89ce168ae3baa85705267c3d31d1bd0b1c49974d Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 18 Nov 2016 15:52:00 +0800
+Subject: [PATCH 363/443] Add 'NewVersion' in 'Config' table.
+
+---
+ api/models.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/api/models.py b/api/models.py
+index ccee6cd..6e7b6db 100755
+--- a/api/models.py
++++ b/api/models.py
+@@ -25,6 +25,7 @@ class Config(models.Model):
+         ('PicFaceSave', 'PicFaceSave'),
+         ('LogSettingSeparator', 'LogSettingSeparator'),
+         ('LogSettingField', 'LogSettingField'),
++        ('NewVersion', 'NewVersion'),
+     )
+     OId = models.CharField(db_column = 'OId', primary_key = True, default = uuid.uuid1, max_length = 36)
+     Name = models.CharField(db_column = 'Name', choices = config_name, unique = True, max_length = 32)
+-- 
+1.9.1
+

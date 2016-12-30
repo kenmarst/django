@@ -1,0 +1,28 @@
+From e1945da171c89c4636b1806fd740f63e10f9ab8a Mon Sep 17 00:00:00 2001
+From: Wellens <wellens@tw.shuttle.com>
+Date: Fri, 14 Oct 2016 17:00:55 +0800
+Subject: [PATCH 321/443] Add Status column to fruser list of web.
+
+---
+ templates/fruser_list.html | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/templates/fruser_list.html b/templates/fruser_list.html
+index 47473bd..8359fe3 100755
+--- a/templates/fruser_list.html
++++ b/templates/fruser_list.html
+@@ -119,6 +119,11 @@
+                         sortable: true
+                     },
+                     {
++                        field: 'State',
++                        title: '{% trans "Status" %}',
++                        sortable: true
++                    },
++                    {
+                         field: 'CreateDate',
+                         title: '{% trans "Create Date" %}',
+                         sortable: true
+-- 
+1.9.1
+

@@ -1,0 +1,33 @@
+From c645983ab00385389d19158129455ef49d068257 Mon Sep 17 00:00:00 2001
+From: Neon Chen <neon_chen@tw.shuttle.com>
+Date: Fri, 7 Oct 2016 18:20:16 +0800
+Subject: [PATCH 312/443] Fix FaceDelete API: The face_id didn't remove from
+ personid in TCIT.
+
+The data post to TCIT api is not correct as json.
+---
+ api/face.py | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/api/face.py b/api/face.py
+index 54a671c..a61d45b 100644
+--- a/api/face.py
++++ b/api/face.py
+@@ -189,11 +189,9 @@ def delete(request):
+                     res = json.loads(
+                         requests.post(
+                             'http://' + settings.TCIT_IP + '/face/person/update/remove',
+-                            data={
+-                                'person_id':fruser.PersonId,
+-                                'face_id':fruser.FaceID1,
+-                                'face_id':fruser.FaceID2,
+-                                'face_id':fruser.FaceID3,
++                            data = {
++                                'person_id': fruser.PersonId,
++                                'face_id': ','.join([fruser.FaceID1, fruser.FaceID2])
+                             }
+                         ).text
+                     )
+-- 
+1.9.1
+
